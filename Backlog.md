@@ -12,3 +12,5 @@
 
 - class based autowiring probably is not working, add this from tdi again
 - move generated code into ".di" - folder
+- make inject a record based generic interface something like `Inject<{api:APIInterface<Foo>}>`
+  - this will allow us to potnetially disable errors via linter down the line
