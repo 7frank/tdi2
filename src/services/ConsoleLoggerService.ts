@@ -1,7 +1,7 @@
 // src/services/ConsoleLoggerService.ts
 
 import { Service } from '../di/decorators';
-import { LoggerService, LOGGER_TOKEN } from './ExampleApiService';
+import { type LoggerService, LOGGER_TOKEN } from './ExampleApiService';
 
 @Service({ token: LOGGER_TOKEN })
 export class ConsoleLoggerService implements LoggerService {

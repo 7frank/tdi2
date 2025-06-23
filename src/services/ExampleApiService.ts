@@ -1,7 +1,7 @@
 // src/services/ExampleApiService.ts
 
 import { Service, Inject } from '../di/decorators';
-import { ExampleApiInterface, EXAMPLE_API_TOKEN } from './ExampleApiInterface';
+import { type ExampleApiInterface, EXAMPLE_API_TOKEN } from './ExampleApiInterface';
 
 // Example of a dependency that could be injected
 export interface LoggerService {
