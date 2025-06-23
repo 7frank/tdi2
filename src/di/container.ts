@@ -1,12 +1,15 @@
 // src/di/container.ts
 
-import { DIContainer, ServiceFactory, DIMap } from './types';
+import type { DIContainer, ServiceFactory, DIMap } from "./types";
 
 export class CompileTimeDIContainer implements DIContainer {
   private services = new Map<string | symbol, any>();
   private instances = new Map<string | symbol, any>();
   private factories = new Map<string | symbol, ServiceFactory<any>>();
-  private scopes = new Map<string | symbol, 'singleton' | 'transient' | 'scoped'>();
+  private scopes = new Map<
+    string | symbol,
+    "singleton" | "transient" | "scoped"
+  >();
   private parent?: DIContainer;
 
   constructor(parent?: DIContainer) {
@@ -14,28 +17,31 @@ export class CompileTimeDIContainer implements DIContainer {
   }
 
   register<T>(
-    token: string | symbol, 
+    token: string | symbol,
     implementation: any, // This will be a factory function generated at compile time
-    scope: 'singleton' | 'transient' | 'scoped' = 'singleton'
+    scope: "singleton" | "transient" | "scoped" = "singleton"
   ): void {
     const tokenKey = this.getTokenKey(token);
-    
-    if (typeof implementation === 'function' && implementation.length === 0) {
+
+    if (typeof implementation === "function" && implementation.length === 0) {
       // It's a factory function
       this.factories.set(tokenKey, implementation);
     } else {
       // It's a constructor
       this.services.set(tokenKey, implementation);
     }
-    
+
     this.scopes.set(tokenKey, scope);
   }
 
   resolve<T>(token: string | symbol): T {
     const tokenKey = this.getTokenKey(token);
-    
+
     // Check if already instantiated for singletons
-    if (this.scopes.get(tokenKey) === 'singleton' && this.instances.has(tokenKey)) {
+    if (
+      this.scopes.get(tokenKey) === "singleton" &&
+      this.instances.has(tokenKey)
+    ) {
       return this.instances.get(tokenKey);
     }
 
@@ -59,7 +65,7 @@ export class CompileTimeDIContainer implements DIContainer {
     }
 
     // Store singleton instances
-    if (this.scopes.get(tokenKey) === 'singleton') {
+    if (this.scopes.get(tokenKey) === "singleton") {
       this.instances.set(tokenKey, instance);
     }
 
@@ -68,9 +74,11 @@ export class CompileTimeDIContainer implements DIContainer {
 
   has(token: string | symbol): boolean {
     const tokenKey = this.getTokenKey(token);
-    return this.factories.has(tokenKey) || 
-           this.services.has(tokenKey) || 
-           (this.parent?.has(token) ?? false);
+    return (
+      this.factories.has(tokenKey) ||
+      this.services.has(tokenKey) ||
+      (this.parent?.has(token) ?? false)
+    );
   }
 
   createScope(): DIContainer {
@@ -86,6 +94,6 @@ export class CompileTimeDIContainer implements DIContainer {
   }
 
   private getTokenKey(token: string | symbol): string {
-    return typeof token === 'symbol' ? token.toString() : token;
+    return typeof token === "symbol" ? token.toString() : token;
   }
 }

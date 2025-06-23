@@ -354,7 +354,7 @@ export const SERVICE_TOKENS = {
 }
 
 // CLI usage
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const transformer = new DITransformer({ 
     verbose: true,
     srcDir: './src',
