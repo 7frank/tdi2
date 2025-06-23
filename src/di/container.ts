@@ -23,12 +23,24 @@ export class CompileTimeDIContainer implements DIContainer {
   ): void {
     const tokenKey = this.getTokenKey(token);
 
-    if (typeof implementation === "function" && implementation.length === 0) {
-      // It's a factory function
-      this.factories.set(tokenKey, implementation);
+    if (typeof implementation === "function") {
+      // Check if it's a factory function (returns another function) or a constructor
+      try {
+        const result = implementation(this);
+        if (typeof result === "function") {
+          // It's a factory function
+          this.factories.set(tokenKey, result);
+        } else {
+          // It's a constructor or direct instance
+          this.services.set(tokenKey, implementation);
+        }
+      } catch (e) {
+        // Fallback to treating as constructor
+        this.services.set(tokenKey, implementation);
+      }
     } else {
-      // It's a constructor
-      this.services.set(tokenKey, implementation);
+      // Direct instance
+      this.instances.set(tokenKey, implementation);
     }
 
     this.scopes.set(tokenKey, scope);
@@ -57,9 +69,13 @@ export class CompileTimeDIContainer implements DIContainer {
       const factory = this.factories.get(tokenKey)!;
       instance = factory();
     } else if (this.services.has(tokenKey)) {
-      // Fallback to constructor (shouldn't happen with compile-time generation)
+      // Use constructor
       const constructor = this.services.get(tokenKey);
-      instance = new constructor();
+      if (typeof constructor === "function") {
+        instance = new constructor();
+      } else {
+        instance = constructor;
+      }
     } else {
       throw new Error(`Service not registered: ${String(token)}`);
     }
@@ -77,6 +93,7 @@ export class CompileTimeDIContainer implements DIContainer {
     return (
       this.factories.has(tokenKey) ||
       this.services.has(tokenKey) ||
+      this.instances.has(tokenKey) ||
       (this.parent?.has(token) ?? false)
     );
   }
@@ -88,12 +105,22 @@ export class CompileTimeDIContainer implements DIContainer {
   // Load generated DI configuration
   loadConfiguration(diMap: DIMap): void {
     for (const [token, config] of Object.entries(diMap)) {
-      this.factories.set(token, config.factory);
+      const factory = config.factory(this);
+      this.factories.set(token, factory);
       this.scopes.set(token, config.scope);
     }
   }
 
   private getTokenKey(token: string | symbol): string {
     return typeof token === "symbol" ? token.toString() : token;
+  }
+
+  // Debug method to see what's registered
+  getRegisteredTokens(): string[] {
+    const tokens = new Set<string>();
+    this.factories.forEach((_, key) => tokens.add(this.getTokenKey(key)));
+    this.services.forEach((_, key) => tokens.add(this.getTokenKey(key)));
+    this.instances.forEach((_, key) => tokens.add(this.getTokenKey(key)));
+    return Array.from(tokens);
   }
 }

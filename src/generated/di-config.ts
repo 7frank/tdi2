@@ -16,7 +16,7 @@ function createConsoleLoggerService(container: any) {
 
 function createExampleApiService(container: any) {
   return () => {
-  const dep0 = container.resolve('LOGGER_TOKEN');
+    const dep0 = container.resolve('LOGGER_TOKEN');
     const instance = new ExampleApiService(dep0);
 
     return instance;

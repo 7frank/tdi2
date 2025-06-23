@@ -1,6 +1,6 @@
 // Auto-generated service registry
-import { ConsoleLoggerService } from 'ConsoleLoggerService';
-import { ExampleApiService } from 'ExampleApiService';
+import { ConsoleLoggerService } from './ConsoleLoggerService';
+import { ExampleApiService } from './ExampleApiService';
 
 export const SERVICE_CLASSES = [
   ConsoleLoggerService,

@@ -44,6 +44,7 @@ export class DITransformer {
   private project: Project;
   private options: TransformerOptions;
   private services: Map<string, ServiceInfo> = new Map();
+  private tokenMap: Map<string, string> = new Map(); // identifier -> actual token
 
   constructor(options: TransformerOptions = {}) {
     this.options = {
@@ -68,10 +69,13 @@ export class DITransformer {
     // Add source files
     this.project.addSourceFilesAtPaths(`${this.options.srcDir}/**/*.{ts,tsx}`);
 
-    // First pass: collect all service information
+    // First pass: collect token exports
+    await this.collectTokenExports();
+
+    // Second pass: collect all service information
     await this.collectServices();
 
-    // Second pass: generate DI configuration
+    // Third pass: generate DI configuration
     await this.generateDIConfiguration();
 
     if (this.options.generateRegistry) {
@@ -80,6 +84,35 @@ export class DITransformer {
 
     if (this.options.verbose) {
       console.log(`Processed ${this.services.size} services`);
+      console.log('Registered tokens:', Array.from(this.services.keys()));
+    }
+  }
+
+  private async collectTokenExports(): Promise<void> {
+    const sourceFiles = this.project.getSourceFiles();
+    
+    for (const sourceFile of sourceFiles) {
+      // Look for exported token constants
+      const variableStatements = sourceFile.getVariableStatements();
+      
+      for (const varStatement of variableStatements) {
+        if (varStatement.isExported()) {
+          const declarations = varStatement.getDeclarations();
+          for (const declaration of declarations) {
+            const name = declaration.getName();
+            const initializer = declaration.getInitializer();
+            
+            if (initializer && Node.isStringLiteral(initializer)) {
+              this.tokenMap.set(name, initializer.getLiteralValue());
+            } else if (initializer && Node.isNoSubstitutionTemplateLiteral(initializer)) {
+              this.tokenMap.set(name, initializer.getLiteralValue());
+            } else if (name.endsWith('_TOKEN')) {
+              // Fallback: use the variable name as token
+              this.tokenMap.set(name, name);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -125,7 +158,8 @@ export class DITransformer {
           if (Node.isStringLiteral(tokenValue)) {
             token = tokenValue.getLiteralValue();
           } else if (Node.isIdentifier(tokenValue)) {
-            token = tokenValue.getText();
+            const tokenName = tokenValue.getText();
+            token = this.tokenMap.get(tokenName) || tokenName;
           }
         }
         
@@ -178,24 +212,26 @@ export class DITransformer {
   private extractDependencyInfo(param: ParameterDeclaration, index: number): DependencyInfo | null {
     const injectDecorator = param.getDecorator('Inject') || param.getDecorator('Autowired');
     
+    if (!injectDecorator) {
+      return null; // Only process explicitly marked dependencies
+    }
+
     let token: string;
     const paramType = param.getType().getText();
     
-    if (injectDecorator) {
-      // Extract token from decorator
-      const decoratorArgs = injectDecorator.getArguments();
-      if (decoratorArgs.length > 0) {
-        const tokenArg = decoratorArgs[0];
-        if (Node.isStringLiteral(tokenArg)) {
-          token = tokenArg.getLiteralValue();
-        } else {
-          token = tokenArg.getText();
-        }
+    // Extract token from decorator
+    const decoratorArgs = injectDecorator.getArguments();
+    if (decoratorArgs.length > 0) {
+      const tokenArg = decoratorArgs[0];
+      if (Node.isStringLiteral(tokenArg)) {
+        token = tokenArg.getLiteralValue();
+      } else if (Node.isIdentifier(tokenArg)) {
+        const tokenName = tokenArg.getText();
+        token = this.tokenMap.get(tokenName) || tokenName;
       } else {
-        token = paramType;
+        token = tokenArg.getText();
       }
     } else {
-      // Auto-inject based on parameter type
       token = paramType;
     }
 
@@ -221,6 +257,9 @@ export class DITransformer {
       const tokenArg = decoratorArgs[0];
       if (Node.isStringLiteral(tokenArg)) {
         token = tokenArg.getLiteralValue();
+      } else if (Node.isIdentifier(tokenArg)) {
+        const tokenName = tokenArg.getText();
+        token = this.tokenMap.get(tokenName) || tokenName;
       } else {
         token = tokenArg.getText();
       }
@@ -241,13 +280,17 @@ export class DITransformer {
     const diMapEntries: string[] = [];
 
     for (const [token, serviceInfo] of this.services) {
-      // Generate import
-      const relativePath = path.relative(
-        this.options.outputDir!,
-        serviceInfo.filePath
-      ).replace(/\.(ts|tsx)$/, '').replace(/\\/g, '/');
+      // Generate import - fix the path resolution
+      const outputPath = path.resolve(this.options.outputDir!);
+      const servicePath = path.resolve(serviceInfo.filePath);
+      const relativePath = path.relative(outputPath, servicePath)
+        .replace(/\.(ts|tsx)$/, '')
+        .replace(/\\/g, '/');
       
-      imports.push(`import { ${serviceInfo.className} } from '${relativePath}';`);
+      // Make sure relative path starts with ./ or ../
+      const importPath = relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
+      
+      imports.push(`import { ${serviceInfo.className} } from '${importPath}';`);
 
       // Generate factory function
       const factoryName = `create${serviceInfo.className}`;
@@ -296,13 +339,13 @@ export function setupDIContainer(container: any) {
 
   private generateFactoryFunction(serviceInfo: ServiceInfo, factoryName: string): string {
     const dependencyResolves = serviceInfo.dependencies.map((dep, index) => 
-      `  const dep${index} = container.resolve('${dep.token}');`
+      `    const dep${index} = container.resolve('${dep.token}');`
     ).join('\n');
 
     const constructorArgs = serviceInfo.dependencies.map((_, index) => `dep${index}`).join(', ');
 
     const propertyInjections = serviceInfo.properties.map(prop => 
-      `  instance.${prop.name} = container.resolve('${prop.token}');`
+      `    instance.${prop.name} = container.resolve('${prop.token}');`
     ).join('\n');
 
     return `function ${factoryName}(container: any) {
@@ -318,12 +361,14 @@ ${propertyInjections}
   private async generateServiceRegistry(): Promise<void> {
     const serviceNames = Array.from(this.services.values()).map(s => s.className);
     const imports = Array.from(this.services.values()).map(serviceInfo => {
-      const relativePath = path.relative(
-        path.join(this.options.srcDir!, 'services'),
-        serviceInfo.filePath
-      ).replace(/\.(ts|tsx)$/, '').replace(/\\/g, '/');
+      const servicesDir = path.join(this.options.srcDir!, 'services');
+      const servicePath = path.resolve(serviceInfo.filePath);
+      const relativePath = path.relative(servicesDir, servicePath)
+        .replace(/\.(ts|tsx)$/, '')
+        .replace(/\\/g, '/');
       
-      return `import { ${serviceInfo.className} } from '${relativePath}';`;
+      const importPath = relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
+      return `import { ${serviceInfo.className} } from '${importPath}';`;
     });
 
     const registryContent = `// Auto-generated service registry
@@ -363,9 +408,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   
   transformer.transform()
     .then(() => transformer.save())
-    .then(() => console.log('DI transformation completed successfully'))
+    .then(() => console.log('✅ DI transformation completed successfully'))
     .catch(error => {
-      console.error('DI transformation failed:', error);
+      console.error('❌ DI transformation failed:', error);
       process.exit(1);
     });
 }

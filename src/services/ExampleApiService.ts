@@ -8,7 +8,7 @@ export interface LoggerService {
   log(message: string): void;
 }
 
-export const LOGGER_TOKEN = 'LoggerService';
+export const LOGGER_TOKEN = 'LOGGER_TOKEN';
 
 @Service({ token: EXAMPLE_API_TOKEN })
 export class ExampleApiService implements ExampleApiInterface {
@@ -22,7 +22,7 @@ export class ExampleApiService implements ExampleApiInterface {
     this.logger?.log('Fetching data from API');
     // Simulate API call
     await this.delay(1000);
-    return ['Item 1', 'Item 2', 'Item 3', 'Item 4'];
+    return ['Item 1 (via DI)', 'Item 2 (via DI)', 'Item 3 (via DI)', 'Item 4 (via DI)'];
   }
 
   async postData(data: any): Promise<boolean> {
@@ -39,7 +39,7 @@ export class ExampleApiService implements ExampleApiInterface {
     await this.delay(800);
     return {
       id,
-      name: `User ${id}`,
+      name: `User ${id} (via DI)`,
       email: `user${id}@example.com`
     };
   }

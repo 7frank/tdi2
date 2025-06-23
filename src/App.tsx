@@ -5,9 +5,11 @@ import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 
+import { useService } from "./di/context";
 import type { ExampleApiInterface } from "./services/ExampleApiInterface";
+import { EXAMPLE_API_TOKEN } from "./services/ExampleApiInterface";
 
-// Spring Boot style: services injected as props
+// Spring Boot style: services injected as props OR use DI hooks
 interface AppWithDIProps {
   services?: {
     appService: ExampleApiInterface;
@@ -25,7 +27,7 @@ function App({ services }: AppWithDIProps) {
   } | null>(null);
 
   // Use DI to get the API service - fallback to useService if not injected via props
-  const apiService = services?.appService!;
+  const apiService = services?.appService || useService<ExampleApiInterface>(EXAMPLE_API_TOKEN);
 
   const fetchData = async () => {
     setLoading(true);

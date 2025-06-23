@@ -6,4 +6,5 @@ export interface ExampleApiInterface {
   getUserInfo(id: string): Promise<{ id: string; name: string; email: string }>;
 }
 
-export const EXAMPLE_API_TOKEN = 'ExampleApiInterface';
+// Token constant for DI resolution
+export const EXAMPLE_API_TOKEN = 'EXAMPLE_API_TOKEN';
