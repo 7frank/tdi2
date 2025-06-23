@@ -6,6 +6,7 @@
       this.tokenMap.set('LOGGER_TOKEN', 'LOGGER_TOKEN');
   ```
 
+  - di-config.ts contains static inits of our service which we also only want with the token approach not the approach that generates a dependency tree of all dependencies
   - we should rather let it use the classname/interface/"generic interface" the initial tdi apporoach uses
   - and pass the token diffrently if one "scope" is required
 
