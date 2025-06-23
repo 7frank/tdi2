@@ -5,10 +5,10 @@ import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 
-import { useService, withServices } from "./di/context";
-import { createDIComponent, useInjectServices } from "./di/functional-utils";
+import { useService } from "./di/context";
+import { useInjectServices } from "./di/functional-utils";
 import type { ExampleApiInterface } from "./services/ExampleApiInterface";
-import { LOGGER_TOKEN, type LoggerService } from "./services/ExampleApiService";
+import { LOGGER_TOKEN } from "./services/ExampleApiService";
 import { EXAMPLE_API_TOKEN } from "./services/ExampleApiInterface";
 
 // Traditional DI approach (current working approach)
@@ -18,37 +18,13 @@ interface AppWithDIProps {
   };
 }
 
-// Example of HOC-based functional DI
-const EnhancedUserCard = withServices({
-  api: EXAMPLE_API_TOKEN,
-  logger: LOGGER_TOKEN
-})(({ userId, services }: { userId: string; services: { api: ExampleApiInterface; logger: LoggerService } }) => {
-  const [userInfo, setUserInfo] = useState<any>(null);
-  
-  useEffect(() => {
-    services.logger.log(`Loading user ${userId} via HOC`);
-    services.api.getUserInfo(userId).then(setUserInfo);
-  }, [userId]);
-
-  return (
-    <div style={{ border: '2px solid #007acc', padding: '10px', margin: '10px' }}>
-      <h4>HOC-Enhanced User Card</h4>
-      {userInfo ? (
-        <p>{userInfo.name} - {userInfo.email}</p>
-      ) : (
-        <p>Loading...</p>
-      )}
-    </div>
-  );
-});
-
 // Example of manual hook-based DI
 function ManualDIComponent({ title }: { title: string }) {
   const services = useInjectServices({
     api: EXAMPLE_API_TOKEN,
-    logger: LOGGER_TOKEN
+    logger: LOGGER_TOKEN,
   });
-  
+
   const [data, setData] = useState<string[]>([]);
 
   useEffect(() => {
@@ -57,7 +33,9 @@ function ManualDIComponent({ title }: { title: string }) {
   }, [title]);
 
   return (
-    <div style={{ border: '2px solid #28a745', padding: '10px', margin: '10px' }}>
+    <div
+      style={{ border: "2px solid #28a745", padding: "10px", margin: "10px" }}
+    >
       <h4>Manual DI: {title}</h4>
       <ul>
         {data.slice(0, 2).map((item, index) => (
@@ -79,7 +57,8 @@ function App({ services }: AppWithDIProps) {
   } | null>(null);
 
   // Traditional DI approach - use DI to get the API service
-  const apiService = services?.appService || useService<ExampleApiInterface>(EXAMPLE_API_TOKEN);
+  const apiService =
+    services?.appService || useService<ExampleApiInterface>(EXAMPLE_API_TOKEN);
 
   const fetchData = async () => {
     setLoading(true);
@@ -192,25 +171,48 @@ function App({ services }: AppWithDIProps) {
           }}
         >
           <h3>🎯 Functional DI Examples</h3>
-          
-          {/* HOC-based DI */}
-          <EnhancedUserCard userId="456" />
-          
+
           {/* Manual hook-based DI */}
           <ManualDIComponent title="Products" />
-          
+
           {/* Future: Marker interface-based components */}
-          <div style={{ padding: '10px', backgroundColor: '#f0f0f0', margin: '10px' }}>
-            <h4>🔮 Future: Marker Interface Components</h4>
-            <p><em>These would be auto-transformed by the enhanced transformer:</em></p>
-            <code style={{ display: 'block', padding: '10px', backgroundColor: '#fff', fontSize: '12px' }}>
+          <div
+            style={{
+              padding: "10px",
+              backgroundColor: "#f0f0f0",
+              margin: "10px",
+            }}
+          >
+            <h4>🔮 POC: Marker Interface Components</h4>
+            <p>
+              <em>
+                These would be auto-transformed by the enhanced transformer:
+              </em>
+            </p>
+            <code
+              style={{
+                display: "block",
+                padding: "10px",
+                backgroundColor: "#fff",
+                fontSize: "12px",
+              }}
+            >
               {`function UserCard(props: { 
   userId: string; 
   services: { api: Inject<ExampleApiInterface> } 
 }) { ... }`}
             </code>
-            <p><em>↓ Transformed to ↓</em></p>
-            <code style={{ display: 'block', padding: '10px', backgroundColor: '#fff', fontSize: '12px' }}>
+            <p>
+              <em>↓ Transformed to ↓</em>
+            </p>
+            <code
+              style={{
+                display: "block",
+                padding: "10px",
+                backgroundColor: "#fff",
+                fontSize: "12px",
+              }}
+            >
               {`function UserCard({ userId }: { userId: string }) {
   const api = useService('EXAMPLE_API_TOKEN');
   // Original component logic with injected services
