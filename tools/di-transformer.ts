@@ -12,6 +12,7 @@ import {
 import * as path from 'path';
 import * as fs from 'fs';
 import { FunctionalDITransformer } from './functional-di-transformer';
+import { SaferFunctionalDITransformer } from './safer-functional-transformer';
 
 interface ServiceInfo {
   className: string;
@@ -47,7 +48,7 @@ export class DITransformer {
   private options: TransformerOptions;
   private services: Map<string, ServiceInfo> = new Map();
   private tokenMap: Map<string, string> = new Map(); // identifier -> actual token
-  private functionalTransformer?: FunctionalDITransformer;
+  private functionalTransformer?: SaferFunctionalDITransformer;
 
   constructor(options: TransformerOptions = {}) {
     this.options = {
@@ -64,7 +65,7 @@ export class DITransformer {
     });
 
     if (this.options.enableFunctionalDI) {
-      this.functionalTransformer = new FunctionalDITransformer(this.project);
+      this.functionalTransformer = new SaferFunctionalDITransformer(this.project);
     }
   }
 
