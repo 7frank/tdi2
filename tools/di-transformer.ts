@@ -1,4 +1,4 @@
-// tools/di-transformer.ts
+// tools/di-transformer.ts - Updated with functional DI support
 
 import { 
   Project, 
@@ -11,6 +11,7 @@ import {
 } from 'ts-morph';
 import * as path from 'path';
 import * as fs from 'fs';
+import { FunctionalDITransformer } from './functional-di-transformer';
 
 interface ServiceInfo {
   className: string;
@@ -38,6 +39,7 @@ interface TransformerOptions {
   outputDir?: string;
   verbose?: boolean;
   generateRegistry?: boolean;
+  enableFunctionalDI?: boolean;
 }
 
 export class DITransformer {
@@ -45,6 +47,7 @@ export class DITransformer {
   private options: TransformerOptions;
   private services: Map<string, ServiceInfo> = new Map();
   private tokenMap: Map<string, string> = new Map(); // identifier -> actual token
+  private functionalTransformer?: FunctionalDITransformer;
 
   constructor(options: TransformerOptions = {}) {
     this.options = {
@@ -52,12 +55,17 @@ export class DITransformer {
       outputDir: './src/generated',
       verbose: false,
       generateRegistry: true,
+      enableFunctionalDI: true,
       ...options
     };
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json'
     });
+
+    if (this.options.enableFunctionalDI) {
+      this.functionalTransformer = new FunctionalDITransformer(this.project);
+    }
   }
 
   async transform(): Promise<void> {
@@ -75,7 +83,18 @@ export class DITransformer {
     // Second pass: collect all service information
     await this.collectServices();
 
-    // Third pass: generate DI configuration
+    // Third pass: functional DI transformation
+    if (this.functionalTransformer) {
+      await this.functionalTransformer.transformFunctionalDI();
+      
+      if (this.options.verbose) {
+        const summary = this.functionalTransformer.getTransformationSummary();
+        console.log(`🎯 Found ${summary.count} functional components with DI:`);
+        summary.functions.forEach(func => console.log(`  - ${func}`));
+      }
+    }
+
+    // Fourth pass: generate DI configuration
     await this.generateDIConfiguration();
 
     if (this.options.generateRegistry) {
@@ -83,8 +102,8 @@ export class DITransformer {
     }
 
     if (this.options.verbose) {
-      console.log(`Processed ${this.services.size} services`);
-      console.log('Registered tokens:', Array.from(this.services.keys()));
+      console.log(`✅ Processed ${this.services.size} class-based services`);
+      console.log('📋 Registered tokens:', Array.from(this.services.keys()));
     }
   }
 
@@ -113,6 +132,10 @@ export class DITransformer {
           }
         }
       }
+    }
+
+    if (this.options.verbose) {
+      console.log('🏷️  Discovered tokens:', Object.fromEntries(this.tokenMap));
     }
   }
 
@@ -320,7 +343,7 @@ export const DI_CONFIG = {
 ${diMapEntries.join(',\n')}
 };
 
-// Container setup function
+// Container setup function (deprecated - use loadConfiguration instead)
 export function setupDIContainer(container: any) {
   for (const [token, config] of Object.entries(DI_CONFIG)) {
     container.register(token, config.factory, config.scope);
@@ -403,7 +426,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const transformer = new DITransformer({ 
     verbose: true,
     srcDir: './src',
-    outputDir: './src/generated'
+    outputDir: './src/generated',
+    enableFunctionalDI: true
   });
   
   transformer.transform()

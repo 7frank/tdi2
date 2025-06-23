@@ -37,7 +37,7 @@ export const DI_CONFIG = {
   }
 };
 
-// Container setup function
+// Container setup function (deprecated - use loadConfiguration instead)
 export function setupDIContainer(container: any) {
   for (const [token, config] of Object.entries(DI_CONFIG)) {
     container.register(token, config.factory, config.scope);

@@ -1,19 +1,85 @@
-// src/App.tsx
+// src/App.tsx - Updated with functional DI examples
 
 import { useState, useEffect } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 
-import { useService } from "./di/context";
+import { useService, withServices } from "./di/context";
+import { useInjectServices } from "./di/functional-utils.ts";
 import type { ExampleApiInterface } from "./services/ExampleApiInterface";
+import { LOGGER_TOKEN, type LoggerService } from "./services/ExampleApiService";
 import { EXAMPLE_API_TOKEN } from "./services/ExampleApiInterface";
 
-// Spring Boot style: services injected as props OR use DI hooks
+// Traditional DI approach (current working approach)
 interface AppWithDIProps {
   services?: {
     appService: ExampleApiInterface;
   };
+}
+
+// Example of HOC-based functional DI
+const EnhancedUserCard = withServices({
+  api: EXAMPLE_API_TOKEN,
+  logger: LOGGER_TOKEN,
+})(
+  ({
+    userId,
+    services,
+  }: {
+    userId: string;
+    services: { api: ExampleApiInterface; logger: LoggerService };
+  }) => {
+    const [userInfo, setUserInfo] = useState<any>(null);
+
+    useEffect(() => {
+      services.logger.log(`Loading user ${userId} via HOC`);
+      services.api.getUserInfo(userId).then(setUserInfo);
+    }, [userId]);
+
+    return (
+      <div
+        style={{ border: "2px solid #007acc", padding: "10px", margin: "10px" }}
+      >
+        <h4>HOC-Enhanced User Card</h4>
+        {userInfo ? (
+          <p>
+            {userInfo.name} - {userInfo.email}
+          </p>
+        ) : (
+          <p>Loading...</p>
+        )}
+      </div>
+    );
+  }
+);
+
+// Example of manual hook-based DI
+function ManualDIComponent({ title }: { title: string }) {
+  const services = useInjectServices({
+    api: EXAMPLE_API_TOKEN,
+    logger: LOGGER_TOKEN,
+  });
+
+  const [data, setData] = useState<string[]>([]);
+
+  useEffect(() => {
+    services.logger.log(`Manual DI component loading data for: ${title}`);
+    services.api.getData().then(setData);
+  }, [title]);
+
+  return (
+    <div
+      style={{ border: "2px solid #28a745", padding: "10px", margin: "10px" }}
+    >
+      <h4>Manual DI: {title}</h4>
+      <ul>
+        {data.slice(0, 2).map((item, index) => (
+          <li key={index}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function App({ services }: AppWithDIProps) {
@@ -26,8 +92,9 @@ function App({ services }: AppWithDIProps) {
     email: string;
   } | null>(null);
 
-  // Use DI to get the API service - fallback to useService if not injected via props
-  const apiService = services?.appService || useService<ExampleApiInterface>(EXAMPLE_API_TOKEN);
+  // Traditional DI approach - use DI to get the API service
+  const apiService =
+    services?.appService || useService<ExampleApiInterface>(EXAMPLE_API_TOKEN);
 
   const fetchData = async () => {
     setLoading(true);
@@ -79,7 +146,7 @@ function App({ services }: AppWithDIProps) {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React + DI</h1>
+      <h1>Vite + React + Functional DI</h1>
 
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
@@ -97,7 +164,7 @@ function App({ services }: AppWithDIProps) {
             borderRadius: "5px",
           }}
         >
-          <h3>Dependency Injection Demo</h3>
+          <h3>Traditional DI Demo</h3>
           <p>
             <strong>Service Source:</strong>{" "}
             {services?.appService ? "Injected via Props" : "DI Container"}
@@ -128,6 +195,69 @@ function App({ services }: AppWithDIProps) {
               <p>Email: {userInfo.email}</p>
             </div>
           )}
+        </div>
+
+        {/* Functional DI Examples */}
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "10px",
+            border: "2px solid #ff6b6b",
+            borderRadius: "5px",
+          }}
+        >
+          <h3>🎯 Functional DI Examples</h3>
+
+          {/* HOC-based DI */}
+          <EnhancedUserCard userId="456" />
+
+          {/* Manual hook-based DI */}
+          <ManualDIComponent title="Products" />
+
+          {/* Future: Marker interface-based components */}
+          <div
+            style={{
+              padding: "10px",
+              backgroundColor: "#f0f0f0",
+              margin: "10px",
+            }}
+          >
+            <h4>🔮 Future: Marker Interface Components</h4>
+            <p>
+              <em>
+                These would be auto-transformed by the enhanced transformer:
+              </em>
+            </p>
+            <code
+              style={{
+                display: "block",
+                padding: "10px",
+                backgroundColor: "#fff",
+                fontSize: "12px",
+              }}
+            >
+              {`function UserCard(props: { 
+  userId: string; 
+  services: { api: Inject<ExampleApiInterface> } 
+}) { ... }`}
+            </code>
+            <p>
+              <em>↓ Transformed to ↓</em>
+            </p>
+            <code
+              style={{
+                display: "block",
+                padding: "10px",
+                backgroundColor: "#fff",
+                fontSize: "12px",
+              }}
+            >
+              {`function UserCard({ userId }: { userId: string }) {
+  const api = useService('EXAMPLE_API_TOKEN');
+  // Original component logic with injected services
+}`}
+            </code>
+          </div>
         </div>
       </div>
 
