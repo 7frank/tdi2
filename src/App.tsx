@@ -1,14 +1,11 @@
 // src/App.tsx
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 
-import type {
-  EXAMPLE_API_TOKEN,
-  ExampleApiInterface,
-} from "./services/ExampleApiInterface";
+import type { ExampleApiInterface } from "./services/ExampleApiInterface";
 
 // Spring Boot style: services injected as props
 interface AppWithDIProps {

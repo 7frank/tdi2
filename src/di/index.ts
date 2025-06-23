@@ -4,7 +4,7 @@
 export * from './types';
 export * from './decorators';
 export * from './container';
-export * from './context';
+export * from './context.tsx';
 
 // Re-export for convenience
 export { CompileTimeDIContainer as DIContainer } from './container';
