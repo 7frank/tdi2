@@ -1,4 +1,4 @@
-// tools/functional-di-transformer.ts - Extension for functional DI
+// tools/functional-di-transformer.ts - Real AST transformation for functional DI
 
 import { 
   Project, 
@@ -9,7 +9,8 @@ import {
   ParameterDeclaration,
   Node,
   SyntaxKind,
-  TypeNode
+  TypeNode,
+  TypeReferenceNode
 } from 'ts-morph';
 import * as path from 'path';
 
@@ -19,6 +20,7 @@ interface FunctionalDIInfo {
   dependencies: FunctionalDependency[];
   isComponent: boolean;
   originalFunction: string;
+  node: FunctionDeclaration | VariableDeclaration;
 }
 
 interface FunctionalDependency {
@@ -41,11 +43,11 @@ export class FunctionalDITransformer {
     // First, collect token exports
     await this.collectTokenExports();
     
-    // Then find and transform functional components with DI
+    // Then find functional components with DI
     await this.findFunctionalComponents();
     
-    // Generate transformations
-    await this.generateTransformations();
+    // Actually transform the components
+    await this.performActualTransformations();
   }
 
   private async collectTokenExports(): Promise<void> {
@@ -70,12 +72,22 @@ export class FunctionalDITransformer {
         }
       }
     }
+
+    // Add known token mappings
+    this.tokenMap.set('EXAMPLE_API_TOKEN', 'EXAMPLE_API_TOKEN');
+    this.tokenMap.set('LOGGER_TOKEN', 'LOGGER_TOKEN');
   }
 
   private async findFunctionalComponents(): Promise<void> {
     const sourceFiles = this.project.getSourceFiles();
     
     for (const sourceFile of sourceFiles) {
+      // Skip generated files and node_modules
+      if (sourceFile.getFilePath().includes('generated') || 
+          sourceFile.getFilePath().includes('node_modules')) {
+        continue;
+      }
+
       // Check function declarations
       const functions = sourceFile.getFunctions();
       for (const func of functions) {
@@ -109,28 +121,25 @@ export class FunctionalDITransformer {
     const parameters = func.getParameters();
     if (parameters.length === 0) return null;
 
-    // Look for services parameter
-    const servicesParam = parameters.find(param => 
-      param.getName() === 'services' || 
-      this.hasInjectMarkers(param)
-    );
+    // Look for a parameter with services that has Inject markers
+    for (const param of parameters) {
+      const dependencies = this.extractDependenciesFromParameter(param);
+      if (dependencies.length > 0) {
+        const returnType = func.getReturnType();
+        const isComponent = this.isReactComponent(func, returnType);
 
-    if (!servicesParam) return null;
+        return {
+          functionName: funcName,
+          filePath: sourceFile.getFilePath(),
+          dependencies,
+          isComponent,
+          originalFunction: func.getFullText(),
+          node: func
+        };
+      }
+    }
 
-    const dependencies = this.extractDependenciesFromParameter(servicesParam);
-    if (dependencies.length === 0) return null;
-
-    // Check if it's a React component (returns JSX)
-    const returnType = func.getReturnType();
-    const isComponent = this.isReactComponent(func, returnType);
-
-    return {
-      functionName: funcName,
-      filePath: sourceFile.getFilePath(),
-      dependencies,
-      isComponent,
-      originalFunction: func.getFullText()
-    };
+    return null;
   }
 
   private extractFunctionalDIFromArrow(
@@ -143,34 +152,24 @@ export class FunctionalDITransformer {
     
     if (parameters.length === 0) return null;
 
-    const servicesParam = parameters.find(param => 
-      param.getName() === 'services' || 
-      this.hasInjectMarkers(param)
-    );
+    for (const param of parameters) {
+      const dependencies = this.extractDependenciesFromParameter(param);
+      if (dependencies.length > 0) {
+        const returnType = arrowFunc.getReturnType();
+        const isComponent = this.isReactComponent(arrowFunc, returnType);
 
-    if (!servicesParam) return null;
+        return {
+          functionName: funcName,
+          filePath: sourceFile.getFilePath(),
+          dependencies,
+          isComponent,
+          originalFunction: declaration.getFullText(),
+          node: declaration
+        };
+      }
+    }
 
-    const dependencies = this.extractDependenciesFromParameter(servicesParam);
-    if (dependencies.length === 0) return null;
-
-    const returnType = arrowFunc.getReturnType();
-    const isComponent = this.isReactComponent(arrowFunc, returnType);
-
-    return {
-      functionName: funcName,
-      filePath: sourceFile.getFilePath(),
-      dependencies,
-      isComponent,
-      originalFunction: declaration.getFullText()
-    };
-  }
-
-  private hasInjectMarkers(param: ParameterDeclaration): boolean {
-    const typeNode = param.getTypeNode();
-    if (!typeNode) return false;
-
-    const typeText = typeNode.getText();
-    return typeText.includes('Inject<') || typeText.includes('InjectOptional<');
+    return null;
   }
 
   private extractDependenciesFromParameter(param: ParameterDeclaration): FunctionalDependency[] {
@@ -179,7 +178,32 @@ export class FunctionalDITransformer {
     
     if (!typeNode) return dependencies;
 
-    // Parse the type to extract Inject<T> and InjectOptional<T> markers
+    // Check if this is a services parameter with Inject types
+    const paramName = param.getName();
+    if (paramName !== 'services' && !paramName.includes('services')) {
+      // Look for object type with services property
+      if (Node.isTypeLiteral(typeNode)) {
+        const servicesProperty = typeNode.getMembers().find(member => 
+          Node.isPropertySignature(member) && member.getName() === 'services'
+        );
+        
+        if (servicesProperty && Node.isPropertySignature(servicesProperty)) {
+          const serviceTypeNode = servicesProperty.getTypeNode();
+          if (serviceTypeNode) {
+            return this.extractInjectDependencies(serviceTypeNode);
+          }
+        }
+      }
+      return dependencies;
+    }
+
+    // Direct services parameter
+    return this.extractInjectDependencies(typeNode);
+  }
+
+  private extractInjectDependencies(typeNode: TypeNode): FunctionalDependency[] {
+    const dependencies: FunctionalDependency[] = [];
+
     if (Node.isTypeLiteral(typeNode)) {
       const members = typeNode.getMembers();
       
@@ -236,16 +260,17 @@ export class FunctionalDITransformer {
   }
 
   private resolveInterfaceToToken(interfaceType: string): string {
-    // Try to map interface names to tokens
-    // LoggerInterface -> LOGGER_TOKEN
-    // ExampleApiInterface -> EXAMPLE_API_TOKEN
+    // Map interface names to actual tokens
+    const mappings: Record<string, string> = {
+      'ExampleApiInterface': 'EXAMPLE_API_TOKEN',
+      'LoggerService': 'LOGGER_TOKEN',
+      'LoggerInterface': 'LOGGER_TOKEN'
+    };
     
-    const tokenKey = interfaceType.replace('Interface', '').toUpperCase() + '_TOKEN';
-    return this.tokenMap.get(tokenKey) || tokenKey;
+    return mappings[interfaceType] || this.tokenMap.get(interfaceType) || interfaceType;
   }
 
   private isReactComponent(func: FunctionDeclaration | ArrowFunction, returnType: any): boolean {
-    // Simple heuristic: check if return type contains JSX
     const returnTypeText = returnType.getText();
     return returnTypeText.includes('JSX.Element') || 
            returnTypeText.includes('ReactElement') ||
@@ -254,7 +279,7 @@ export class FunctionalDITransformer {
            func.getText().includes('=> <');
   }
 
-  private async generateTransformations(): Promise<void> {
+  private async performActualTransformations(): Promise<void> {
     for (const [key, diInfo] of this.functionalServices) {
       await this.transformFunctionComponent(diInfo);
     }
@@ -264,48 +289,137 @@ export class FunctionalDITransformer {
     const sourceFile = this.project.getSourceFile(diInfo.filePath);
     if (!sourceFile) return;
 
-    // Generate the transformed function
-    const transformedCode = this.generateTransformedFunction(diInfo);
-    
-    // For now, just log what we would transform
-    console.log(`🔄 Would transform ${diInfo.functionName}:`);
-    console.log(`📍 Dependencies: ${diInfo.dependencies.map(d => `${d.serviceKey}:${d.token}`).join(', ')}`);
-    console.log(`🔧 Generated hooks: ${this.generateUseServiceCalls(diInfo.dependencies)}`);
-    
-    // TODO: Actually replace the function in the source file
-    // This would require careful AST manipulation to preserve formatting
+    console.log(`🔄 Transforming ${diInfo.functionName} with dependencies: ${diInfo.dependencies.map(d => d.serviceKey).join(', ')}`);
+
+    // Add the necessary imports at the top of the file
+    this.addDIImports(sourceFile);
+
+    if (Node.isFunctionDeclaration(diInfo.node)) {
+      this.transformFunctionDeclaration(diInfo.node, diInfo);
+    } else if (Node.isVariableDeclaration(diInfo.node)) {
+      this.transformArrowFunction(diInfo.node, diInfo);
+    }
   }
 
-  private generateTransformedFunction(diInfo: FunctionalDIInfo): string {
-    const useServiceCalls = this.generateUseServiceCalls(diInfo.dependencies);
-    const servicesObject = this.generateServicesObject(diInfo.dependencies);
-    
-    return `
-// Auto-transformed function with DI
-function ${diInfo.functionName}(props) {
-  ${useServiceCalls}
-  
-  const services = {
-    ${servicesObject}
-  };
-  
-  // Call original function logic with injected services
-  return Original${diInfo.functionName}({ ...props, services });
-}`;
+  private addDIImports(sourceFile: SourceFile): void {
+    // Check if DI imports already exist
+    const existingImports = sourceFile.getImportDeclarations();
+    const hasDIImport = existingImports.some(imp => 
+      imp.getModuleSpecifierValue().includes('./di/') || 
+      imp.getModuleSpecifierValue().includes('../di/')
+    );
+
+    if (!hasDIImport) {
+      // Add DI imports
+      const relativePath = this.getRelativeDIPath(sourceFile.getFilePath());
+      sourceFile.addImportDeclaration({
+        moduleSpecifier: `${relativePath}/di/context`,
+        namedImports: ['useService', 'useOptionalService']
+      });
+    }
   }
 
-  private generateUseServiceCalls(dependencies: FunctionalDependency[]): string {
-    return dependencies.map(dep => {
+  private getRelativeDIPath(filePath: string): string {
+    const depth = filePath.split('/').length - filePath.split('/src/')[1].split('/').length;
+    return depth > 1 ? '../'.repeat(depth - 1).slice(0, -1) : '.';
+  }
+
+  private transformFunctionDeclaration(func: FunctionDeclaration, diInfo: FunctionalDIInfo): void {
+    // Get the original parameters and remove the services parameter
+    const originalParams = func.getParameters();
+    const nonServicesParams = originalParams.filter(param => {
+      const paramName = param.getName();
+      return paramName !== 'services' && !this.parameterHasInjectMarkers(param);
+    });
+
+    // Create new parameter list without services
+    const newParamList = nonServicesParams.map(param => param.getText()).join(', ');
+
+    // Generate DI hook calls
+    const hookCalls = diInfo.dependencies.map(dep => {
       if (dep.isOptional) {
         return `  const ${dep.serviceKey} = useOptionalService('${dep.token}');`;
       } else {
         return `  const ${dep.serviceKey} = useService('${dep.token}');`;
       }
     }).join('\n');
+
+    // Generate services object
+    const servicesObj = `  const services = {\n    ${diInfo.dependencies.map(dep => dep.serviceKey).join(',\n    ')}\n  };`;
+
+    // Get function body
+    const body = func.getBody();
+    const bodyText = body ? body.getText() : '{}';
+
+    // Create the transformed function
+    const transformedFunction = `function ${diInfo.functionName}(${newParamList}) {
+${hookCalls}
+
+${servicesObj}
+
+  // Original function logic with injected services
+  const props = arguments[0] || {};
+  const originalProps = { ...props, services };
+  
+${bodyText.slice(1, -1)} // Remove braces and use original body
+}`;
+
+    // Replace the original function
+    func.replaceWithText(transformedFunction);
   }
 
-  private generateServicesObject(dependencies: FunctionalDependency[]): string {
-    return dependencies.map(dep => `    ${dep.serviceKey}`).join(',\n');
+  private transformArrowFunction(declaration: VariableDeclaration, diInfo: FunctionalDIInfo): void {
+    const initializer = declaration.getInitializer();
+    if (!Node.isArrowFunction(initializer)) return;
+
+    // Get original parameters
+    const originalParams = initializer.getParameters();
+    const nonServicesParams = originalParams.filter(param => {
+      const paramName = param.getName();
+      return paramName !== 'services' && !this.parameterHasInjectMarkers(param);
+    });
+
+    const newParamList = nonServicesParams.map(param => param.getText()).join(', ');
+
+    // Generate DI hook calls
+    const hookCalls = diInfo.dependencies.map(dep => {
+      if (dep.isOptional) {
+        return `  const ${dep.serviceKey} = useOptionalService('${dep.token}');`;
+      } else {
+        return `  const ${dep.serviceKey} = useService('${dep.token}');`;
+      }
+    }).join('\n');
+
+    // Generate services object
+    const servicesObj = `  const services = {\n    ${diInfo.dependencies.map(dep => dep.serviceKey).join(',\n    ')}\n  };`;
+
+    // Get function body
+    const body = initializer.getBody();
+    const bodyText = Node.isBlock(body) ? body.getText() : `{ return ${body.getText()}; }`;
+
+    // Create transformed arrow function
+    const transformedFunction = `const ${diInfo.functionName} = (${newParamList}) => {
+${hookCalls}
+
+${servicesObj}
+
+  // Original function logic with injected services
+  const props = arguments[0] || {};
+  const originalProps = { ...props, services };
+  
+${bodyText.slice(1, -1)} // Remove braces and use original body
+};`;
+
+    // Replace the original declaration
+    declaration.replaceWithText(transformedFunction);
+  }
+
+  private parameterHasInjectMarkers(param: ParameterDeclaration): boolean {
+    const typeNode = param.getTypeNode();
+    if (!typeNode) return false;
+
+    const typeText = typeNode.getText();
+    return typeText.includes('Inject<') || typeText.includes('InjectOptional<');
   }
 
   getTransformationSummary(): { count: number; functions: string[] } {

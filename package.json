@@ -12,7 +12,9 @@
     "preview": "vite preview",
     "di:transform": "tsx tools/di-transformer.ts",
     "di:watch": "tsx watch tools/di-transformer.ts",
-    "test":"bun run test-di.ts"
+    "di:functional": "tsx tools/di-transformer.ts --functional",
+    "test": "bun run test-di.ts",
+    "test:functional": "bun run test-functional-di.tsx"
   },
   "dependencies": {
     "react": "^19.1.0",
