@@ -1,6 +1,9 @@
 import "./App.css";
 
-import { UserProfile } from "./components/NewFunctionalComponent";
+import { UserProfile,DataList } from "./components/NewFunctionalComponent";
+import { SimpleTest } from "./components/SimpleTestComponent";
+
+
 
 function App() {
   return (
@@ -14,6 +17,8 @@ function App() {
     >
       <h3>🎯 Functional DI Example</h3>
       <UserProfile userId="foo1" title="it works" />
+      <DataList category="bar"/>
+      <SimpleTest message="baz"/>
       <div
         style={{
           padding: "10px",
