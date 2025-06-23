@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "di:transform": "tsx tools/di-transformer.ts",
-    "di:watch": "tsx watch tools/di-transformer.ts"
+    "di:watch": "tsx watch tools/di-transformer.ts",
+    "test":"bun run test-di.ts"
   },
   "dependencies": {
     "react": "^19.1.0",
