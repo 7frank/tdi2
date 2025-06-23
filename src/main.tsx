@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.tsx';
 import { DIProvider, CompileTimeDIContainer } from './di/index.ts';
-import { DI_CONFIG } from './generated/di-config.ts';
+import { DI_CONFIG } from './generated/di-config';
 
 // Create and configure the DI container
 const container = new CompileTimeDIContainer();
