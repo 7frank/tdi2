@@ -6,9 +6,9 @@ import viteLogo from "/vite.svg";
 import "./App.css";
 
 import { useService } from "./di/context";
-import { useInjectServices } from "./di/functional-utils";
+
 import type { ExampleApiInterface } from "./services/ExampleApiInterface";
-import { LOGGER_TOKEN } from "./services/ExampleApiService";
+
 import { EXAMPLE_API_TOKEN } from "./services/ExampleApiInterface";
 
 // Traditional DI approach (current working approach)
@@ -16,34 +16,6 @@ interface AppWithDIProps {
   services?: {
     appService: ExampleApiInterface;
   };
-}
-
-// Example of manual hook-based DI
-function ManualDIComponent({ title }: { title: string }) {
-  const services = useInjectServices({
-    api: EXAMPLE_API_TOKEN,
-    logger: LOGGER_TOKEN,
-  });
-
-  const [data, setData] = useState<string[]>([]);
-
-  useEffect(() => {
-    services.logger.log(`Manual DI component loading data for: ${title}`);
-    services.api.getData().then(setData);
-  }, [title]);
-
-  return (
-    <div
-      style={{ border: "2px solid #28a745", padding: "10px", margin: "10px" }}
-    >
-      <h4>Manual DI: {title}</h4>
-      <ul>
-        {data.slice(0, 2).map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
-    </div>
-  );
 }
 
 function App({ services }: AppWithDIProps) {
@@ -171,9 +143,6 @@ function App({ services }: AppWithDIProps) {
           }}
         >
           <h3>🎯 Functional DI Examples</h3>
-
-          {/* Manual hook-based DI */}
-          <ManualDIComponent title="Products" />
 
           {/* Future: Marker interface-based components */}
           <div
