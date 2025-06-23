@@ -44,7 +44,7 @@ export class BuildTimeDITransformer {
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json',
-      useInMemoryFileSystem: false // Use in-memory for clean transformation
+      useInMemoryFileSystem: true // Use in-memory for clean transformation
     });
 
     // Token mappings
@@ -252,6 +252,9 @@ export class BuildTimeDITransformer {
     const body = func.getBody();
     if (!body || !Node.isBlock(body)) return;
 
+    // Remove services from destructuring first
+    this.removeServicesFromDestructuring(body);
+
     // Generate DI hook calls
     const diStatements: string[] = [];
     
@@ -273,6 +276,9 @@ export class BuildTimeDITransformer {
   private prependDICodeToArrowFunction(arrowFunc: ArrowFunction, dependencies: FunctionalDependency[]): void {
     const body = arrowFunc.getBody();
     if (!Node.isBlock(body)) return;
+
+    // Remove services from destructuring first
+    this.removeServicesFromDestructuring(body);
 
     // Generate DI hook calls
     const diStatements: string[] = [];
@@ -302,6 +308,51 @@ export class BuildTimeDITransformer {
       if (Node.isPropertySignature(member) && member.getName() === 'services') {
         member.remove();
         break;
+      }
+    }
+  }
+
+  private removeServicesFromDestructuring(body: any): void {
+    const statements = body.getStatements();
+    
+    for (const statement of statements) {
+      // Check for variable declarations with destructuring
+      if (Node.isVariableStatement(statement)) {
+        const declarations = statement.getDeclarationList().getDeclarations();
+        
+        for (const declaration of declarations) {
+          const nameNode = declaration.getNameNode();
+          
+          // Check if it's object destructuring
+          if (Node.isObjectBindingPattern(nameNode)) {
+            const elements = nameNode.getElements();
+            
+            // Look for services in the destructuring
+            for (let i = elements.length - 1; i >= 0; i--) {
+              const element = elements[i];
+              if (Node.isBindingElement(element)) {
+                const propertyName = element.getPropertyNameNode();
+                const name = element.getNameNode();
+                
+                // Check if this is destructuring 'services'
+                if ((propertyName && Node.isIdentifier(propertyName) && propertyName.getText() === 'services') ||
+                    (Node.isIdentifier(name) && name.getText() === 'services')) {
+                  
+                  // Remove this element from destructuring
+                  element.remove();
+                  
+                  // If this was the last element and there's a trailing comma, we need to clean up
+                  // ts-morph should handle this automatically
+                }
+              }
+            }
+            
+            // If no elements left in destructuring, remove the entire statement
+            if (nameNode.getElements().length === 0) {
+              statement.remove();
+            }
+          }
+        }
       }
     }
   }
