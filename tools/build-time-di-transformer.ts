@@ -323,33 +323,44 @@ export class BuildTimeDITransformer {
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
           
-          // Check if it's object destructuring
+          // Check if it's object destructuring from props
           if (Node.isObjectBindingPattern(nameNode)) {
-            const elements = nameNode.getElements();
-            const elementsToRemove: any[] = [];
+            const initializer = declaration.getInitializer();
             
-            // Find services elements to remove
-            for (const element of elements) {
-              if (Node.isBindingElement(element)) {
-                const propertyName = element.getPropertyNameNode();
-                const name = element.getNameNode();
-                
-                // Check if this is destructuring 'services'
-                if ((propertyName && Node.isIdentifier(propertyName) && propertyName.getText() === 'services') ||
-                    (Node.isIdentifier(name) && name.getText() === 'services')) {
-                  elementsToRemove.push(element);
+            // Only process if it's destructuring from 'props'
+            if (initializer && Node.isIdentifier(initializer) && initializer.getText() === 'props') {
+              const elements = nameNode.getElements();
+              const nonServicesElements: string[] = [];
+              
+              // Collect non-services elements
+              for (const element of elements) {
+                if (Node.isBindingElement(element)) {
+                  const propertyName = element.getPropertyNameNode();
+                  const name = element.getNameNode();
+                  
+                  let elementName = '';
+                  if (propertyName && Node.isIdentifier(propertyName)) {
+                    elementName = propertyName.getText();
+                  } else if (Node.isIdentifier(name)) {
+                    elementName = name.getText();
+                  }
+                  
+                  // Keep everything except 'services'
+                  if (elementName !== 'services') {
+                    nonServicesElements.push(element.getText());
+                  }
                 }
               }
-            }
-            
-            // Remove the services elements
-            for (const element of elementsToRemove) {
-              nameNode.removeElement(element);
-            }
-            
-            // If no elements left in destructuring, remove the entire statement
-            if (nameNode.getElements().length === 0) {
-              statement.remove();
+              
+              // If we removed services and have other elements, reconstruct the destructuring
+              if (nonServicesElements.length > 0 && nonServicesElements.length < elements.length) {
+                const newDestructuring = `const { ${nonServicesElements.join(', ')} } = props;`;
+                statement.replaceWithText(newDestructuring);
+              }
+              // If only services was being destructured, remove the entire statement
+              else if (nonServicesElements.length === 0) {
+                statement.remove();
+              }
             }
           }
         }

@@ -10,6 +10,7 @@ import { useService } from "./di/context";
 import type { ExampleApiInterface } from "./services/ExampleApiInterface";
 
 import { EXAMPLE_API_TOKEN } from "./services/ExampleApiInterface";
+import { UserProfile } from "./components/NewFunctionalComponent";
 
 // Traditional DI approach (current working approach)
 interface AppWithDIProps {
@@ -143,8 +144,7 @@ function App({ services }: AppWithDIProps) {
           }}
         >
           <h3>🎯 Functional DI Examples</h3>
-
-          {/* Future: Marker interface-based components */}
+<UserProfile userId="foo1" title="it works"/>
           <div
             style={{
               padding: "10px",
