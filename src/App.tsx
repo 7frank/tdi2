@@ -8,10 +8,8 @@ import "./App.css";
 import { useService, withServices } from "./di/context";
 import { createDIComponent, useInjectServices } from "./di/functional-utils";
 import type { ExampleApiInterface } from "./services/ExampleApiInterface";
-import type { LoggerService } from "./services/ExampleApiService";
-import { EXAMPLE_API_TOKEN, LOGGER_TOKEN } from "./services/ExampleApiInterface";
-import { UserCard, ProductList } from "./components/FunctionalExample";
-import { UserProfile, DataList } from "./components/NewFunctionalComponent";
+import { LOGGER_TOKEN, type LoggerService } from "./services/ExampleApiService";
+import { EXAMPLE_API_TOKEN } from "./services/ExampleApiInterface";
 
 // Traditional DI approach (current working approach)
 interface AppWithDIProps {

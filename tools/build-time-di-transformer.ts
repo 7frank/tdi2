@@ -44,7 +44,7 @@ export class BuildTimeDITransformer {
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json',
-      useInMemoryFileSystem: false // Don't use in-memory for clean transformation
+      useInMemoryFileSystem: false // Use in-memory for clean transformation
     });
 
     // Token mappings
@@ -326,10 +326,10 @@ export class BuildTimeDITransformer {
           // Check if it's object destructuring
           if (Node.isObjectBindingPattern(nameNode)) {
             const elements = nameNode.getElements();
+            const elementsToRemove: any[] = [];
             
-            // Look for services in the destructuring
-            for (let i = elements.length - 1; i >= 0; i--) {
-              const element = elements[i];
+            // Find services elements to remove
+            for (const element of elements) {
               if (Node.isBindingElement(element)) {
                 const propertyName = element.getPropertyNameNode();
                 const name = element.getNameNode();
@@ -337,14 +337,14 @@ export class BuildTimeDITransformer {
                 // Check if this is destructuring 'services'
                 if ((propertyName && Node.isIdentifier(propertyName) && propertyName.getText() === 'services') ||
                     (Node.isIdentifier(name) && name.getText() === 'services')) {
-                  
-                  // Remove this element from destructuring
-                  element.remove();
-                  
-                  // If this was the last element and there's a trailing comma, we need to clean up
-                  // ts-morph should handle this automatically
+                  elementsToRemove.push(element);
                 }
               }
+            }
+            
+            // Remove the services elements
+            for (const element of elementsToRemove) {
+              nameNode.removeElement(element);
             }
             
             // If no elements left in destructuring, remove the entire statement
