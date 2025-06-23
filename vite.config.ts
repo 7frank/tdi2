@@ -9,7 +9,9 @@ export default defineConfig({
   plugins: [
     diPlugin({
       verbose: true,
-      watch: true
+      watch: true,
+      enableFunctionalDI: true,
+      generateDebugFiles: true // Generate .di-transformed files for debugging
     }),
     react()
   ],
