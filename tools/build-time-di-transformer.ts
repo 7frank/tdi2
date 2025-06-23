@@ -44,7 +44,7 @@ export class BuildTimeDITransformer {
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json',
-      useInMemoryFileSystem: true // Use in-memory for clean transformation
+      useInMemoryFileSystem: false // Don't use in-memory for clean transformation
     });
 
     // Token mappings
