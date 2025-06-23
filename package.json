@@ -13,6 +13,7 @@
     "di:transform": "tsx tools/di-transformer.ts",
     "di:watch": "tsx watch tools/di-transformer.ts",
     "di:functional": "tsx tools/di-transformer.ts --functional",
+    "di:test": "tsx test-transformation.ts",
     "test": "bun run test-di.ts",
     "test:functional": "bun run test-functional-di.tsx"
   },

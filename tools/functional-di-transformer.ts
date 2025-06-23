@@ -325,15 +325,18 @@ export class FunctionalDITransformer {
   }
 
   private transformFunctionDeclaration(func: FunctionDeclaration, diInfo: FunctionalDIInfo): void {
-    // Get the original parameters and remove the services parameter
+    // Get the original parameters and identify the props parameter with services
     const originalParams = func.getParameters();
-    const nonServicesParams = originalParams.filter(param => {
-      const paramName = param.getName();
-      return paramName !== 'services' && !this.parameterHasInjectMarkers(param);
+    const propsParam = originalParams.find(param => {
+      const typeNode = param.getTypeNode();
+      return typeNode && this.extractInjectDependencies(typeNode).length > 0;
     });
 
-    // Create new parameter list without services
-    const newParamList = nonServicesParams.map(param => param.getText()).join(', ');
+    if (!propsParam) return;
+
+    // Extract non-services properties from the props type
+    const newParamType = this.extractNonServicesProps(propsParam);
+    const newParamList = `props: ${newParamType}`;
 
     // Generate DI hook calls
     const hookCalls = diInfo.dependencies.map(dep => {
@@ -347,9 +350,12 @@ export class FunctionalDITransformer {
     // Generate services object
     const servicesObj = `  const services = {\n    ${diInfo.dependencies.map(dep => dep.serviceKey).join(',\n    ')}\n  };`;
 
-    // Get function body
+    // Get function body and preserve it
     const body = func.getBody();
-    const bodyText = body ? body.getText() : '{}';
+    if (!body) return;
+    
+    const statements = body.getStatements();
+    const bodyContent = statements.map(stmt => stmt.getText()).join('\n  ');
 
     // Create the transformed function
     const transformedFunction = `function ${diInfo.functionName}(${newParamList}) {
@@ -357,11 +363,11 @@ ${hookCalls}
 
 ${servicesObj}
 
-  // Original function logic with injected services
-  const props = arguments[0] || {};
-  const originalProps = { ...props, services };
+  // Merge props with injected services
+  const propsWithServices = { ...props, services };
   
-${bodyText.slice(1, -1)} // Remove braces and use original body
+  // Original function body
+  ${bodyContent}
 }`;
 
     // Replace the original function
@@ -372,14 +378,18 @@ ${bodyText.slice(1, -1)} // Remove braces and use original body
     const initializer = declaration.getInitializer();
     if (!Node.isArrowFunction(initializer)) return;
 
-    // Get original parameters
+    // Get original parameters and extract props structure
     const originalParams = initializer.getParameters();
-    const nonServicesParams = originalParams.filter(param => {
-      const paramName = param.getName();
-      return paramName !== 'services' && !this.parameterHasInjectMarkers(param);
+    const propsParam = originalParams.find(param => {
+      const typeNode = param.getTypeNode();
+      return typeNode && this.extractInjectDependencies(typeNode).length > 0;
     });
 
-    const newParamList = nonServicesParams.map(param => param.getText()).join(', ');
+    if (!propsParam) return;
+
+    // Extract non-services properties from the props type
+    const newParamType = this.extractNonServicesProps(propsParam);
+    const newParamList = `props: ${newParamType}`;
 
     // Generate DI hook calls
     const hookCalls = diInfo.dependencies.map(dep => {
@@ -393,9 +403,16 @@ ${bodyText.slice(1, -1)} // Remove braces and use original body
     // Generate services object
     const servicesObj = `  const services = {\n    ${diInfo.dependencies.map(dep => dep.serviceKey).join(',\n    ')}\n  };`;
 
-    // Get function body
+    // Get the original function body and clean it up
     const body = initializer.getBody();
-    const bodyText = Node.isBlock(body) ? body.getText() : `{ return ${body.getText()}; }`;
+    let bodyContent = '';
+    
+    if (Node.isBlock(body)) {
+      const statements = body.getStatements();
+      bodyContent = statements.map(stmt => stmt.getText()).join('\n  ');
+    } else {
+      bodyContent = `return ${body.getText()};`;
+    }
 
     // Create transformed arrow function
     const transformedFunction = `const ${diInfo.functionName} = (${newParamList}) => {
@@ -403,11 +420,11 @@ ${hookCalls}
 
 ${servicesObj}
 
-  // Original function logic with injected services
-  const props = arguments[0] || {};
-  const originalProps = { ...props, services };
+  // Merge props with injected services
+  const propsWithServices = { ...props, services };
   
-${bodyText.slice(1, -1)} // Remove braces and use original body
+  // Original function body
+  ${bodyContent}
 };`;
 
     // Replace the original declaration
@@ -420,6 +437,29 @@ ${bodyText.slice(1, -1)} // Remove braces and use original body
 
     const typeText = typeNode.getText();
     return typeText.includes('Inject<') || typeText.includes('InjectOptional<');
+  }
+
+  private extractNonServicesProps(param: ParameterDeclaration): string {
+    const typeNode = param.getTypeNode();
+    if (!typeNode || !Node.isTypeLiteral(typeNode)) {
+      return '{}';
+    }
+
+    const members = typeNode.getMembers();
+    const nonServicesMembers = members.filter(member => {
+      if (Node.isPropertySignature(member)) {
+        const propName = member.getName();
+        return propName !== 'services';
+      }
+      return true;
+    });
+
+    if (nonServicesMembers.length === 0) {
+      return '{}';
+    }
+
+    const memberTexts = nonServicesMembers.map(member => member.getText());
+    return `{ ${memberTexts.join('; ')} }`;
   }
 
   getTransformationSummary(): { count: number; functions: string[] } {

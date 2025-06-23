@@ -1,4 +1,4 @@
-// src/components/FunctionalExample.tsx - Example of functional DI
+// src/components/FunctionalExample.tsx - Example of functional DI patterns (reference only)
 
 import React, { useState, useEffect } from 'react';
 import type { Inject, InjectOptional } from '../di/markers';
@@ -11,9 +11,9 @@ interface UserCardServices {
   logger?: InjectOptional<LoggerService>;
 }
 
-// Functional component with DI marker interfaces
-// The transformer will detect this pattern and generate the appropriate hooks
-function UserCard(props: { 
+// NOTE: This is a reference example - not transformed
+// For working examples, see NewFunctionalComponent.tsx
+function UserCardExample(props: { 
   userId: string; 
   services: UserCardServices 
 }): JSX.Element {
@@ -70,29 +70,17 @@ function UserCard(props: {
   );
 }
 
-// Alternative syntax: Arrow function with marker interfaces
-const ProductList = (props: {
-  category: string;
-  services: {
-    api: Inject<ExampleApiInterface>;
-    logger: Inject<LoggerService>;
-  }
-}) => {
-  const { category, services } = props;
-  const [products, setProducts] = useState<string[]>([]);
-
-  useEffect(() => {
-    services.logger.log(`Loading products for category: ${category}`);
-    
-    // Simulate loading products
-    services.api.getData().then(data => {
-      const categoryProducts = data.map(item => `${category}: ${item}`);
-      setProducts(categoryProducts);
-    });
-  }, [category]);
+// Simple component without transformation for demonstration
+const SimpleProductList = ({ category }: { category: string }) => {
+  const [products] = useState(['Demo Product 1', 'Demo Product 2']);
 
   return (
-    <div>
+    <div style={{
+      border: '1px solid #ddd',
+      borderRadius: '4px',
+      padding: '12px',
+      margin: '8px'
+    }}>
       <h3>Products in {category}</h3>
       <ul>
         {products.map((product, index) => (
@@ -103,18 +91,4 @@ const ProductList = (props: {
   );
 };
 
-// This would be transformed by the DI transformer to:
-/*
-const UserCardTransformed = (props: { userId: string }) => {
-  // Auto-generated DI hooks
-  const api = useService<ExampleApiInterface>('EXAMPLE_API_TOKEN');
-  const logger = useOptionalService<LoggerService>('LOGGER_TOKEN');
-  
-  const services = { api, logger };
-  
-  // Call original component
-  return UserCard({ ...props, services });
-};
-*/
-
-export { UserCard, ProductList };
+export { UserCardExample as UserCard, SimpleProductList as ProductList };
