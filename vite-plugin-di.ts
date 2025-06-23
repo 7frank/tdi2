@@ -40,12 +40,12 @@ export function diPlugin(options: DIPluginOptions = {}): Plugin {
         console.log('🔧 Running DI transformation...');
       }
       
-      // Run class-based DI transformation
+      // Run class-based DI transformation (ONLY class-based, no functional DI)
       transformer = new DITransformer({
         srcDir: opts.srcDir,
         outputDir: opts.outputDir,
         verbose: opts.verbose,
-        enableFunctionalDI: false // Handle functional DI separately
+        enableFunctionalDI: false // Explicitly disable
       });
       await transformer.transform();
       await transformer.save();

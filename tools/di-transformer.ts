@@ -56,7 +56,7 @@ export class DITransformer {
       outputDir: './src/generated',
       verbose: false,
       generateRegistry: true,
-      enableFunctionalDI: true,
+      enableFunctionalDI: false, // Disable functional DI in main transformer
       ...options
     };
 
@@ -64,9 +64,10 @@ export class DITransformer {
       tsConfigFilePath: './tsconfig.json'
     });
 
-    if (this.options.enableFunctionalDI) {
-      this.functionalTransformer = new SaferFunctionalDITransformer(this.project);
-    }
+    // Functional DI is now handled by the build-time transformer in the Vite plugin
+    // if (this.options.enableFunctionalDI) {
+    //   this.functionalTransformer = new SaferFunctionalDITransformer(this.project);
+    // }
   }
 
   async transform(): Promise<void> {
@@ -84,16 +85,16 @@ export class DITransformer {
     // Second pass: collect all service information
     await this.collectServices();
 
-    // Third pass: functional DI transformation
-    if (this.functionalTransformer) {
-      await this.functionalTransformer.transformFunctionalDI();
-      
-      if (this.options.verbose) {
-        const summary = this.functionalTransformer.getTransformationSummary();
-        console.log(`🎯 Found ${summary.count} functional components with DI:`);
-        summary.functions.forEach(func => console.log(`  - ${func}`));
-      }
-    }
+    // Third pass: functional DI transformation (DISABLED for build-time approach)
+    // if (this.functionalTransformer) {
+    //   await this.functionalTransformer.transformFunctionalDI();
+    //   
+    //   if (this.options.verbose) {
+    //     const summary = this.functionalTransformer.getTransformationSummary();
+    //     console.log(`🎯 Found ${summary.count} functional components with DI:`);
+    //     summary.functions.forEach(func => console.log(`  - ${func}`));
+    //   }
+    // }
 
     // Fourth pass: generate DI configuration
     await this.generateDIConfiguration();
