@@ -1,4 +1,4 @@
-// tools/build-time-di-transformer.ts - Build-time transformation without modifying source
+// tools/build-time-di-transformer.ts - Simple AST transformer
 
 import { 
   Project, 
@@ -13,21 +13,10 @@ import {
 import * as path from 'path';
 import * as fs from 'fs';
 
-interface FunctionalDIInfo {
-  functionName: string;
-  filePath: string;
-  dependencies: FunctionalDependency[];
-  isComponent: boolean;
-  originalFunction: string;
-  node: FunctionDeclaration | VariableDeclaration;
-  sourceFile: SourceFile;
-}
-
 interface FunctionalDependency {
   serviceKey: string;
   token: string;
   isOptional: boolean;
-  type: string;
 }
 
 interface TransformationOptions {
@@ -39,10 +28,10 @@ interface TransformationOptions {
 
 export class BuildTimeDITransformer {
   private project: Project;
-  private functionalServices: Map<string, FunctionalDIInfo> = new Map();
   private tokenMap: Map<string, string> = new Map();
-  private transformedFiles: Map<string, string> = new Map(); // Original path -> Transformed content
+  private transformedFiles: Map<string, string> = new Map();
   private options: TransformationOptions;
+  private transformationCount = 0;
 
   constructor(options: TransformationOptions = {}) {
     this.options = {
@@ -55,187 +44,157 @@ export class BuildTimeDITransformer {
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json',
-      useInMemoryFileSystem: false // Use real file system for reading, but don't modify files
+      useInMemoryFileSystem: false // Use in-memory for clean transformation
     });
 
-    // Pre-populate known tokens
+    // Token mappings
     this.tokenMap.set('ExampleApiInterface', 'EXAMPLE_API_TOKEN');
     this.tokenMap.set('LoggerService', 'LOGGER_TOKEN');
   }
 
   async transformForBuild(): Promise<Map<string, string>> {
     if (this.options.verbose) {
-      console.log('🔧 Starting build-time DI transformation...');
+      console.log('🔧 Starting simple AST transformation...');
     }
 
-    // Add source files to in-memory project
+    // Add source files
     this.project.addSourceFilesAtPaths(`${this.options.srcDir}/**/*.{ts,tsx}`);
 
-    // Find functional components with DI
-    await this.findFunctionalComponents();
+    // Transform each file
+    for (const sourceFile of this.project.getSourceFiles()) {
+      if (this.shouldSkipFile(sourceFile)) continue;
 
-    // Transform each file that contains DI components
-    await this.transformFiles();
+      if (this.transformSourceFile(sourceFile)) {
+        // File was transformed, save the result
+        this.transformedFiles.set(sourceFile.getFilePath(), sourceFile.getFullText());
+      }
+    }
 
     if (this.options.generateDebugFiles) {
       await this.generateDebugFiles();
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Transformed ${this.transformedFiles.size} files for build`);
+      console.log(`✅ Transformed ${this.transformationCount} functions in ${this.transformedFiles.size} files`);
     }
 
     return this.transformedFiles;
   }
 
-  private async findFunctionalComponents(): Promise<void> {
-    const sourceFiles = this.project.getSourceFiles();
-    
-    for (const sourceFile of sourceFiles) {
-      // Skip generated files and node_modules
-      if (sourceFile.getFilePath().includes('generated') || 
-          sourceFile.getFilePath().includes('node_modules')) {
-        continue;
-      }
+  private shouldSkipFile(sourceFile: SourceFile): boolean {
+    const filePath = sourceFile.getFilePath();
+    return filePath.includes('generated') || 
+           filePath.includes('node_modules') ||
+           filePath.includes('.d.ts');
+  }
 
-      if (this.options.verbose) {
-        console.log(`📂 Scanning ${sourceFile.getBaseName()}...`);
-      }
+  private transformSourceFile(sourceFile: SourceFile): boolean {
+    let hasTransformations = false;
 
-      let hasTransformations = false;
+    if (this.options.verbose) {
+      console.log(`📂 Processing ${sourceFile.getBaseName()}...`);
+    }
 
-      // Check function declarations
-      const functions = sourceFile.getFunctions();
-      for (const func of functions) {
-        const diInfo = this.extractFunctionalDI(func, sourceFile);
-        if (diInfo) {
-          this.functionalServices.set(`${sourceFile.getFilePath()}_${func.getName()}`, diInfo);
-          hasTransformations = true;
-          if (this.options.verbose) {
-            console.log(`✅ Found function: ${func.getName()} with DI dependencies`);
-          }
+    // Transform function declarations
+    for (const func of sourceFile.getFunctions()) {
+      if (this.transformFunction(func, sourceFile)) {
+        hasTransformations = true;
+        this.transformationCount++;
+        
+        if (this.options.verbose) {
+          console.log(`✅ Transformed function: ${func.getName()}`);
         }
       }
-      
-      // Check variable declarations with arrow functions
-      const variableStatements = sourceFile.getVariableStatements();
-      for (const varStatement of variableStatements) {
-        const declarations = varStatement.getDeclarations();
-        for (const declaration of declarations) {
-          const initializer = declaration.getInitializer();
-          if (Node.isArrowFunction(initializer)) {
-            const diInfo = this.extractFunctionalDIFromArrow(declaration, initializer, sourceFile);
-            if (diInfo) {
-              this.functionalServices.set(`${sourceFile.getFilePath()}_${declaration.getName()}`, diInfo);
-              hasTransformations = true;
-              if (this.options.verbose) {
-                console.log(`✅ Found arrow function: ${declaration.getName()} with DI dependencies`);
-              }
+    }
+
+    // Transform arrow functions in variable declarations
+    for (const varStatement of sourceFile.getVariableStatements()) {
+      for (const declaration of varStatement.getDeclarations()) {
+        const initializer = declaration.getInitializer();
+        if (Node.isArrowFunction(initializer)) {
+          if (this.transformArrowFunction(declaration, initializer, sourceFile)) {
+            hasTransformations = true;
+            this.transformationCount++;
+            
+            if (this.options.verbose) {
+              console.log(`✅ Transformed arrow function: ${declaration.getName()}`);
             }
           }
         }
       }
-
-      // Mark file for transformation if it has DI components
-      if (hasTransformations) {
-        this.transformedFiles.set(sourceFile.getFilePath(), ''); // Will be filled during transformation
-      }
     }
+
+    return hasTransformations;
   }
 
-  private extractFunctionalDI(func: FunctionDeclaration, sourceFile: SourceFile): FunctionalDIInfo | null {
-    const funcName = func.getName();
-    if (!funcName) return null;
-
+  private transformFunction(func: FunctionDeclaration, sourceFile: SourceFile): boolean {
     const parameters = func.getParameters();
-    if (parameters.length === 0) return null;
+    if (parameters.length === 0) return false;
 
-    // Look for a parameter with services that has Inject markers
-    for (const param of parameters) {
-      const dependencies = this.extractDependenciesFromParameter(param);
-      if (dependencies.length > 0) {
-        return {
-          functionName: funcName,
-          filePath: sourceFile.getFilePath(),
-          dependencies,
-          isComponent: true,
-          originalFunction: func.getFullText(),
-          node: func,
-          sourceFile
-        };
-      }
-    }
+    const firstParam = parameters[0];
+    const dependencies = this.extractDependenciesFromParameter(firstParam);
+    if (dependencies.length === 0) return false;
 
-    return null;
+    // Add DI imports if needed
+    this.ensureDIImports(sourceFile);
+
+    // Prepend DI code to function body
+    this.prependDICodeToFunction(func, dependencies);
+
+    // Remove services from parameter type
+    this.removeServicesFromParameterType(firstParam);
+
+    return true;
   }
 
-  private extractFunctionalDIFromArrow(
+  private transformArrowFunction(
     declaration: VariableDeclaration, 
     arrowFunc: ArrowFunction, 
     sourceFile: SourceFile
-  ): FunctionalDIInfo | null {
-    const funcName = declaration.getName();
+  ): boolean {
     const parameters = arrowFunc.getParameters();
-    
-    if (parameters.length === 0) return null;
+    if (parameters.length === 0) return false;
 
-    for (const param of parameters) {
-      const dependencies = this.extractDependenciesFromParameter(param);
-      if (dependencies.length > 0) {
-        return {
-          functionName: funcName,
-          filePath: sourceFile.getFilePath(),
-          dependencies,
-          isComponent: true,
-          originalFunction: declaration.getFullText(),
-          node: declaration,
-          sourceFile
-        };
-      }
-    }
+    const firstParam = parameters[0];
+    const dependencies = this.extractDependenciesFromParameter(firstParam);
+    if (dependencies.length === 0) return false;
 
-    return null;
+    // Add DI imports if needed
+    this.ensureDIImports(sourceFile);
+
+    // Prepend DI code to arrow function body
+    this.prependDICodeToArrowFunction(arrowFunc, dependencies);
+
+    // Remove services from parameter type
+    this.removeServicesFromParameterType(firstParam);
+
+    return true;
   }
 
   private extractDependenciesFromParameter(param: ParameterDeclaration): FunctionalDependency[] {
-    const dependencies: FunctionalDependency[] = [];
     const typeNode = param.getTypeNode();
+    if (!typeNode || !Node.isTypeLiteral(typeNode)) return [];
+
+    const servicesProperty = typeNode.getMembers().find(member => 
+      Node.isPropertySignature(member) && member.getName() === 'services'
+    );
     
-    if (!typeNode) return dependencies;
+    if (!servicesProperty || !Node.isPropertySignature(servicesProperty)) return [];
 
-    // Check if this parameter has a services property with Inject types
-    if (Node.isTypeLiteral(typeNode)) {
-      const servicesProperty = typeNode.getMembers().find(member => 
-        Node.isPropertySignature(member) && member.getName() === 'services'
-      );
-      
-      if (servicesProperty && Node.isPropertySignature(servicesProperty)) {
-        const serviceTypeNode = servicesProperty.getTypeNode();
-        if (serviceTypeNode) {
-          return this.extractInjectDependencies(serviceTypeNode);
-        }
-      }
-    }
+    const serviceTypeNode = servicesProperty.getTypeNode();
+    if (!serviceTypeNode || !Node.isTypeLiteral(serviceTypeNode)) return [];
 
-    return dependencies;
-  }
-
-  private extractInjectDependencies(typeNode: TypeNode): FunctionalDependency[] {
     const dependencies: FunctionalDependency[] = [];
 
-    if (Node.isTypeLiteral(typeNode)) {
-      const members = typeNode.getMembers();
-      
-      for (const member of members) {
-        if (Node.isPropertySignature(member)) {
-          const propName = member.getName();
-          const propTypeNode = member.getTypeNode();
-          
-          if (propTypeNode) {
-            const dependency = this.parseDependencyType(propName, propTypeNode);
-            if (dependency) {
-              dependencies.push(dependency);
-            }
+    for (const member of serviceTypeNode.getMembers()) {
+      if (Node.isPropertySignature(member)) {
+        const propName = member.getName();
+        const propTypeNode = member.getTypeNode();
+        
+        if (propTypeNode) {
+          const dependency = this.parseDependencyType(propName, propTypeNode);
+          if (dependency) {
+            dependencies.push(dependency);
           }
         }
       }
@@ -247,31 +206,24 @@ export class BuildTimeDITransformer {
   private parseDependencyType(propName: string, typeNode: TypeNode): FunctionalDependency | null {
     const typeText = typeNode.getText();
     
-    // Match Inject<SomeInterface> or InjectOptional<SomeInterface>
     const injectMatch = typeText.match(/Inject<([^>]+)>/);
     const optionalMatch = typeText.match(/InjectOptional<([^>]+)>/);
     
     if (injectMatch) {
       const interfaceType = injectMatch[1];
-      const token = this.resolveInterfaceToToken(interfaceType);
-      
       return {
         serviceKey: propName,
-        token,
-        isOptional: false,
-        type: interfaceType
+        token: this.resolveInterfaceToToken(interfaceType),
+        isOptional: false
       };
     }
     
     if (optionalMatch) {
       const interfaceType = optionalMatch[1];
-      const token = this.resolveInterfaceToToken(interfaceType);
-      
       return {
         serviceKey: propName,
-        token,
-        isOptional: true,
-        type: interfaceType
+        token: this.resolveInterfaceToToken(interfaceType),
+        isOptional: true
       };
     }
 
@@ -279,203 +231,101 @@ export class BuildTimeDITransformer {
   }
 
   private resolveInterfaceToToken(interfaceType: string): string {
-    const mappings: Record<string, string> = {
-      'ExampleApiInterface': 'EXAMPLE_API_TOKEN',
-      'LoggerService': 'LOGGER_TOKEN',
-      'LoggerInterface': 'LOGGER_TOKEN'
-    };
-    
-    return mappings[interfaceType] || interfaceType;
+    return this.tokenMap.get(interfaceType) || `${interfaceType.toUpperCase()}_TOKEN`;
   }
 
-  private async transformFiles(): Promise<void> {
-    for (const [filePath] of this.transformedFiles) {
-      const sourceFile = this.project.getSourceFile(filePath);
-      if (!sourceFile) continue;
+  private ensureDIImports(sourceFile: SourceFile): void {
+    const existingImports = sourceFile.getImportDeclarations();
+    const hasDIImport = existingImports.some(imp => 
+      imp.getModuleSpecifierValue().includes('di/context')
+    );
 
-      if (this.options.verbose) {
-        console.log(`🔄 Transforming ${sourceFile.getBaseName()}...`);
-      }
-
-      // Create a copy of the source file for transformation
-      const transformedContent = this.transformSourceFile(sourceFile);
-      this.transformedFiles.set(filePath, transformedContent);
+    if (!hasDIImport) {
+      sourceFile.addImportDeclaration({
+        moduleSpecifier: '../di/context',
+        namedImports: ['useService', 'useOptionalService']
+      });
     }
   }
 
-  private transformSourceFile(sourceFile: SourceFile): string {
-    // Start with the original content
-    let content = sourceFile.getFullText();
+  private prependDICodeToFunction(func: FunctionDeclaration, dependencies: FunctionalDependency[]): void {
+    const body = func.getBody();
+    if (!body || !Node.isBlock(body)) return;
 
-    // Add DI imports if needed
-    const needsDIImports = Array.from(this.functionalServices.values())
-      .some(info => info.sourceFile === sourceFile);
-
-    if (needsDIImports) {
-      // Add DI imports at the top (after existing imports)
-      const importIndex = content.lastIndexOf('import');
-      if (importIndex !== -1) {
-        const endOfLastImport = content.indexOf('\n', importIndex);
-        const diImports = `import { useService, useOptionalService } from '../di/context';\n`;
-        content = content.slice(0, endOfLastImport + 1) + diImports + content.slice(endOfLastImport + 1);
-      }
-    }
-
-    // Transform each function in this file
-    const fileServices = Array.from(this.functionalServices.values())
-      .filter(info => info.sourceFile === sourceFile);
-
-    for (const diInfo of fileServices) {
-      content = this.transformFunctionInContent(content, diInfo);
-    }
-
-    return content;
-  }
-
-  private transformFunctionInContent(content: string, diInfo: FunctionalDIInfo): string {
-    // Generate the transformed function
-    const transformedFunction = this.generateTransformedFunction(diInfo);
-
-    // Replace the original function with the transformed version
-    // This is a simple string replacement - in production you'd want more sophisticated AST manipulation
-    const originalFunctionText = diInfo.originalFunction;
-    
-    // Find and replace the original function
-    const functionIndex = content.indexOf(originalFunctionText);
-    if (functionIndex !== -1) {
-      const before = content.slice(0, functionIndex);
-      const after = content.slice(functionIndex + originalFunctionText.length);
-      content = before + transformedFunction + after;
-    }
-
-    return content;
-  }
-
-  private generateTransformedFunction(diInfo: FunctionalDIInfo): string {
     // Generate DI hook calls
-    const hookCalls = diInfo.dependencies.map(dep => {
-      if (dep.isOptional) {
-        return `  const ${dep.serviceKey} = useOptionalService('${dep.token}');`;
-      } else {
-        return `  const ${dep.serviceKey} = useService('${dep.token}');`;
-      }
-    }).join('\n');
+    const diStatements: string[] = [];
+    
+    for (const dep of dependencies) {
+      const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
+      diStatements.push(`const ${dep.serviceKey} = ${hookName}('${dep.token}');`);
+    }
 
     // Generate services object
-    const servicesObj = `  const services = {\n    ${diInfo.dependencies.map(dep => dep.serviceKey).join(',\n    ')}\n  };`;
+    const serviceKeys = dependencies.map(dep => dep.serviceKey).join(', ');
+    diStatements.push(`const services = { ${serviceKeys} };`);
 
-    // Extract props type without services
-    const propsType = this.extractPropsTypeWithoutServices(diInfo);
-
-    if (Node.isFunctionDeclaration(diInfo.node)) {
-      return `// Auto-transformed: DI hooks injected at build time
-function ${diInfo.functionName}(props: ${propsType}): JSX.Element {
-${hookCalls}
-
-${servicesObj}
-
-  // Original function logic with injected services
-  const { ${this.extractDestructuredProps(diInfo)} } = props;
-  
-${this.extractFunctionBody(diInfo)}
-}`;
-    } else {
-      return `// Auto-transformed: DI hooks injected at build time
-const ${diInfo.functionName} = (props: ${propsType}) => {
-${hookCalls}
-
-${servicesObj}
-
-  // Original function logic with injected services
-  const { ${this.extractDestructuredProps(diInfo)} } = props;
-  
-${this.extractFunctionBody(diInfo)}
-};`;
+    // Insert at the beginning of the function body
+    for (let i = diStatements.length - 1; i >= 0; i--) {
+      body.insertStatements(0, diStatements[i]);
     }
   }
 
-  private extractPropsTypeWithoutServices(diInfo: FunctionalDIInfo): string {
-    // Simple extraction - in production you'd parse the AST more carefully
-    const originalText = diInfo.originalFunction;
-    const propsMatch = originalText.match(/props:\s*\{\s*([^}]+)\s*\}/);
+  private prependDICodeToArrowFunction(arrowFunc: ArrowFunction, dependencies: FunctionalDependency[]): void {
+    const body = arrowFunc.getBody();
+    if (!Node.isBlock(body)) return;
+
+    // Generate DI hook calls
+    const diStatements: string[] = [];
     
-    if (propsMatch) {
-      const propsContent = propsMatch[1];
-      // Remove services property
-      const propsWithoutServices = propsContent
-        .split(/[,;]/)
-        .filter(prop => !prop.trim().startsWith('services'))
-        .join(',');
-      
-      return `{ ${propsWithoutServices} }`;
+    for (const dep of dependencies) {
+      const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
+      diStatements.push(`const ${dep.serviceKey} = ${hookName}('${dep.token}');`);
     }
-    
-    return '{ [key: string]: any }';
+
+    // Generate services object
+    const serviceKeys = dependencies.map(dep => dep.serviceKey).join(', ');
+    diStatements.push(`const services = { ${serviceKeys} };`);
+
+    // Insert at the beginning of the function body
+    for (let i = diStatements.length - 1; i >= 0; i--) {
+      body.insertStatements(0, diStatements[i]);
+    }
   }
 
-  private extractDestructuredProps(diInfo: FunctionalDIInfo): string {
-    // Extract destructured props from original function
-    const originalText = diInfo.originalFunction;
-    const destructureMatch = originalText.match(/const\s*\{\s*([^}]+)\s*\}\s*=\s*props/);
-    
-    if (destructureMatch) {
-      const destructured = destructureMatch[1];
-      // Remove services from destructuring
-      return destructured
-        .split(',')
-        .filter(prop => !prop.trim().startsWith('services'))
-        .join(', ');
-    }
-    
-    // Fallback: extract from props type
-    return this.extractPropsTypeWithoutServices(diInfo).replace(/[{}]/g, '').replace(/:/g, '');
-  }
+  private removeServicesFromParameterType(param: ParameterDeclaration): void {
+    const typeNode = param.getTypeNode();
+    if (!typeNode || !Node.isTypeLiteral(typeNode)) return;
 
-  private extractFunctionBody(diInfo: FunctionalDIInfo): string {
-    // Extract the function body, removing the services destructuring
-    const originalText = diInfo.originalFunction;
-    
-    if (Node.isFunctionDeclaration(diInfo.node)) {
-      const bodyMatch = originalText.match(/\{([\s\S]*)\}$/);
-      if (bodyMatch) {
-        let body = bodyMatch[1];
-        // Remove services destructuring line
-        body = body.replace(/const\s*\{\s*[^}]*services[^}]*\}\s*=\s*props;\s*\n?/, '');
-        return body;
-      }
-    } else {
-      // Arrow function
-      const arrowMatch = originalText.match(/=>\s*\{([\s\S]*)\}[;]?$/);
-      if (arrowMatch) {
-        let body = arrowMatch[1];
-        body = body.replace(/const\s*\{\s*[^}]*services[^}]*\}\s*=\s*props;\s*\n?/, '');
-        return body;
+    // Find and remove the services property
+    const members = typeNode.getMembers();
+    for (const member of members) {
+      if (Node.isPropertySignature(member) && member.getName() === 'services') {
+        member.remove();
+        break;
       }
     }
-    
-    return '  return <div>Transformation error</div>;';
   }
 
   private async generateDebugFiles(): Promise<void> {
     if (!this.options.generateDebugFiles) return;
 
     for (const [originalPath, transformedContent] of this.transformedFiles) {
-      const relativePath = path.relative(process.cwd(), originalPath);
-      const debugPath = relativePath.replace(/\.(ts|tsx)$/, '.di-transformed.$1');
-      
       try {
-        // Ensure directory exists
+        const relativePath = path.relative(process.cwd(), originalPath);
+        const debugPath = relativePath.replace(/\.(ts|tsx)$/, '.di-transformed.$1');
+        
         const debugDir = path.dirname(debugPath);
         if (!fs.existsSync(debugDir)) {
           await fs.promises.mkdir(debugDir, { recursive: true });
         }
         
         await fs.promises.writeFile(debugPath, transformedContent, 'utf8');
+        
         if (this.options.verbose) {
           console.log(`📝 Generated debug file: ${debugPath}`);
         }
       } catch (error) {
-        console.warn(`⚠️  Failed to write debug file ${debugPath}:`, error);
+        console.warn(`⚠️  Failed to write debug file for ${originalPath}:`, error);
       }
     }
   }
@@ -486,8 +336,8 @@ ${this.extractFunctionBody(diInfo)}
     transformedFiles: string[] 
   } {
     return {
-      count: this.functionalServices.size,
-      functions: Array.from(this.functionalServices.keys()),
+      count: this.transformationCount,
+      functions: [], // Could track function names if needed
       transformedFiles: Array.from(this.transformedFiles.keys())
     };
   }
