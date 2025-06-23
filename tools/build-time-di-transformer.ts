@@ -55,7 +55,7 @@ export class BuildTimeDITransformer {
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json',
-      useInMemoryFileSystem: true // Don't modify actual files
+      useInMemoryFileSystem: false // Use real file system for reading, but don't modify files
     });
 
     // Pre-populate known tokens
@@ -460,9 +460,16 @@ ${this.extractFunctionBody(diInfo)}
     if (!this.options.generateDebugFiles) return;
 
     for (const [originalPath, transformedContent] of this.transformedFiles) {
-      const debugPath = originalPath.replace(/\.(ts|tsx)$/, '.di-transformed.$1');
+      const relativePath = path.relative(process.cwd(), originalPath);
+      const debugPath = relativePath.replace(/\.(ts|tsx)$/, '.di-transformed.$1');
       
       try {
+        // Ensure directory exists
+        const debugDir = path.dirname(debugPath);
+        if (!fs.existsSync(debugDir)) {
+          await fs.promises.mkdir(debugDir, { recursive: true });
+        }
+        
         await fs.promises.writeFile(debugPath, transformedContent, 'utf8');
         if (this.options.verbose) {
           console.log(`📝 Generated debug file: ${debugPath}`);

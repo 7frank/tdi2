@@ -14,6 +14,7 @@
     "di:watch": "tsx watch tools/di-transformer.ts",
     "di:build-time": "tsx tools/build-time-di-transformer.ts",
     "di:debug": "tsx tools/build-time-di-transformer.ts --debug",
+    "di:simple": "tsx test-simple-di.ts",
     "test": "bun run test-di.ts",
     "test:functional": "bun run test-functional-di.tsx"
   },
