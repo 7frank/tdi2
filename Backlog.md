@@ -10,7 +10,7 @@
   - we should rather let it use the classname/interface/"generic interface" the initial tdi apporoach uses
   - and pass the token diffrently if one "scope" is required
 
-- class based autowiring probably is not working, add this from tdi again
+- class based autowiring probably is not working fully, add this from tdi again
 - move generated code into ".di" - folder
 - make inject a record based generic interface something like `Inject<{api:APIInterface<Foo>}>`
   - this will allow us to potnetially disable errors via linter down the line
