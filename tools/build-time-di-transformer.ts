@@ -1,4 +1,4 @@
-// tools/build-time-di-transformer.ts - Simple AST transformer
+// tools/build-time-di-transformer.ts - Updated with ConfigManager support
 
 import { 
   Project, 
@@ -12,6 +12,7 @@ import {
 } from 'ts-morph';
 import * as path from 'path';
 import * as fs from 'fs';
+import { ConfigManager } from './config-manager';
 
 interface FunctionalDependency {
   serviceKey: string;
@@ -24,6 +25,7 @@ interface TransformationOptions {
   outputDir?: string;
   generateDebugFiles?: boolean;
   verbose?: boolean;
+  customSuffix?: string;
 }
 
 export class BuildTimeDITransformer {
@@ -32,11 +34,12 @@ export class BuildTimeDITransformer {
   private transformedFiles: Map<string, string> = new Map();
   private options: TransformationOptions;
   private transformationCount = 0;
+  private configManager: ConfigManager;
 
   constructor(options: TransformationOptions = {}) {
     this.options = {
       srcDir: './src',
-      outputDir: './src/generated',
+      outputDir: './src/generated', // Will be overridden by ConfigManager
       generateDebugFiles: false,
       verbose: false,
       ...options
@@ -44,7 +47,16 @@ export class BuildTimeDITransformer {
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json',
-      useInMemoryFileSystem: false // Use in-memory for clean transformation
+      useInMemoryFileSystem: false
+    });
+
+    // Initialize ConfigManager
+    this.configManager = new ConfigManager({
+      srcDir: this.options.srcDir!,
+      outputDir: this.options.outputDir!,
+      enableFunctionalDI: true,
+      verbose: this.options.verbose!,
+      customSuffix: this.options.customSuffix
     });
 
     // Token mappings
@@ -54,7 +66,7 @@ export class BuildTimeDITransformer {
 
   async transformForBuild(): Promise<Map<string, string>> {
     if (this.options.verbose) {
-      console.log('🔧 Starting simple AST transformation...');
+      console.log('🔧 Starting functional DI transformation...');
     }
 
     // Add source files
@@ -76,6 +88,7 @@ export class BuildTimeDITransformer {
 
     if (this.options.verbose) {
       console.log(`✅ Transformed ${this.transformationCount} functions in ${this.transformedFiles.size} files`);
+      console.log(`🏗️  Config directory: ${this.configManager.getConfigDir()}`);
     }
 
     return this.transformedFiles;
@@ -85,7 +98,8 @@ export class BuildTimeDITransformer {
     const filePath = sourceFile.getFilePath();
     return filePath.includes('generated') || 
            filePath.includes('node_modules') ||
-           filePath.includes('.d.ts');
+           filePath.includes('.d.ts') ||
+           filePath.includes('.tdi2'); // Skip bridge files
   }
 
   private transformSourceFile(sourceFile: SourceFile): boolean {
@@ -260,12 +274,12 @@ export class BuildTimeDITransformer {
     
     for (const dep of dependencies) {
       const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
-      diStatements.push(`const ${dep.serviceKey} = ${hookName}('${dep.token}');`);
+      diStatements.push(`    const ${dep.serviceKey} = ${hookName}('${dep.token}');`);
     }
 
     // Generate services object
     const serviceKeys = dependencies.map(dep => dep.serviceKey).join(', ');
-    diStatements.push(`const services = { ${serviceKeys} };`);
+    diStatements.push(`    const services = { ${serviceKeys} };`);
 
     // Insert at the beginning of the function body
     for (let i = diStatements.length - 1; i >= 0; i--) {
@@ -285,12 +299,12 @@ export class BuildTimeDITransformer {
     
     for (const dep of dependencies) {
       const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
-      diStatements.push(`const ${dep.serviceKey} = ${hookName}('${dep.token}');`);
+      diStatements.push(`    const ${dep.serviceKey} = ${hookName}('${dep.token}');`);
     }
 
     // Generate services object
     const serviceKeys = dependencies.map(dep => dep.serviceKey).join(', ');
-    diStatements.push(`const services = { ${serviceKeys} };`);
+    diStatements.push(`    const services = { ${serviceKeys} };`);
 
     // Insert at the beginning of the function body
     for (let i = diStatements.length - 1; i >= 0; i--) {
@@ -371,20 +385,35 @@ export class BuildTimeDITransformer {
   private async generateDebugFiles(): Promise<void> {
     if (!this.options.generateDebugFiles) return;
 
+    const transformedDir = this.configManager.getTransformedDir();
+    
+    // Ensure transformed directory exists
+    if (!fs.existsSync(transformedDir)) {
+      fs.mkdirSync(transformedDir, { recursive: true });
+    }
+
     for (const [originalPath, transformedContent] of this.transformedFiles) {
       try {
-        const relativePath = path.relative(process.cwd(), originalPath);
-        const debugPath = relativePath.replace(/\.(ts|tsx)$/, '.di-transformed.$1');
+        const relativePath = path.relative(path.resolve(this.options.srcDir!), originalPath);
+        const debugPath = path.join(transformedDir, relativePath.replace(/\.(ts|tsx)$/, '.di-transformed.$1'));
         
         const debugDir = path.dirname(debugPath);
         if (!fs.existsSync(debugDir)) {
           await fs.promises.mkdir(debugDir, { recursive: true });
         }
         
-        await fs.promises.writeFile(debugPath, transformedContent, 'utf8');
+        // Add header comment to debug file
+        const debugContent = `// Auto-generated transformed file - do not edit
+// Original: ${relativePath}
+// Config: ${this.configManager.getConfigHash()}
+// Generated: ${new Date().toISOString()}
+
+${transformedContent}`;
+        
+        await fs.promises.writeFile(debugPath, debugContent, 'utf8');
         
         if (this.options.verbose) {
-          console.log(`📝 Generated debug file: ${debugPath}`);
+          console.log(`📝 Generated debug file: ${path.relative(process.cwd(), debugPath)}`);
         }
       } catch (error) {
         console.warn(`⚠️  Failed to write debug file for ${originalPath}:`, error);
@@ -402,5 +431,10 @@ export class BuildTimeDITransformer {
       functions: [], // Could track function names if needed
       transformedFiles: Array.from(this.transformedFiles.keys())
     };
+  }
+
+  // Expose ConfigManager for external use
+  getConfigManager(): ConfigManager {
+    return this.configManager;
   }
 }

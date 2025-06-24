@@ -15,6 +15,9 @@
     "di:build-time": "tsx tools/build-time-di-transformer.ts",
     "di:debug": "tsx tools/build-time-di-transformer.ts --debug",
     "di:simple": "tsx test-simple-di.ts",
+    "di:clean": "tsx -e \"import {ConfigManager} from './tools/config-manager.js'; ConfigManager.cleanOldConfigs(0); console.log('🗑️ Cleaned all DI configs');\"",
+    "di:list": "tsx -e \"import * as fs from 'fs'; import * as path from 'path'; const dir='node_modules/.tdi2/configs'; if(fs.existsSync(dir)) { const configs = fs.readdirSync(dir); console.log('📋 Available configs:', configs); } else { console.log('No configs found'); }\"",
+    "di:info": "tsx -e \"console.log('🔍 DI Debug Info at: http://localhost:5173/_di_debug'); console.log('📋 Config List at: http://localhost:5173/_di_configs');\"",
     "test": "bun run test-di.ts",
     "test:functional": "bun run test-functional-di.tsx"
   },
