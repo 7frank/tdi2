@@ -1,7 +1,7 @@
 // vite-plugin-di.ts - Enhanced with build-time functional DI transformation
 
 import { Plugin } from 'vite';
-
+import { DITransformer } from './tools/di-transformer';
 import { BuildTimeDITransformer } from './tools/build-time-di-transformer';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -26,6 +26,7 @@ export function diPlugin(options: DIPluginOptions = {}): Plugin {
     ...options
   };
 
+  let transformer: DITransformer;
   let buildTimeTransformer: BuildTimeDITransformer;
   let isTransforming = false;
   let transformedFiles: Map<string, string> = new Map();
@@ -39,6 +40,16 @@ export function diPlugin(options: DIPluginOptions = {}): Plugin {
         console.log('🔧 Running DI transformation...');
       }
       
+      // Run class-based DI transformation (ONLY class-based, no functional DI)
+      transformer = new DITransformer({
+        srcDir: opts.srcDir,
+        outputDir: opts.outputDir,
+        verbose: opts.verbose,
+        enableFunctionalDI: false // Explicitly disable
+      });
+      await transformer.transform();
+      await transformer.save();
+
       // Run build-time functional DI transformation
       if (opts.enableFunctionalDI) {
         buildTimeTransformer = new BuildTimeDITransformer({
