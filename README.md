@@ -2,6 +2,21 @@
 
 > **🎯 NEW: Automatic Interface Resolution!** TDI2 now automatically resolves dependencies using TypeScript interfaces, eliminating the need for manual token mapping. Inspired by [TDI proof-of-concept](https://github.com/7frank/tdi).
 
+## TLDR
+
+#### For Development
+
+```bash
+# Initial setup
+npm run di:enhanced
+
+# Start development (reuses config)
+npm run dev
+
+# If issues arise
+npm run di:reset && npm run dev
+```
+
 ## 🚀 Overview
 
 TDI2 (TypeScript Dependency Injection 2) brings **Spring Boot-style dependency injection** to React applications with **automatic interface-to-implementation resolution**. No more manual token management – just use interfaces!
@@ -10,7 +25,7 @@ TDI2 (TypeScript Dependency Injection 2) brings **Spring Boot-style dependency i
 
 - **🎯 Interface-First DI**: Automatic resolution from TypeScript interfaces
 - **⚡ Zero Manual Tokens**: `@Inject()` automatically finds implementations
-- **🔧 Generic Interface Support**: `CacheInterface<T>`, `Repository<User>` work automatically  
+- **🔧 Generic Interface Support**: `CacheInterface<T>`, `Repository<User>` work automatically
 - **🌉 Functional Component DI**: `Inject<ApiInterface>` in React components
 - **🔄 Hot Reload**: Development-friendly with automatic retransformation
 - **📦 Build-Time Optimization**: Zero runtime overhead through compile-time generation
@@ -18,10 +33,11 @@ TDI2 (TypeScript Dependency Injection 2) brings **Spring Boot-style dependency i
 ## 🎯 Problem Solved
 
 ### Before TDI2 (Manual Token Hell)
+
 ```typescript
 // 😰 Manual token management
-export const USER_API_TOKEN = 'USER_API_TOKEN';
-export const LOGGER_TOKEN = 'LOGGER_TOKEN';
+export const USER_API_TOKEN = "USER_API_TOKEN";
+export const LOGGER_TOKEN = "LOGGER_TOKEN";
 
 @Service({ token: USER_API_TOKEN })
 export class UserService implements UserApiInterface {
@@ -30,6 +46,7 @@ export class UserService implements UserApiInterface {
 ```
 
 ### After TDI2 (Interface Paradise)
+
 ```typescript
 // 🎉 Automatic interface resolution!
 @Service()
@@ -46,10 +63,12 @@ TDI2 scans your codebase and automatically builds a mapping:
 // 1. TDI2 finds this implementation
 @Service()
 export class ConsoleLogger implements LoggerInterface {
-  log(message: string) { console.log(message); }
+  log(message: string) {
+    console.log(message);
+  }
 }
 
-// 2. TDI2 finds this consumer  
+// 2. TDI2 finds this consumer
 @Service()
 export class UserService implements UserApiInterface {
   constructor(@Inject() private logger: LoggerInterface) {}
@@ -64,6 +83,7 @@ export class UserService implements UserApiInterface {
 ## 🏗️ Architecture
 
 ### Interface-Based Service Layer
+
 ```typescript
 // Define your interfaces
 export interface UserRepository {
@@ -79,7 +99,7 @@ export interface EmailService {
 @Service()
 export class DatabaseUserRepository implements UserRepository {
   constructor(@Inject() private logger: LoggerInterface) {}
-  
+
   async findById(id: string): Promise<User> {
     this.logger.log(`Finding user ${id}`);
     // Implementation...
@@ -92,7 +112,7 @@ export class SMTPEmailService implements EmailService {
     @Inject() private config: ConfigService,
     @Inject() private logger: LoggerInterface
   ) {}
-  
+
   async send(to: string, subject: string, body: string): Promise<void> {
     // Implementation...
   }
@@ -100,24 +120,25 @@ export class SMTPEmailService implements EmailService {
 ```
 
 ### Functional Component DI
+
 ```typescript
 // React components with automatic interface injection
 function UserProfile(props: {
   userId: string;
   services: {
-    userRepo: Inject<UserRepository>;        // → DatabaseUserRepository
-    email: Inject<EmailService>;             // → SMTPEmailService  
+    userRepo: Inject<UserRepository>; // → DatabaseUserRepository
+    email: Inject<EmailService>; // → SMTPEmailService
     logger?: InjectOptional<LoggerInterface>; // → ConsoleLogger (optional)
   };
 }) {
   const { userId, services } = props;
-  
+
   const sendWelcomeEmail = async () => {
     const user = await services.userRepo.findById(userId);
     await services.email.send(user.email, "Welcome!", "Hello!");
     services.logger?.log(`Welcome email sent to ${user.email}`);
   };
-  
+
   return <div>{/* Your UI */}</div>;
 }
 ```
@@ -125,21 +146,25 @@ function UserProfile(props: {
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 2. Run Interface-Based DI Transformation
+
 ```bash
 npm run di:enhanced
 ```
 
 ### 3. Start Development
+
 ```bash
 npm run dev
 ```
 
 ### 4. Check Interface Mappings
+
 Visit `http://localhost:5173/_di_interfaces` to see resolved interfaces.
 
 ## 📁 Project Structure
@@ -171,6 +196,7 @@ tools/
 ## 🎯 Usage Examples
 
 ### Service Definition with Interface Resolution
+
 ```typescript
 // Define interface
 export interface PaymentService {
@@ -194,6 +220,7 @@ export class StripePaymentService implements PaymentService {
 ```
 
 ### Generic Interface Support
+
 ```typescript
 export interface Repository<T> {
   findAll(): Promise<T[]>;
@@ -204,14 +231,14 @@ export interface Repository<T> {
 @Service()
 export class UserRepository implements Repository<User> {
   constructor(@Inject() private db: DatabaseService) {}
-  
+
   async findAll(): Promise<User[]> {
-    return this.db.query('SELECT * FROM users');
+    return this.db.query("SELECT * FROM users");
   }
 }
 
 // Automatic resolution works with generics!
-@Service() 
+@Service()
 export class UserController {
   constructor(@Inject() private userRepo: Repository<User>) {}
   //                    ↑ Automatically resolves to UserRepository!
@@ -219,33 +246,39 @@ export class UserController {
 ```
 
 ### Multiple Implementations with Qualifiers
+
 ```typescript
 // Multiple implementations of same interface
 @Service()
 @Primary() // Mark as default
 export class DatabaseLogger implements LoggerInterface {
-  log(message: string) { /* save to database */ }
+  log(message: string) {
+    /* save to database */
+  }
 }
 
 @Service()
-@Qualifier('console')
+@Qualifier("console")
 export class ConsoleLogger implements LoggerInterface {
-  log(message: string) { console.log(message); }
+  log(message: string) {
+    console.log(message);
+  }
 }
 
 @Service()
 export class UserService {
   constructor(
-    @Inject() private defaultLogger: LoggerInterface,        // → DatabaseLogger (primary)
-    @Inject() @Qualifier('console') private consoleLogger: LoggerInterface // → ConsoleLogger
+    @Inject() private defaultLogger: LoggerInterface, // → DatabaseLogger (primary)
+    @Inject() @Qualifier("console") private consoleLogger: LoggerInterface // → ConsoleLogger
   ) {}
 }
 ```
 
 ### Environment-Specific Implementations
+
 ```typescript
 @Service()
-@Profile('production')
+@Profile("production")
 export class ProductionEmailService implements EmailService {
   async send(to: string, subject: string, body: string) {
     // Real SMTP implementation
@@ -253,7 +286,7 @@ export class ProductionEmailService implements EmailService {
 }
 
 @Service()
-@Profile('development', 'test')
+@Profile("development", "test")
 export class MockEmailService implements EmailService {
   async send(to: string, subject: string, body: string) {
     console.log(`Mock email to ${to}: ${subject}`);
@@ -266,13 +299,13 @@ export class MockEmailService implements EmailService {
 ```typescript
 // Easy mocking for tests
 const mockUserService: UserApiInterface = {
-  getUserInfo: jest.fn().mockResolvedValue({ id: '1', name: 'Test User' }),
-  getData: jest.fn().mockResolvedValue(['test data']),
-  postData: jest.fn().mockResolvedValue(true)
+  getUserInfo: jest.fn().mockResolvedValue({ id: "1", name: "Test User" }),
+  getData: jest.fn().mockResolvedValue(["test data"]),
+  postData: jest.fn().mockResolvedValue(true),
 };
 
 const testContainer = new CompileTimeDIContainer();
-testContainer.registerByInterface('UserApiInterface', () => mockUserService);
+testContainer.registerByInterface("UserApiInterface", () => mockUserService);
 
 render(
   <DIProvider container={testContainer}>
@@ -284,6 +317,7 @@ render(
 ## 🔧 Configuration
 
 ### Vite Plugin Setup
+
 ```typescript
 // vite.config.ts
 export default defineConfig({
@@ -291,9 +325,9 @@ export default defineConfig({
     diEnhancedPlugin({
       verbose: true,
       enableInterfaceResolution: true, // Enable automatic interface resolution
-      enableFunctionalDI: true,        // Enable functional component DI
-      generateDebugFiles: true,        // Generate debug transformation files
-      watch: true,                     // Hot reload on DI changes
+      enableFunctionalDI: true, // Enable functional component DI
+      generateDebugFiles: true, // Generate debug transformation files
+      watch: true, // Hot reload on DI changes
     }),
     react(),
   ],
@@ -303,11 +337,13 @@ export default defineConfig({
 ## 📊 Debug & Monitoring
 
 ### Development URLs
+
 - `http://localhost:5173/_di_debug` - Transformation details
 - `http://localhost:5173/_di_interfaces` - Interface mappings
 - `http://localhost:5173/_di_configs` - Configuration versions
 
 ### CLI Commands
+
 ```bash
 npm run di:enhanced     # Run interface-based transformation
 npm run di:validate     # Validate dependency resolution
@@ -317,43 +353,46 @@ npm run test:interfaces # Test interface scanning
 
 ## 🆚 Comparison with Manual Token Approaches
 
-| Aspect | Manual Tokens (Old) | Interface Resolution (New) |
-|--------|---------------------|----------------------------|
-| **Setup** | Manual token constants | Automatic from interfaces |
-| **Refactoring** | Update tokens manually | Automatic with interface renames |
+| Aspect          | Manual Tokens (Old)        | Interface Resolution (New)           |
+| --------------- | -------------------------- | ------------------------------------ |
+| **Setup**       | Manual token constants     | Automatic from interfaces            |
+| **Refactoring** | Update tokens manually     | Automatic with interface renames     |
 | **Type Safety** | String tokens, error-prone | Full TypeScript interface validation |
-| **IDE Support** | Limited autocomplete | Full IntelliSense with interfaces |
-| **Testing** | Mock by token strings | Mock by interface types |
-| **Maintenance** | High (token management) | Low (automatic resolution) |
-| **Ambiguity** | Tokens can conflict | Clear interface contracts |
+| **IDE Support** | Limited autocomplete       | Full IntelliSense with interfaces    |
+| **Testing**     | Mock by token strings      | Mock by interface types              |
+| **Maintenance** | High (token management)    | Low (automatic resolution)           |
+| **Ambiguity**   | Tokens can conflict        | Clear interface contracts            |
 
 ## 🔮 Advanced Features
 
 ### Conditional Services
+
 ```typescript
 @Service()
-@Profile('feature-flag-enabled')
+@Profile("feature-flag-enabled")
 export class NewFeatureService implements FeatureService {
   // Only registered when profile is active
 }
 ```
 
 ### Lazy Loading
+
 ```typescript
 @Service()
-@Scope('transient')
+@Scope("transient")
 export class ExpensiveService {
   // New instance created each time
 }
 ```
 
 ### Configuration Injection
+
 ```typescript
 @Service()
 export class ApiClient {
   constructor(
     @Inject() private config: ConfigService,
-    @Inject() @Qualifier('api') private endpoint: string
+    @Inject() @Qualifier("api") private endpoint: string
   ) {}
 }
 ```
@@ -361,6 +400,7 @@ export class ApiClient {
 ## 🤝 Migration from Token-Based DI
 
 ### Step 1: Update Service Decorators
+
 ```typescript
 // Before
 @Service({ token: 'USER_SERVICE_TOKEN' })
@@ -370,15 +410,17 @@ export class ApiClient {
 ```
 
 ### Step 2: Update Inject Decorators
+
 ```typescript
 // Before
 constructor(@Inject('LOGGER_TOKEN') private logger: LoggerInterface)
 
-// After  
+// After
 constructor(@Inject() private logger: LoggerInterface)
 ```
 
 ### Step 3: Remove Token Constants
+
 ```typescript
 // Delete these files:
 // src/tokens/service-tokens.ts
@@ -395,7 +437,7 @@ constructor(@Inject() private logger: LoggerInterface)
 ## 🏆 Benefits Over Context API
 
 1. **No Provider Hell**: Direct service injection
-2. **Better Performance**: No context re-render issues  
+2. **Better Performance**: No context re-render issues
 3. **Type Safety**: Compile-time interface validation
 4. **Easier Testing**: Direct interface mocking
 5. **Cleaner Architecture**: Clear separation of concerns
