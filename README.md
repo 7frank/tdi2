@@ -27,28 +27,31 @@ React's component model, while excellent for UI composition, lacks formalized pa
 
 ### vs. React Context API
 
-| Aspect | Context API | TDI2 |
-|--------|-------------|------|
-| **Coupling** | Tight coupling to React tree | Decoupled from component hierarchy |
-| **Testing** | Requires provider setup | Direct service mocking |
-| **Performance** | Re-renders on context changes | No context-related re-renders |
-| **Scope** | Limited to React component tree | Application-wide service management |
-| **Type Safety** | Manual typing required | Automatic type inference |
+| Aspect          | Context API                     | TDI2                                |
+| --------------- | ------------------------------- | ----------------------------------- |
+| **Coupling**    | Tight coupling to React tree    | Decoupled from component hierarchy  |
+| **Testing**     | Requires provider setup         | Direct service mocking              |
+| **Performance** | Re-renders on context changes   | No context-related re-renders       |
+| **Scope**       | Limited to React component tree | Application-wide service management |
+| **Type Safety** | Manual typing required          | Automatic type inference            |
 
 ### vs. Class-Based DI Solutions
 
 TDI2 complements existing class-based DI frameworks rather than replacing them:
 
 #### [LemonDI](https://github.com/OleksandrDemian/lemondi)
+
 - **Similarity**: Decorator-based service registration, compile-time optimization
 - **Difference**: TDI2 focuses on functional components, LemonDI on class hierarchies
 - **Compatibility**: Could work together - LemonDI for services, TDI2 for components
 
 #### [Better DI Framework](https://dev.to/9zemian5/typescript-deserves-a-better-dependency-injection-framework-29bp)
+
 - **Shared Vision**: Move away from `reflect-metadata` towards build-time solutions
 - **Alignment**: Both prioritize TypeScript-native approaches and performance
 
 #### Traditional Solutions (TSyringe, InversifyJS)
+
 - **Runtime Overhead**: Rely on `reflect-metadata` and decorators at runtime
 - **Reflection Dependency**: Require additional polyfills and build configuration
 - **Performance**: Higher memory usage and slower instantiation
@@ -73,10 +76,10 @@ function UserProfile(props: {
 
 // After transformation (generated code)
 function UserProfile({ userId }: { userId: string }) {
-  const api = useService('USER_API_TOKEN');
-  const logger = useOptionalService('LOGGER_TOKEN');
+  const api = useService("USER_API_TOKEN");
+  const logger = useOptionalService("LOGGER_TOKEN");
   const services = { api, logger };
-  
+
   // Your component logic using services.api and services.logger
 }
 ```
@@ -86,11 +89,11 @@ function UserProfile({ userId }: { userId: string }) {
 Traditional decorator-based DI for business logic:
 
 ```typescript
-@Service({ token: 'USER_API_TOKEN' })
+@Service({ token: "USER_API_TOKEN" })
 export class UserApiService implements UserApiInterface {
   constructor(
-    @Inject('HTTP_CLIENT_TOKEN') private http: HttpClient,
-    @Inject('LOGGER_TOKEN') private logger?: LoggerInterface
+    @Inject("HTTP_CLIENT_TOKEN") private http: HttpClient,
+    @Inject("LOGGER_TOKEN") private logger?: LoggerInterface
   ) {}
 }
 ```
@@ -112,16 +115,19 @@ graph LR
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 2. Run DI Transformation
+
 ```bash
 npm run di:transform
 ```
 
 ### 3. Start Development
+
 ```bash
 npm run dev
 ```
@@ -163,11 +169,11 @@ export default defineConfig({
       verbose: true,
       enableFunctionalDI: true,
       generateDebugFiles: true,
-      watch: true
+      watch: true,
     }),
-    react()
+    react(),
   ],
-})
+});
 ```
 
 ### TypeScript Configuration
@@ -187,7 +193,7 @@ export default defineConfig({
 ### Functional Component with DI
 
 ```typescript
-import type { Inject, InjectOptional } from '../di/markers';
+import type { Inject, InjectOptional } from "../di/markers";
 
 const DataDashboard = (props: {
   title: string;
@@ -197,7 +203,7 @@ const DataDashboard = (props: {
   };
 }) => {
   const { title, services } = props;
-  
+
   useEffect(() => {
     services.analytics.trackView(title);
     services.logger?.log(`Dashboard ${title} mounted`);
@@ -210,14 +216,12 @@ const DataDashboard = (props: {
 ### Service Definition
 
 ```typescript
-@Service({ token: 'ANALYTICS_TOKEN' })
+@Service({ token: "ANALYTICS_TOKEN" })
 export class AnalyticsService implements AnalyticsInterface {
-  constructor(
-    @Inject('HTTP_CLIENT_TOKEN') private http: HttpClient
-  ) {}
+  constructor(@Inject("HTTP_CLIENT_TOKEN") private http: HttpClient) {}
 
   async trackView(page: string): Promise<void> {
-    await this.http.post('/analytics/view', { page });
+    await this.http.post("/analytics/view", { page });
   }
 }
 ```
@@ -226,8 +230,8 @@ export class AnalyticsService implements AnalyticsInterface {
 
 ```typescript
 // main.tsx
-import { DIProvider, CompileTimeDIContainer } from './di';
-import { DI_CONFIG } from './.tdi2/di-config';
+import { DIProvider, CompileTimeDIContainer } from "./di";
+import { DI_CONFIG } from "./.tdi2/di-config";
 
 const container = new CompileTimeDIContainer();
 container.loadConfiguration(DI_CONFIG);
@@ -245,11 +249,11 @@ createRoot(root).render(
 
 ```typescript
 const mockAnalytics: AnalyticsInterface = {
-  trackView: jest.fn()
+  trackView: jest.fn(),
 };
 
 const testContainer = new CompileTimeDIContainer();
-testContainer.register('ANALYTICS_TOKEN', () => mockAnalytics);
+testContainer.register("ANALYTICS_TOKEN", () => mockAnalytics);
 
 render(
   <DIProvider container={testContainer}>
@@ -261,20 +265,24 @@ render(
 ## 🔮 Future Roadmap
 
 ### Phase 1: Foundation ✅
+
 - [x] Build-time DI transformation
 - [x] Functional component marker interfaces
 - [x] Class-based service registration
 - [x] Bridge file architecture
 
 ### Phase 2: Enhancement 🚧
+
 - [ ] Environment-based profiles (`@Profile`)
 - [ ] Testing (`@Mock`)
 - [ ] Lifecycle hooks (`onInit`, `onDestroy`)
 
 ### Phase 3: Integration 🔮
+
 - [ ] OpenTelemetry integration for better debugging
 
 ### Phase 4: Ecosystem 🌟
+
 - [ ] ESLint plugin for DI rules
 - [ ] Integration with existing DI frameworks
 - [ ] Production case studies
@@ -331,7 +339,7 @@ function UserCard(props: {
 
 ## 🤝 Contributing
 
-This is an experimental proof-of-concept. Contributions, feedback, and discussions about the approach are welcome! 
+This is an experimental proof-of-concept. Contributions, feedback, and discussions about the approach are welcome!
 
 ### Development Commands
 
@@ -349,4 +357,4 @@ MIT License - See LICENSE file for details
 
 ---
 
-*TDI2 is an experimental exploration of dependency injection patterns for modern React applications. It represents one possible future direction for managing complex application dependencies while maintaining the elegance of functional programming.*
+_TDI2 is an experimental exploration of dependency injection patterns for modern React applications. It represents one possible future direction for managing complex application dependencies while maintaining the elegance of functional programming._
