@@ -16,5 +16,8 @@
   - this will allow us to potnetially disable errors via linter down the line
 - generate tests and smaller files to test individual features otherwise this is getting out of hand
   - **FIXME** tests currently are mostly ai slop and add no values
+  - missing test file dependency-tree-builder-test.ts generate one
+  - fix test files
+    - [x] interface-resolver.test.ts
 - fix issue where when deleting .vite folder interface files break
   - maybe one plugin doesnt use the project tsconfig properly
