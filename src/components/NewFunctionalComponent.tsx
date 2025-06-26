@@ -1,19 +1,19 @@
 // src/components/NewFunctionalComponent.tsx - Real functional DI example
 
-import React, { useState, useEffect } from 'react';
-import type { Inject, InjectOptional } from '../di/markers';
-import type { ExampleApiInterface } from '../services/ExampleApiInterface';
-import type { LoggerService } from '../services/ExampleApiService';
+import { useState, useEffect } from "react";
+import type { Inject, InjectOptional } from "../di/markers";
+import type { ExampleApiInterface } from "../services/ExampleApiInterface";
+import type { LoggerService } from "../services/ExampleApiService";
 
 // This component will be transformed by the DI transformer!
-function UserProfile(props: { 
+function UserProfile(props: {
   userId: string;
   title?: string;
   services: {
     api: Inject<ExampleApiInterface>;
     logger?: InjectOptional<LoggerService>;
-  }
-}): JSX.Element {
+  };
+}) {
   const { userId, title = "User Profile", services } = props;
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ function UserProfile(props: {
   const loadUser = async () => {
     setLoading(true);
     services.logger?.log(`Loading user profile for ${userId}`);
-    
+
     try {
       const userData = await services.api.getUserInfo(userId);
       setUser(userData);
@@ -46,13 +46,15 @@ function UserProfile(props: {
   }
 
   return (
-    <div style={{
-      border: '2px solid #4CAF50',
-      borderRadius: '8px',
-      padding: '16px',
-      margin: '8px',
-      backgroundColor: '#f8f9fa'
-    }}>
+    <div
+      style={{
+        border: "2px solid #4CAF50",
+        borderRadius: "8px",
+        padding: "16px",
+        margin: "8px",
+        backgroundColor: "#f8f9fa",
+      }}
+    >
       <h3>{title}</h3>
       <div>
         <strong>Name:</strong> {user.name}
@@ -63,16 +65,16 @@ function UserProfile(props: {
       <div>
         <strong>ID:</strong> {user.id}
       </div>
-      <button 
+      <button
         onClick={loadUser}
         style={{
-          marginTop: '8px',
-          padding: '4px 8px',
-          backgroundColor: '#4CAF50',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer'
+          marginTop: "8px",
+          padding: "4px 8px",
+          backgroundColor: "#4CAF50",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
         }}
       >
         Refresh
@@ -87,27 +89,29 @@ const DataList = (props: {
   services: {
     api: Inject<ExampleApiInterface>;
     logger: Inject<LoggerService>;
-  }
+  };
 }) => {
   const { category, services } = props;
   const [items, setItems] = useState<string[]>([]);
 
   useEffect(() => {
     services.logger.log(`Loading ${category} data`);
-    services.api.getData().then(data => {
-      const categoryItems = data.map(item => `${category}: ${item}`);
+    services.api.getData().then((data) => {
+      const categoryItems = data.map((item) => `${category}: ${item}`);
       setItems(categoryItems);
     });
   }, [category]);
 
   return (
-    <div style={{
-      border: '2px solid #2196F3',
-      borderRadius: '8px',
-      padding: '16px',
-      margin: '8px',
-      backgroundColor: '#e3f2fd'
-    }}>
+    <div
+      style={{
+        border: "2px solid #2196F3",
+        borderRadius: "8px",
+        padding: "16px",
+        margin: "8px",
+        backgroundColor: "#e3f2fd",
+      }}
+    >
       <h4>{category} Items</h4>
       <ul>
         {items.map((item, index) => (
