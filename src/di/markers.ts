@@ -37,7 +37,7 @@ export type ExtractServices<T extends ServiceDependencies> = {
  * Function component with DI support
  * This is what the transformer would look for and transform
  */
-export interface DIFunction<TServices extends ServiceDependencies, TProps = {}> {
+export interface DIFunction<TServices extends ServiceDependencies, TProps = object> {
   (props: TProps & { services?: ExtractServices<TServices> }): JSX.Element;
 }
 

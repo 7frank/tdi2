@@ -408,7 +408,7 @@ export class InterfaceResolver {
       const normalized = this.normalizeGenericType(type.trim());
 
       // Step 2: Convert to safe identifier
-      let sanitized = normalized
+      const sanitized = normalized
         .replace(/<any>/g, "_any") // CacheInterface<any> -> CacheInterface_any
         .replace(/[^\w]/g, "_") // Replace remaining special chars
         .replace(/_+/g, "_") // Remove multiple underscores
