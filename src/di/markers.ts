@@ -4,17 +4,17 @@
  * Marker interface for dependency injection in function parameters
  * Usage: function MyComponent(services: {logger: Inject<LoggerInterface>}) {}
  */
-export interface Inject<T> extends T {
+export type Inject<T> = T & {
   readonly __inject__: unique symbol;
-}
+};
 
 /**
- * Marker interface for optional dependency injection
+ * Marker type for optional dependency injection
  * Usage: function MyComponent(services: {logger?: InjectOptional<LoggerInterface>}) {}
  */
-export interface InjectOptional<T> extends Partial<T> {
+export type InjectOptional<T> = T & {
   readonly __injectOptional__: unique symbol;
-}
+};
 
 /**
  * Service configuration for functional components
