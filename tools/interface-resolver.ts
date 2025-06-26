@@ -280,13 +280,20 @@ export class InterfaceResolver {
   }
 
   private sanitizeKey(type: string): string {
-    // Remove special characters and normalize for DI container key
-    // Also normalize generic parameters to handle T vs any vs specific types
-    return type
+    // First normalize generic parameters before removing special characters
+    let normalized = type;
+    
+    // Replace common generic type parameters with 'any' to unify them
+    // This allows CacheInterface<T> to match CacheInterface<any>
+    normalized = normalized.replace(/<(T|U|V|K|any|string|number|boolean|\w+)>/g, '<any>');
+    
+    // Then remove special characters and convert to safe key
+    const sanitized = normalized
       .replace(/[^\w\s]/gi, '_')
-      .replace(/\b(any|T|U|V|K)\b/g, 'any') // Normalize generic type parameters
       .replace(/_+/g, '_') // Remove multiple underscores
       .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
+    
+    return sanitized;
   }
 
   // Public API methods
