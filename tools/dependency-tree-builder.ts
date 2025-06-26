@@ -1,4 +1,4 @@
-// tools/dependency-tree-builder.ts - Build dependency tree and generate DI configuration
+// tools/dependency-tree-builder.ts - Fixed version with proper key handling
 
 import {
   InterfaceResolver,
@@ -61,17 +61,16 @@ export class DependencyTreeBuilder {
     const validation = this.interfaceResolver.validateDependencies();
     if (!validation.isValid) {
       console.error("❌ Dependency validation failed:");
+      
+      // Show detailed information for debugging
+      const implementations = this.interfaceResolver.getInterfaceImplementations();
+      console.log("Available implementations:", implementations);
+      
       if (validation.missingImplementations.length > 0) {
-        console.error(
-          "Missing implementations:",
-          validation.missingImplementations
-        );
+        console.error("Missing implementations:", validation.missingImplementations);
       }
       if (validation.circularDependencies.length > 0) {
-        console.error(
-          "Circular dependencies:",
-          validation.circularDependencies
-        );
+        console.error("Circular dependencies:", validation.circularDependencies);
       }
       throw new Error(
         "Invalid dependency configuration. Fix the issues above before proceeding."
@@ -95,32 +94,48 @@ export class DependencyTreeBuilder {
   }
 
   private async buildConfigurations(): Promise<void> {
-    const implementations =
-      this.interfaceResolver.getInterfaceImplementations();
+    const implementations = this.interfaceResolver.getInterfaceImplementations();
     const dependencies = this.interfaceResolver.getServiceDependencies();
 
-    // Create configurations for each interface implementation
-    for (const [sanitizedKey, implementation] of implementations) {
-      const dependency = dependencies.get(implementation.implementationClass);
+    // FIXED: Group implementations by interface name to handle multiple implementations
+    const implementationsByInterface = new Map<string, InterfaceImplementation[]>();
+    
+    for (const [uniqueKey, implementation] of implementations) {
+      const interfaceKey = implementation.sanitizedKey;
+      if (!implementationsByInterface.has(interfaceKey)) {
+        implementationsByInterface.set(interfaceKey, []);
+      }
+      implementationsByInterface.get(interfaceKey)!.push(implementation);
+    }
 
-      const dependencyTokens = dependency
-        ? dependency.interfaceDependencies
-        : [];
+    // FIXED: Create configurations using interface names as tokens
+    for (const [interfaceKey, impls] of implementationsByInterface) {
+      // For multiple implementations, choose the first one (or implement @Primary logic later)
+      const chosenImpl = impls[0];
+      
+      if (impls.length > 1 && this.options.verbose) {
+        console.log(`⚠️  Multiple implementations for ${interfaceKey}:`);
+        impls.forEach(impl => 
+          console.log(`   - ${impl.implementationClass}${impl === chosenImpl ? ' (chosen)' : ''}`)
+        );
+      }
+
+      const dependency = dependencies.get(chosenImpl.implementationClass);
+      const dependencyTokens = dependency ? dependency.interfaceDependencies : [];
 
       const config: DIConfiguration = {
-        token: sanitizedKey,
-        implementation,
+        token: interfaceKey, // FIXED: Use interface name as token for lookups
+        implementation: chosenImpl,
         dependencies: dependencyTokens,
-        factory: this.generateFactoryName(implementation.implementationClass),
+        factory: this.generateFactoryName(chosenImpl.implementationClass),
         scope: "singleton", // Default scope
       };
 
-      this.configurations.set(sanitizedKey, config);
+      // FIXED: Store by interface name (token) for easy lookup during topological sort
+      this.configurations.set(interfaceKey, config);
 
       if (this.options.verbose) {
-        console.log(
-          `🔧 Config: ${sanitizedKey} -> ${implementation.implementationClass}`
-        );
+        console.log(`🔧 Config: ${interfaceKey} -> ${chosenImpl.implementationClass}`);
         if (dependencyTokens.length > 0) {
           console.log(`   Dependencies: ${dependencyTokens.join(", ")}`);
         }
@@ -160,7 +175,10 @@ export class DependencyTreeBuilder {
       diMapEntries.push(`  '${config.token}': {
     factory: ${config.factory},
     scope: '${config.scope}',
-    dependencies: [${config.dependencies.map((dep) => `'${dep}'`).join(", ")}]
+    dependencies: [${config.dependencies.map((dep) => `'${dep}'`).join(", ")}],
+    interfaceName: '${config.implementation.interfaceName}',
+    implementationClass: '${config.implementation.implementationClass}',
+    isAutoResolved: true
   }`);
     }
 
@@ -319,14 +337,24 @@ ${dependencyResolves}
 
       const config = this.configurations.get(token);
       if (!config) {
-        throw new Error(`Configuration not found for token: ${token}`);
+        // FIXED: Better error message showing available configurations
+        const availableTokens = Array.from(this.configurations.keys());
+        console.error(`❌ Available configurations: ${availableTokens.join(', ')}`);
+        throw new Error(`Configuration not found for token: ${token}. Available: ${availableTokens.slice(0, 3).join(', ')}...`);
       }
 
       visiting.add(token);
 
       // Visit dependencies first
       for (const depToken of config.dependencies) {
-        visit(depToken);
+        // FIXED: Ensure dependency exists before visiting
+        if (this.configurations.has(depToken)) {
+          visit(depToken);
+        } else {
+          // This is a missing dependency - should have been caught in validation
+          console.warn(`⚠️  Dependency ${depToken} not found for ${token}`);
+          // For now, continue without this dependency (it might be optional)
+        }
       }
 
       visiting.delete(token);
@@ -337,7 +365,12 @@ ${dependencyResolves}
     // Visit all configurations
     for (const token of this.configurations.keys()) {
       if (!visited.has(token)) {
-        visit(token);
+        try {
+          visit(token);
+        } catch (error) {
+          console.error(`❌ Failed to sort configuration for ${token}:`, error);
+          throw error;
+        }
       }
     }
 

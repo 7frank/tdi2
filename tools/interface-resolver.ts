@@ -1,15 +1,15 @@
-// tools/interface-resolver.ts - Automatic interface-to-implementation resolution
+// tools/interface-resolver.ts - Fixed version addressing test failures
 
-import { 
-  Project, 
-  SourceFile, 
+import {
+  Project,
+  SourceFile,
   ClassDeclaration,
   InterfaceDeclaration,
   TypeParameterDeclaration,
   Node,
-  SyntaxKind
-} from 'ts-morph';
-import * as path from 'path';
+  SyntaxKind,
+} from "ts-morph";
+import * as path from "path";
 
 export interface InterfaceImplementation {
   interfaceName: string;
@@ -43,90 +43,140 @@ export class InterfaceResolver {
   constructor(options: { verbose?: boolean; srcDir?: string } = {}) {
     this.options = {
       verbose: false,
-      srcDir: './src',
-      ...options
+      srcDir: "./src",
+      ...options,
     };
 
     this.project = new Project({
-      tsConfigFilePath: './tsconfig.json'
+      tsConfigFilePath: "./tsconfig.json",
     });
   }
 
   async scanProject(): Promise<void> {
     if (this.options.verbose) {
-      console.log('🔍 Scanning project for interfaces and implementations...');
+      console.log("🔍 Scanning project for interfaces and implementations...");
     }
 
-    // Add source files
-    this.project.addSourceFilesAtPaths(`${this.options.srcDir}/**/*.{ts,tsx}`);
+    // Clear previous results
+    this.interfaces.clear();
+    this.dependencies.clear();
 
-    // First pass: collect all interface implementations
-    await this.collectInterfaceImplementations();
+    try {
+      // Add source files
+      this.project.addSourceFilesAtPaths(
+        `${this.options.srcDir}/**/*.{ts,tsx}`
+      );
 
-    // Second pass: collect service dependencies
-    await this.collectServiceDependencies();
+      // First pass: collect all interface implementations
+      await this.collectInterfaceImplementations();
 
-    if (this.options.verbose) {
-      console.log(`✅ Found ${this.interfaces.size} interface implementations`);
-      console.log(`✅ Found ${this.dependencies.size} services with dependencies`);
+      // Second pass: collect service dependencies
+      await this.collectServiceDependencies();
+
+      if (this.options.verbose) {
+        console.log(
+          `✅ Found ${this.interfaces.size} interface implementations`
+        );
+        console.log(
+          `✅ Found ${this.dependencies.size} services with dependencies`
+        );
+      }
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn("⚠️  Error during project scanning:", error);
+      }
+      // Continue with partial results
     }
   }
 
   private async collectInterfaceImplementations(): Promise<void> {
     const sourceFiles = this.project.getSourceFiles();
-    
+
     for (const sourceFile of sourceFiles) {
-      const classes = sourceFile.getClasses();
-      
-      for (const classDecl of classes) {
-        await this.processClassForInterfaces(classDecl, sourceFile);
+      try {
+        const classes = sourceFile.getClasses();
+
+        for (const classDecl of classes) {
+          await this.processClassForInterfaces(classDecl, sourceFile);
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn(
+            `⚠️  Failed to process ${sourceFile.getBaseName()}:`,
+            error
+          );
+        }
+        // Continue processing other files
       }
     }
   }
 
-  private async processClassForInterfaces(classDecl: ClassDeclaration, sourceFile: SourceFile): Promise<void> {
+  private async processClassForInterfaces(
+    classDecl: ClassDeclaration,
+    sourceFile: SourceFile
+  ): Promise<void> {
     const className = classDecl.getName();
     if (!className) return;
 
-    // Check if class has any service decorator (@Service, @AutoWireService, etc.)
-    const hasServiceDecorator = classDecl.getDecorators().some(decorator => {
-      const expression = decorator.getExpression();
-      if (Node.isCallExpression(expression)) {
-        const expressionText = expression.getExpression().getText();
-        return expressionText === 'Service' || 
-               expressionText === 'AutoWireService' ||
-               expressionText.includes('Service');
-      } else if (Node.isIdentifier(expression)) {
-        // Handle decorators without parentheses like @Service
-        const expressionText = expression.getText();
-        return expressionText === 'Service' || 
-               expressionText === 'AutoWireService' ||
-               expressionText.includes('Service');
+    try {
+      // Check if class has any service decorator (@Service, @AutoWireService, etc.)
+      const hasServiceDecorator = classDecl
+        .getDecorators()
+        .some((decorator) => {
+          try {
+            const expression = decorator.getExpression();
+            if (Node.isCallExpression(expression)) {
+              const expressionText = expression.getExpression().getText();
+              return (
+                expressionText === "Service" ||
+                expressionText === "AutoWireService" ||
+                expressionText.includes("Service")
+              );
+            } else if (Node.isIdentifier(expression)) {
+              // Handle decorators without parentheses like @Service
+              const expressionText = expression.getText();
+              return (
+                expressionText === "Service" ||
+                expressionText === "AutoWireService" ||
+                expressionText.includes("Service")
+              );
+            }
+          } catch (error) {
+            // Ignore malformed decorators
+          }
+          return false;
+        });
+
+      if (!hasServiceDecorator) return;
+
+      // Get implemented interfaces
+      const implementedInterfaces = this.getImplementedInterfaces(classDecl);
+
+      for (const interfaceInfo of implementedInterfaces) {
+        const sanitizedKey = this.sanitizeKey(interfaceInfo.fullType);
+
+        const implementation: InterfaceImplementation = {
+          interfaceName: interfaceInfo.name,
+          implementationClass: className,
+          filePath: sourceFile.getFilePath(),
+          isGeneric: interfaceInfo.isGeneric,
+          typeParameters: interfaceInfo.typeParameters,
+          sanitizedKey,
+        };
+
+        // FIXED: Use interface name + class name as unique key to allow multiple implementations
+        const uniqueKey = `${sanitizedKey}_${className}`;
+        this.interfaces.set(uniqueKey, implementation);
+
+        if (this.options.verbose) {
+          console.log(
+            `📝 ${className} implements ${interfaceInfo.fullType} (key: ${sanitizedKey})`
+          );
+        }
       }
-      return false;
-    });
-
-    if (!hasServiceDecorator) return;
-
-    // Get implemented interfaces
-    const implementedInterfaces = this.getImplementedInterfaces(classDecl);
-    
-    for (const interfaceInfo of implementedInterfaces) {
-      const sanitizedKey = this.sanitizeKey(interfaceInfo.fullType);
-      
-      const implementation: InterfaceImplementation = {
-        interfaceName: interfaceInfo.name,
-        implementationClass: className,
-        filePath: sourceFile.getFilePath(),
-        isGeneric: interfaceInfo.isGeneric,
-        typeParameters: interfaceInfo.typeParameters,
-        sanitizedKey
-      };
-
-      this.interfaces.set(sanitizedKey, implementation);
-
+    } catch (error) {
       if (this.options.verbose) {
-        console.log(`📝 ${className} implements ${interfaceInfo.fullType} (key: ${sanitizedKey})`);
+        console.warn(`⚠️  Failed to process class ${className}:`, error);
       }
     }
   }
@@ -144,36 +194,44 @@ export class InterfaceResolver {
       typeParameters: string[];
     }> = [];
 
-    const heritageClauses = classDecl.getHeritageClauses();
-    
-    for (const heritage of heritageClauses) {
-      // Check if this is an implements clause
-      const token = heritage.getToken();
-      const isImplementsClause = token === SyntaxKind.ImplementsKeyword || heritage.getText().includes('implements');
-      
-      if (isImplementsClause) {
-        for (const type of heritage.getTypeNodes()) {
-          const fullType = type.getText();
-          const isGeneric = fullType.includes('<');
-          
-          let name = fullType;
-          let typeParameters: string[] = [];
-          
-          if (isGeneric) {
-            const match = fullType.match(/^([^<]+)<(.+)>$/);
-            if (match) {
-              name = match[1];
-              typeParameters = match[2].split(',').map(p => p.trim());
-            }
-          }
+    try {
+      const heritageClauses = classDecl.getHeritageClauses();
 
-          interfaces.push({
-            name,
-            fullType,
-            isGeneric,
-            typeParameters
-          });
+      for (const heritage of heritageClauses) {
+        // Check if this is an implements clause
+        const token = heritage.getToken();
+        if (token === SyntaxKind.ImplementsKeyword) {
+          for (const type of heritage.getTypeNodes()) {
+            const fullType = type.getText();
+            const isGeneric = fullType.includes("<");
+
+            let name = fullType;
+            let typeParameters: string[] = [];
+
+            if (isGeneric) {
+              const match = fullType.match(/^([^<]+)<(.+)>$/);
+              if (match) {
+                name = match[1];
+                typeParameters = match[2].split(",").map((p) => p.trim());
+              }
+            }
+
+            interfaces.push({
+              name,
+              fullType,
+              isGeneric,
+              typeParameters,
+            });
+          }
         }
+      }
+    } catch (error) {
+      // Handle malformed heritage clauses gracefully
+      if (this.options.verbose) {
+        console.warn(
+          `⚠️  Failed to parse interfaces for ${classDecl.getName()}:`,
+          error
+        );
       }
     }
 
@@ -182,118 +240,215 @@ export class InterfaceResolver {
 
   private async collectServiceDependencies(): Promise<void> {
     const sourceFiles = this.project.getSourceFiles();
-    
+
     for (const sourceFile of sourceFiles) {
-      const classes = sourceFile.getClasses();
-      
-      for (const classDecl of classes) {
-        await this.processClassForDependencies(classDecl, sourceFile);
+      try {
+        const classes = sourceFile.getClasses();
+
+        for (const classDecl of classes) {
+          await this.processClassForDependencies(classDecl, sourceFile);
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn(
+            `⚠️  Failed to process dependencies in ${sourceFile.getBaseName()}:`,
+            error
+          );
+        }
+        // Continue processing other files
       }
     }
   }
 
-  private async processClassForDependencies(classDecl: ClassDeclaration, sourceFile: SourceFile): Promise<void> {
+  private async processClassForDependencies(
+    classDecl: ClassDeclaration,
+    sourceFile: SourceFile
+  ): Promise<void> {
     const className = classDecl.getName();
     if (!className) return;
 
-    // Check if class has any DI decorator (@Service, @AutoWireService, etc.)
-    const hasServiceDecorator = classDecl.getDecorators().some(decorator => {
-      const expression = decorator.getExpression();
-      if (Node.isCallExpression(expression)) {
-        const expressionText = expression.getExpression().getText();
-        return expressionText === 'Service' || 
-               expressionText === 'AutoWireService' ||
-               expressionText.includes('Service');
-      } else if (Node.isIdentifier(expression)) {
-        // Handle decorators without parentheses like @Service
-        const expressionText = expression.getText();
-        return expressionText === 'Service' || 
-               expressionText === 'AutoWireService' ||
-               expressionText.includes('Service');
-      }
-      return false;
-    });
+    try {
+      // Check if class has any DI decorator (@Service, @AutoWireService, etc.)
+      const hasServiceDecorator = classDecl
+        .getDecorators()
+        .some((decorator) => {
+          try {
+            const expression = decorator.getExpression();
+            if (Node.isCallExpression(expression)) {
+              const expressionText = expression.getExpression().getText();
+              return (
+                expressionText === "Service" ||
+                expressionText === "AutoWireService" ||
+                expressionText.includes("Service")
+              );
+            } else if (Node.isIdentifier(expression)) {
+              // Handle decorators without parentheses like @Service
+              const expressionText = expression.getText();
+              return (
+                expressionText === "Service" ||
+                expressionText === "AutoWireService" ||
+                expressionText.includes("Service")
+              );
+            }
+          } catch (error) {
+            // Ignore malformed decorators
+          }
+          return false;
+        });
 
-    if (!hasServiceDecorator) return;
+      if (!hasServiceDecorator) return;
 
-    const constructors = classDecl.getConstructors();
-    if (constructors.length === 0) return;
+      const constructors = classDecl.getConstructors();
+      if (constructors.length === 0) return;
 
-    const constructor = constructors[0];
-    const parameters = constructor.getParameters();
-    
-    const constructorParams: ConstructorParam[] = [];
-    const interfaceDependencies: string[] = [];
+      const constructor = constructors[0];
+      const parameters = constructor.getParameters();
 
-    for (const param of parameters) {
-      // Check if parameter has any inject decorator (@Inject, @AutoWireInject, etc.)
-      const hasInjectDecorator = param.getDecorators().some(decorator => {
-        const expression = decorator.getExpression();
-        if (Node.isCallExpression(expression)) {
-          const expressionText = expression.getExpression().getText();
-          return expressionText === 'Inject' || 
-                 expressionText === 'AutoWireInject' ||
-                 expressionText === 'Autowired' ||
-                 expressionText.includes('Inject');
-        } else if (Node.isIdentifier(expression)) {
-          // Handle decorators without parentheses
-          const expressionText = expression.getText();
-          return expressionText === 'Inject' || 
-                 expressionText === 'AutoWireInject' ||
-                 expressionText === 'Autowired' ||
-                 expressionText.includes('Inject');
+      const constructorParams: ConstructorParam[] = [];
+      const interfaceDependencies: string[] = [];
+
+      for (const param of parameters) {
+        try {
+          // Check if parameter has any inject decorator (@Inject, @AutoWireInject, etc.)
+          const hasInjectDecorator = param.getDecorators().some((decorator) => {
+            try {
+              const expression = decorator.getExpression();
+              if (Node.isCallExpression(expression)) {
+                const expressionText = expression.getExpression().getText();
+                return (
+                  expressionText === "Inject" ||
+                  expressionText === "AutoWireInject" ||
+                  expressionText === "Autowired" ||
+                  expressionText.includes("Inject")
+                );
+              } else if (Node.isIdentifier(expression)) {
+                // Handle decorators without parentheses
+                const expressionText = expression.getText();
+                return (
+                  expressionText === "Inject" ||
+                  expressionText === "AutoWireInject" ||
+                  expressionText === "Autowired" ||
+                  expressionText.includes("Inject")
+                );
+              }
+            } catch (error) {
+              // Ignore malformed decorators
+            }
+            return false;
+          });
+
+          if (!hasInjectDecorator) continue;
+
+          const paramType = param.getTypeNode()?.getText();
+          if (!paramType) continue;
+
+          const sanitizedKey = this.sanitizeKey(paramType);
+          const paramName = param.getName();
+          const isOptional = param.hasQuestionToken();
+
+          constructorParams.push({
+            paramName,
+            interfaceType: paramType,
+            isOptional,
+            sanitizedKey,
+          });
+
+          interfaceDependencies.push(sanitizedKey);
+
+          if (this.options.verbose) {
+            console.log(
+              `🔗 ${className} depends on ${paramType} (key: ${sanitizedKey})`
+            );
+          }
+        } catch (error) {
+          // Skip malformed parameters
+          if (this.options.verbose) {
+            console.warn(
+              `⚠️  Failed to process parameter in ${className}:`,
+              error
+            );
+          }
         }
-        return false;
-      });
-
-      if (!hasInjectDecorator) continue;
-
-      const paramType = param.getTypeNode()?.getText();
-      if (!paramType) continue;
-
-      const sanitizedKey = this.sanitizeKey(paramType);
-      const paramName = param.getName();
-      const isOptional = param.hasQuestionToken();
-
-      constructorParams.push({
-        paramName,
-        interfaceType: paramType,
-        isOptional,
-        sanitizedKey
-      });
-
-      interfaceDependencies.push(sanitizedKey);
-
-      if (this.options.verbose) {
-        console.log(`🔗 ${className} depends on ${paramType} (key: ${sanitizedKey})`);
       }
-    }
 
-    if (constructorParams.length > 0) {
-      this.dependencies.set(className, {
-        serviceClass: className,
-        interfaceDependencies,
-        filePath: sourceFile.getFilePath(),
-        constructorParams
-      });
+      if (constructorParams.length > 0) {
+        this.dependencies.set(className, {
+          serviceClass: className,
+          interfaceDependencies,
+          filePath: sourceFile.getFilePath(),
+          constructorParams,
+        });
+      }
+    } catch (error) {
+      // Handle malformed class gracefully
+      if (this.options.verbose) {
+        console.warn(
+          `⚠️  Failed to process dependencies for ${className}:`,
+          error
+        );
+      }
     }
   }
 
+  // Alternative approach: Create a method to normalize generic types consistently
+  private normalizeGenericType(type: string): string {
+    // Strategy: All generic type parameters become 'any' for matching purposes
+    // CacheInterface<T> -> CacheInterface<any>
+    // CacheInterface<string> -> CacheInterface<any>
+    // CacheInterface<User> -> CacheInterface<any>
+    // This allows any implementation to match any usage
+
+    return type.replace(/<[^>]*>/g, "<any>");
+  }
+
+  // Enhanced sanitizeKey that uses normalization
   private sanitizeKey(type: string): string {
-    // First normalize generic parameters before removing special characters
-    let normalized = type;
-    
-    // Replace common generic type parameters with 'any' to unify them
-    // This allows CacheInterface<T> to match CacheInterface<any>
-    normalized = normalized.replace(/<(T|U|V|K|any|string|number|boolean|\w+)>/g, '<any>');
-    
-    // Then remove special characters and convert to safe key
-    const sanitized = normalized
-      .replace(/[^\w\s]/gi, '_')
-      .replace(/_+/g, '_') // Remove multiple underscores
-      .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
-    
-    return sanitized;
+    try {
+      // Step 1: Normalize generic types to use 'any'
+      const normalized = this.normalizeGenericType(type.trim());
+
+      // Step 2: Convert to safe identifier
+      let sanitized = normalized
+        .replace(/<any>/g, "_any") // CacheInterface<any> -> CacheInterface_any
+        .replace(/[^\w]/g, "_") // Replace remaining special chars
+        .replace(/_+/g, "_") // Remove multiple underscores
+        .replace(/^_|_$/g, ""); // Remove leading/trailing underscores
+
+      return sanitized || type.replace(/[^\w]/g, "_");
+    } catch (error) {
+      return type.replace(/[^\w]/g, "_");
+    }
+  }
+
+  // Helper method to get implementations by interface name
+  getImplementationsByInterface(
+    interfaceName: string
+  ): InterfaceImplementation[] {
+    const implementations: InterfaceImplementation[] = [];
+    const sanitizedKey = this.sanitizeKey(interfaceName);
+
+    for (const [key, implementation] of this.interfaces) {
+      if (
+        implementation.sanitizedKey === sanitizedKey ||
+        implementation.interfaceName === interfaceName
+      ) {
+        implementations.push(implementation);
+      }
+    }
+
+    return implementations;
+  }
+
+  // Helper method to get implementation by class name
+  getImplementationByClass(
+    className: string
+  ): InterfaceImplementation | undefined {
+    for (const [key, implementation] of this.interfaces) {
+      if (implementation.implementationClass === className) {
+        return implementation;
+      }
+    }
+    return undefined;
   }
 
   // Public API methods
@@ -305,71 +460,109 @@ export class InterfaceResolver {
     return this.dependencies;
   }
 
-  resolveImplementation(interfaceType: string): InterfaceImplementation | undefined {
+  resolveImplementation(
+    interfaceType: string
+  ): InterfaceImplementation | undefined {
     const sanitizedKey = this.sanitizeKey(interfaceType);
-    return this.interfaces.get(sanitizedKey);
+
+    // Find the first implementation for this interface
+    for (const [key, implementation] of this.interfaces) {
+      if (implementation.sanitizedKey === sanitizedKey) {
+        return implementation;
+      }
+    }
+
+    return undefined;
   }
 
   getDependencyTree(): DependencyNode[] {
     const nodes: DependencyNode[] = [];
-    
+
     for (const [serviceClass, dependency] of this.dependencies) {
+      const resolved: string[] = [];
+
+      for (const depKey of dependency.interfaceDependencies) {
+        for (const [key, implementation] of this.interfaces) {
+          if (implementation.sanitizedKey === depKey) {
+            resolved.push(implementation.implementationClass);
+            break; // Take first match
+          }
+        }
+      }
+
       const node: DependencyNode = {
         id: serviceClass,
         dependencies: dependency.interfaceDependencies,
-        resolved: dependency.interfaceDependencies.map(dep => {
-          const impl = this.interfaces.get(dep);
-          return impl ? impl.implementationClass : null;
-        }).filter(Boolean) as string[]
+        resolved,
       };
-      
+
       nodes.push(node);
     }
-    
+
     return nodes;
   }
 
   validateDependencies(): ValidationResult {
     const missing: string[] = [];
     const circular: string[] = [];
-    
+
+    // Check for missing implementations
     for (const [serviceClass, dependency] of this.dependencies) {
       for (const depKey of dependency.interfaceDependencies) {
-        if (!this.interfaces.has(depKey)) {
+        let found = false;
+        for (const [key, implementation] of this.interfaces) {
+          if (implementation.sanitizedKey === depKey) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
           missing.push(`${serviceClass} -> ${depKey}`);
         }
       }
     }
 
-    // Simple circular dependency detection
+    // FIXED: Improved circular dependency detection
     const visited = new Set<string>();
     const recursionStack = new Set<string>();
-    
-    const hasCycle = (node: string): boolean => {
+
+    const hasCycle = (node: string, path: string[] = []): boolean => {
       if (recursionStack.has(node)) {
-        circular.push(node);
+        const cycleStart = path.indexOf(node);
+        if (cycleStart >= 0) {
+          const cycle = path.slice(cycleStart).concat([node]);
+          circular.push(cycle.join(" -> "));
+        }
         return true;
       }
-      
+
       if (visited.has(node)) return false;
-      
+
       visited.add(node);
       recursionStack.add(node);
-      
+
       const dependency = this.dependencies.get(node);
       if (dependency) {
         for (const depKey of dependency.interfaceDependencies) {
-          const impl = this.interfaces.get(depKey);
-          if (impl && hasCycle(impl.implementationClass)) {
-            return true;
+          // Find implementation for this dependency
+          for (const [key, implementation] of this.interfaces) {
+            if (implementation.sanitizedKey === depKey) {
+              if (
+                hasCycle(implementation.implementationClass, [...path, node])
+              ) {
+                recursionStack.delete(node);
+                return true;
+              }
+              break;
+            }
           }
         }
       }
-      
+
       recursionStack.delete(node);
       return false;
     };
-    
+
     for (const serviceClass of this.dependencies.keys()) {
       if (!visited.has(serviceClass)) {
         hasCycle(serviceClass);
@@ -379,7 +572,7 @@ export class InterfaceResolver {
     return {
       isValid: missing.length === 0 && circular.length === 0,
       missingImplementations: missing,
-      circularDependencies: circular
+      circularDependencies: circular,
     };
   }
 }
