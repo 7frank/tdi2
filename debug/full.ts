@@ -77,8 +77,7 @@ async function comprehensiveDebug() {
         // Multiple ways to check for implements
         const isImplementsClause = 
           token === SyntaxKind.ImplementsKeyword || 
-          heritageText.includes('implements') ||
-          token === 118; // Direct number check
+          heritageText.includes('implements')
         
         console.log(`      Is Implements Clause: ${isImplementsClause}`);
         
