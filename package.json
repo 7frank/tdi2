@@ -18,15 +18,15 @@
     "di:simple": "tsx test-simple-di.ts",
     
     "// === Configuration Management ===": "",
-    "di:clean": "tsx -e \"import {ConfigManager} from './tools/config-manager.js'; ConfigManager.cleanOldConfigs(0); console.log('🗑️ Cleaned all DI configs');\"",
-    "di:clean-keep-recent": "tsx -e \"import {ConfigManager} from './tools/config-manager.js'; ConfigManager.cleanOldConfigs(3); console.log('🗑️ Cleaned old DI configs, kept 3 most recent');\"",
-    "di:list": "tsx -e \"import {ConfigManager} from './tools/config-manager.js'; ConfigManager.listConfigs();\"",
+    "di:clean": "tsx -e \"import {ConfigManager} from './tools/config-manager.ts'; ConfigManager.cleanOldConfigs(0); console.log('🗑️ Cleaned all DI configs');\"",
+    "di:clean-keep-recent": "tsx -e \"import {ConfigManager} from './tools/config-manager.ts'; ConfigManager.cleanOldConfigs(3); console.log('🗑️ Cleaned old DI configs, kept 3 most recent');\"",
+    "di:list": "tsx -e \"import {ConfigManager} from './tools/config-manager.ts'; ConfigManager.listConfigs();\"",
     "di:reset": "npm run di:clean && npm run di:enhanced",
     
     "// === Debug and Info Scripts ===": "",
     "di:info": "tsx -e \"console.log('🔍 DI Debug Info at: http://localhost:5173/_di_debug'); console.log('📋 Interface Mappings at: http://localhost:5173/_di_interfaces'); console.log('📋 Config List at: http://localhost:5173/_di_configs'); console.log('🔄 Force Regenerate: POST to http://localhost:5173/_di_regenerate');\"",
-    "di:validate": "tsx -e \"import {EnhancedDITransformer} from './tools/enhanced-di-transformer.js'; const t = new EnhancedDITransformer({verbose: true}); t.transform().then(() => t.getDebugInfo()).then(info => { console.log('✅ Validation completed'); console.log('📊 Results:', info.validation); if (!info.validation.isValid) { console.error('❌ Validation failed'); process.exit(1); } });\"",
-    "di:check-config": "tsx -e \"import {ConfigManager} from './tools/config-manager.js'; const cm = new ConfigManager({srcDir: './src', outputDir: './src/generated', enableFunctionalDI: true, verbose: true}); console.log('🏗️ Current config:', cm.getConfigHash()); console.log('✅ Config valid:', cm.isConfigValid()); const existing = cm.findExistingConfig(); if (existing) console.log('♻️ Existing config found:', existing);\"",
+    "di:validate": "tsx -e \"import {EnhancedDITransformer} from './tools/enhanced-di-transformer.ts'; const t = new EnhancedDITransformer({verbose: true}); t.transform().then(() => t.getDebugInfo()).then(info => { console.log('✅ Validation completed'); console.log('📊 Results:', info.validation); if (!info.validation.isValid) { console.error('❌ Validation failed'); process.exit(1); } });\"",
+    "di:check-config": "tsx -e \"import {ConfigManager} from './tools/config-manager.ts'; const cm = new ConfigManager({srcDir: './src', outputDir: './src/generated', enableFunctionalDI: true, verbose: true}); console.log('🏗️ Current config:', cm.getConfigHash()); console.log('✅ Config valid:', cm.isConfigValid()); const existing = cm.findExistingConfig(); if (existing) console.log('♻️ Existing config found:', existing);\"",
     
     "// === Development Workflow ===": "",
     "dev:fresh": "npm run di:reset && npm run dev",
@@ -36,6 +36,6 @@
     "// === Testing Scripts ===": "",
     "test": "bun run test-di.ts",
     "test:functional": "bun run test-functional-di.tsx",
-    "test:interfaces": "tsx -e \"import {InterfaceResolver} from './tools/interface-resolver.js'; const r = new InterfaceResolver({verbose: true}); r.scanProject().then(() => { console.log('✅ Interface scanning completed'); console.log('📋 Implementations:', r.getInterfaceImplementations().size); console.log('🔗 Dependencies:', r.getServiceDependencies().size); const validation = r.validateDependencies(); console.log('✅ Validation:', validation.isValid ? 'PASSED' : 'FAILED'); if (!validation.isValid) { console.log('❌ Issues:', validation); } });\""
+    "test:interfaces": "tsx -e \"import {InterfaceResolver} from './tools/interface-resolver.ts'; const r = new InterfaceResolver({verbose: true}); r.scanProject().then(() => { console.log('✅ Interface scanning completed'); console.log('📋 Implementations:', r.getInterfaceImplementations().size); console.log('🔗 Dependencies:', r.getServiceDependencies().size); const validation = r.validateDependencies(); console.log('✅ Validation:', validation.isValid ? 'PASSED' : 'FAILED'); if (!validation.isValid) { console.log('❌ Issues:', validation); } });\""
   }
 }
