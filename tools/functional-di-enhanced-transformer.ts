@@ -1,4 +1,4 @@
-// tools/build-time-di-transformer.ts - Updated with ConfigManager support
+// tools/functional-di-enhanced-transformer.ts - Interface-based functional DI
 
 import { 
   Project, 
@@ -13,11 +13,14 @@ import {
 import * as path from 'path';
 import * as fs from 'fs';
 import { ConfigManager } from './config-manager';
+import { InterfaceResolver, InterfaceImplementation } from './interface-resolver';
 
 interface FunctionalDependency {
   serviceKey: string;
-  token: string;
+  interfaceType: string;
+  sanitizedKey: string;
   isOptional: boolean;
+  resolvedImplementation?: InterfaceImplementation;
 }
 
 interface TransformationOptions {
@@ -28,9 +31,9 @@ interface TransformationOptions {
   customSuffix?: string;
 }
 
-export class BuildTimeDITransformer {
+export class FunctionalDIEnhancedTransformer {
   private project: Project;
-  private tokenMap: Map<string, string> = new Map();
+  private interfaceResolver: InterfaceResolver;
   private transformedFiles: Map<string, string> = new Map();
   private options: TransformationOptions;
   private transformationCount = 0;
@@ -39,7 +42,7 @@ export class BuildTimeDITransformer {
   constructor(options: TransformationOptions = {}) {
     this.options = {
       srcDir: './src',
-      outputDir: './src/generated', // Will be overridden by ConfigManager
+      outputDir: './src/generated',
       generateDebugFiles: false,
       verbose: false,
       ...options
@@ -59,14 +62,29 @@ export class BuildTimeDITransformer {
       customSuffix: this.options.customSuffix
     });
 
-    // Token mappings
-    this.tokenMap.set('ExampleApiInterface', 'EXAMPLE_API_TOKEN');
-    this.tokenMap.set('LoggerService', 'LOGGER_TOKEN');
+    // Initialize InterfaceResolver
+    this.interfaceResolver = new InterfaceResolver({
+      verbose: this.options.verbose,
+      srcDir: this.options.srcDir
+    });
   }
 
   async transformForBuild(): Promise<Map<string, string>> {
     if (this.options.verbose) {
-      console.log('🔧 Starting functional DI transformation...');
+      console.log('🎯 Starting interface-based functional DI transformation...');
+    }
+
+    // First, scan for interface implementations
+    await this.interfaceResolver.scanProject();
+
+    // Validate dependencies
+    const validation = this.interfaceResolver.validateDependencies();
+    if (!validation.isValid) {
+      console.warn('⚠️  Some dependencies may not be resolvable:');
+      if (validation.missingImplementations.length > 0) {
+        console.warn('Missing implementations:', validation.missingImplementations);
+      }
+      // Continue with transformation even if some dependencies are missing
     }
 
     // Add source files
@@ -89,6 +107,15 @@ export class BuildTimeDITransformer {
     if (this.options.verbose) {
       console.log(`✅ Transformed ${this.transformationCount} functions in ${this.transformedFiles.size} files`);
       console.log(`🏗️  Config directory: ${this.configManager.getConfigDir()}`);
+      
+      // Show resolved interfaces
+      const implementations = this.interfaceResolver.getInterfaceImplementations();
+      if (implementations.size > 0) {
+        console.log('\n📋 Available Interface Implementations:');
+        for (const [key, impl] of implementations) {
+          console.log(`  ${impl.interfaceName} -> ${impl.implementationClass}`);
+        }
+      }
     }
 
     return this.transformedFiles;
@@ -99,7 +126,7 @@ export class BuildTimeDITransformer {
     return filePath.includes('generated') || 
            filePath.includes('node_modules') ||
            filePath.includes('.d.ts') ||
-           filePath.includes('.tdi2'); // Skip bridge files
+           filePath.includes('.tdi2');
   }
 
   private transformSourceFile(sourceFile: SourceFile): boolean {
@@ -149,11 +176,14 @@ export class BuildTimeDITransformer {
     const dependencies = this.extractDependenciesFromParameter(firstParam);
     if (dependencies.length === 0) return false;
 
+    // Resolve implementations for dependencies
+    const resolvedDependencies = this.resolveDependencies(dependencies, func.getName() || 'anonymous');
+
     // Add DI imports if needed
     this.ensureDIImports(sourceFile);
 
     // Prepend DI code to function body
-    this.prependDICodeToFunction(func, dependencies);
+    this.prependDICodeToFunction(func, resolvedDependencies);
 
     // Remove services from parameter type
     this.removeServicesFromParameterType(firstParam);
@@ -173,11 +203,14 @@ export class BuildTimeDITransformer {
     const dependencies = this.extractDependenciesFromParameter(firstParam);
     if (dependencies.length === 0) return false;
 
+    // Resolve implementations for dependencies
+    const resolvedDependencies = this.resolveDependencies(dependencies, declaration.getName());
+
     // Add DI imports if needed
     this.ensureDIImports(sourceFile);
 
     // Prepend DI code to arrow function body
-    this.prependDICodeToArrowFunction(arrowFunc, dependencies);
+    this.prependDICodeToArrowFunction(arrowFunc, resolvedDependencies);
 
     // Remove services from parameter type
     this.removeServicesFromParameterType(firstParam);
@@ -223,29 +256,66 @@ export class BuildTimeDITransformer {
     const injectMatch = typeText.match(/Inject<([^>]+)>/);
     const optionalMatch = typeText.match(/InjectOptional<([^>]+)>/);
     
+    let interfaceType: string;
+    let isOptional: boolean;
+
     if (injectMatch) {
-      const interfaceType = injectMatch[1];
-      return {
-        serviceKey: propName,
-        token: this.resolveInterfaceToToken(interfaceType),
-        isOptional: false
-      };
-    }
-    
-    if (optionalMatch) {
-      const interfaceType = optionalMatch[1];
-      return {
-        serviceKey: propName,
-        token: this.resolveInterfaceToToken(interfaceType),
-        isOptional: true
-      };
+      interfaceType = injectMatch[1];
+      isOptional = false;
+    } else if (optionalMatch) {
+      interfaceType = optionalMatch[1];
+      isOptional = true;
+    } else {
+      return null;
     }
 
-    return null;
+    const sanitizedKey = this.sanitizeKey(interfaceType);
+
+    return {
+      serviceKey: propName,
+      interfaceType,
+      sanitizedKey,
+      isOptional
+    };
   }
 
-  private resolveInterfaceToToken(interfaceType: string): string {
-    return this.tokenMap.get(interfaceType) || `${interfaceType.toUpperCase()}_TOKEN`;
+  private resolveDependencies(
+    dependencies: FunctionalDependency[], 
+    componentName: string
+  ): FunctionalDependency[] {
+    const resolved: FunctionalDependency[] = [];
+
+    for (const dependency of dependencies) {
+      const implementation = this.interfaceResolver.resolveImplementation(dependency.interfaceType);
+      
+      if (implementation) {
+        dependency.resolvedImplementation = implementation;
+        resolved.push(dependency);
+        
+        if (this.options.verbose) {
+          console.log(`🔗 ${componentName}: ${dependency.interfaceType} -> ${implementation.implementationClass}`);
+        }
+      } else {
+        if (dependency.isOptional) {
+          // Optional dependency, continue without implementation
+          resolved.push(dependency);
+          
+          if (this.options.verbose) {
+            console.log(`⚠️  ${componentName}: Optional dependency ${dependency.interfaceType} not found`);
+          }
+        } else {
+          // Required dependency missing - warn but continue
+          console.warn(`⚠️  ${componentName}: Required dependency ${dependency.interfaceType} not found`);
+          resolved.push(dependency); // Include anyway for error handling at runtime
+        }
+      }
+    }
+
+    return resolved;
+  }
+
+  private sanitizeKey(type: string): string {
+    return type.replace(/[^\w\s]/gi, '_');
   }
 
   private ensureDIImports(sourceFile: SourceFile): void {
@@ -273,8 +343,18 @@ export class BuildTimeDITransformer {
     const diStatements: string[] = [];
     
     for (const dep of dependencies) {
-      const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
-      diStatements.push(`    const ${dep.serviceKey} = ${hookName}('${dep.token}');`);
+      if (dep.resolvedImplementation) {
+        // Use the sanitized key from the resolved implementation
+        const token = dep.resolvedImplementation.sanitizedKey;
+        const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
+        diStatements.push(`    const ${dep.serviceKey} = ${hookName}('${token}');`);
+      } else if (dep.isOptional) {
+        // Optional dependency that couldn't be resolved
+        diStatements.push(`    const ${dep.serviceKey} = undefined; // Optional dependency not found`);
+      } else {
+        // Required dependency that couldn't be resolved - will throw at runtime
+        diStatements.push(`    const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
+      }
     }
 
     // Generate services object
@@ -294,12 +374,19 @@ export class BuildTimeDITransformer {
     // Remove services from destructuring first
     this.removeServicesFromDestructuring(body);
 
-    // Generate DI hook calls
+    // Generate DI hook calls (same logic as function)
     const diStatements: string[] = [];
     
     for (const dep of dependencies) {
-      const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
-      diStatements.push(`    const ${dep.serviceKey} = ${hookName}('${dep.token}');`);
+      if (dep.resolvedImplementation) {
+        const token = dep.resolvedImplementation.sanitizedKey;
+        const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
+        diStatements.push(`    const ${dep.serviceKey} = ${hookName}('${token}');`);
+      } else if (dep.isOptional) {
+        diStatements.push(`    const ${dep.serviceKey} = undefined; // Optional dependency not found`);
+      } else {
+        diStatements.push(`    const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
+      }
     }
 
     // Generate services object
@@ -330,23 +417,19 @@ export class BuildTimeDITransformer {
     const statements = body.getStatements();
     
     for (const statement of statements) {
-      // Check for variable declarations with destructuring
       if (Node.isVariableStatement(statement)) {
         const declarations = statement.getDeclarationList().getDeclarations();
         
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
           
-          // Check if it's object destructuring from props
           if (Node.isObjectBindingPattern(nameNode)) {
             const initializer = declaration.getInitializer();
             
-            // Only process if it's destructuring from 'props'
             if (initializer && Node.isIdentifier(initializer) && initializer.getText() === 'props') {
               const elements = nameNode.getElements();
               const nonServicesElements: string[] = [];
               
-              // Collect non-services elements
               for (const element of elements) {
                 if (Node.isBindingElement(element)) {
                   const propertyName = element.getPropertyNameNode();
@@ -359,20 +442,16 @@ export class BuildTimeDITransformer {
                     elementName = name.getText();
                   }
                   
-                  // Keep everything except 'services'
                   if (elementName !== 'services') {
                     nonServicesElements.push(element.getText());
                   }
                 }
               }
               
-              // If we removed services and have other elements, reconstruct the destructuring
               if (nonServicesElements.length > 0 && nonServicesElements.length < elements.length) {
                 const newDestructuring = `const { ${nonServicesElements.join(', ')} } = props;`;
                 statement.replaceWithText(newDestructuring);
-              }
-              // If only services was being destructured, remove the entire statement
-              else if (nonServicesElements.length === 0) {
+              } else if (nonServicesElements.length === 0) {
                 statement.remove();
               }
             }
@@ -387,7 +466,6 @@ export class BuildTimeDITransformer {
 
     const transformedDir = this.configManager.getTransformedDir();
     
-    // Ensure transformed directory exists
     if (!fs.existsSync(transformedDir)) {
       fs.mkdirSync(transformedDir, { recursive: true });
     }
@@ -402,7 +480,6 @@ export class BuildTimeDITransformer {
           await fs.promises.mkdir(debugDir, { recursive: true });
         }
         
-        // Add header comment to debug file
         const debugContent = `// Auto-generated transformed file - do not edit
 // Original: ${relativePath}
 // Config: ${this.configManager.getConfigHash()}
@@ -424,17 +501,24 @@ ${transformedContent}`;
   getTransformationSummary(): { 
     count: number; 
     functions: string[]; 
-    transformedFiles: string[] 
+    transformedFiles: string[];
+    resolvedDependencies: number;
   } {
+    const implementations = this.interfaceResolver.getInterfaceImplementations();
+    
     return {
       count: this.transformationCount,
-      functions: [], // Could track function names if needed
-      transformedFiles: Array.from(this.transformedFiles.keys())
+      functions: [],
+      transformedFiles: Array.from(this.transformedFiles.keys()),
+      resolvedDependencies: implementations.size
     };
   }
 
-  // Expose ConfigManager for external use
   getConfigManager(): ConfigManager {
     return this.configManager;
+  }
+
+  getInterfaceResolver(): InterfaceResolver {
+    return this.interfaceResolver;
   }
 }

@@ -1,8 +1,10 @@
 import "./App.css";
 
-import { UserProfile, DataList } from "./components/NewFunctionalComponent";
 import { SimpleTest } from "./components/SimpleTestComponent";
-
+import {
+  DataList,
+  UserProfile,
+} from "./components/EnhancedFunctionalComponent";
 function Foo() {
   return (
     <div

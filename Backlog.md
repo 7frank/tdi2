@@ -1,4 +1,4 @@
-- transformer is hard bound
+- [/] transformer is hard bound
 
   ```tỳpescript
       // Add known token mappings

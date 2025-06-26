@@ -8,14 +8,14 @@ export interface LoggerService {
   log(message: string): void;
 }
 
-export const LOGGER_TOKEN = 'LOGGER_TOKEN';
+
 
 @Service({ token: EXAMPLE_API_TOKEN })
 export class ExampleApiService implements ExampleApiInterface {
   
   // Example of constructor injection
   constructor(
-    @Inject(LOGGER_TOKEN) private logger?: LoggerService
+    @Inject() private logger?: LoggerService
   ) {}
 
   async getData(): Promise<string[]> {

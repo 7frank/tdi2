@@ -77,7 +77,7 @@ function UserProfile(props: {
 // After transformation (generated code)
 function UserProfile({ userId }: { userId: string }) {
   const api = useService("USER_API_TOKEN");
-  const logger = useOptionalService("LOGGER_TOKEN");
+  const logger = useOptionalService("LoggerService");
   const services = { api, logger };
 
   // Your component logic using services.api and services.logger
@@ -93,7 +93,7 @@ Traditional decorator-based DI for business logic:
 export class UserApiService implements UserApiInterface {
   constructor(
     @Inject("HTTP_CLIENT_TOKEN") private http: HttpClient,
-    @Inject("LOGGER_TOKEN") private logger?: LoggerInterface
+    @Inject() private logger?: LoggerInterface
   ) {}
 }
 ```
