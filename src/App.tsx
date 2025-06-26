@@ -51,6 +51,11 @@ function Foo() {
   );
 }
 
+/** DI marker to prevent squigly lines
+ * TODO we should have a linter rule that detects that services has Inject markers
+ */
+const SERVICES = {} as any;
+
 function App() {
   return (
     <div
@@ -62,8 +67,8 @@ function App() {
       }}
     >
       <h3>🎯 Functional DI Example</h3>
-      <UserProfile userId="foo1" title="it works" />
-      <DataList category="bar" />
+      <UserProfile userId="foo1" title="it works" services={SERVICES} />
+      <DataList category="bar" services={SERVICES} />
       <SimpleTest message="baz" />
       <Foo />
     </div>
