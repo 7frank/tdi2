@@ -1,14 +1,13 @@
 {
-  "name": "tdi2",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "prebuild": "npm run di:enhanced",
+    "prebuild": "npm run di:build-prepare",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    
+    "// === Enhanced DI Scripts ===": "",
+    "di:build-prepare": "npm run di:enhanced",
     "di:transform": "tsx tools/di-transformer.ts",
     "di:enhanced": "tsx tools/enhanced-di-transformer.ts",
     "di:functional": "tsx tools/functional-di-enhanced-transformer.ts",
@@ -17,32 +16,26 @@
     "di:build-time": "tsx tools/build-time-di-transformer.ts",
     "di:debug": "tsx tools/build-time-di-transformer.ts --debug",
     "di:simple": "tsx test-simple-di.ts",
+    
+    "// === Configuration Management ===": "",
     "di:clean": "tsx -e \"import {ConfigManager} from './tools/config-manager.js'; ConfigManager.cleanOldConfigs(0); console.log('🗑️ Cleaned all DI configs');\"",
-    "di:list": "tsx -e \"import * as fs from 'fs'; import * as path from 'path'; const dir='node_modules/.tdi2/configs'; if(fs.existsSync(dir)) { const configs = fs.readdirSync(dir); console.log('📋 Available configs:', configs); } else { console.log('No configs found'); }\"",
-    "di:info": "tsx -e \"console.log('🔍 DI Debug Info at: http://localhost:5173/_di_debug'); console.log('📋 Interface Mappings at: http://localhost:5173/_di_interfaces'); console.log('📋 Config List at: http://localhost:5173/_di_configs');\"",
-    "di:validate": "tsx -e \"import {EnhancedDITransformer} from './tools/enhanced-di-transformer.js'; const t = new EnhancedDITransformer({verbose: true}); t.transform().then(() => t.getDebugInfo()).then(info => console.log('Validation:', info.validation));\"",
+    "di:clean-keep-recent": "tsx -e \"import {ConfigManager} from './tools/config-manager.js'; ConfigManager.cleanOldConfigs(3); console.log('🗑️ Cleaned old DI configs, kept 3 most recent');\"",
+    "di:list": "tsx -e \"import {ConfigManager} from './tools/config-manager.js'; ConfigManager.listConfigs();\"",
+    "di:reset": "npm run di:clean && npm run di:enhanced",
+    
+    "// === Debug and Info Scripts ===": "",
+    "di:info": "tsx -e \"console.log('🔍 DI Debug Info at: http://localhost:5173/_di_debug'); console.log('📋 Interface Mappings at: http://localhost:5173/_di_interfaces'); console.log('📋 Config List at: http://localhost:5173/_di_configs'); console.log('🔄 Force Regenerate: POST to http://localhost:5173/_di_regenerate');\"",
+    "di:validate": "tsx -e \"import {EnhancedDITransformer} from './tools/enhanced-di-transformer.js'; const t = new EnhancedDITransformer({verbose: true}); t.transform().then(() => t.getDebugInfo()).then(info => { console.log('✅ Validation completed'); console.log('📊 Results:', info.validation); if (!info.validation.isValid) { console.error('❌ Validation failed'); process.exit(1); } });\"",
+    "di:check-config": "tsx -e \"import {ConfigManager} from './tools/config-manager.js'; const cm = new ConfigManager({srcDir: './src', outputDir: './src/generated', enableFunctionalDI: true, verbose: true}); console.log('🏗️ Current config:', cm.getConfigHash()); console.log('✅ Config valid:', cm.isConfigValid()); const existing = cm.findExistingConfig(); if (existing) console.log('♻️ Existing config found:', existing);\"",
+    
+    "// === Development Workflow ===": "",
+    "dev:fresh": "npm run di:reset && npm run dev",
+    "dev:check": "npm run di:check-config && npm run dev",
+    "dev:reuse": "npm run dev",
+    
+    "// === Testing Scripts ===": "",
     "test": "bun run test-di.ts",
     "test:functional": "bun run test-functional-di.tsx",
-    "test:interfaces": "tsx -e \"import {InterfaceResolver} from './tools/interface-resolver.js'; const r = new InterfaceResolver({verbose: true}); r.scanProject().then(() => { console.log('✅ Interface scanning completed'); console.log('Implementations:', r.getInterfaceImplementations().size); console.log('Dependencies:', r.getServiceDependencies().size); console.log('Validation:', r.validateDependencies()); });\""
-  },
-  "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.25.0",
-    "@types/node": "^20.0.0",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
-    "@vitejs/plugin-react": "^4.4.1",
-    "eslint": "^9.25.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.19",
-    "globals": "^16.0.0",
-    "ts-morph": "^21.0.1",
-    "tsx": "^4.7.0",
-    "typescript": "~5.8.3",
-    "typescript-eslint": "^8.30.1",
-    "vite": "^6.3.5"
+    "test:interfaces": "tsx -e \"import {InterfaceResolver} from './tools/interface-resolver.js'; const r = new InterfaceResolver({verbose: true}); r.scanProject().then(() => { console.log('✅ Interface scanning completed'); console.log('📋 Implementations:', r.getInterfaceImplementations().size); console.log('🔗 Dependencies:', r.getServiceDependencies().size); const validation = r.validateDependencies(); console.log('✅ Validation:', validation.isValid ? 'PASSED' : 'FAILED'); if (!validation.isValid) { console.log('❌ Issues:', validation); } });\""
   }
 }
