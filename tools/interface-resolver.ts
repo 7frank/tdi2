@@ -6,7 +6,8 @@ import {
   ClassDeclaration,
   InterfaceDeclaration,
   TypeParameterDeclaration,
-  Node
+  Node,
+  SyntaxKind
 } from 'ts-morph';
 import * as path from 'path';
 
@@ -87,14 +88,20 @@ export class InterfaceResolver {
     const className = classDecl.getName();
     if (!className) return;
 
-    // Check if class has @AutoWireService decorator
+    // Check if class has any service decorator (@Service, @AutoWireService, etc.)
     const hasServiceDecorator = classDecl.getDecorators().some(decorator => {
       const expression = decorator.getExpression();
       if (Node.isCallExpression(expression)) {
         const expressionText = expression.getExpression().getText();
         return expressionText === 'Service' || 
                expressionText === 'AutoWireService' ||
-               expressionText.includes('AutoWireService');
+               expressionText.includes('Service');
+      } else if (Node.isIdentifier(expression)) {
+        // Handle decorators without parentheses like @Service
+        const expressionText = expression.getText();
+        return expressionText === 'Service' || 
+               expressionText === 'AutoWireService' ||
+               expressionText.includes('Service');
       }
       return false;
     });
@@ -140,7 +147,11 @@ export class InterfaceResolver {
     const heritageClauses = classDecl.getHeritageClauses();
     
     for (const heritage of heritageClauses) {
-      if (heritage.getToken() === 118) { // SyntaxKind.ImplementsKeyword
+      // Check if this is an implements clause
+      const token = heritage.getToken();
+      const isImplementsClause = token === SyntaxKind.ImplementsKeyword || heritage.getText().includes('implements');
+      
+      if (isImplementsClause) {
         for (const type of heritage.getTypeNodes()) {
           const fullType = type.getText();
           const isGeneric = fullType.includes('<');
@@ -185,11 +196,17 @@ export class InterfaceResolver {
     const className = classDecl.getName();
     if (!className) return;
 
-    // Check if class has any DI decorator
+    // Check if class has any DI decorator (@Service, @AutoWireService, etc.)
     const hasServiceDecorator = classDecl.getDecorators().some(decorator => {
       const expression = decorator.getExpression();
       if (Node.isCallExpression(expression)) {
         const expressionText = expression.getExpression().getText();
+        return expressionText === 'Service' || 
+               expressionText === 'AutoWireService' ||
+               expressionText.includes('Service');
+      } else if (Node.isIdentifier(expression)) {
+        // Handle decorators without parentheses like @Service
+        const expressionText = expression.getText();
         return expressionText === 'Service' || 
                expressionText === 'AutoWireService' ||
                expressionText.includes('Service');
@@ -209,13 +226,21 @@ export class InterfaceResolver {
     const interfaceDependencies: string[] = [];
 
     for (const param of parameters) {
-      // Check if parameter has @AutoWireInject decorator
+      // Check if parameter has any inject decorator (@Inject, @AutoWireInject, etc.)
       const hasInjectDecorator = param.getDecorators().some(decorator => {
         const expression = decorator.getExpression();
         if (Node.isCallExpression(expression)) {
           const expressionText = expression.getExpression().getText();
           return expressionText === 'Inject' || 
                  expressionText === 'AutoWireInject' ||
+                 expressionText === 'Autowired' ||
+                 expressionText.includes('Inject');
+        } else if (Node.isIdentifier(expression)) {
+          // Handle decorators without parentheses
+          const expressionText = expression.getText();
+          return expressionText === 'Inject' || 
+                 expressionText === 'AutoWireInject' ||
+                 expressionText === 'Autowired' ||
                  expressionText.includes('Inject');
         }
         return false;
@@ -256,7 +281,12 @@ export class InterfaceResolver {
 
   private sanitizeKey(type: string): string {
     // Remove special characters and normalize for DI container key
-    return type.replace(/[^\w\s]/gi, '_');
+    // Also normalize generic parameters to handle T vs any vs specific types
+    return type
+      .replace(/[^\w\s]/gi, '_')
+      .replace(/\b(any|T|U|V|K)\b/g, 'any') // Normalize generic type parameters
+      .replace(/_+/g, '_') // Remove multiple underscores
+      .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
   }
 
   // Public API methods
