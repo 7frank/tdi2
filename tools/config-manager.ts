@@ -1,4 +1,4 @@
-// tools/config-manager.ts - Manages configuration hashing and bridge files
+// tools/config-manager.ts - Fixed version with consistent hashing
 
 import * as crypto from 'crypto';
 import * as fs from 'fs';
@@ -46,21 +46,96 @@ export class ConfigManager {
   }
 
   private generateConfigHash(): string {
+    // FIXED: Make hash generation more deterministic
+    // Normalize paths to be consistent regardless of execution context
+    const normalizedSrcDir = path.resolve(this.options.srcDir).replace(/\\/g, '/');
+    
+    // Only include essential configuration that affects DI behavior
     const hashInput = {
-      srcDir: path.resolve(this.options.srcDir),
+      srcDir: normalizedSrcDir,
       enableFunctionalDI: this.options.enableFunctionalDI,
-      nodeEnv: this.options.nodeEnv,
       packageName: this.packageName,
-      customSuffix: this.options.customSuffix || ''
+      // Remove nodeEnv from hash unless it's explicitly different
+      // This prevents dev vs build from having different configs
+      environment: this.options.nodeEnv === 'production' ? 'production' : 'development',
+      // Only include customSuffix if provided
+      ...(this.options.customSuffix && { customSuffix: this.options.customSuffix })
     };
 
-    const hashString = JSON.stringify(hashInput, Object.keys(hashInput).sort());
+    // Sort keys for consistent hashing
+    const sortedKeys = Object.keys(hashInput).sort();
+    const sortedHashInput = sortedKeys.reduce((acc, key) => {
+      acc[key] = hashInput[key as keyof typeof hashInput];
+      return acc;
+    }, {} as any);
+
+    const hashString = JSON.stringify(sortedHashInput);
     const hash = crypto.createHash('sha256').update(hashString).digest('hex').substring(0, 8);
     
-    return `${this.packageName}-${this.options.nodeEnv}-${hash}`;
+    // FIXED: Use a more stable naming scheme
+    const configName = `${this.packageName}-${hash}`;
+    
+    if (this.options.verbose) {
+      console.log(`🔑 Config hash inputs:`, sortedHashInput);
+      console.log(`🏗️  Generated config: ${configName}`);
+    }
+    
+    return configName;
   }
 
+  // FIXED: Add method to check for existing configurations
+  findExistingConfig(): string | null {
+    const tdi2Dir = path.resolve('node_modules/.tdi2/configs');
+    
+    if (!fs.existsSync(tdi2Dir)) {
+      return null;
+    }
+
+    try {
+      const configs = fs.readdirSync(tdi2Dir)
+        .filter(name => name.startsWith(this.packageName))
+        .map(name => ({
+          name,
+          path: path.join(tdi2Dir, name),
+          stats: fs.statSync(path.join(tdi2Dir, name))
+        }))
+        .filter(item => item.stats.isDirectory())
+        .sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
+
+      // FIXED: Check if any existing config has the required files
+      for (const config of configs) {
+        const diConfigFile = path.join(config.path, 'di-config.ts');
+        if (fs.existsSync(diConfigFile)) {
+          if (this.options.verbose) {
+            console.log(`♻️  Found existing config: ${config.name}`);
+          }
+          return config.name;
+        }
+      }
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn('⚠️  Failed to scan existing configs:', error);
+      }
+    }
+
+    return null;
+  }
+
+  // FIXED: Use existing config if available and valid
   private ensureDirectories(): void {
+    // Check for existing valid configuration first
+    const existingConfig = this.findExistingConfig();
+    
+    if (existingConfig && existingConfig !== this.configHash) {
+      if (this.options.verbose) {
+        console.log(`🔄 Using existing config: ${existingConfig}`);
+      }
+      
+      // Update to use existing config
+      this.configHash = existingConfig;
+      this.configDir = path.resolve(`node_modules/.tdi2/configs/${this.configHash}`);
+    }
+
     // Ensure config directory exists
     if (!fs.existsSync(this.configDir)) {
       fs.mkdirSync(this.configDir, { recursive: true });
@@ -90,6 +165,14 @@ export class ConfigManager {
       paths: {
         configDir: this.configDir,
         bridgeDir: this.bridgeDir
+      },
+      // FIXED: Add version tracking
+      version: '2.0.0',
+      hashInputs: {
+        srcDir: path.resolve(this.options.srcDir).replace(/\\/g, '/'),
+        enableFunctionalDI: this.options.enableFunctionalDI,
+        packageName: this.packageName,
+        environment: this.options.nodeEnv === 'production' ? 'production' : 'development'
       }
     };
 
@@ -183,12 +266,35 @@ This directory contains auto-generated bridge files that connect your source cod
 ## Files
 - \`di-config.ts\` - Exports DI configuration
 - \`registry.ts\` - Exports service registry
+
+## Debugging
+If you see issues with mismatched configurations:
+1. Check \`npm run di:info\` for debug URLs
+2. Compare config hashes between CLI and dev server
+3. Use \`npm run di:clean\` to reset all configs
+4. Run \`npm run di:enhanced\` followed by \`npm run dev\`
 `;
 
     fs.writeFileSync(
       path.join(this.bridgeDir, 'README.md'),
       readmeContent
     );
+  }
+
+  // FIXED: Add method to check if config is valid
+  isConfigValid(): boolean {
+    const diConfigFile = path.join(this.configDir, 'di-config.ts');
+    const registryFile = path.join(this.configDir, 'AutoGeneratedRegistry.ts');
+    
+    return fs.existsSync(diConfigFile) && fs.existsSync(registryFile);
+  }
+
+  // FIXED: Add method to force regeneration
+  forceRegenerate(): void {
+    if (fs.existsSync(this.configDir)) {
+      fs.rmSync(this.configDir, { recursive: true, force: true });
+    }
+    this.ensureDirectories();
   }
 
   // Getters for other classes to use
@@ -208,7 +314,7 @@ This directory contains auto-generated bridge files that connect your source cod
     return path.join(this.configDir, 'transformed');
   }
 
-  // Clean up old configurations
+  // FIXED: Enhanced cleanup with better logic
   static cleanOldConfigs(keepCount: number = 3): void {
     const tdi2Dir = path.resolve('node_modules/.tdi2/configs');
     
@@ -230,11 +336,71 @@ This directory contains auto-generated bridge files that connect your source cod
       const toRemove = configs.slice(keepCount);
       
       for (const config of toRemove) {
-        fs.rmSync(config.path, { recursive: true, force: true });
-        console.log(`🗑️  Cleaned up old config: ${config.name}`);
+        try {
+          fs.rmSync(config.path, { recursive: true, force: true });
+          console.log(`🗑️  Cleaned up old config: ${config.name}`);
+        } catch (error) {
+          console.warn(`⚠️  Failed to remove config ${config.name}:`, error);
+        }
+      }
+      
+      if (toRemove.length === 0 && configs.length > 0) {
+        console.log(`📋 Found ${configs.length} configs, all within keep limit`);
       }
     } catch (error) {
       console.warn('⚠️  Failed to clean old configs:', error);
+    }
+  }
+
+  // FIXED: Add method to list all configs
+  static listConfigs(): void {
+    const tdi2Dir = path.resolve('node_modules/.tdi2/configs');
+    
+    if (!fs.existsSync(tdi2Dir)) {
+      console.log('📋 No configuration directory found');
+      return;
+    }
+
+    try {
+      const configs = fs.readdirSync(tdi2Dir)
+        .map(name => {
+          const configPath = path.join(tdi2Dir, name);
+          const metaFile = path.join(configPath, '.config-meta.json');
+          let metadata = null;
+          
+          if (fs.existsSync(metaFile)) {
+            try {
+              metadata = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+            } catch (error) {
+              // Ignore metadata read errors
+            }
+          }
+          
+          return {
+            name,
+            path: configPath,
+            metadata,
+            stats: fs.statSync(configPath),
+            isValid: fs.existsSync(path.join(configPath, 'di-config.ts'))
+          };
+        })
+        .filter(item => item.stats.isDirectory())
+        .sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
+
+      console.log(`📋 Found ${configs.length} configurations:`);
+      
+      for (const config of configs) {
+        const age = Math.round((Date.now() - config.stats.mtime.getTime()) / (1000 * 60));
+        const status = config.isValid ? '✅' : '❌';
+        console.log(`  ${status} ${config.name} (${age}m ago)`);
+        
+        if (config.metadata) {
+          console.log(`     Generated: ${config.metadata.generatedAt}`);
+          console.log(`     Options: functional=${config.metadata.options?.enableFunctionalDI}`);
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️  Failed to list configs:', error);
     }
   }
 }

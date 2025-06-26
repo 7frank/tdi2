@@ -1,8 +1,10 @@
 import "./App.css";
 
-import { UserProfile, DataList } from "./components/NewFunctionalComponent";
 import { SimpleTest } from "./components/SimpleTestComponent";
-
+import {
+  DataList,
+  UserProfile,
+} from "./components/EnhancedFunctionalComponent";
 function Foo() {
   return (
     <div
@@ -41,7 +43,7 @@ function Foo() {
         }}
       >
         {`function UserCard({ userId }: { userId: string }) {
-  const api = useService('EXAMPLE_API_TOKEN');
+  const api = useService('ExampleApiService');
   // Original component logic with injected services
 }`}
       </code>

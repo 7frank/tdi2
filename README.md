@@ -1,115 +1,146 @@
-# TDI2 – Dependency Injection for React Functional Components
+# TDI2 – Interface-Based Dependency Injection for React
 
-> A proof-of-concept dependency injection framework that brings Spring Boot-style DI patterns to React applications, with special focus on functional components and build-time optimization.
+> **🎯 NEW: Automatic Interface Resolution!** TDI2 now automatically resolves dependencies using TypeScript interfaces, eliminating the need for manual token mapping. Inspired by [TDI proof-of-concept](https://github.com/7frank/tdi).
+
+## TLDR
+
+#### For Development
+
+```bash
+# Initial setup
+npm run di:enhanced
+
+# Start development (reuses config)
+npm run dev
+
+# If issues arise
+npm run di:reset && npm run dev
+```
 
 ## 🚀 Overview
 
-TDI2 (TypeScript Dependency Injection 2) is an experimental implementation that explores how dependency injection can be elegantly integrated into React applications without sacrificing the functional programming paradigm or runtime performance. Unlike traditional DI approaches that rely on decorators and reflection metadata, TDI2 uses build-time code transformation to inject dependencies into functional components.
+TDI2 (TypeScript Dependency Injection 2) brings **Spring Boot-style dependency injection** to React applications with **automatic interface-to-implementation resolution**. No more manual token management – just use interfaces!
 
 ### Key Features
 
-- **🎯 Functional-First DI**: Transform React functional components with marker interfaces
-- **⚡ Build-Time Optimization**: Zero runtime overhead through compile-time code generation
-- **🔧 Class-Based Support**: Traditional decorator-based DI for service layers
-- **🌉 Bridge Architecture**: Clean separation between generated and source code
+- **🎯 Interface-First DI**: Automatic resolution from TypeScript interfaces
+- **⚡ Zero Manual Tokens**: `@Inject()` automatically finds implementations
+- **🔧 Generic Interface Support**: `CacheInterface<T>`, `Repository<User>` work automatically
+- **🌉 Functional Component DI**: `Inject<ApiInterface>` in React components
 - **🔄 Hot Reload**: Development-friendly with automatic retransformation
-- **📦 TypeScript Native**: Full type safety without `reflect-metadata`
+- **📦 Build-Time Optimization**: Zero runtime overhead through compile-time generation
 
-## 🎯 Problem Statement
+## 🎯 Problem Solved
 
-React's component model, while excellent for UI composition, lacks formalized patterns for dependency management in complex applications. Current approaches have limitations:
+### Before TDI2 (Manual Token Hell)
 
-- **Context API**: Leads to provider hell and tight coupling for non-UI concerns
-- **Direct Imports**: Creates hard dependencies that are difficult to test and swap
-- **Manual DI**: Requires boilerplate and doesn't scale systematically
+```typescript
+// 😰 Manual token management
+export const USER_API_TOKEN = "USER_API_TOKEN";
+export const LOGGER_TOKEN = "LOGGER_TOKEN";
 
-## 🔄 How It Compares
+@Service({ token: USER_API_TOKEN })
+export class UserService implements UserApiInterface {
+  constructor(@Inject(LOGGER_TOKEN) private logger: LoggerInterface) {}
+}
+```
 
-### vs. React Context API
+### After TDI2 (Interface Paradise)
 
-| Aspect          | Context API                     | TDI2                                |
-| --------------- | ------------------------------- | ----------------------------------- |
-| **Coupling**    | Tight coupling to React tree    | Decoupled from component hierarchy  |
-| **Testing**     | Requires provider setup         | Direct service mocking              |
-| **Performance** | Re-renders on context changes   | No context-related re-renders       |
-| **Scope**       | Limited to React component tree | Application-wide service management |
-| **Type Safety** | Manual typing required          | Automatic type inference            |
+```typescript
+// 🎉 Automatic interface resolution!
+@Service()
+export class UserService implements UserApiInterface {
+  constructor(@Inject() private logger: LoggerInterface) {} // Automatically finds ConsoleLogger!
+}
+```
 
-### vs. Class-Based DI Solutions
+## 🔄 How Interface Resolution Works
 
-TDI2 complements existing class-based DI frameworks rather than replacing them:
+TDI2 scans your codebase and automatically builds a mapping:
 
-#### [LemonDI](https://github.com/OleksandrDemian/lemondi)
+```typescript
+// 1. TDI2 finds this implementation
+@Service()
+export class ConsoleLogger implements LoggerInterface {
+  log(message: string) {
+    console.log(message);
+  }
+}
 
-- **Similarity**: Decorator-based service registration, compile-time optimization
-- **Difference**: TDI2 focuses on functional components, LemonDI on class hierarchies
-- **Compatibility**: Could work together - LemonDI for services, TDI2 for components
+// 2. TDI2 finds this consumer
+@Service()
+export class UserService implements UserApiInterface {
+  constructor(@Inject() private logger: LoggerInterface) {}
+  //             ↑ Automatically resolves to ConsoleLogger!
+}
 
-#### [Better DI Framework](https://dev.to/9zemian5/typescript-deserves-a-better-dependency-injection-framework-29bp)
-
-- **Shared Vision**: Move away from `reflect-metadata` towards build-time solutions
-- **Alignment**: Both prioritize TypeScript-native approaches and performance
-
-#### Traditional Solutions (TSyringe, InversifyJS)
-
-- **Runtime Overhead**: Rely on `reflect-metadata` and decorators at runtime
-- **Reflection Dependency**: Require additional polyfills and build configuration
-- **Performance**: Higher memory usage and slower instantiation
+// 3. Generated mapping (automatic!)
+// LoggerInterface -> ConsoleLogger
+// UserApiInterface -> UserService
+```
 
 ## 🏗️ Architecture
 
-### Functional Component DI
-
-Transform marker interfaces into runtime dependency resolution:
+### Interface-Based Service Layer
 
 ```typescript
-// Before transformation (your code)
+// Define your interfaces
+export interface UserRepository {
+  findById(id: string): Promise<User>;
+  save(user: User): Promise<void>;
+}
+
+export interface EmailService {
+  send(to: string, subject: string, body: string): Promise<void>;
+}
+
+// Implement with automatic resolution
+@Service()
+export class DatabaseUserRepository implements UserRepository {
+  constructor(@Inject() private logger: LoggerInterface) {}
+
+  async findById(id: string): Promise<User> {
+    this.logger.log(`Finding user ${id}`);
+    // Implementation...
+  }
+}
+
+@Service()
+export class SMTPEmailService implements EmailService {
+  constructor(
+    @Inject() private config: ConfigService,
+    @Inject() private logger: LoggerInterface
+  ) {}
+
+  async send(to: string, subject: string, body: string): Promise<void> {
+    // Implementation...
+  }
+}
+```
+
+### Functional Component DI
+
+```typescript
+// React components with automatic interface injection
 function UserProfile(props: {
   userId: string;
   services: {
-    api: Inject<UserApiInterface>;
-    logger?: InjectOptional<LoggerInterface>;
+    userRepo: Inject<UserRepository>; // → DatabaseUserRepository
+    email: Inject<EmailService>; // → SMTPEmailService
+    logger?: InjectOptional<LoggerInterface>; // → ConsoleLogger (optional)
   };
 }) {
-  // Your component logic using services.api and services.logger
+  const { userId, services } = props;
+
+  const sendWelcomeEmail = async () => {
+    const user = await services.userRepo.findById(userId);
+    await services.email.send(user.email, "Welcome!", "Hello!");
+    services.logger?.log(`Welcome email sent to ${user.email}`);
+  };
+
+  return <div>{/* Your UI */}</div>;
 }
-
-// After transformation (generated code)
-function UserProfile({ userId }: { userId: string }) {
-  const api = useService("USER_API_TOKEN");
-  const logger = useOptionalService("LOGGER_TOKEN");
-  const services = { api, logger };
-
-  // Your component logic using services.api and services.logger
-}
-```
-
-### Class-Based Service Layer
-
-Traditional decorator-based DI for business logic:
-
-```typescript
-@Service({ token: "USER_API_TOKEN" })
-export class UserApiService implements UserApiInterface {
-  constructor(
-    @Inject("HTTP_CLIENT_TOKEN") private http: HttpClient,
-    @Inject("LOGGER_TOKEN") private logger?: LoggerInterface
-  ) {}
-}
-```
-
-### Build-Time Code Generation
-
-```mermaid
-graph LR
-    A[Source Files] --> B[DI Transformer]
-    B --> C[Generated Config]
-    B --> D[Bridge Files]
-    B --> E[Transformed Components]
-    D --> F[Runtime Container]
-    C --> F
-    E --> G[Final Bundle]
-    F --> G
 ```
 
 ## 🚀 Quick Start
@@ -120,10 +151,10 @@ graph LR
 npm install
 ```
 
-### 2. Run DI Transformation
+### 2. Run Interface-Based DI Transformation
 
 ```bash
-npm run di:transform
+npm run di:enhanced
 ```
 
 ### 3. Start Development
@@ -132,29 +163,155 @@ npm run di:transform
 npm run dev
 ```
 
+### 4. Check Interface Mappings
+
+Visit `http://localhost:5173/_di_interfaces` to see resolved interfaces.
+
 ## 📁 Project Structure
 
 ```
 src/
 ├── di/                          # DI Framework Core
-│   ├── container.ts            # Runtime dependency container
-│   ├── context.tsx             # React hooks and providers
-│   ├── decorators.ts           # @Service, @Inject decorators
+│   ├── decorators.ts           # @Service, @Inject (interface-based)
+│   ├── container.ts            # Enhanced container with interface support
+│   ├── context.tsx             # React hooks for DI
 │   ├── markers.ts              # Inject<T>, InjectOptional<T>
-│   └── types.ts               # Core type definitions
+│   └── types.ts                # Enhanced types for interface resolution
 ├── services/                   # Business Services
-│   ├── ExampleApiService.ts    # Example service with DI
-│   └── ConsoleLoggerService.ts # Logger implementation
+│   ├── UserApiServiceImpl.ts   # Example: implements UserApiInterface
+│   └── ConsoleLogger.ts        # Example: implements LoggerInterface
 ├── components/                 # React Components
-│   └── NewFunctionalComponent.tsx  # Functional DI examples
+│   └── EnhancedFunctionalComponent.tsx  # Interface DI examples
 ├── .tdi2/                     # Bridge Files (auto-generated)
 │   ├── di-config.ts           # Points to current config
 │   └── registry.ts            # Service registry bridge
 tools/
-├── di-transformer.ts          # Class-based DI transformer
-├── build-time-di-transformer.ts  # Functional DI transformer
-├── config-manager.ts          # Configuration and hashing
-└── vite-plugin-di.ts         # Vite integration
+├── enhanced-di-transformer.ts      # Interface-based class DI
+├── functional-di-enhanced-transformer.ts  # Interface-based functional DI
+├── interface-resolver.ts           # Core interface resolution logic
+├── dependency-tree-builder.ts      # Automatic dependency tree building
+└── vite-plugin-di-enhanced.ts     # Enhanced Vite integration
+```
+
+## 🎯 Usage Examples
+
+### Service Definition with Interface Resolution
+
+```typescript
+// Define interface
+export interface PaymentService {
+  process(amount: number, cardToken: string): Promise<PaymentResult>;
+}
+
+// Implement (automatic registration)
+@Service()
+export class StripePaymentService implements PaymentService {
+  constructor(
+    @Inject() private config: ConfigService,
+    @Inject() private logger: LoggerInterface,
+    @Inject() private audit?: AuditService // Optional dependency
+  ) {}
+
+  async process(amount: number, cardToken: string): Promise<PaymentResult> {
+    this.logger.log(`Processing payment of $${amount}`);
+    // Implementation...
+  }
+}
+```
+
+### Generic Interface Support
+
+```typescript
+export interface Repository<T> {
+  findAll(): Promise<T[]>;
+  findById(id: string): Promise<T>;
+  save(entity: T): Promise<void>;
+}
+
+@Service()
+export class UserRepository implements Repository<User> {
+  constructor(@Inject() private db: DatabaseService) {}
+
+  async findAll(): Promise<User[]> {
+    return this.db.query("SELECT * FROM users");
+  }
+}
+
+// Automatic resolution works with generics!
+@Service()
+export class UserController {
+  constructor(@Inject() private userRepo: Repository<User>) {}
+  //                    ↑ Automatically resolves to UserRepository!
+}
+```
+
+### Multiple Implementations with Qualifiers
+
+```typescript
+// Multiple implementations of same interface
+@Service()
+@Primary() // Mark as default
+export class DatabaseLogger implements LoggerInterface {
+  log(message: string) {
+    /* save to database */
+  }
+}
+
+@Service()
+@Qualifier("console")
+export class ConsoleLogger implements LoggerInterface {
+  log(message: string) {
+    console.log(message);
+  }
+}
+
+@Service()
+export class UserService {
+  constructor(
+    @Inject() private defaultLogger: LoggerInterface, // → DatabaseLogger (primary)
+    @Inject() @Qualifier("console") private consoleLogger: LoggerInterface // → ConsoleLogger
+  ) {}
+}
+```
+
+### Environment-Specific Implementations
+
+```typescript
+@Service()
+@Profile("production")
+export class ProductionEmailService implements EmailService {
+  async send(to: string, subject: string, body: string) {
+    // Real SMTP implementation
+  }
+}
+
+@Service()
+@Profile("development", "test")
+export class MockEmailService implements EmailService {
+  async send(to: string, subject: string, body: string) {
+    console.log(`Mock email to ${to}: ${subject}`);
+  }
+}
+```
+
+## 🧪 Testing with Interface Mocks
+
+```typescript
+// Easy mocking for tests
+const mockUserService: UserApiInterface = {
+  getUserInfo: jest.fn().mockResolvedValue({ id: "1", name: "Test User" }),
+  getData: jest.fn().mockResolvedValue(["test data"]),
+  postData: jest.fn().mockResolvedValue(true),
+};
+
+const testContainer = new CompileTimeDIContainer();
+testContainer.registerByInterface("UserApiInterface", () => mockUserService);
+
+render(
+  <DIProvider container={testContainer}>
+    <UserProfile userId="1" />
+  </DIProvider>
+);
 ```
 
 ## 🔧 Configuration
@@ -165,190 +322,155 @@ tools/
 // vite.config.ts
 export default defineConfig({
   plugins: [
-    diPlugin({
+    diEnhancedPlugin({
       verbose: true,
-      enableFunctionalDI: true,
-      generateDebugFiles: true,
-      watch: true,
+      enableInterfaceResolution: true, // Enable automatic interface resolution
+      enableFunctionalDI: true, // Enable functional component DI
+      generateDebugFiles: true, // Generate debug transformation files
+      watch: true, // Hot reload on DI changes
     }),
     react(),
   ],
 });
 ```
 
-### TypeScript Configuration
+## 📊 Debug & Monitoring
 
-```json
-{
-  "compilerOptions": {
-    "experimentalDecorators": true,
-    "target": "ES2020",
-    "strict": true
-  }
+### Development URLs
+
+- `http://localhost:5173/_di_debug` - Transformation details
+- `http://localhost:5173/_di_interfaces` - Interface mappings
+- `http://localhost:5173/_di_configs` - Configuration versions
+
+### CLI Commands
+
+```bash
+npm run di:enhanced     # Run interface-based transformation
+npm run di:validate     # Validate dependency resolution
+npm run di:info         # Show debug URLs
+npm run test:interfaces # Test interface scanning
+```
+
+## 🆚 Comparison with Manual Token Approaches
+
+| Aspect          | Manual Tokens (Old)        | Interface Resolution (New)           |
+| --------------- | -------------------------- | ------------------------------------ |
+| **Setup**       | Manual token constants     | Automatic from interfaces            |
+| **Refactoring** | Update tokens manually     | Automatic with interface renames     |
+| **Type Safety** | String tokens, error-prone | Full TypeScript interface validation |
+| **IDE Support** | Limited autocomplete       | Full IntelliSense with interfaces    |
+| **Testing**     | Mock by token strings      | Mock by interface types              |
+| **Maintenance** | High (token management)    | Low (automatic resolution)           |
+| **Ambiguity**   | Tokens can conflict        | Clear interface contracts            |
+
+## 🔮 Advanced Features
+
+### Conditional Services
+
+```typescript
+@Service()
+@Profile("feature-flag-enabled")
+export class NewFeatureService implements FeatureService {
+  // Only registered when profile is active
 }
 ```
 
-## 🎯 Usage Examples
-
-### Functional Component with DI
+### Lazy Loading
 
 ```typescript
-import type { Inject, InjectOptional } from "../di/markers";
-
-const DataDashboard = (props: {
-  title: string;
-  services: {
-    analytics: Inject<AnalyticsInterface>;
-    logger?: InjectOptional<LoggerInterface>;
-  };
-}) => {
-  const { title, services } = props;
-
-  useEffect(() => {
-    services.analytics.trackView(title);
-    services.logger?.log(`Dashboard ${title} mounted`);
-  }, [title]);
-
-  return <div>{title} Dashboard</div>;
-};
-```
-
-### Service Definition
-
-```typescript
-@Service({ token: "ANALYTICS_TOKEN" })
-export class AnalyticsService implements AnalyticsInterface {
-  constructor(@Inject("HTTP_CLIENT_TOKEN") private http: HttpClient) {}
-
-  async trackView(page: string): Promise<void> {
-    await this.http.post("/analytics/view", { page });
-  }
+@Service()
+@Scope("transient")
+export class ExpensiveService {
+  // New instance created each time
 }
 ```
 
-### Container Setup
+### Configuration Injection
 
 ```typescript
-// main.tsx
-import { DIProvider, CompileTimeDIContainer } from "./di";
-import { DI_CONFIG } from "./.tdi2/di-config";
-
-const container = new CompileTimeDIContainer();
-container.loadConfiguration(DI_CONFIG);
-
-createRoot(root).render(
-  <DIProvider container={container}>
-    <App />
-  </DIProvider>
-);
+@Service()
+export class ApiClient {
+  constructor(
+    @Inject() private config: ConfigService,
+    @Inject() @Qualifier("api") private endpoint: string
+  ) {}
+}
 ```
 
-## 🧪 Testing
+## 🤝 Migration from Token-Based DI
 
-### Mocking Services
+### Step 1: Update Service Decorators
 
 ```typescript
-const mockAnalytics: AnalyticsInterface = {
-  trackView: jest.fn(),
-};
+// Before
+@Service({ token: 'USER_SERVICE_TOKEN' })
 
-const testContainer = new CompileTimeDIContainer();
-testContainer.register("ANALYTICS_TOKEN", () => mockAnalytics);
-
-render(
-  <DIProvider container={testContainer}>
-    <DataDashboard title="Test" />
-  </DIProvider>
-);
+// After
+@Service() // Token automatically resolved from interface
 ```
 
-## 🔮 Future Roadmap
-
-### Phase 1: Foundation ✅
-
-- [x] Build-time DI transformation
-- [x] Functional component marker interfaces
-- [x] Class-based service registration
-- [x] Bridge file architecture
-
-### Phase 2: Enhancement 🚧
-
-- [ ] Environment-based profiles (`@Profile`)
-- [ ] Testing (`@Mock`)
-- [ ] Lifecycle hooks (`onInit`, `onDestroy`)
-
-### Phase 3: Integration 🔮
-
-- [ ] OpenTelemetry integration for better debugging
-
-### Phase 4: Ecosystem 🌟
-
-- [ ] ESLint plugin for DI rules
-- [ ] Integration with existing DI frameworks
-- [ ] Production case studies
-
-## 🤝 Compatibility with Existing Solutions
-
-TDI2 is designed to work alongside existing DI frameworks:
+### Step 2: Update Inject Decorators
 
 ```typescript
-// Service layer using LemonDI or traditional DI
-@Injectable()
-class UserService {
-  constructor(@Inject() private repo: UserRepository) {}
-}
+// Before
+constructor(@Inject('LOGGER_TOKEN') private logger: LoggerInterface)
 
-// Component layer using TDI2
-function UserCard(props: {
-  userId: string;
-  services: { userService: Inject<UserService> };
-}) {
-  // Functional component with injected services
-}
+// After
+constructor(@Inject() private logger: LoggerInterface)
+```
+
+### Step 3: Remove Token Constants
+
+```typescript
+// Delete these files:
+// src/tokens/service-tokens.ts
+// src/constants/di-tokens.ts
 ```
 
 ## ⚠️ Current Limitations
 
-- **Experimental**: Not ready for production use
-- **Build Tool Dependency**: Requires Vite plugin for transformation
+- **Experimental**: Interface resolution is new - test thoroughly
+- **Single Implementation**: One implementation per interface (use qualifiers for multiple)
+- **Build Tool Dependency**: Requires enhanced transformers
 - **IDE Support**: Limited IntelliSense for transformed code
-- **Debugging**: Generated code can be harder to debug
 
 ## 🏆 Benefits Over Context API
 
-1. **Performance**: No unnecessary re-renders from context changes
-2. **Testability**: Direct service mocking without provider setup
-3. **Scalability**: Centralized service management across the application
-4. **Type Safety**: Compile-time verification of dependencies
-5. **Separation of Concerns**: Clear boundary between UI and business logic
+1. **No Provider Hell**: Direct service injection
+2. **Better Performance**: No context re-render issues
+3. **Type Safety**: Compile-time interface validation
+4. **Easier Testing**: Direct interface mocking
+5. **Cleaner Architecture**: Clear separation of concerns
 
 ## 📚 Inspiration & References
 
-- **Spring Framework**: Decorator-based DI patterns
-- **Angular DI**: Hierarchical injection and service organization
-- **LemonDI**: Modern TypeScript DI without runtime overhead
-- **TSyringe/InversifyJS**: Pioneering TypeScript DI implementations
+- **Spring Framework**: `@Autowired` and interface-based DI
+- **[TDI Proof-of-Concept](https://github.com/7frank/tdi)**: Original interface resolution approach
+- **Angular DI**: Hierarchical injection patterns
+- **InversifyJS**: Container-based DI for TypeScript
 
 ## 🚀 Getting Started
 
 1. **Clone the repository**
 2. **Install dependencies**: `npm install`
-3. **Run transformation**: `npm run di:transform`
+3. **Run transformation**: `npm run di:enhanced`
 4. **Start development**: `npm run dev`
-5. **Explore examples** in `src/components/`
+5. **Check interface mappings**: `http://localhost:5173/_di_interfaces`
+6. **Explore examples** in `src/components/EnhancedFunctionalComponent.tsx`
 
 ## 🤝 Contributing
 
-This is an experimental proof-of-concept. Contributions, feedback, and discussions about the approach are welcome!
+This enhanced interface-based approach represents the future of DI in React applications. Contributions, feedback, and discussions about interface resolution are welcome!
 
 ### Development Commands
 
 ```bash
-npm run di:transform        # Run DI transformation
-npm run di:watch           # Watch mode for development
+npm run di:enhanced         # Run interface-based transformation
+npm run di:functional       # Run functional DI only
+npm run di:validate         # Validate interface resolution
 npm run di:debug           # Generate debug files
 npm run di:clean           # Clean generated configs
-npm run test              # Run tests
+npm run test:interfaces    # Test interface scanning
 ```
 
 ## 📄 License
@@ -357,4 +479,4 @@ MIT License - See LICENSE file for details
 
 ---
 
-_TDI2 is an experimental exploration of dependency injection patterns for modern React applications. It represents one possible future direction for managing complex application dependencies while maintaining the elegance of functional programming._
+_TDI2 with interface resolution eliminates the complexity of manual token management while providing the power and flexibility of enterprise-grade dependency injection for React applications._
