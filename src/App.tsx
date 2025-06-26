@@ -43,7 +43,7 @@ function Foo() {
         }}
       >
         {`function UserCard({ userId }: { userId: string }) {
-  const api = useService('EXAMPLE_API_TOKEN');
+  const api = useService('ExampleApiService');
   // Original component logic with injected services
 }`}
       </code>

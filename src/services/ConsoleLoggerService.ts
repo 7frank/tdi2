@@ -3,7 +3,7 @@
 import { Service } from '../di/decorators';
 import { type LoggerService } from './ExampleApiService';
 
-@Service({})
+@Service()
 export class ConsoleLoggerService implements LoggerService {
   log(message: string): void {
     console.log(`[LOG] ${new Date().toISOString()}: ${message}`);
