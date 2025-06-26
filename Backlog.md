@@ -15,3 +15,5 @@
 - make inject a record based generic interface something like `Inject<{api:APIInterface<Foo>}>`
   - this will allow us to potnetially disable errors via linter down the line
 - generate tests and smaller files to test individual features otherwise this is getting out of hand
+- fix issue where when deleting .vite folder interface files break
+  - maybe one plugin doesnt use the project tsconfig properly

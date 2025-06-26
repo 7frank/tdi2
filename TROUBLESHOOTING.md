@@ -3,17 +3,20 @@
 ## Problem: CLI and Dev Server Generate Different Configurations
 
 ### Symptoms
+
 - Running `npm run di:enhanced` creates one config
-- Running `npm run dev` creates a different config  
+- Running `npm run dev` creates a different config
 - Frontend shows "Service not registered" errors
 - Bridge files point to the wrong configuration
 
 ### Root Cause
+
 The ConfigManager generates hashes based on execution context, and subtle differences between CLI and Vite plugin execution can result in different hashes.
 
 ### Quick Fixes
 
 #### 1. Use the Reset Workflow (Recommended)
+
 ```bash
 # Clean all configs and regenerate
 npm run di:reset
@@ -23,6 +26,7 @@ npm run dev
 ```
 
 #### 2. Check Current Configuration Status
+
 ```bash
 # See all available configs
 npm run di:list
@@ -35,12 +39,14 @@ npm run di:validate
 ```
 
 #### 3. Force Fresh Development
+
 ```bash
 # Start development with fresh config
 npm run dev:fresh
 ```
 
 #### 4. Clean Up Old Configs
+
 ```bash
 # Remove all old configs
 npm run di:clean
@@ -52,6 +58,7 @@ npm run di:clean-keep-recent
 ### Advanced Debugging
 
 #### 1. Compare Hash Inputs
+
 Check what inputs are being used for hash generation:
 
 ```bash
@@ -60,6 +67,7 @@ DEBUG=true npm run di:enhanced
 ```
 
 Look for output like:
+
 ```
 🔑 Config hash inputs: {
   "srcDir": "/path/to/src",
@@ -71,13 +79,15 @@ Look for output like:
 ```
 
 #### 2. Check Debug URLs
+
 While dev server is running, visit these URLs:
 
 - `http://localhost:5173/_di_debug` - General debug info
-- `http://localhost:5173/_di_interfaces` - Interface mappings  
+- `http://localhost:5173/_di_interfaces` - Interface mappings
 - `http://localhost:5173/_di_configs` - All configurations
 
 #### 3. Force Regeneration via API
+
 ```bash
 # Force regeneration while dev server is running
 curl -X POST http://localhost:5173/_di_regenerate
@@ -86,12 +96,14 @@ curl -X POST http://localhost:5173/_di_regenerate
 ### Configuration Coordination Features
 
 #### New ConfigManager Features
+
 - **Existing Config Detection**: Automatically finds and reuses valid existing configs
 - **Config Validation**: Checks if config files are complete and valid
 - **Force Regeneration**: Ability to force clean regeneration
 - **Better Hash Stability**: More consistent hash generation across contexts
 
 #### Updated Vite Plugin Features
+
 - **Config Reuse**: By default, reuses existing valid configurations
 - **Smart Regeneration**: Only regenerates when necessary
 - **Hot Update Coordination**: Better coordination with file changes
@@ -100,6 +112,7 @@ curl -X POST http://localhost:5173/_di_regenerate
 ### Workflow Recommendations
 
 #### For Development
+
 ```bash
 # Initial setup
 npm run di:enhanced
@@ -112,6 +125,7 @@ npm run di:reset && npm run dev
 ```
 
 #### For Production Build
+
 ```bash
 # Ensure fresh config for build
 npm run di:enhanced
@@ -121,6 +135,7 @@ npm run build
 ```
 
 #### For Testing
+
 ```bash
 # Test interface resolution
 npm run test:interfaces
@@ -135,14 +150,18 @@ npm run test
 ### Common Issues and Solutions
 
 #### Issue: "Service not registered" in browser console
+
 **Solution:**
+
 ```bash
 npm run di:reset
 npm run dev
 ```
 
 #### Issue: Bridge files point to wrong config
+
 **Solution:**
+
 ```bash
 # Check current config
 npm run di:check-config
@@ -152,13 +171,17 @@ npm run di:reset
 ```
 
 #### Issue: Hot reload not working for DI changes
+
 **Solution:**
+
 1. Check that the Vite plugin is configured correctly
 2. Ensure `watch: true` in plugin options
 3. Try manual reload or restart dev server
 
 #### Issue: Multiple configs with same timestamp
+
 **Solution:**
+
 ```bash
 # Clean up and start fresh
 npm run di:clean
@@ -169,6 +192,7 @@ npm run dev
 ### Understanding Config Hash Generation
 
 The hash is generated from:
+
 - **srcDir**: Absolute path to source directory
 - **enableFunctionalDI**: Whether functional DI is enabled
 - **packageName**: Name from package.json
@@ -190,10 +214,10 @@ export default defineConfig({
       enableFunctionalDI: true,
       reuseExistingConfig: true, // NEW: Reuse existing configs
       watch: true,
-      generateDebugFiles: true
+      generateDebugFiles: true,
     }),
-    react()
-  ]
+    react(),
+  ],
 });
 ```
 
@@ -216,6 +240,7 @@ export default defineConfig({
 ### Emergency Reset
 
 If all else fails:
+
 ```bash
 # Nuclear option: clean everything and start fresh
 rm -rf node_modules/.tdi2
@@ -223,3 +248,15 @@ rm -rf src/.tdi2
 npm run di:enhanced
 npm run dev
 ```
+
+### WIP Issue: Interface Imports Cause Module Errors in Vite
+
+**NOT SOLVED**
+
+**Symptom:**
+
+`Uncaught SyntaxError: The requested module '...' doesn't provide an export named ...`
+
+- this seems to happen after deleting ".vite" folder
+
+**partial solution** start server then rename abstract class to interface or other way then safe and error might disappear
