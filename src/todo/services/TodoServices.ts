@@ -11,7 +11,6 @@ import type {
   TodoServiceType,
   TodoFormServiceType,
   TodoRepositoryInterface,
-  TodoCacheInterface,
   TodoNotificationInterface,
   LoggerInterface
 } from '../interfaces/TodoInterfaces';
@@ -43,97 +42,6 @@ export class TodoLogger implements LoggerInterface {
   }
 }
 
-// Cache implementation for todos
-@Service()
-export class TodoCache implements TodoCacheInterface {
-  private todoCache = new Map<string, Todo>();
-  private todosCache: Todo[] | null = null;
-  private statsCache: TodoStats | null = null;
-  private cacheTTL = 5 * 60 * 1000; // 5 minutes
-  private cacheTimestamp = 0;
-
-  constructor(@Inject() private logger: LoggerInterface) {}
-
-  private isExpired(): boolean {
-    return Date.now() - this.cacheTimestamp > this.cacheTTL;
-  }
-
-  getTodos(): Todo[] | null {
-    if (this.isExpired()) {
-      this.clear();
-      return null;
-    }
-    this.logger.debug('Cache hit for todos', { count: this.todosCache?.length });
-    return this.todosCache;
-  }
-
-  setTodos(todos: Todo[]): void {
-    this.todosCache = [...todos];
-    this.cacheTimestamp = Date.now();
-    
-    // Update individual todo cache as well
-    this.todoCache.clear();
-    todos.forEach(todo => this.todoCache.set(todo.id, todo));
-    
-    this.logger.debug('Cached todos', { count: todos.length });
-  }
-
-  getTodo(id: string): Todo | null {
-    if (this.isExpired()) {
-      return null;
-    }
-    const todo = this.todoCache.get(id) || null;
-    this.logger.debug('Cache lookup for todo', { id, found: !!todo });
-    return todo;
-  }
-
-  setTodo(todo: Todo): void {
-    this.todoCache.set(todo.id, todo);
-    
-    // Update the todos cache if it exists
-    if (this.todosCache) {
-      const index = this.todosCache.findIndex(t => t.id === todo.id);
-      if (index >= 0) {
-        this.todosCache[index] = todo;
-      } else {
-        this.todosCache.push(todo);
-      }
-    }
-    
-    this.logger.debug('Cached todo', { id: todo.id });
-  }
-
-  removeTodo(id: string): void {
-    this.todoCache.delete(id);
-    
-    if (this.todosCache) {
-      this.todosCache = this.todosCache.filter(t => t.id !== id);
-    }
-    
-    this.logger.debug('Removed todo from cache', { id });
-  }
-
-  clear(): void {
-    this.todoCache.clear();
-    this.todosCache = null;
-    this.statsCache = null;
-    this.cacheTimestamp = 0;
-    this.logger.debug('Cache cleared');
-  }
-
-  getStats(): TodoStats | null {
-    if (this.isExpired()) {
-      return null;
-    }
-    return this.statsCache;
-  }
-
-  setStats(stats: TodoStats): void {
-    this.statsCache = stats;
-    this.logger.debug('Cached stats', stats);
-  }
-}
-
 // Notification service
 @Service()
 export class TodoNotificationService implements TodoNotificationInterface {
@@ -141,7 +49,6 @@ export class TodoNotificationService implements TodoNotificationInterface {
 
   notifyTodoAdded(todo: Todo): void {
     this.logger.log('Todo added', { id: todo.id, title: todo.title });
-    // In a real app, this might show a toast notification
     this.showNotification(`Added: ${todo.title}`, 'success');
   }
 
@@ -167,7 +74,6 @@ export class TodoNotificationService implements TodoNotificationInterface {
 
   private showNotification(message: string, type: 'success' | 'error' | 'info'): void {
     // In a real app, this would show a toast or browser notification
-    // For now, we'll just log it
     console.log(`[NOTIFICATION ${type.toUpperCase()}] ${message}`);
   }
 }
@@ -177,7 +83,6 @@ export class TodoNotificationService implements TodoNotificationInterface {
 export class TodoService extends AsyncState<TodoServiceState> implements TodoServiceType {
   constructor(
     @Inject() private repository: TodoRepositoryInterface,
-    @Inject() private cache: TodoCacheInterface,
     @Inject() private notifications: TodoNotificationInterface,
     @Inject() private logger: LoggerInterface
   ) {
@@ -206,20 +111,8 @@ export class TodoService extends AsyncState<TodoServiceState> implements TodoSer
     return this.execute(async () => {
       this.logger.log('Loading todos...');
       
-      // Try cache first
-      const cachedTodos = this.cache.getTodos();
-      if (cachedTodos) {
-        this.logger.log('Using cached todos', { count: cachedTodos.length });
-        const state = this.buildState(cachedTodos);
-        return state;
-      }
-
-      // Load from repository
       await delay(300); // Simulate network delay
       const todos = await this.repository.getAll();
-      
-      // Cache the results
-      this.cache.setTodos(todos);
       
       const state = this.buildState(todos);
       this.logger.log('Todos loaded successfully', { count: todos.length });
@@ -235,12 +128,8 @@ export class TodoService extends AsyncState<TodoServiceState> implements TodoSer
       await delay(200);
       const newTodo = await this.repository.create(todoData);
       
-      // Update cache
-      this.cache.setTodo(newTodo);
-      
       // Get updated todos
       const todos = await this.repository.getAll();
-      this.cache.setTodos(todos);
       
       // Notify
       this.notifications.notifyTodoAdded(newTodo);
@@ -259,12 +148,8 @@ export class TodoService extends AsyncState<TodoServiceState> implements TodoSer
       await delay(150);
       const updatedTodo = await this.repository.update(id, updates);
       
-      // Update cache
-      this.cache.setTodo(updatedTodo);
-      
       // Get updated todos
       const todos = await this.repository.getAll();
-      this.cache.setTodos(todos);
       
       // Notify
       this.notifications.notifyTodoUpdated(updatedTodo);
@@ -287,12 +172,8 @@ export class TodoService extends AsyncState<TodoServiceState> implements TodoSer
       const success = await this.repository.delete(id);
       
       if (success) {
-        // Update cache
-        this.cache.removeTodo(id);
-        
         // Get updated todos
         const todos = await this.repository.getAll();
-        this.cache.setTodos(todos);
         
         // Notify
         if (todoToDelete) {
@@ -327,12 +208,8 @@ export class TodoService extends AsyncState<TodoServiceState> implements TodoSer
         completed: !todo.completed 
       });
       
-      // Update cache
-      this.cache.setTodo(updatedTodo);
-      
       // Get updated todos
       const todos = await this.repository.getAll();
-      this.cache.setTodos(todos);
       
       // Notify
       if (updatedTodo.completed) {
@@ -352,11 +229,12 @@ export class TodoService extends AsyncState<TodoServiceState> implements TodoSer
     return this.execute(async () => {
       this.logger.log('Setting filter', filter);
       
-      // Get current todos (use cache if available)
-      let todos = this.cache.getTodos();
-      if (!todos) {
+      // Get current todos (from current state or repository)
+      const currentState = this.getCurrentData();
+      let todos = currentState?.todos || [];
+      
+      if (todos.length === 0) {
         todos = await this.repository.getAll();
-        this.cache.setTodos(todos);
       }
       
       const state = this.buildState(todos, filter);
@@ -373,12 +251,8 @@ export class TodoService extends AsyncState<TodoServiceState> implements TodoSer
       await delay(200);
       const deletedCount = await this.repository.clearCompleted();
       
-      // Clear cache to force refresh
-      this.cache.clear();
-      
       // Get updated todos
       const todos = await this.repository.getAll();
-      this.cache.setTodos(todos);
       
       // Notify
       this.notifications.notifyBulkAction('Cleared completed', deletedCount);
@@ -397,10 +271,7 @@ export class TodoService extends AsyncState<TodoServiceState> implements TodoSer
       let selectedTodo: Todo | null = null;
       
       if (id) {
-        selectedTodo = this.cache.getTodo(id);
-        if (!selectedTodo) {
-          selectedTodo = await this.repository.getById(id);
-        }
+        selectedTodo = await this.repository.getById(id);
       }
       
       const currentState = this.getCurrentData();
@@ -434,14 +305,9 @@ export class TodoService extends AsyncState<TodoServiceState> implements TodoSer
       this.logger.log('Refreshing stats');
       
       // Get current todos
-      let todos = this.cache.getTodos();
-      if (!todos) {
-        todos = await this.repository.getAll();
-        this.cache.setTodos(todos);
-      }
+      const todos = await this.repository.getAll();
       
       const state = this.buildState(todos);
-      this.cache.setStats(state.stats);
       
       this.logger.log('Stats refreshed', state.stats);
       return state;

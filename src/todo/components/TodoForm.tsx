@@ -7,7 +7,7 @@ import type {
   TodoServiceType,
   Todo 
 } from '../interfaces/TodoInterfaces';
-import { useAsyncServiceInterface } from '../../experimental-utils/observable/useObservableState';
+import { useObservableState } from '../../experimental-utils/observable/useObservableState';
 
 interface TodoFormProps {
   editingTodo?: Todo | null;
@@ -22,9 +22,9 @@ interface TodoFormProps {
 export function TodoForm(props: TodoFormProps) {
   const { editingTodo, onSubmit, onCancel, services } = props;
   
-  // Use the AsyncState hooks for reactive state management
-  const formState = useAsyncServiceInterface(services.formService);
-  const todoState = useAsyncServiceInterface(services.todoService);
+  // Use the observable state hooks for reactive state management
+  const formState = useObservableState(services.formService);
+  const todoState = useObservableState(services.todoService);
   
   const [newTag, setNewTag] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -125,14 +125,14 @@ export function TodoForm(props: TodoFormProps) {
           </label>
           <input
             type="text"
-            value={formState.data?.title || ''}
+            value={formState.title || ''}
             onChange={(e) => services.formService.setTitle(e.target.value)}
             placeholder="Enter todo title..."
             disabled={isLoading}
             style={{
               width: '100%',
               padding: '12px 16px',
-              border: formState.data?.errors?.title ? '2px solid #ff4757' : '1px solid #ddd',
+              border: formState.errors?.title ? '2px solid #ff4757' : '1px solid #ddd',
               borderRadius: '6px',
               fontSize: '16px',
               outline: 'none',
@@ -140,13 +140,13 @@ export function TodoForm(props: TodoFormProps) {
               boxSizing: 'border-box'
             }}
           />
-          {formState.data?.errors?.title && (
+          {formState.errors?.title && (
             <div style={{ 
               color: '#ff4757', 
               fontSize: '14px', 
               marginTop: '4px' 
             }}>
-              {formState.data.errors.title}
+              {formState.errors.title}
             </div>
           )}
         </div>
@@ -162,7 +162,7 @@ export function TodoForm(props: TodoFormProps) {
             Description
           </label>
           <textarea
-            value={formState.data?.description || ''}
+            value={formState.description || ''}
             onChange={(e) => services.formService.setDescription(e.target.value)}
             placeholder="Enter description (optional)..."
             disabled={isLoading}
@@ -170,7 +170,7 @@ export function TodoForm(props: TodoFormProps) {
             style={{
               width: '100%',
               padding: '12px 16px',
-              border: formState.data?.errors?.description ? '2px solid #ff4757' : '1px solid #ddd',
+              border: formState.errors?.description ? '2px solid #ff4757' : '1px solid #ddd',
               borderRadius: '6px',
               fontSize: '14px',
               outline: 'none',
@@ -180,13 +180,13 @@ export function TodoForm(props: TodoFormProps) {
               boxSizing: 'border-box'
             }}
           />
-          {formState.data?.errors?.description && (
+          {formState.errors?.description && (
             <div style={{ 
               color: '#ff4757', 
               fontSize: '14px', 
               marginTop: '4px' 
             }}>
-              {formState.data.errors.description}
+              {formState.errors.description}
             </div>
           )}
         </div>
@@ -209,7 +209,7 @@ export function TodoForm(props: TodoFormProps) {
               Priority
             </label>
             <select
-              value={formState.data?.priority || 'medium'}
+              value={formState.priority || 'medium'}
               onChange={(e) => services.formService.setPriority(e.target.value as 'low' | 'medium' | 'high')}
               disabled={isLoading}
               style={{
@@ -241,26 +241,26 @@ export function TodoForm(props: TodoFormProps) {
             </label>
             <input
               type="date"
-              value={formState.data?.dueDate || ''}
+              value={formState.dueDate || ''}
               onChange={(e) => services.formService.setDueDate(e.target.value)}
               disabled={isLoading}
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                border: formState.data?.errors?.dueDate ? '2px solid #ff4757' : '1px solid #ddd',
+                border: formState.errors?.dueDate ? '2px solid #ff4757' : '1px solid #ddd',
                 borderRadius: '6px',
                 fontSize: '14px',
                 outline: 'none',
                 boxSizing: 'border-box'
               }}
             />
-            {formState.data?.errors?.dueDate && (
+            {formState.errors?.dueDate && (
               <div style={{ 
                 color: '#ff4757', 
                 fontSize: '14px', 
                 marginTop: '4px' 
               }}>
-                {formState.data.errors.dueDate}
+                {formState.errors.dueDate}
               </div>
             )}
           </div>
@@ -278,14 +278,14 @@ export function TodoForm(props: TodoFormProps) {
           </label>
           
           {/* Existing Tags */}
-          {formState.data?.tags && formState.data.tags.length > 0 && (
+          {formState.tags && formState.tags.length > 0 && (
             <div style={{ 
               display: 'flex', 
               flexWrap: 'wrap', 
               gap: '8px', 
               marginBottom: '12px' 
             }}>
-              {formState.data.tags.map((tag, index) => (
+              {formState.tags.map((tag, index) => (
                 <span
                   key={index}
                   style={{
@@ -377,14 +377,14 @@ export function TodoForm(props: TodoFormProps) {
           
           <button
             type="submit"
-            disabled={isLoading || !formState.data?.isValid}
+            disabled={isLoading || !formState.isValid}
             style={{
               padding: '12px 24px',
               border: 'none',
               borderRadius: '6px',
-              backgroundColor: formState.data?.isValid && !isLoading ? '#4CAF50' : '#ccc',
+              backgroundColor: formState.isValid && !isLoading ? '#4CAF50' : '#ccc',
               color: 'white',
-              cursor: formState.data?.isValid && !isLoading ? 'pointer' : 'not-allowed',
+              cursor: formState.isValid && !isLoading ? 'pointer' : 'not-allowed',
               fontSize: '14px',
               fontWeight: '500',
               transition: 'all 0.2s'
@@ -412,11 +412,11 @@ export function TodoForm(props: TodoFormProps) {
           fontSize: '11px',
           fontFamily: 'monospace'
         }}>
-          <div><strong>Form Valid:</strong> {formState.data?.isValid ? 'Yes' : 'No'}</div>
+          <div><strong>Form Valid:</strong> {formState.isValid ? 'Yes' : 'No'}</div>
           <div><strong>Form Loading:</strong> {formState.isLoading ? 'Yes' : 'No'}</div>
           <div><strong>Todo Service Loading:</strong> {todoState.isLoading ? 'Yes' : 'No'}</div>
-          {formState.data?.errors && Object.keys(formState.data.errors).length > 0 && (
-            <div><strong>Errors:</strong> {JSON.stringify(formState.data.errors)}</div>
+          {formState.errors && Object.keys(formState.errors).length > 0 && (
+            <div><strong>Errors:</strong> {JSON.stringify(formState.errors)}</div>
           )}
         </div>
       )}

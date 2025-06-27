@@ -7,7 +7,7 @@ import type {
   Todo, 
   TodoFilter 
 } from '../interfaces/TodoInterfaces';
-import { useAsyncServiceInterface } from '../../experimental-utils/observable/useObservableState';
+import { useObservableState } from '../../experimental-utils/observable/useObservableState';
 
 interface TodoListProps {
   onEditTodo?: (todo: Todo) => void;
@@ -20,8 +20,8 @@ interface TodoListProps {
 export function TodoList(props: TodoListProps) {
   const { onEditTodo, onSelectTodo, services } = props;
   
-  // Use the AsyncState hook for reactive state management
-  const todoState = useAsyncServiceInterface(services.todoService);
+  // Use the observable state hook for reactive state management
+  const todoState = useObservableState(services.todoService);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showCompleted, setShowCompleted] = useState(true);
@@ -42,7 +42,7 @@ export function TodoList(props: TodoListProps) {
   };
 
   const handleFilterChange = async (filter: Partial<TodoFilter>) => {
-    const currentFilter = todoState.data?.currentFilter || {};
+    const currentFilter = todoState.currentFilter || {};
     const newFilter = { ...currentFilter, ...filter };
     await services.todoService.setFilter(newFilter);
   };
@@ -57,7 +57,7 @@ export function TodoList(props: TodoListProps) {
   };
 
   const handleClearCompleted = async () => {
-    const completedCount = todoState.data?.todos.filter(t => t.completed).length || 0;
+    const completedCount = todoState.todos?.filter(t => t.completed).length || 0;
     if (completedCount === 0) return;
     
     if (window.confirm(`Clear ${completedCount} completed todos?`)) {
@@ -97,9 +97,9 @@ export function TodoList(props: TodoListProps) {
 
   // Filter todos based on UI state
   const displayTodos = React.useMemo(() => {
-    if (!todoState.data?.filteredTodos) return [];
+    if (!todoState.filteredTodos) return [];
     
-    let filtered = todoState.data.filteredTodos;
+    let filtered = todoState.filteredTodos;
     
     if (!showCompleted) {
       filtered = filtered.filter(todo => !todo.completed);
@@ -126,10 +126,10 @@ export function TodoList(props: TodoListProps) {
       // Finally by creation date (newest first)
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [todoState.data?.filteredTodos, showCompleted]);
+  }, [todoState.filteredTodos, showCompleted]);
 
-  const currentFilter = todoState.data?.currentFilter;
-  const stats = todoState.data?.stats;
+  const currentFilter = todoState.currentFilter;
+  const stats = todoState.stats;
 
   if (todoState.isLoading) {
     return (
@@ -380,15 +380,15 @@ export function TodoList(props: TodoListProps) {
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 opacity: todo.completed ? 0.7 : 1,
-                boxShadow: todoState.data?.selectedTodo?.id === todo.id ? '0 0 0 2px #4CAF50' : '0 1px 3px rgba(0,0,0,0.1)'
+                boxShadow: todoState.selectedTodo?.id === todo.id ? '0 0 0 2px #4CAF50' : '0 1px 3px rgba(0,0,0,0.1)'
               }}
               onMouseEnter={(e) => {
-                if (todoState.data?.selectedTodo?.id !== todo.id) {
+                if (todoState.selectedTodo?.id !== todo.id) {
                   e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
                 }
               }}
               onMouseLeave={(e) => {
-                if (todoState.data?.selectedTodo?.id !== todo.id) {
+                if (todoState.selectedTodo?.id !== todo.id) {
                   e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
                 }
               }}
@@ -555,14 +555,11 @@ export function TodoList(props: TodoListProps) {
           <div><strong>Service State:</strong></div>
           <div>Loading: {todoState.isLoading ? 'Yes' : 'No'}</div>
           <div>Error: {todoState.isError ? todoState.error?.message : 'None'}</div>
-          <div>Total Todos: {todoState.data?.todos.length || 0}</div>
-          <div>Filtered Todos: {todoState.data?.filteredTodos.length || 0}</div>
+          <div>Total Todos: {todoState.todos?.length || 0}</div>
+          <div>Filtered Todos: {todoState.filteredTodos?.length || 0}</div>
           <div>Displayed Todos: {displayTodos.length}</div>
-          <div>Selected Todo: {todoState.data?.selectedTodo?.id || 'None'}</div>
+          <div>Selected Todo: {todoState.selectedTodo?.id || 'None'}</div>
           <div>Current Filter: {JSON.stringify(currentFilter)}</div>
-          {todoState.isStale && (
-            <div style={{ color: '#ff4757' }}>⚠️ Data is stale</div>
-          )}
         </div>
       )}
     </div>

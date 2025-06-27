@@ -1,4 +1,4 @@
-// src/todo/interfaces/TodoInterfaces.ts - Interface definitions for Todo app
+// src/todo/interfaces/TodoInterfaces.ts - Core interfaces for Todo app
 
 export interface Todo {
   id: string;
@@ -31,44 +31,6 @@ export interface TodoStats {
   overdue: number;
 }
 
-// Service interfaces following TDI2 pattern
-export interface TodoRepositoryInterface {
-  getAll(): Promise<Todo[]>;
-  getById(id: string): Promise<Todo | null>;
-  create(todo: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>): Promise<Todo>;
-  update(id: string, updates: Partial<Todo>): Promise<Todo>;
-  delete(id: string): Promise<boolean>;
-  search(query: string): Promise<Todo[]>;
-  getByFilter(filter: TodoFilter): Promise<Todo[]>;
-  clearCompleted(): Promise<number>; // Returns number of deleted todos
-}
-
-export interface TodoCacheInterface {
-  getTodos(): Todo[] | null;
-  setTodos(todos: Todo[]): void;
-  getTodo(id: string): Todo | null;
-  setTodo(todo: Todo): void;
-  removeTodo(id: string): void;
-  clear(): void;
-  getStats(): TodoStats | null;
-  setStats(stats: TodoStats): void;
-}
-
-export interface TodoNotificationInterface {
-  notifyTodoAdded(todo: Todo): void;
-  notifyTodoCompleted(todo: Todo): void;
-  notifyTodoDeleted(todo: Todo): void;
-  notifyTodoUpdated(todo: Todo): void;
-  notifyBulkAction(action: string, count: number): void;
-}
-
-export interface LoggerInterface {
-  log(message: string, data?: any): void;
-  error(message: string, error?: any): void;
-  warn(message: string, data?: any): void;
-  debug(message: string, data?: any): void;
-}
-
 // State types for AsyncState services
 export interface TodoServiceState {
   todos: Todo[];
@@ -87,6 +49,33 @@ export interface TodoFormState {
   tags: string[];
   isValid: boolean;
   errors: Record<string, string>;
+}
+
+// Service interfaces following TDI2 pattern
+export interface TodoRepositoryInterface {
+  getAll(): Promise<Todo[]>;
+  getById(id: string): Promise<Todo | null>;
+  create(todo: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>): Promise<Todo>;
+  update(id: string, updates: Partial<Todo>): Promise<Todo>;
+  delete(id: string): Promise<boolean>;
+  search(query: string): Promise<Todo[]>;
+  getByFilter(filter: TodoFilter): Promise<Todo[]>;
+  clearCompleted(): Promise<number>;
+}
+
+export interface TodoNotificationInterface {
+  notifyTodoAdded(todo: Todo): void;
+  notifyTodoCompleted(todo: Todo): void;
+  notifyTodoDeleted(todo: Todo): void;
+  notifyTodoUpdated(todo: Todo): void;
+  notifyBulkAction(action: string, count: number): void;
+}
+
+export interface LoggerInterface {
+  log(message: string, data?: any): void;
+  error(message: string, error?: any): void;
+  warn(message: string, data?: any): void;
+  debug(message: string, data?: any): void;
 }
 
 // Service method interfaces

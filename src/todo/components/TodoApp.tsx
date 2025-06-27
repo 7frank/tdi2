@@ -7,7 +7,7 @@ import type {
   TodoFormServiceType,
   Todo 
 } from '../interfaces/TodoInterfaces';
-import { useMultipleAsyncStates } from '../../experimental-utils/observable/useObservableState';
+import { useObservableState } from '../../experimental-utils/observable/useObservableState';
 import { TodoList } from './TodoList';
 import { TodoForm } from './TodoForm';
 
@@ -21,11 +21,9 @@ interface TodoAppProps {
 export function TodoApp(props: TodoAppProps) {
   const { services } = props;
   
-  // Use the multiple async states hook for combined state management
-  const multiState = useMultipleAsyncStates({
-    todos: services.todoService,
-    form: services.formService,
-  });
+  // Use the observable state hooks for reactive state management
+  const todoState = useObservableState(services.todoService);
+  const formState = useObservableState(services.formService);
 
   const [showForm, setShowForm] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
@@ -66,9 +64,9 @@ export function TodoApp(props: TodoAppProps) {
   };
 
   // Get stats from todo service
-  const stats = multiState.todos.data?.stats;
-  const isAnyLoading = multiState.isAnyLoading;
-  const hasAnyError = multiState.hasAnyError;
+  const stats = todoState.stats;
+  const isAnyLoading = todoState.isLoading || formState.isLoading;
+  const hasAnyError = todoState.isError || formState.isError;
 
   return (
     <div style={{
@@ -281,7 +279,10 @@ export function TodoApp(props: TodoAppProps) {
             <span>Something went wrong. Please try again.</span>
           </div>
           <button
-            onClick={multiState.resetAll}
+            onClick={() => {
+              services.todoService.reset();
+              services.formService.reset();
+            }}
             style={{
               padding: '6px 12px',
               backgroundColor: 'rgba(255,255,255,0.2)',
@@ -398,8 +399,8 @@ export function TodoApp(props: TodoAppProps) {
             <div style={{ fontSize: '12px' }}>Local browser storage</div>
           </div>
           <div>
-            <div style={{ fontWeight: '600', color: '#9C27B0' }}>Automatic Resolution</div>
-            <div style={{ fontSize: '12px' }}>Zero manual token mapping</div>
+            <div style={{ fontWeight: '600', color: '#9C27B0' }}>Observable State</div>
+            <div style={{ fontSize: '12px' }}>useObservableState hooks</div>
           </div>
         </div>
 
@@ -417,22 +418,22 @@ export function TodoApp(props: TodoAppProps) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', textAlign: 'left' }}>
             <div>
-              <strong>Todo Service:</strong> {multiState.todos.isError ? '❌ Error' : multiState.todos.isLoading ? '⏳ Loading' : '✅ Ready'}
+              <strong>Todo Service:</strong> {todoState.isError ? '❌ Error' : todoState.isLoading ? '⏳ Loading' : '✅ Ready'}
             </div>
             <div>
-              <strong>Form Service:</strong> {multiState.form.isError ? '❌ Error' : multiState.form.isLoading ? '⏳ Loading' : '✅ Ready'}
+              <strong>Form Service:</strong> {formState.isError ? '❌ Error' : formState.isLoading ? '⏳ Loading' : '✅ Ready'}
             </div>
             <div>
-              <strong>Any Loading:</strong> {multiState.isAnyLoading ? '🔄 Yes' : '✅ No'}
+              <strong>Any Loading:</strong> {isAnyLoading ? '🔄 Yes' : '✅ No'}
             </div>
             <div>
-              <strong>Has Errors:</strong> {multiState.hasAnyError ? '❌ Yes' : '✅ No'}
-            </div>
-            <div>
-              <strong>All Successful:</strong> {multiState.allSuccessful ? '✅ Yes' : '⏳ Pending'}
+              <strong>Has Errors:</strong> {hasAnyError ? '❌ Yes' : '✅ No'}
             </div>
             <div>
               <strong>Current View:</strong> {selectedView === 'form' ? '📝 Form' : '📋 List'}
+            </div>
+            <div>
+              <strong>Total Todos:</strong> {stats?.total || 0}
             </div>
           </div>
           
