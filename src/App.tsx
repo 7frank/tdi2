@@ -5,7 +5,8 @@ import {
   DataList,
   UserProfile,
 } from "./components/EnhancedFunctionalComponent";
-import { ExampleUseAsyncChain } from "./hooks/useAsyncChain";
+import { ExampleUseAsyncChain } from "./experimental-utils/async/ExampleUseAsyncChain";
+import { ExampleObservableFC } from "./experimental-utils/observable/ExampleObservableFC";
 function Foo() {
   return (
     <div
@@ -72,6 +73,7 @@ function App() {
       <DataList category="bar" services={SERVICES} />
       <SimpleTest message="baz" />
       <ExampleUseAsyncChain />
+      <ExampleObservableFC/>
       <Foo />
     </div>
   );
