@@ -22,6 +22,8 @@
   - fix test files
     - [x] interface-resolver.test.ts
     - [ ] missing test file dependency-tree-builder-test.ts generate one
+    - [ ] 7frank/tdi2/tools/functional-di-enhanced-transformer.ts
+      - fixtures and work isolated test previously working implementation and the latest 2 commits
 
 - fix issue where when deleting .vite folder interface files break
   - maybe one plugin doesnt use the project tsconfig properly
@@ -35,7 +37,7 @@
 - FIXME duplicated keys see generated list of services
 - even more tests for DI if this is supposed to be somewhat viable
 - compile to npm package and publish
--  write tests for different styles of inject markers
-  - inline
-  - inline destructure
-  - separate props interface
+- write tests for different styles of inject markers
+- inline
+- inline destructure
+- separate props interface
