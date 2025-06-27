@@ -1,4 +1,4 @@
-// src/App.tsx - Enhanced with DI Example Cards
+// src/App.tsx - Updated to include the Todo App
 
 import "./App.css";
 import { DIExampleCard } from "./components/DIExampleCard";
@@ -10,6 +10,7 @@ import {
 } from "./components/EnhancedFunctionalComponent";
 import { ExampleUseAsyncChain } from "./experimental-utils/async/ExampleUseAsyncChain";
 import { ExampleObservableFC } from "./experimental-utils/observable/ExampleObservableFC";
+import { TodoApp } from "./todo/components/TodoApp";
 
 /** DI marker to prevent TypeScript errors */
 const SERVICES = {} as any;
@@ -27,6 +28,69 @@ function App() {
           and functional component dependency injection patterns.
         </p>
       </div>
+
+      {/* Todo App - Full Featured Example */}
+      <DIExampleCard
+        title="Complete Todo Application"
+        description="Full-featured todo app demonstrating TDI2 with IndexedDB persistence, AsyncState pattern, and interface-based DI"
+        diPattern="Real-World Application"
+        variant="interface"
+      >
+        <DICardBody
+          pattern="TodoServiceType & TodoFormServiceType → Implementations"
+          explanation="This is a complete todo application showcasing TDI2's capabilities. It uses interface-based dependency injection with AsyncState services for reactive state management. The app demonstrates TodoRepository (IndexedDB persistence), TodoCache (memory caching), TodoNotificationService, and reactive form handling. All services are automatically resolved without manual token mapping."
+          dependencies={[
+            { name: 'TodoServiceType', type: 'required', resolvedTo: 'TodoService' },
+            { name: 'TodoFormServiceType', type: 'required', resolvedTo: 'TodoFormService' },
+            { name: 'TodoRepositoryInterface', type: 'required', resolvedTo: 'TodoRepository' },
+            { name: 'TodoCacheInterface', type: 'required', resolvedTo: 'TodoCache' },
+            { name: 'TodoNotificationInterface', type: 'required', resolvedTo: 'TodoNotificationService' },
+            { name: 'LoggerInterface', type: 'required', resolvedTo: 'TodoLogger' }
+          ]}
+          codeExample={`// Service interfaces combine AsyncState + Methods
+export interface TodoServiceType 
+  extends AsyncState<TodoServiceState>, TodoServiceMethods {}
+
+// Implementation with dependency injection
+@Service()
+export class TodoService 
+  extends AsyncState<TodoServiceState> 
+  implements TodoServiceType {
+  
+  constructor(
+    @Inject() private repository: TodoRepositoryInterface,
+    @Inject() private cache: TodoCacheInterface,
+    @Inject() private notifications: TodoNotificationInterface,
+    @Inject() private logger: LoggerInterface
+  ) { super(); }
+  
+  async addTodo(data: CreateTodoData): Promise<TodoServiceState> {
+    return this.execute(async () => {
+      const todo = await this.repository.create(data);
+      this.cache.setTodo(todo);
+      this.notifications.notifyTodoAdded(todo);
+      return this.buildState(await this.repository.getAll());
+    });
+  }
+}
+
+// Usage in React component
+function TodoApp(props: {
+  services: {
+    todoService: Inject<TodoServiceType>;
+    formService: Inject<TodoFormServiceType>;
+  };
+}) {
+  const todoState = useAsyncServiceInterface(props.services.todoService);
+  const formState = useAsyncServiceInterface(props.services.formService);
+  
+  // Reactive state management with automatic DI
+}`}
+          variant="interface"
+        >
+          <TodoApp services={SERVICES} />
+        </DICardBody>
+      </DIExampleCard>
 
       {/* Interface-Based DI Examples */}
       <DIExampleCard
@@ -217,6 +281,18 @@ await asyncState
             <strong>🔄 Hot Reload</strong>
             <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
               Automatic retransformation during development
+            </p>
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>💾 Persistence</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              IndexedDB integration with caching layer
+            </p>
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>🌊 Reactive State</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              AsyncState pattern for reactive UIs
             </p>
           </div>
         </div>
