@@ -26,9 +26,12 @@ export class ApiService extends AsyncState<string> {
   }
 }
 
+export 
+interface UserServiceState{ name: string; email: string }
+
 @Service()
-export class UserService extends AsyncState<{ name: string; email: string }> {
-  async getProfile(id: string): Promise<{ name: string; email: string }> {
+export class UserService extends AsyncState<UserServiceState> {
+  async getProfile(id: string): Promise<UserServiceState> {
     return this.execute(async () => {
       await delay(600);
       return {

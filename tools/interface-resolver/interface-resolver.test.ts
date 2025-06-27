@@ -1,11 +1,7 @@
 // tests/unit/tools/interface-resolver.test.ts - FIXED VERSION
 import { describe, it, expect, beforeEach, mock } from "bun:test";
 import { InterfaceResolver } from "./interface-resolver";
-import type {
-  InterfaceImplementation,
-  ServiceDependency,
-  ValidationResult,
-} from "./interface-resolver";
+
 import { Project, SourceFile } from "ts-morph";
 
 // Mock TypeScript source files for testing

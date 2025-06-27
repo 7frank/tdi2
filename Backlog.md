@@ -26,3 +26,7 @@
 - fix issue where when deleting .vite folder interface files break
   - maybe one plugin doesnt use the project tsconfig properly
 - FC DI props.destructuring works limited at the moment and will fail if not in certain format
+- is DI scope using import path
+  - if say we have two "implements UserRepoInterface"
+- in case of multipleunnamed generic interfaces we should throw an error or warning (nject<AsyncState<{ name: string; email: string }>>;)
+- FIXME after hot reloading most of the service are no longer avail `rm -rf node_modules/.vite/` && `npm run di:reset && npm run dev` circumbvents this

@@ -132,7 +132,7 @@ function App() {
           explanation="Services extend AsyncState for reactive state management. Classes are registered directly as their own tokens - no interfaces needed. This pattern is perfect when you have concrete implementations that don't need abstraction, or when working with stateful services that manage their own lifecycle."
           dependencies={[
             { name: 'ApiService', type: 'required', resolvedTo: 'ApiService' },
-            { name: 'UserService', type: 'required', resolvedTo: 'UserService' }
+            { name: 'AsyncState<UserServiceState>', type: 'required', resolvedTo: 'UserService' }
           ]}
           codeExample={`@Service()
 export class ApiService extends AsyncState<string> {

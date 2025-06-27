@@ -13,7 +13,7 @@ import {
 import * as path from 'path';
 import * as fs from 'fs';
 import { ConfigManager } from './config-manager';
-import { InterfaceResolver, InterfaceImplementation } from './interface-resolver';
+import { InterfaceResolver, type InterfaceImplementation } from "./interface-resolver/interface-resolver";
 
 interface FunctionalDependency {
   serviceKey: string;

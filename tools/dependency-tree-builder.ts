@@ -2,9 +2,9 @@
 
 import {
   InterfaceResolver,
-  InterfaceImplementation,
-  ServiceDependency,
-} from "./interface-resolver";
+  type InterfaceImplementation,
+  type ServiceDependency,
+} from "./interface-resolver/interface-resolver";
 import { ConfigManager } from "./config-manager";
 import * as path from "path";
 import * as fs from "fs";

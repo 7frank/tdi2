@@ -1,11 +1,17 @@
 import type { Inject } from "../../di/markers";
-import type { ApiService, UserService } from "./exampleServices";
-import { useObservableState } from "./useObservableState";
+import type {
+  ApiService,
+  UserServiceState,
+  UserService,
+} from "./exampleServices";
+import { AsyncState, useObservableState } from "./useObservableState";
 
 export function ExampleObservableFC(props: {
   services: {
     apiService: Inject<ApiService>;
     userService: Inject<UserService>;
+    /** FIXME  */
+    // userService: Inject<AsyncState<UserServiceState>>;
   };
 }) {
   const { services } = props;
