@@ -14,6 +14,7 @@ npm run di:enhanced
 npm run dev
 
 # If issues arise
+rm -rf node_modules/.vite/
 npm run di:reset && npm run dev
 ```
 

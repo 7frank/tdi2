@@ -5,22 +5,25 @@ import type { Inject, InjectOptional } from "../di/markers";
 
 // Import interfaces (not implementations!)
 import type { ExampleApiInterface } from "../services/ExampleApiInterface";
-import type { LoggerInterface, CacheInterface } from "../services/UserApiServiceImpl";
+import type {
+  LoggerInterface,
+  CacheInterface,
+} from "../services/UserApiServiceImpl";
 
 // Enhanced UserProfile with interface-based dependencies
 function UserProfile(props: {
   userId: string;
   title?: string;
   services: {
-    api: Inject<ExampleApiInterface>;           // Required: Will auto-resolve to UserApiServiceImpl
-    logger?: InjectOptional<LoggerInterface>;   // Optional: Will auto-resolve to ConsoleLogger
+    api: Inject<ExampleApiInterface>; // Required: Will auto-resolve to UserApiServiceImpl
+    logger?: InjectOptional<LoggerInterface>; // Optional: Will auto-resolve to ConsoleLogger
     cache?: InjectOptional<CacheInterface<any>>; // Optional: Will auto-resolve to MemoryCache
   };
 }) {
   const { userId, title = "User Profile", services } = props;
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [cacheStatus, setCacheStatus] = useState<string>('unknown');
+  const [cacheStatus, setCacheStatus] = useState<string>("unknown");
 
   const loadUser = async () => {
     setLoading(true);
@@ -30,7 +33,7 @@ function UserProfile(props: {
       // Check cache status if available
       if (services.cache) {
         const cached = await services.cache.get(`user-${userId}`);
-        setCacheStatus(cached ? 'hit' : 'miss');
+        setCacheStatus(cached ? "hit" : "miss");
       }
 
       const userData = await services.api.getUserInfo(userId);
@@ -47,7 +50,7 @@ function UserProfile(props: {
     if (services.cache) {
       await services.cache.delete(`user-${userId}`);
       services.logger?.log(`Cache cleared for user ${userId}`);
-      setCacheStatus('cleared');
+      setCacheStatus("cleared");
     }
   };
 
@@ -64,15 +67,7 @@ function UserProfile(props: {
   }
 
   return (
-    <div
-      style={{
-        border: "2px solid #4CAF50",
-        borderRadius: "8px",
-        padding: "16px",
-        margin: "8px",
-        backgroundColor: "#f8f9fa",
-      }}
-    >
+    <div>
       <h3>{title} (Interface DI)</h3>
       <div>
         <strong>Name:</strong> {user.name}
@@ -83,12 +78,12 @@ function UserProfile(props: {
       <div>
         <strong>ID:</strong> {user.id}
       </div>
-      
+
       {/* Cache status indicator */}
       {services.cache && (
         <div style={{ marginTop: "8px", fontSize: "12px", color: "#666" }}>
           <strong>Cache:</strong> {cacheStatus}
-          {cacheStatus !== 'cleared' && (
+          {cacheStatus !== "cleared" && (
             <button
               onClick={clearCache}
               style={{
@@ -107,7 +102,7 @@ function UserProfile(props: {
           )}
         </div>
       )}
-      
+
       <button
         onClick={loadUser}
         style={{
@@ -122,12 +117,11 @@ function UserProfile(props: {
       >
         Refresh
       </button>
-      
+
       {/* Debug info */}
       <div style={{ marginTop: "8px", fontSize: "11px", color: "#999" }}>
-        Dependencies: API={services.api ? '✅' : '❌'}, 
-        Logger={services.logger ? '✅' : '❌'}, 
-        Cache={services.cache ? '✅' : '❌'}
+        Dependencies: API={services.api ? "✅" : "❌"}, Logger=
+        {services.logger ? "✅" : "❌"}, Cache={services.cache ? "✅" : "❌"}
       </div>
     </div>
   );
@@ -148,23 +142,23 @@ const DataList = (props: {
 
   const loadData = async () => {
     services.logger.log(`Loading ${category} data`);
-    
+
     // Try cache first
     if (services.cache) {
       const cached = await services.cache.get(`data-${category}`);
       if (cached) {
         services.logger.log(`Cache hit for ${category} data`);
-        setItems(cached.map(item => `${category}: ${item} (cached)`));
+        setItems(cached.map((item) => `${category}: ${item} (cached)`));
         setCacheHit(true);
         return;
       }
     }
-    
+
     setCacheHit(false);
     const data = await services.api.getData();
     const categoryItems = data.map((item) => `${category}: ${item}`);
     setItems(categoryItems);
-    
+
     // Cache the result
     if (services.cache) {
       await services.cache.set(`data-${category}`, data, 180); // 3 minutes
@@ -175,7 +169,7 @@ const DataList = (props: {
   const postNewData = async () => {
     const newData = { category, timestamp: new Date().toISOString() };
     const success = await services.api.postData(newData);
-    
+
     if (success) {
       services.logger.log(`Successfully posted data for ${category}`);
       // Reload data after posting
@@ -190,29 +184,23 @@ const DataList = (props: {
   }, [category]);
 
   return (
-    <div
-      style={{
-        border: "2px solid #2196F3",
-        borderRadius: "8px",
-        padding: "16px",
-        margin: "8px",
-        backgroundColor: "#e3f2fd",
-      }}
-    >
+    <div>
       <h4>{category} Items (Interface DI)</h4>
-      
+
       {cacheHit && (
-        <div style={{ fontSize: "12px", color: "#ff9800", marginBottom: "8px" }}>
+        <div
+          style={{ fontSize: "12px", color: "#ff9800", marginBottom: "8px" }}
+        >
           ⚡ Data loaded from cache
         </div>
       )}
-      
+
       <ul>
         {items.map((item, index) => (
           <li key={index}>{item}</li>
         ))}
       </ul>
-      
+
       <div style={{ marginTop: "8px" }}>
         <button
           onClick={loadData}
@@ -228,7 +216,7 @@ const DataList = (props: {
         >
           Refresh
         </button>
-        
+
         <button
           onClick={postNewData}
           style={{
@@ -243,12 +231,12 @@ const DataList = (props: {
           Post Data
         </button>
       </div>
-      
+
       {/* Debug info */}
       <div style={{ marginTop: "8px", fontSize: "11px", color: "#999" }}>
-        Resolved: API={services.api?.constructor.name}, 
-        Logger={services.logger?.constructor.name},
-        Cache={services.cache?.constructor.name || 'none'}
+        Resolved: API={services.api?.constructor.name}, Logger=
+        {services.logger?.constructor.name}, Cache=
+        {services.cache?.constructor.name || "none"}
       </div>
     </div>
   );
@@ -276,37 +264,30 @@ function GenericProcessor<T = any>(props: {
     const validate = services.processor.validate(data);
     setIsValid(validate);
     services.logger?.log(`Data validation: ${validate}`);
-    
+
     if (validate) {
-      services.processor.process(data).then(processed => {
+      services.processor.process(data).then((processed) => {
         setResult(processed);
-        services.logger?.log('Data processed successfully');
+        services.logger?.log("Data processed successfully");
       });
     }
   }, [data]);
 
   return (
-    <div
-      style={{
-        border: "2px solid #9C27B0",
-        borderRadius: "8px",
-        padding: "16px",
-        margin: "8px",
-        backgroundColor: "#f3e5f5",
-      }}
-    >
+    <div>
       <h4>Generic Processor (Interface DI)</h4>
       <div>
-        <strong>Valid:</strong> {isValid ? '✅' : '❌'}
+        <strong>Valid:</strong> {isValid ? "✅" : "❌"}
       </div>
       {result && (
         <div>
           <strong>Result:</strong> {JSON.stringify(result)}
         </div>
       )}
-      
+
       <div style={{ marginTop: "8px", fontSize: "11px", color: "#999" }}>
-        Generic Interface: {services.processor?.constructor.name || 'Not resolved'}
+        Generic Interface:{" "}
+        {services.processor?.constructor.name || "Not resolved"}
       </div>
     </div>
   );
