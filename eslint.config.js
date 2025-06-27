@@ -1,110 +1,12 @@
-// eslint.config.js - Updated with TDI2 rules
+// eslint.config.js - Updated with enhanced TDI2 rules
 import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
-// Import TDI2 plugin (you'd need to create this as a separate package or local plugin)
-// For now, here's a simplified inline version
-const tdi2Plugin = {
-  rules: {
-    "detect-di-components": {
-      meta: {
-        type: "suggestion",
-        docs: {
-          description:
-            "Detect TDI2 DI components and warn about missing transformer",
-        },
-        messages: {
-          diComponentNeedsTransformer:
-            'Component "{{name}}" uses DI markers but services prop is missing. Ensure TDI2 transformer is running.',
-          diComponentDetected:
-            'DI component detected: "{{name}}" - services will be auto-injected by transformer.',
-        },
-      },
-      create(context) {
-        let diComponents = new Set();
-
-        return {
-          // Detect function components with Inject<> types
-          "FunctionDeclaration, ArrowFunctionExpression"(node) {
-            const sourceCode = context.getSourceCode().getText(node);
-            if (
-              sourceCode.includes("Inject<") ||
-              sourceCode.includes("InjectOptional<")
-            ) {
-              const name =
-                node.id?.name || node.parent?.id?.name || "AnonymousComponent";
-              diComponents.add(name);
-            }
-          },
-
-          // Check JSX usage
-          JSXElement(node) {
-            const elementName = node.openingElement.name.name;
-            if (diComponents.has(elementName)) {
-              const hasServicesAttr = node.openingElement.attributes.some(
-                (attr) =>
-                  attr.type === "JSXAttribute" && attr.name?.name === "services"
-              );
-
-              if (!hasServicesAttr) {
-                context.report({
-                  node: node.openingElement,
-                  messageId: "diComponentNeedsTransformer",
-                  data: { name: elementName },
-                });
-              }
-            }
-          },
-        };
-      },
-    },
-
-    "require-di-transformer": {
-      meta: {
-        type: "problem",
-        docs: {
-          description: "Ensure TDI2 transformer is properly configured",
-        },
-        messages: {
-          missingTransformerComment:
-            'File uses DI but missing transformer indicator comment. Run "npm run di:enhanced".',
-        },
-      },
-      create(context) {
-        return {
-          Program(node) {
-            const sourceCode = context.getSourceCode();
-            const text = sourceCode.getText();
-
-            if (
-              (text.includes("Inject<") || text.includes("InjectOptional<")) &&
-              !text.includes("TDI2-TRANSFORMED") &&
-              !text.includes("Auto-generated transformed file")
-            ) {
-              const comments = sourceCode.getAllComments();
-              const hasTransformerIndicator = comments.some(
-                (comment) =>
-                  comment.value.includes("TDI2") ||
-                  comment.value.includes("Auto-generated")
-              );
-
-              if (!hasTransformerIndicator) {
-                context.report({
-                  node,
-                  messageId: "missingTransformerComment",
-                  loc: { line: 1, column: 0 },
-                });
-              }
-            }
-          },
-        };
-      },
-    },
-  },
-};
+// Import the enhanced TDI2 plugin
+import tdi2Plugin from "./eslint-tdi2-plugin.js";
 
 export default tseslint.config(
   {
@@ -122,11 +24,17 @@ export default tseslint.config(
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parser: tseslint.parser,
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
     },
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
-      tdi2: tdi2Plugin,
+      "tdi2": tdi2Plugin,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -135,15 +43,28 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
 
-      // TDI2 specific rules
-      "tdi2/detect-di-components": "warn",
-      "tdi2/require-di-transformer": "warn",
+      // Enhanced TDI2 specific rules
+      "tdi2/detect-di-components": [
+        "warn",
+        {
+          suppressMissingServicesError: true,
+          strictMode: false, // Set to true for stricter validation
+        },
+      ],
+      "tdi2/suppress-di-prop-errors": "off", // Use with caution
+      "tdi2/require-di-transformer": [
+        "warn",
+        {
+          requireTransformerComment: false, // Set to true in CI/production
+        },
+      ],
+      "tdi2/validate-di-markers": "error",
 
       // Disable TypeScript rules that conflict with DI transformation
       "@typescript-eslint/no-unused-vars": [
         "off",
         {
-          argsIgnorePattern: "^_",
+          argsIgnorePattern: "^_|^services$", // Ignore 'services' parameter
           varsIgnorePattern: "^_",
           ignoreRestSiblings: true,
         },
@@ -156,26 +77,66 @@ export default tseslint.config(
           ignoreRestArgs: true,
         },
       ],
+
+      // Relax some rules for DI-related code
+      "@typescript-eslint/no-empty-interface": [
+        "error",
+        {
+          allowSingleExtends: true, // Allow marker interfaces
+        },
+      ],
+
+      // Allow unused parameters in DI service constructors
+      "@typescript-eslint/no-unused-parameters": [
+        "off",
+        {
+          ignoreRestSiblings: true,
+          argsIgnorePattern: "^_|services",
+        },
+      ],
     },
     settings: {
       tdi2: {
         transformerRequired: true,
         debugMode: process.env.NODE_ENV === "development",
+        suppressMissingServicesErrors: true, // Global setting
       },
+      react: {
+        version: "detect",
+      },
+    },
+  },
+  // Special configuration for transformed files
+  {
+    files: ["**/*.di-transformed.*", "src/.tdi2/**/*"],
+    rules: {
+      // Disable all problematic rules for transformed files
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-parameters": "off",
+      "tdi2/detect-di-components": "off",
+      "tdi2/require-di-transformer": "off",
+      "tdi2/validate-di-markers": "off",
+    },
+  },
+  // Special configuration for App.tsx and component files
+  {
+    files: ["src/App.tsx", "src/components/**/*.{ts,tsx}"],
+    rules: {
+      // More lenient rules for components using DI
+      "@typescript-eslint/no-unused-vars": [
+        "off",
+        {
+          varsIgnorePattern: "^(SERVICES|services)$",
+          argsIgnorePattern: "^(services|_)",
+        },
+      ],
     },
   }
 );
 
-// Additional configuration for transformed files
-// export const transformedFilesConfig = {
-//   files: ["**/*.di-transformed.*", "src/.tdi2/**/*"],
-//   rules: {
-//     // Disable all rules for transformed files
-//     "@typescript-eslint/no-unused-vars": "off",
-//     "@typescript-eslint/no-explicit-any": "off",
-
-    
-//     "tdi2/detect-di-components": "off",
-//     "tdi2/require-di-transformer": "off",
-//   },
-// };
+// Additional processors for better DI handling
+export const diProcessorConfig = {
+  files: ["**/*.tsx"],
+  processor: "tdi2/.tsx", // Use the TDI2 processor
+};
