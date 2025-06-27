@@ -30,3 +30,8 @@
   - if say we have two "implements UserRepoInterface"
 - in case of multipleunnamed generic interfaces we should throw an error or warning (nject<AsyncState<{ name: string; email: string }>>;)
 - FIXME after hot reloading most of the service are no longer avail `rm -rf node_modules/.vite/` && `npm run di:reset && npm run dev` circumbvents this
+- Lazy decorator and marker
+- Profile decorator and marker
+- FIXME duplicated keys see generated list of services
+- even more tests for DI if this is supposed to be somewhat viable
+- compile to npm package and publish
