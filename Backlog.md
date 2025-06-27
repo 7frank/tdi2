@@ -35,3 +35,7 @@
 - FIXME duplicated keys see generated list of services
 - even more tests for DI if this is supposed to be somewhat viable
 - compile to npm package and publish
+-  write tests for different styles of inject markers
+  - inline
+  - inline destructure
+  - separate props interface

@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer.ts - ENHANCED with AsyncState support
+// tools/functional-di-enhanced-transformer.ts - FINAL FIX for interface reference support
 
 import { 
   Project, 
@@ -8,7 +8,9 @@ import {
   ArrowFunction,
   ParameterDeclaration,
   Node,
-  TypeNode
+  TypeNode,
+  InterfaceDeclaration,
+  TypeAliasDeclaration
 } from 'ts-morph';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -173,7 +175,7 @@ export class FunctionalDIEnhancedTransformer {
     if (parameters.length === 0) return false;
 
     const firstParam = parameters[0];
-    const dependencies = this.extractDependenciesFromParameter(firstParam);
+    const dependencies = this.extractDependenciesFromParameter(firstParam, sourceFile);
     if (dependencies.length === 0) return false;
 
     // Resolve implementations for dependencies
@@ -185,8 +187,8 @@ export class FunctionalDIEnhancedTransformer {
     // Prepend DI code to function body
     this.prependDICodeToFunction(func, resolvedDependencies);
 
-    // Remove services from parameter type
-    this.removeServicesFromParameterType(firstParam);
+    // Remove services from parameter type (if it's inline type literal)
+    this.removeServicesFromParameterType(firstParam, sourceFile);
 
     return true;
   }
@@ -200,7 +202,7 @@ export class FunctionalDIEnhancedTransformer {
     if (parameters.length === 0) return false;
 
     const firstParam = parameters[0];
-    const dependencies = this.extractDependenciesFromParameter(firstParam);
+    const dependencies = this.extractDependenciesFromParameter(firstParam, sourceFile);
     if (dependencies.length === 0) return false;
 
     // Resolve implementations for dependencies
@@ -212,24 +214,60 @@ export class FunctionalDIEnhancedTransformer {
     // Prepend DI code to arrow function body
     this.prependDICodeToArrowFunction(arrowFunc, resolvedDependencies);
 
-    // Remove services from parameter type
-    this.removeServicesFromParameterType(firstParam);
+    // Remove services from parameter type (if it's inline type literal)
+    this.removeServicesFromParameterType(firstParam, sourceFile);
 
     return true;
   }
 
-  private extractDependenciesFromParameter(param: ParameterDeclaration): FunctionalDependency[] {
+  // FIXED: Enhanced method to handle both inline type literals AND interface references
+  private extractDependenciesFromParameter(param: ParameterDeclaration, sourceFile: SourceFile): FunctionalDependency[] {
     const typeNode = param.getTypeNode();
-    if (!typeNode || !Node.isTypeLiteral(typeNode)) return [];
+    if (!typeNode) return [];
 
-    const servicesProperty = typeNode.getMembers().find(member => 
+    if (this.options.verbose) {
+      console.log(`🔍 Analyzing parameter type: ${typeNode.getKindName()}`);
+    }
+
+    // Case 1: Inline type literal - props: { services: {...} }
+    if (Node.isTypeLiteral(typeNode)) {
+      if (this.options.verbose) {
+        console.log('📝 Found inline type literal');
+      }
+      return this.extractFromTypeLiteral(typeNode);
+    }
+
+    // Case 2: Type reference - props: TodoAppProps
+    if (Node.isTypeReference(typeNode)) {
+      if (this.options.verbose) {
+        console.log('📝 Found type reference');
+      }
+      return this.extractFromTypeReference(typeNode, sourceFile);
+    }
+
+    return [];
+  }
+
+  // Extract dependencies from inline type literal
+  private extractFromTypeLiteral(typeNode: any): FunctionalDependency[] {
+    const servicesProperty = typeNode.getMembers().find((member: any) => 
       Node.isPropertySignature(member) && member.getName() === 'services'
     );
     
-    if (!servicesProperty || !Node.isPropertySignature(servicesProperty)) return [];
+    if (!servicesProperty || !Node.isPropertySignature(servicesProperty)) {
+      if (this.options.verbose) {
+        console.log('⚠️  No services property found in type literal');
+      }
+      return [];
+    }
 
     const serviceTypeNode = servicesProperty.getTypeNode();
-    if (!serviceTypeNode || !Node.isTypeLiteral(serviceTypeNode)) return [];
+    if (!serviceTypeNode || !Node.isTypeLiteral(serviceTypeNode)) {
+      if (this.options.verbose) {
+        console.log('⚠️  Services property is not a type literal');
+      }
+      return [];
+    }
 
     const dependencies: FunctionalDependency[] = [];
 
@@ -247,7 +285,185 @@ export class FunctionalDIEnhancedTransformer {
       }
     }
 
+    if (this.options.verbose) {
+      console.log(`📋 Found ${dependencies.length} dependencies in type literal`);
+    }
+
     return dependencies;
+  }
+
+  // FIXED: Extract dependencies from type reference (interface/type alias)
+  private extractFromTypeReference(typeNode: any, sourceFile: SourceFile): FunctionalDependency[] {
+    const typeName = typeNode.getTypeName().getText();
+    
+    if (this.options.verbose) {
+      console.log(`🔍 Resolving type reference: ${typeName}`);
+    }
+
+    // Find the interface or type alias declaration
+    const typeDeclaration = this.findTypeDeclaration(typeName, sourceFile);
+    if (!typeDeclaration) {
+      if (this.options.verbose) {
+        console.log(`❌ Could not find declaration for type: ${typeName}`);
+      }
+      return [];
+    }
+
+    if (this.options.verbose) {
+      console.log(`✅ Found type declaration: ${typeDeclaration.getKindName()}`);
+    }
+
+    // Extract services property from the type declaration
+    if (Node.isInterfaceDeclaration(typeDeclaration)) {
+      return this.extractFromInterfaceDeclaration(typeDeclaration);
+    }
+
+    if (Node.isTypeAliasDeclaration(typeDeclaration)) {
+      return this.extractFromTypeAliasDeclaration(typeDeclaration);
+    }
+
+    return [];
+  }
+
+  // Find interface or type alias declaration in the source file or imported files
+  private findTypeDeclaration(typeName: string, sourceFile: SourceFile): InterfaceDeclaration | TypeAliasDeclaration | undefined {
+    // First, look in the current source file
+    const localInterface = sourceFile.getInterface(typeName);
+    if (localInterface) {
+      if (this.options.verbose) {
+        console.log(`✅ Found interface ${typeName} in current file`);
+      }
+      return localInterface;
+    }
+
+    const localTypeAlias = sourceFile.getTypeAlias(typeName);
+    if (localTypeAlias) {
+      if (this.options.verbose) {
+        console.log(`✅ Found type alias ${typeName} in current file`);
+      }
+      return localTypeAlias;
+    }
+
+    // Then, look in imported files
+    for (const importDeclaration of sourceFile.getImportDeclarations()) {
+      const namedImports = importDeclaration.getNamedImports();
+      const isTypeImported = namedImports.some(namedImport => 
+        namedImport.getName() === typeName
+      );
+
+      if (isTypeImported) {
+        const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
+        if (this.options.verbose) {
+          console.log(`🔍 Looking for ${typeName} in imported module: ${moduleSpecifier}`);
+        }
+        
+        const importedFile = this.resolveImportedFile(moduleSpecifier, sourceFile);
+        
+        if (importedFile) {
+          const importedInterface = importedFile.getInterface(typeName);
+          if (importedInterface) {
+            if (this.options.verbose) {
+              console.log(`✅ Found interface ${typeName} in imported file`);
+            }
+            return importedInterface;
+          }
+
+          const importedTypeAlias = importedFile.getTypeAlias(typeName);
+          if (importedTypeAlias) {
+            if (this.options.verbose) {
+              console.log(`✅ Found type alias ${typeName} in imported file`);
+            }
+            return importedTypeAlias;
+          }
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  // Resolve imported file path
+  private resolveImportedFile(moduleSpecifier: string, sourceFile: SourceFile): SourceFile | undefined {
+    try {
+      const currentDir = path.dirname(sourceFile.getFilePath());
+      
+      let resolvedPath: string;
+      if (moduleSpecifier.startsWith('.')) {
+        // Relative import
+        resolvedPath = path.resolve(currentDir, moduleSpecifier);
+      } else {
+        // Absolute import (from src root)
+        resolvedPath = path.resolve(this.options.srcDir!, moduleSpecifier);
+      }
+
+      // Try different extensions
+      const extensions = ['.ts', '.tsx', '/index.ts', '/index.tsx'];
+      for (const ext of extensions) {
+        const fullPath = resolvedPath + ext;
+        const importedFile = this.project.getSourceFile(fullPath);
+        if (importedFile) {
+          if (this.options.verbose) {
+            console.log(`✅ Resolved import: ${moduleSpecifier} -> ${fullPath}`);
+          }
+          return importedFile;
+        }
+      }
+
+      if (this.options.verbose) {
+        console.log(`❌ Could not resolve import: ${moduleSpecifier}`);
+      }
+      return undefined;
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Failed to resolve import: ${moduleSpecifier}`, error);
+      }
+      return undefined;
+    }
+  }
+
+  // Extract dependencies from interface declaration
+  private extractFromInterfaceDeclaration(interfaceDecl: InterfaceDeclaration): FunctionalDependency[] {
+    const servicesProperty = interfaceDecl.getProperties().find(prop => 
+      prop.getName() === 'services'
+    );
+
+    if (!servicesProperty) {
+      if (this.options.verbose) {
+        console.log(`⚠️  No services property found in interface ${interfaceDecl.getName()}`);
+      }
+      return [];
+    }
+
+    const serviceTypeNode = servicesProperty.getTypeNode();
+    if (!serviceTypeNode || !Node.isTypeLiteral(serviceTypeNode)) {
+      if (this.options.verbose) {
+        console.log(`⚠️  Services property in interface ${interfaceDecl.getName()} is not a type literal`);
+      }
+      return [];
+    }
+
+    if (this.options.verbose) {
+      console.log(`✅ Extracting dependencies from interface ${interfaceDecl.getName()}`);
+    }
+
+    return this.extractFromTypeLiteral(serviceTypeNode);
+  }
+
+  // Extract dependencies from type alias declaration
+  private extractFromTypeAliasDeclaration(typeAlias: TypeAliasDeclaration): FunctionalDependency[] {
+    const typeNode = typeAlias.getTypeNode();
+    if (!typeNode || !Node.isTypeLiteral(typeNode)) {
+      if (this.options.verbose) {
+        console.log(`⚠️  Type alias ${typeAlias.getName()} is not a type literal`);
+      }
+      return [];
+    }
+
+    if (this.options.verbose) {
+      console.log(`✅ Extracting dependencies from type alias ${typeAlias.getName()}`);
+    }
+
+    return this.extractFromTypeLiteral(typeNode);
   }
 
   private parseDependencyType(propName: string, typeNode: TypeNode): FunctionalDependency | null {
@@ -266,6 +482,7 @@ export class FunctionalDIEnhancedTransformer {
       interfaceType = optionalMatch[1];
       isOptional = true;
     } else {
+      // Not a DI marker type
       return null;
     }
 
@@ -273,6 +490,10 @@ export class FunctionalDIEnhancedTransformer {
     const sanitizedKey = this.interfaceResolver.getInterfaceResolver ? 
       this.interfaceResolver.resolveImplementation(interfaceType)?.sanitizedKey || this.sanitizeKey(interfaceType) :
       this.sanitizeKey(interfaceType);
+
+    if (this.options.verbose) {
+      console.log(`🔗 Found dependency: ${propName} -> ${interfaceType} (${isOptional ? 'optional' : 'required'})`);
+    }
 
     return {
       serviceKey: propName,
@@ -434,17 +655,33 @@ export class FunctionalDIEnhancedTransformer {
     }
   }
 
-  private removeServicesFromParameterType(param: ParameterDeclaration): void {
+  // FIXED: Enhanced method to handle both inline types and interface references
+  private removeServicesFromParameterType(param: ParameterDeclaration, sourceFile: SourceFile): void {
     const typeNode = param.getTypeNode();
-    if (!typeNode || !Node.isTypeLiteral(typeNode)) return;
+    if (!typeNode) return;
 
-    // Find and remove the services property
-    const members = typeNode.getMembers();
-    for (const member of members) {
-      if (Node.isPropertySignature(member) && member.getName() === 'services') {
-        member.remove();
-        break;
+    // Case 1: Inline type literal - can remove services property
+    if (Node.isTypeLiteral(typeNode)) {
+      const members = typeNode.getMembers();
+      for (const member of members) {
+        if (Node.isPropertySignature(member) && member.getName() === 'services') {
+          member.remove();
+          break;
+        }
       }
+      return;
+    }
+
+    // Case 2: Type reference - need to create a new interface without services
+    if (Node.isTypeReference(typeNode)) {
+      const typeName = typeNode.getTypeName().getText();
+      
+      // For now, we'll comment out the services parameter rather than modifying the interface
+      // This prevents breaking other components that use the same interface
+      if (this.options.verbose) {
+        console.log(`⚠️  Cannot remove services from interface ${typeName}, keeping parameter for compatibility`);
+      }
+      return;
     }
   }
 
