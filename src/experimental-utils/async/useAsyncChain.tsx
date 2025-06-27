@@ -123,7 +123,7 @@ class SuccessChain<T, E = Error> {
 
   map(fn: (data: T) => React.ReactNode): AsyncChain<any, E> {
     const chain = new AsyncChain(this._state, this._setState);
-    // @ts-ignore - complex typing, but works at runtime
+
     chain["successRenderer"] = (data: any) => fn(this.transform(data));
     chain["errorRenderer"] = this.errorRenderer;
     chain["pendingRenderer"] = this.pendingRenderer;
@@ -166,7 +166,7 @@ class ErrorChain<T, E = Error> {
   map(fn: (error: E) => React.ReactNode): AsyncChain<T, any> {
     const chain = new AsyncChain(this._state, this._setState);
     chain["successRenderer"] = this.successRenderer;
-    // @ts-ignore - complex typing, but works at runtime
+
     chain["errorRenderer"] = (error: any) => fn(this.transform(error));
     chain["pendingRenderer"] = this.pendingRenderer;
     chain["idleRenderer"] = this.idleRenderer;
@@ -210,10 +210,10 @@ class SuccessErrorChain<T, E = Error> {
     error: (error: E) => React.ReactNode;
   }): AsyncChain<any, any> {
     const chain = new AsyncChain(this._state, this._setState);
-    // @ts-ignore
+
     chain["successRenderer"] = (data: any) =>
       handlers.success(this.successTransform(data));
-    // @ts-ignore
+
     chain["errorRenderer"] = (error: any) =>
       handlers.error(this.errorTransform(error));
     chain["pendingRenderer"] = this.pendingRenderer;
@@ -234,8 +234,7 @@ class SuccessErrorChain<T, E = Error> {
 
 // check out if we can combine async,either, and loading. This way our services can be simple async functions / classes
 // https://www.npmjs.com/package/@sweet-monads/either#eitherasyncchain
-export
-function useAsyncChain<T, E = Error>() {
+export function useAsyncChain<T, E = Error>() {
   const [state, setState] = useState<AsyncState<T, E>>({
     isLoading: false,
     isSuccess: false,
@@ -264,5 +263,3 @@ function useAsyncChain<T, E = Error>() {
 
   return chainRef.current;
 }
-
-

@@ -47,14 +47,14 @@ export interface DIFunction<TServices extends ServiceDependencies, TProps = obje
  * const MyComponent: DIComponent<{logger: Inject<LoggerInterface>}, {title: string}> = 
  *   ({title, services}) => { ... }
  */
-export type DIComponent<TServices extends ServiceDependencies, TProps = {}> = 
+export type DIComponent<TServices extends ServiceDependencies, TProps = object> = 
   DIFunction<TServices, TProps>;
 
 /**
  * Transform a regular React component to support DI
  * This could be used as a higher-order function or detected by the transformer
  */
-export function withDI<TServices extends ServiceDependencies, TProps = {}>(
+export function withDI<TServices extends ServiceDependencies, TProps = object>(
   component: (props: TProps & { services: ExtractServices<TServices> }) => JSX.Element,
   serviceConfig: TServices
 ): React.ComponentType<TProps> {
