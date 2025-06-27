@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer.ts - FINAL FIX for interface reference support
+// tools/functional-di-enhanced-transformer.ts - FIXED: Extract dependencies from interface declarations
 
 import { 
   Project, 
@@ -248,15 +248,68 @@ export class FunctionalDIEnhancedTransformer {
     return [];
   }
 
-  // Extract dependencies from inline type literal
+  // FIXED: Extract dependencies from inline type literal OR direct type literal
   private extractFromTypeLiteral(typeNode: any): FunctionalDependency[] {
-    const servicesProperty = typeNode.getMembers().find((member: any) => 
+    if (this.options.verbose) {
+      console.log('📝 Extracting from type literal');
+      console.log(`📝 Type literal text: ${typeNode.getText()}`);
+    }
+
+    const members = typeNode.getMembers();
+    
+    if (this.options.verbose) {
+      console.log(`🔍 Type literal has ${members.length} members:`);
+      members.forEach((member: any, index: number) => {
+        if (Node.isPropertySignature(member)) {
+          console.log(`  ${index}: ${member.getName()} (${member.getKindName()})`);
+        } else {
+          console.log(`  ${index}: ${member.getKindName()}`);
+        }
+      });
+    }
+
+    // CASE 1: Direct services type literal (when called from interface with services property)
+    // Check if this type literal contains Inject<> types directly
+    const dependencies: FunctionalDependency[] = [];
+    let hasInjectTypes = false;
+
+    for (const member of members) {
+      if (Node.isPropertySignature(member)) {
+        const propName = member.getName();
+        const propTypeNode = member.getTypeNode();
+        
+        if (propTypeNode) {
+          const typeText = propTypeNode.getText();
+          if (typeText.includes('Inject<') || typeText.includes('InjectOptional<')) {
+            hasInjectTypes = true;
+            const dependency = this.parseDependencyType(propName, propTypeNode);
+            if (dependency) {
+              dependencies.push(dependency);
+              if (this.options.verbose) {
+                console.log(`✅ Added dependency: ${propName} -> ${dependency.interfaceType}`);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // If we found inject types directly, return them
+    if (hasInjectTypes) {
+      if (this.options.verbose) {
+        console.log(`📋 Found ${dependencies.length} direct dependencies in type literal`);
+      }
+      return dependencies;
+    }
+
+    // CASE 2: Props type literal with services property (traditional structure)
+    const servicesProperty = members.find((member: any) => 
       Node.isPropertySignature(member) && member.getName() === 'services'
     );
     
     if (!servicesProperty || !Node.isPropertySignature(servicesProperty)) {
       if (this.options.verbose) {
-        console.log('⚠️  No services property found in type literal');
+        console.log('⚠️  No services property found and no direct Inject types in type literal');
       }
       return [];
     }
@@ -269,8 +322,11 @@ export class FunctionalDIEnhancedTransformer {
       return [];
     }
 
-    const dependencies: FunctionalDependency[] = [];
+    if (this.options.verbose) {
+      console.log('✅ Found services property in type literal, extracting nested dependencies');
+    }
 
+    // Extract from nested services type literal
     for (const member of serviceTypeNode.getMembers()) {
       if (Node.isPropertySignature(member)) {
         const propName = member.getName();
@@ -280,6 +336,9 @@ export class FunctionalDIEnhancedTransformer {
           const dependency = this.parseDependencyType(propName, propTypeNode);
           if (dependency) {
             dependencies.push(dependency);
+            if (this.options.verbose) {
+              console.log(`✅ Added nested dependency: ${propName} -> ${dependency.interfaceType}`);
+            }
           }
         }
       }
@@ -287,6 +346,9 @@ export class FunctionalDIEnhancedTransformer {
 
     if (this.options.verbose) {
       console.log(`📋 Found ${dependencies.length} dependencies in type literal`);
+      dependencies.forEach(dep => {
+        console.log(`  - ${dep.serviceKey}: ${dep.interfaceType} (${dep.isOptional ? 'optional' : 'required'})`);
+      });
     }
 
     return dependencies;
@@ -421,32 +483,78 @@ export class FunctionalDIEnhancedTransformer {
     }
   }
 
-  // Extract dependencies from interface declaration
+  // FIXED: Extract dependencies from interface declaration
   private extractFromInterfaceDeclaration(interfaceDecl: InterfaceDeclaration): FunctionalDependency[] {
-    const servicesProperty = interfaceDecl.getProperties().find(prop => 
-      prop.getName() === 'services'
-    );
+    if (this.options.verbose) {
+      console.log(`✅ Extracting dependencies from interface ${interfaceDecl.getName()}`);
+    }
+
+    // FIXED: Get all properties and find services property with better debugging
+    const properties = interfaceDecl.getProperties();
+    
+    if (this.options.verbose) {
+      console.log(`🔍 Interface ${interfaceDecl.getName()} has ${properties.length} properties:`);
+      properties.forEach(prop => {
+        console.log(`  - ${prop.getName()}: ${prop.getTypeNode()?.getKindName() || 'unknown'}`);
+      });
+    }
+
+    const servicesProperty = properties.find(prop => {
+      const propName = prop.getName();
+      if (this.options.verbose) {
+        console.log(`🔍 Checking property: ${propName}`);
+      }
+      return propName === 'services';
+    });
 
     if (!servicesProperty) {
       if (this.options.verbose) {
         console.log(`⚠️  No services property found in interface ${interfaceDecl.getName()}`);
-      }
-      return [];
-    }
-
-    const serviceTypeNode = servicesProperty.getTypeNode();
-    if (!serviceTypeNode || !Node.isTypeLiteral(serviceTypeNode)) {
-      if (this.options.verbose) {
-        console.log(`⚠️  Services property in interface ${interfaceDecl.getName()} is not a type literal`);
+        console.log(`📋 Available properties: ${properties.map(p => p.getName()).join(', ')}`);
       }
       return [];
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Extracting dependencies from interface ${interfaceDecl.getName()}`);
+      console.log(`✅ Found services property in interface ${interfaceDecl.getName()}`);
     }
 
-    return this.extractFromTypeLiteral(serviceTypeNode);
+    const serviceTypeNode = servicesProperty.getTypeNode();
+    if (!serviceTypeNode) {
+      if (this.options.verbose) {
+        console.log(`⚠️  Services property in interface ${interfaceDecl.getName()} has no type annotation`);
+      }
+      return [];
+    }
+
+    if (this.options.verbose) {
+      console.log(`🔍 Services property type: ${serviceTypeNode.getKindName()}`);
+      console.log(`📝 Services property type text: ${serviceTypeNode.getText()}`);
+    }
+
+    // FIXED: Handle both type literal and type reference for services property
+    if (Node.isTypeLiteral(serviceTypeNode)) {
+      if (this.options.verbose) {
+        console.log(`✅ Found type literal for services property in interface ${interfaceDecl.getName()}`);
+      }
+      return this.extractFromTypeLiteral(serviceTypeNode);
+    }
+
+    if (Node.isTypeReference(serviceTypeNode)) {
+      if (this.options.verbose) {
+        console.log(`✅ Found type reference for services property in interface ${interfaceDecl.getName()}`);
+      }
+      // Get the source file containing this interface
+      const sourceFile = interfaceDecl.getSourceFile();
+      return this.extractFromTypeReference(serviceTypeNode, sourceFile);
+    }
+
+    if (this.options.verbose) {
+      console.log(`⚠️  Services property in interface ${interfaceDecl.getName()} is not a supported type (${serviceTypeNode.getKindName()})`);
+      console.log(`📝 Full property text: ${servicesProperty.getText()}`);
+    }
+
+    return [];
   }
 
   // Extract dependencies from type alias declaration
