@@ -462,4 +462,4 @@ export class InterfaceResolver {
 }
 
 // Re-export types for convenience
-export { InterfaceImplementation, ServiceDependency, ConstructorParam, ValidationResult, DependencyNode };
+export type { InterfaceImplementation, ServiceDependency, ConstructorParam, ValidationResult, DependencyNode };

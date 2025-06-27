@@ -9,9 +9,9 @@ import { AsyncState, useObservableState } from "./useObservableState";
 export function ExampleObservableFC(props: {
   services: {
     apiService: Inject<ApiService>;
-    userService: Inject<UserService>;
-    /** FIXME  */
-    // userService: Inject<AsyncState<UserServiceState>>;
+    // userService: Inject<UserService>;
+
+    userService: Inject<AsyncState<UserServiceState>>;
   };
 }) {
   const { services } = props;

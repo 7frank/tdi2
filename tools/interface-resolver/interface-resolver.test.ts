@@ -684,6 +684,9 @@ export class Service${i} implements Service${i}Interface {
         expect(keySanitizer.sanitizeStateKey("ProductData")).toBe("ProductData"); // FIXED: Match actual behavior
         expect(keySanitizer.sanitizeStateKey("OrderInterface")).toBe("OrderState"); // Interface suffix removed, State added
         expect(keySanitizer.sanitizeStateKey("OrderType")).toBe("OrderState"); // Type suffix removed, State added
+
+        expect(keySanitizer.sanitizeStateKey("AsyncState<UserServiceState>")).toBe("AsyncState_UserServiceState"); 
+        
       });
 
       it("When testing key validation, Then should correctly identify valid identifiers", async () => {
