@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Service } from "../../di";
 
 // Observable State Base Class
 abstract class ObservableState<T> {
@@ -43,8 +42,7 @@ type AsyncData<T> = {
   isIdle: boolean;
 };
 
-export 
-abstract class AsyncState<T> extends ObservableState<AsyncData<T>> {
+export abstract class AsyncState<T> extends ObservableState<AsyncData<T>> {
   constructor() {
     super({
       isLoading: false,
@@ -102,4 +100,3 @@ export function useObservableState<T>(observable: ObservableState<T>): T {
 
   return observable.state;
 }
-
