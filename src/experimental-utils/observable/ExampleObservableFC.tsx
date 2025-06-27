@@ -2,23 +2,23 @@ import type { Inject } from "../../di/markers";
 import type { ApiService, UserService } from "./exampleServices";
 import { useObservableState } from "./useObservableState";
 
-export function ExampleObservableFC({
-  services: { apiService, userService },
-}: {
+export function ExampleObservableFC(props: {
   services: {
     apiService: Inject<ApiService>;
     userService: Inject<UserService>;
   };
 }) {
-  const apiState = useObservableState(apiService);
-  const userState = useObservableState(userService);
+  const { services } = props;
+
+  const apiState = useObservableState(services.apiService);
+  const userState = useObservableState(services.userService);
 
   const handleApiCall = async () => {
-    await apiService.fetchData();
+    await services.apiService.fetchData();
   };
 
   const handleUserFetch = async () => {
-    await userService.getProfile("123");
+    await services.userService.getProfile("123");
   };
 
   const renderApiState = () => {
