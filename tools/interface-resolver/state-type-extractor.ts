@@ -1,4 +1,4 @@
-// tools/state-type-extractor.ts - Handles extraction of state-based DI registrations
+// tools/interface-resolver/state-type-extractor.ts - ENHANCED VERSION
 
 import { InterfaceInfo, InheritanceInfo, StateBasedRegistration } from "./interface-resolver-types";
 import { KeySanitizer } from "./key-sanitizer";
@@ -15,6 +15,37 @@ export class StateTypeExtractor {
   ): StateBasedRegistration[] {
     const registrations: StateBasedRegistration[] = [];
 
+    // ENHANCED: Check inheritance for AsyncState patterns FIRST
+    if (inheritanceInfo.hasInheritance) {
+      for (const inheritanceMapping of inheritanceInfo.inheritanceMappings) {
+        if (inheritanceMapping.baseClass === 'AsyncState' && inheritanceMapping.isGeneric) {
+          // Extract state type from AsyncState<StateType>
+          for (const typeParam of inheritanceMapping.typeParameters) {
+            const stateRegistration: StateBasedRegistration = {
+              stateType: typeParam,
+              serviceInterface: `AsyncState<${typeParam}>`
+            };
+            
+            registrations.push(stateRegistration);
+
+            if (this.verbose) {
+              console.log(`🎯 Found state inheritance: AsyncState<${typeParam}> -> ${typeParam}`);
+            }
+          }
+        }
+
+        // Handle other state-based inheritance patterns
+        if (this.isStateManagementPattern(inheritanceMapping)) {
+          const stateRegistrations = this.extractStateFromInheritance(inheritanceMapping);
+          registrations.push(...stateRegistrations);
+
+          if (this.verbose && stateRegistrations.length > 0) {
+            console.log(`🎯 Found state inheritance: ${inheritanceMapping.baseClassGeneric} -> ${stateRegistrations.map(r => r.stateType).join(', ')}`);
+          }
+        }
+      }
+    }
+
     // Check implemented interfaces for state patterns
     for (const interfaceInfo of implementedInterfaces) {
       if (interfaceInfo.isGeneric) {
@@ -27,20 +58,6 @@ export class StateTypeExtractor {
 
           if (this.verbose) {
             console.log(`🎯 Found state interface: ${interfaceInfo.fullType} -> ${stateType}`);
-          }
-        }
-      }
-    }
-
-    // Check inheritance for state patterns (e.g., extends AsyncState<UserServiceState>)
-    if (inheritanceInfo.hasInheritance) {
-      for (const inheritanceMapping of inheritanceInfo.inheritanceMappings) {
-        if (inheritanceMapping.isGeneric) {
-          const stateRegistrations = this.extractStateFromInheritance(inheritanceMapping);
-          registrations.push(...stateRegistrations);
-
-          if (this.verbose && stateRegistrations.length > 0) {
-            console.log(`🎯 Found state inheritance: ${inheritanceMapping.baseClassGeneric} -> ${stateRegistrations.map(r => r.stateType).join(', ')}`);
           }
         }
       }
@@ -92,12 +109,12 @@ export class StateTypeExtractor {
   private extractStateFromInheritance(inheritanceMapping: any): StateBasedRegistration[] {
     const registrations: StateBasedRegistration[] = [];
 
-    // Pattern 1: extends AsyncState<StateType>
+    // Pattern 1: extends AsyncState<StateType> - ENHANCED
     if (inheritanceMapping.baseClass === 'AsyncState') {
       for (const typeParam of inheritanceMapping.typeParameters) {
         registrations.push({
           stateType: typeParam,
-          serviceInterface: `AsyncStateService<${typeParam}>`
+          serviceInterface: `AsyncState<${typeParam}>`
         });
       }
     }
@@ -236,10 +253,12 @@ export class StateTypeExtractor {
 
   /**
    * Get recommended service interface for a state type
+   * 
+   * FIXME: This is a simplified version, may need to handle more cases
    */
   getRecommendedServiceInterface(stateType: string, baseClass?: string): string {
     if (baseClass === 'AsyncState') {
-      return `AsyncStateService<${stateType}>`;
+      return `AsyncState<${stateType}>`;
     }
     
     if (baseClass === 'Repository' || baseClass === 'BaseRepository') {

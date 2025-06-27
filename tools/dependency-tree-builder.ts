@@ -1,4 +1,4 @@
-// tools/dependency-tree-builder.ts - FIXED with deduplication
+// tools/dependency-tree-builder.ts - FIXED with enhanced registration
 
 import {
   InterfaceResolver,
@@ -26,7 +26,7 @@ interface DIConfiguration {
   scope: string;
 }
 
-// NEW: Service class metadata to avoid duplicates
+// Service class metadata to avoid duplicates
 interface ServiceClass {
   className: string;
   filePath: string;
@@ -34,7 +34,7 @@ interface ServiceClass {
   factory: string;
   registrations: Array<{
     token: string;
-    type: 'interface' | 'class' | 'inheritance';
+    type: 'interface' | 'class' | 'inheritance' | 'state';
     interfaceName: string;
     metadata?: any;
   }>;
@@ -44,7 +44,7 @@ export class DependencyTreeBuilder {
   private interfaceResolver: InterfaceResolver;
   private configManager: ConfigManager;
   private configurations: Map<string, DIConfiguration> = new Map();
-  private serviceClasses: Map<string, ServiceClass> = new Map(); // NEW: Track unique service classes
+  private serviceClasses: Map<string, ServiceClass> = new Map();
   private options: { verbose: boolean; srcDir: string; enableInheritanceDI: boolean };
 
   constructor(
@@ -98,7 +98,7 @@ export class DependencyTreeBuilder {
       );
     }
 
-    // FIXED: Build configurations with deduplication
+    // Build configurations with deduplication
     await this.buildConfigurationsWithDeduplication();
 
     // Generate DI configuration file
@@ -117,7 +117,7 @@ export class DependencyTreeBuilder {
     }
   }
 
-  // FIXED: New method that groups implementations by service class first
+  // ENHANCED: Build configurations with proper AsyncState handling
   private async buildConfigurationsWithDeduplication(): Promise<void> {
     const implementations = this.interfaceResolver.getInterfaceImplementations();
     const dependencies = this.interfaceResolver.getServiceDependencies();
@@ -162,10 +162,15 @@ export class DependencyTreeBuilder {
       // Add all the different ways this service can be accessed
       for (const impl of serviceInfo.implementations) {
         let token: string;
-        let type: 'interface' | 'class' | 'inheritance';
+        let type: 'interface' | 'class' | 'inheritance' | 'state';
         
-        if (impl.isInheritanceBased) {
-          token = impl.interfaceName; // Base class name
+        if (impl.isStateBased) {
+          // CRITICAL: Use the full service interface for state-based services
+          token = impl.serviceInterface || impl.interfaceName;
+          type = 'state';
+        } else if (impl.isInheritanceBased) {
+          // CRITICAL: Use the base class generic for inheritance-based services
+          token = impl.baseClassGeneric || impl.interfaceName;
           type = 'inheritance';
         } else if (impl.isClassBased) {
           token = impl.implementationClass; // Class name
@@ -187,7 +192,12 @@ export class DependencyTreeBuilder {
               sanitizedKey: impl.sanitizedKey,
               baseClass: impl.baseClass,
               baseClassGeneric: impl.baseClassGeneric,
-              inheritanceChain: impl.inheritanceChain
+              inheritanceChain: impl.inheritanceChain,
+              stateType: impl.stateType,
+              serviceInterface: impl.serviceInterface,
+              isStateBased: impl.isStateBased,
+              isInheritanceBased: impl.isInheritanceBased,
+              isClassBased: impl.isClassBased,
             }
           });
         }
@@ -214,7 +224,8 @@ export class DependencyTreeBuilder {
         this.configurations.set(registration.token, config);
 
         if (this.options.verbose) {
-          const typeIndicator = registration.type === 'inheritance' ? '🧬' : 
+          const typeIndicator = registration.type === 'state' ? '🎯' :
+                               registration.type === 'inheritance' ? '🧬' : 
                                registration.type === 'class' ? '📦' : '🔌';
           console.log(`${typeIndicator} Config: ${registration.token} -> ${className}`);
         }
@@ -238,7 +249,7 @@ export class DependencyTreeBuilder {
     const factories: string[] = [];
     const diMapEntries: string[] = [];
 
-    // FIXED: Use serviceClasses to avoid duplicate imports and factories
+    // Use serviceClasses to avoid duplicate imports and factories
     const processedClasses = new Set<string>();
 
     // Generate unique imports and factories
@@ -282,8 +293,11 @@ export class DependencyTreeBuilder {
     registrationType: '${registration.type}',
     isClassBased: ${registration.type === 'class'},
     isInheritanceBased: ${registration.type === 'inheritance'},
+    isStateBased: ${registration.type === 'state'},
     baseClass: ${registration.metadata?.baseClass ? `'${registration.metadata.baseClass}'` : 'null'},
     baseClassGeneric: ${registration.metadata?.baseClassGeneric ? `'${registration.metadata.baseClassGeneric}'` : 'null'},
+    stateType: ${registration.metadata?.stateType ? `'${registration.metadata.stateType}'` : 'null'},
+    serviceInterface: ${registration.metadata?.serviceInterface ? `'${registration.metadata.serviceInterface}'` : 'null'},
     inheritanceChain: [${(registration.metadata?.inheritanceChain || []).map((c: string) => `'${c}'`).join(', ')}]
   }`);
     }
@@ -345,6 +359,17 @@ ${Array.from(this.configurations.values())
   .join(",\n")}
 };
 
+export const STATE_MAPPING = {
+${Array.from(this.configurations.values())
+  .filter(config => {
+    const serviceClass = this.serviceClasses.get(config.implementation.implementationClass)!;
+    const registration = serviceClass.registrations.find(reg => reg.token === config.token)!;
+    return registration.type === 'state';
+  })
+  .map(config => `  '${config.token}': '${config.implementation.implementationClass}'`)
+  .join(",\n")}
+};
+
 // Enhanced helper functions
 export function getServicesByBaseClass(baseClass: string): string[] {
   return Object.values(DI_CONFIG)
@@ -352,11 +377,17 @@ export function getServicesByBaseClass(baseClass: string): string[] {
     .map(config => config.implementationClass);
 }
 
+export function getServicesByStateType(stateType: string): string[] {
+  return Object.values(DI_CONFIG)
+    .filter(config => config.stateType === stateType)
+    .map(config => config.implementationClass);
+}
+
 export function getTokensForService(serviceClass: string): string[] {
   return SERVICE_REGISTRATIONS[serviceClass] || [];
 }
 
-export function getRegistrationType(token: string): 'interface' | 'class' | 'inheritance' | null {
+export function getRegistrationType(token: string): 'interface' | 'class' | 'inheritance' | 'state' | null {
   const config = DI_CONFIG[token];
   return config?.registrationType || null;
 }
@@ -435,7 +466,7 @@ ${dependencyResolves}
 * This file contains dependencies for DI auto wiring mechanism to work
 * (generate anew by running DI transformation)
 * 
-* Supports: Interface-based, Class-based, and Inheritance-based DI
+* Supports: Interface-based, Class-based, Inheritance-based, and State-based DI
 * Config: ${this.configManager.getConfigHash()}
 * Generated: ${new Date().toISOString()}
 */
@@ -541,12 +572,10 @@ export * from '${path
     return this.interfaceResolver;
   }
 
-  // NEW: Get service class information
   getServiceClasses(): Map<string, ServiceClass> {
     return this.serviceClasses;
   }
 
-  // NEW: Get inheritance-specific information
   getInheritanceInfo(): {
     baseClasses: string[];
     implementations: Map<string, string[]>;

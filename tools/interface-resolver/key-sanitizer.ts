@@ -1,18 +1,25 @@
-// tools/key-sanitizer.ts - Handles sanitization of keys for DI registration
+// tools/interface-resolver/key-sanitizer.ts - FIXED VERSION
 
 export class KeySanitizer {
   
   /**
-   * Standard sanitization for interface and class names
+   * Standard sanitization for interface and class names - FIXED FOR ASYNCSTATE
    */
   sanitizeKey(type: string): string {
     try {
-      // Step 1: Normalize generic types to use 'any'
-      const normalized = this.normalizeGenericType(type.trim());
+      // Step 1: Handle AsyncState pattern specifically
+      const asyncStateMatch = type.match(/^AsyncState<(.+)>$/);
+      if (asyncStateMatch) {
+        const stateType = asyncStateMatch[1];
+        return `AsyncState_${this.sanitizeKey(stateType)}`;
+      }
 
-      // Step 2: Convert to safe identifier
+      // Step 2: Normalize generic types to preserve state information
+      const normalized = this.normalizeGenericTypePreserveState(type.trim());
+
+      // Step 3: Convert to safe identifier
       const sanitized = normalized
-        .replace(/<any>/g, "_any") // CacheInterface<any> -> CacheInterface_any
+        .replace(/<([^>]+)>/g, "_$1") // CacheInterface<UserServiceState> -> CacheInterface_UserServiceState
         .replace(/[^\w]/g, "_") // Replace remaining special chars
         .replace(/_+/g, "_") // Remove multiple underscores
         .replace(/^_|_$/g, ""); // Remove leading/trailing underscores
@@ -24,11 +31,18 @@ export class KeySanitizer {
   }
 
   /**
-   * Special sanitization for inheritance keys (more descriptive)
+   * Special sanitization for inheritance keys - FIXED
    */
   sanitizeInheritanceKey(inheritanceType: string): string {
     try {
-      // Handle complex generic inheritance like AsyncState<{name: string, email: string}>
+      // Handle AsyncState<StateType> inheritance specifically
+      const asyncStateMatch = inheritanceType.match(/^AsyncState<(.+)>$/);
+      if (asyncStateMatch) {
+        const stateType = asyncStateMatch[1];
+        return `AsyncState_${this.sanitizeKey(stateType)}`;
+      }
+
+      // Continue with existing logic for other patterns
       let sanitized = inheritanceType
         .replace(/\s+/g, '_') // Replace spaces with underscores
         .replace(/[{}\[\]]/g, '_') // Replace object/array brackets
@@ -80,14 +94,15 @@ export class KeySanitizer {
   }
 
   /**
-   * Normalize generic types consistently
+   * Normalize generic types while preserving state type information
    */
-  private normalizeGenericType(type: string): string {
-    // Strategy: All generic type parameters become 'any' for matching purposes
-    // CacheInterface<T> -> CacheInterface<any>
-    // CacheInterface<string> -> CacheInterface<any>  
-    // CacheInterface<User> -> CacheInterface<any>
-    // This allows any implementation to match any usage
+  private normalizeGenericTypePreserveState(type: string): string {
+    // For AsyncState and similar patterns, preserve the state type
+    if (type.includes('AsyncState<') || type.includes('State<') || type.includes('Service<')) {
+      return type; // Keep as-is for state-based registrations
+    }
+    
+    // For other generics, use 'any' for compatibility
     return type.replace(/<[^>]*>/g, "<any>");
   }
 

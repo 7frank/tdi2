@@ -1,4 +1,4 @@
-// tools/interface-resolver.ts - Main interface resolver with modular architecture
+// tools/interface-resolver/interface-resolver.ts - CRITICAL FIXES
 
 import {
   Project,
@@ -118,6 +118,7 @@ export class InterfaceResolver {
     }
   }
 
+  // CRITICAL FIX: Updated processClassForInterfaces method
   private async processClassForInterfaces(
     classDecl: ClassDeclaration,
     sourceFile: SourceFile
@@ -176,17 +177,20 @@ export class InterfaceResolver {
         }
       }
 
-      // 5. Register inheritance-based implementations
+      // 5. ENHANCED: Register inheritance-based implementations with consistent keys
       if (this.options.enableInheritanceDI && inheritanceInfo.hasInheritance) {
         hasInheritanceRegistrations = true;
         for (const inheritanceMapping of inheritanceInfo.inheritanceMappings) {
+          // CRITICAL: Use the SAME sanitization logic as the key sanitizer
+          const sanitizedKey = this.keySanitizer.sanitizeKey(inheritanceMapping.baseClassGeneric);
+          
           const implementation: InterfaceImplementation = {
             interfaceName: inheritanceMapping.baseTypeName,
             implementationClass: className,
             filePath: sourceFile.getFilePath(),
             isGeneric: inheritanceMapping.isGeneric,
             typeParameters: inheritanceMapping.typeParameters,
-            sanitizedKey: inheritanceMapping.sanitizedKey,
+            sanitizedKey, // CRITICAL: Use consistent sanitization
             isClassBased: false,
             isInheritanceBased: true,
             isStateBased: false,
@@ -195,28 +199,32 @@ export class InterfaceResolver {
             baseClassGeneric: inheritanceMapping.baseClassGeneric,
           };
 
-          const uniqueKey = `${inheritanceMapping.sanitizedKey}_${className}`;
+          // IMPORTANT: Use the sanitized key for consistent lookup
+          const uniqueKey = `${sanitizedKey}_${className}`;
           this.interfaces.set(uniqueKey, implementation);
 
           if (this.options.verbose) {
             console.log(
-              `🧬 ${className} extends ${inheritanceMapping.baseClassGeneric} (key: ${inheritanceMapping.sanitizedKey})`
+              `🧬 ${className} extends ${inheritanceMapping.baseClassGeneric} (key: ${sanitizedKey})`
             );
           }
         }
       }
 
-      // 6. Register state-based implementations
+      // 6. ENHANCED: Register state-based implementations with correct keys
       if (this.options.enableStateDI && stateBasedRegistrations.length > 0) {
         hasStateRegistrations = true;
         for (const stateRegistration of stateBasedRegistrations) {
+          // CRITICAL: Use the service interface (AsyncState<UserServiceState>) for key generation
+          const sanitizedKey = this.keySanitizer.sanitizeKey(stateRegistration.serviceInterface);
+          
           const implementation: InterfaceImplementation = {
-            interfaceName: stateRegistration.stateType,
+            interfaceName: stateRegistration.serviceInterface, // Use full interface name
             implementationClass: className,
             filePath: sourceFile.getFilePath(),
             isGeneric: true,
             typeParameters: [stateRegistration.stateType],
-            sanitizedKey: this.keySanitizer.sanitizeKey(stateRegistration.stateType),
+            sanitizedKey, // CRITICAL: Use service interface key
             isClassBased: false,
             isInheritanceBased: false,
             isStateBased: true,
@@ -224,18 +232,18 @@ export class InterfaceResolver {
             serviceInterface: stateRegistration.serviceInterface,
           };
 
-          const uniqueKey = `${implementation.sanitizedKey}_${className}_state`;
+          const uniqueKey = `${sanitizedKey}_${className}_state`;
           this.interfaces.set(uniqueKey, implementation);
 
           if (this.options.verbose) {
             console.log(
-              `🎯 ${className} manages state ${stateRegistration.stateType} via ${stateRegistration.serviceInterface}`
+              `🎯 ${className} manages state ${stateRegistration.stateType} via ${stateRegistration.serviceInterface} (key: ${sanitizedKey})`
             );
           }
         }
       }
 
-      // 7. IMPORTANT: Register as class-based if no other registrations OR always for direct lookup
+      // 7. IMPORTANT: Always register class-based lookup
       const shouldRegisterAsClass = !hasInterfaceRegistrations && !hasInheritanceRegistrations && !hasStateRegistrations;
       
       if (shouldRegisterAsClass) {
@@ -322,47 +330,120 @@ export class InterfaceResolver {
     }
   }
 
-  // Enhanced resolution that supports interface, class, inheritance, and state-based lookup
-  resolveImplementation(
-    interfaceType: string
-  ): InterfaceImplementation | undefined {
+  // ENHANCED: Updated resolution logic with AsyncState support
+  resolveImplementation(interfaceType: string): InterfaceImplementation | undefined {
     const sanitizedKey = this.keySanitizer.sanitizeKey(interfaceType);
+    
+    if (this.options.verbose) {
+      console.log(`🔍 Resolving: ${interfaceType} -> key: ${sanitizedKey}`);
+    }
+
+    // 1. Exact match - highest priority
+    for (const [key, implementation] of this.interfaces) {
+      if (implementation.sanitizedKey === sanitizedKey) {
+        if (this.options.verbose) {
+          console.log(`✅ Found exact match: ${implementation.implementationClass}`);
+        }
+        return implementation;
+      }
+    }
+
+    // 2. Handle AsyncState<T> pattern specifically
+    const asyncStateMatch = interfaceType.match(/^AsyncState<(.+)>$/);
+    if (asyncStateMatch) {
+      const stateType = asyncStateMatch[1];
+      
+      // Look for state-based registrations first
+      for (const [key, implementation] of this.interfaces) {
+        if (implementation.isStateBased && 
+            implementation.stateType === stateType &&
+            implementation.serviceInterface === interfaceType) {
+          if (this.options.verbose) {
+            console.log(`✅ Found AsyncState state-based match: ${implementation.implementationClass}`);
+          }
+          return implementation;
+        }
+      }
+      
+      // Look for inheritance-based registrations
+      for (const [key, implementation] of this.interfaces) {
+        if (implementation.isInheritanceBased && 
+            implementation.baseClassGeneric === interfaceType) {
+          if (this.options.verbose) {
+            console.log(`✅ Found AsyncState inheritance match: ${implementation.implementationClass}`);
+          }
+          return implementation;
+        }
+      }
+
+      // Look for any registration with matching sanitized key
+      for (const [key, implementation] of this.interfaces) {
+        if (implementation.sanitizedKey === sanitizedKey) {
+          if (this.options.verbose) {
+            console.log(`✅ Found AsyncState key match: ${implementation.implementationClass}`);
+          }
+          return implementation;
+        }
+      }
+    }
+
+    // 3. Handle inheritance-based lookups
     const inheritanceSanitizedKey = this.keySanitizer.sanitizeInheritanceKey(interfaceType);
-
-    // First try: Find interface-based implementation
-    for (const [key, implementation] of this.interfaces) {
-      if (implementation.sanitizedKey === sanitizedKey && !implementation.isClassBased && !implementation.isInheritanceBased && !implementation.isStateBased) {
-        return implementation;
-      }
-    }
-
-    // Second try: Find state-based implementation
-    for (const [key, implementation] of this.interfaces) {
-      if (implementation.isStateBased && implementation.sanitizedKey === sanitizedKey) {
-        return implementation;
-      }
-    }
-
-    // Third try: Find inheritance-based implementation
     for (const [key, implementation] of this.interfaces) {
       if (implementation.isInheritanceBased && 
           (implementation.sanitizedKey === sanitizedKey || implementation.sanitizedKey === inheritanceSanitizedKey)) {
+        if (this.options.verbose) {
+          console.log(`✅ Found inheritance match: ${implementation.implementationClass}`);
+        }
         return implementation;
       }
     }
 
-    // Fourth try: Find class-based implementation (exact class name match)
+    // 4. Handle state-based lookups
+    for (const [key, implementation] of this.interfaces) {
+      if (implementation.isStateBased && implementation.sanitizedKey === sanitizedKey) {
+        if (this.options.verbose) {
+          console.log(`✅ Found state-based match: ${implementation.implementationClass}`);
+        }
+        return implementation;
+      }
+    }
+
+    // 5. Handle class-based lookups (exact class name match)
     for (const [key, implementation] of this.interfaces) {
       if (implementation.sanitizedKey === sanitizedKey && implementation.isClassBased) {
+        if (this.options.verbose) {
+          console.log(`✅ Found class-based match: ${implementation.implementationClass}`);
+        }
         return implementation;
       }
     }
 
-    // Fifth try: Fallback to any implementation with matching key
+    // 6. Fallback to partial matches by interface name
     for (const [key, implementation] of this.interfaces) {
-      if (implementation.sanitizedKey === sanitizedKey) {
+      if (implementation.interfaceName === interfaceType) {
+        if (this.options.verbose) {
+          console.log(`⚠️  Using interface name fallback match: ${implementation.implementationClass}`);
+        }
         return implementation;
       }
+    }
+
+    // 7. Final fallback to any implementation with matching key
+    for (const [key, implementation] of this.interfaces) {
+      if (key.includes(sanitizedKey)) {
+        if (this.options.verbose) {
+          console.log(`⚠️  Using partial key fallback match: ${implementation.implementationClass}`);
+        }
+        return implementation;
+      }
+    }
+
+    if (this.options.verbose) {
+      console.log(`❌ No implementation found for: ${interfaceType}`);
+      console.log(`🔍 Searched for key: ${sanitizedKey}`);
+      console.log(`📋 Available keys:`, Array.from(this.interfaces.keys()).slice(0, 10));
+      console.log(`📋 Available implementations:`, Array.from(this.interfaces.values()).map(i => `${i.interfaceName} -> ${i.implementationClass}`).slice(0, 10));
     }
 
     return undefined;

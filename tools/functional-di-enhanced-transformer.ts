@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer.ts - FIXED: Correct import path resolution
+// tools/functional-di-enhanced-transformer.ts - ENHANCED with AsyncState support
 
 import { 
   Project, 
@@ -269,7 +269,10 @@ export class FunctionalDIEnhancedTransformer {
       return null;
     }
 
-    const sanitizedKey = this.sanitizeKey(interfaceType);
+    // ENHANCED: Use the same key sanitization as the interface resolver
+    const sanitizedKey = this.interfaceResolver.getInterfaceResolver ? 
+      this.interfaceResolver.resolveImplementation(interfaceType)?.sanitizedKey || this.sanitizeKey(interfaceType) :
+      this.sanitizeKey(interfaceType);
 
     return {
       serviceKey: propName,
@@ -290,6 +293,8 @@ export class FunctionalDIEnhancedTransformer {
       
       if (implementation) {
         dependency.resolvedImplementation = implementation;
+        // CRITICAL: Use the implementation's sanitized key, not our own
+        dependency.sanitizedKey = implementation.sanitizedKey;
         resolved.push(dependency);
         
         if (this.options.verbose) {
@@ -314,11 +319,23 @@ export class FunctionalDIEnhancedTransformer {
     return resolved;
   }
 
+  // ENHANCED: Better key sanitization that matches the interface resolver
   private sanitizeKey(type: string): string {
-    return type.replace(/[^\w\s]/gi, '_');
+    // Handle AsyncState<T> pattern specifically
+    const asyncStateMatch = type.match(/^AsyncState<(.+)>$/);
+    if (asyncStateMatch) {
+      const stateType = asyncStateMatch[1];
+      return `AsyncState_${this.sanitizeKey(stateType)}`;
+    }
+
+    return type
+      .replace(/<([^>]+)>/g, "_$1") // CacheInterface<UserServiceState> -> CacheInterface_UserServiceState
+      .replace(/[^\w]/g, "_") // Replace special chars
+      .replace(/_+/g, "_") // Remove multiple underscores
+      .replace(/^_|_$/g, ""); // Remove leading/trailing underscores
   }
 
-  // FIXED: Calculate correct relative import path based on file location
+  // Calculate correct relative import path based on file location
   private ensureDIImports(sourceFile: SourceFile): void {
     const existingImports = sourceFile.getImportDeclarations();
     const hasDIImport = existingImports.some(imp => 
@@ -326,7 +343,7 @@ export class FunctionalDIEnhancedTransformer {
     );
 
     if (!hasDIImport) {
-      // FIXED: Calculate relative path from current file to DI context
+      // Calculate relative path from current file to DI context
       const currentFilePath = sourceFile.getFilePath();
       const srcDir = path.resolve(this.options.srcDir!);
       const diContextPath = path.join(srcDir, 'di', 'context');
@@ -362,7 +379,7 @@ export class FunctionalDIEnhancedTransformer {
     
     for (const dep of dependencies) {
       if (dep.resolvedImplementation) {
-        // Use the sanitized key from the resolved implementation
+        // CRITICAL: Use the resolved implementation's sanitized key
         const token = dep.resolvedImplementation.sanitizedKey;
         const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
         diStatements.push(`    const ${dep.serviceKey} = ${hookName}('${token}');`);
