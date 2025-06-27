@@ -24,6 +24,8 @@
     - [ ] missing test file dependency-tree-builder-test.ts generate one
     - [ ] 7frank/tdi2/tools/functional-di-enhanced-transformer.ts
       - fixtures and work isolated test previously working implementation and the latest 2 commits
+      - [ ] check test runner that it has tests for all fixtures 
+      - split test runner into setup and several "describe" per fixture
 
 - fix issue where when deleting .vite folder interface files break
   - maybe one plugin doesnt use the project tsconfig properly
