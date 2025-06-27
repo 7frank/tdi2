@@ -1,4 +1,4 @@
-// tools/interface-resolver.ts - FIXED to support both interface-based and class-based DI
+// tools/interface-resolver.ts - Enhanced with inheritance-based DI support
 
 import {
   Project,
@@ -18,7 +18,11 @@ export interface InterfaceImplementation {
   isGeneric: boolean;
   typeParameters: string[];
   sanitizedKey: string;
-  isClassBased?: boolean; // NEW: Indicates if this is a class-based registration
+  isClassBased?: boolean; // Indicates if this is a class-based registration
+  isInheritanceBased?: boolean; // NEW: Indicates if this is based on inheritance
+  inheritanceChain?: string[]; // NEW: The full inheritance chain
+  baseClass?: string; // NEW: The immediate base class
+  baseClassGeneric?: string; // NEW: The generic base class with type parameters
 }
 
 export interface ServiceDependency {
@@ -39,12 +43,17 @@ export class InterfaceResolver {
   private project: Project;
   private interfaces: Map<string, InterfaceImplementation> = new Map();
   private dependencies: Map<string, ServiceDependency> = new Map();
-  private options: { verbose: boolean; srcDir: string };
+  private options: { verbose: boolean; srcDir: string; enableInheritanceDI: boolean };
 
-  constructor(options: { verbose?: boolean; srcDir?: string } = {}) {
+  constructor(options: { 
+    verbose?: boolean; 
+    srcDir?: string; 
+    enableInheritanceDI?: boolean;
+  } = {}) {
     this.options = {
       verbose: false,
       srcDir: "./src",
+      enableInheritanceDI: true, // NEW: Enable inheritance-based DI by default
       ...options,
     };
 
@@ -55,7 +64,7 @@ export class InterfaceResolver {
 
   async scanProject(): Promise<void> {
     if (this.options.verbose) {
-      console.log("🔍 Scanning project for interfaces and implementations...");
+      console.log("🔍 Scanning project for interfaces, implementations, and inheritance...");
     }
 
     // Clear previous results
@@ -150,11 +159,14 @@ export class InterfaceResolver {
 
       if (!hasServiceDecorator) return;
 
-      // Get implemented interfaces
+      // 1. Get implemented interfaces (existing functionality)
       const implementedInterfaces = this.getImplementedInterfaces(classDecl);
 
+      // 2. NEW: Get inheritance information
+      const inheritanceInfo = this.getInheritanceInfo(classDecl);
+
+      // 3. Register interface-based implementations
       if (implementedInterfaces.length > 0) {
-        // EXISTING: Register interface-based implementations
         for (const interfaceInfo of implementedInterfaces) {
           const sanitizedKey = this.sanitizeKey(interfaceInfo.fullType);
 
@@ -166,6 +178,7 @@ export class InterfaceResolver {
             typeParameters: interfaceInfo.typeParameters,
             sanitizedKey,
             isClassBased: false,
+            isInheritanceBased: false,
           };
 
           // Use interface name + class name as unique key to allow multiple implementations
@@ -178,8 +191,38 @@ export class InterfaceResolver {
             );
           }
         }
-      } else {
-        // NEW: Register class-based implementation (class acts as its own interface)
+      }
+
+      // 4. NEW: Register inheritance-based implementations
+      if (this.options.enableInheritanceDI && inheritanceInfo.hasInheritance) {
+        for (const inheritanceMapping of inheritanceInfo.inheritanceMappings) {
+          const implementation: InterfaceImplementation = {
+            interfaceName: inheritanceMapping.baseTypeName,
+            implementationClass: className,
+            filePath: sourceFile.getFilePath(),
+            isGeneric: inheritanceMapping.isGeneric,
+            typeParameters: inheritanceMapping.typeParameters,
+            sanitizedKey: inheritanceMapping.sanitizedKey,
+            isClassBased: false,
+            isInheritanceBased: true,
+            inheritanceChain: inheritanceInfo.inheritanceChain,
+            baseClass: inheritanceMapping.baseClass,
+            baseClassGeneric: inheritanceMapping.baseClassGeneric,
+          };
+
+          const uniqueKey = `${inheritanceMapping.sanitizedKey}_${className}`;
+          this.interfaces.set(uniqueKey, implementation);
+
+          if (this.options.verbose) {
+            console.log(
+              `🧬 ${className} extends ${inheritanceMapping.baseClassGeneric} (key: ${inheritanceMapping.sanitizedKey})`
+            );
+          }
+        }
+      }
+
+      // 5. Register as class-based if no interfaces or inheritance
+      if (implementedInterfaces.length === 0 && !inheritanceInfo.hasInheritance) {
         const sanitizedKey = this.sanitizeKey(className);
 
         const implementation: InterfaceImplementation = {
@@ -189,7 +232,8 @@ export class InterfaceResolver {
           isGeneric: false, // Classes are typically not generic for DI purposes
           typeParameters: [],
           sanitizedKey,
-          isClassBased: true, // Mark as class-based
+          isClassBased: true,
+          isInheritanceBased: false,
         };
 
         const uniqueKey = `${sanitizedKey}_${className}`;
@@ -201,10 +245,141 @@ export class InterfaceResolver {
           );
         }
       }
+
+      // 6. Always register the class itself for direct lookup
+      if (implementedInterfaces.length > 0 || inheritanceInfo.hasInheritance) {
+        const sanitizedKey = this.sanitizeKey(className);
+
+        const implementation: InterfaceImplementation = {
+          interfaceName: className,
+          implementationClass: className,
+          filePath: sourceFile.getFilePath(),
+          isGeneric: false,
+          typeParameters: [],
+          sanitizedKey,
+          isClassBased: true,
+          isInheritanceBased: false,
+        };
+
+        const uniqueKey = `${sanitizedKey}_${className}_direct`;
+        this.interfaces.set(uniqueKey, implementation);
+
+        if (this.options.verbose) {
+          console.log(
+            `📝 ${className} also registered for direct class lookup (key: ${sanitizedKey})`
+          );
+        }
+      }
     } catch (error) {
       if (this.options.verbose) {
         console.warn(`⚠️  Failed to process class ${className}:`, error);
       }
+    }
+  }
+
+  // NEW: Method to extract inheritance information
+  private getInheritanceInfo(classDecl: ClassDeclaration): {
+    hasInheritance: boolean;
+    inheritanceChain: string[];
+    inheritanceMappings: Array<{
+      baseClass: string;
+      baseClassGeneric: string;
+      baseTypeName: string;
+      sanitizedKey: string;
+      isGeneric: boolean;
+      typeParameters: string[];
+    }>;
+  } {
+    const inheritanceChain: string[] = [];
+    const inheritanceMappings: Array<{
+      baseClass: string;
+      baseClassGeneric: string;
+      baseTypeName: string;
+      sanitizedKey: string;
+      isGeneric: boolean;
+      typeParameters: string[];
+    }> = [];
+
+    try {
+      const heritageClauses = classDecl.getHeritageClauses();
+
+      for (const heritage of heritageClauses) {
+        // Check if this is an extends clause
+        const token = heritage.getToken();
+        if (token === SyntaxKind.ExtendsKeyword) {
+          for (const type of heritage.getTypeNodes()) {
+            const fullType = type.getText();
+            const isGeneric = fullType.includes("<");
+
+            let baseClass = fullType;
+            let baseTypeName = fullType;
+            let typeParameters: string[] = [];
+
+            if (isGeneric) {
+              const match = fullType.match(/^([^<]+)<(.+)>$/);
+              if (match) {
+                baseClass = match[1];
+                baseTypeName = match[1];
+                typeParameters = match[2].split(",").map((p) => p.trim());
+              }
+            }
+
+            inheritanceChain.push(fullType);
+
+            // Create sanitized key for the inheritance mapping
+            const sanitizedKey = this.sanitizeInheritanceKey(fullType);
+
+            inheritanceMappings.push({
+              baseClass,
+              baseClassGeneric: fullType,
+              baseTypeName,
+              sanitizedKey,
+              isGeneric,
+              typeParameters,
+            });
+          }
+        }
+      }
+    } catch (error) {
+      // Handle malformed heritage clauses gracefully
+      if (this.options.verbose) {
+        console.warn(
+          `⚠️  Failed to parse inheritance for ${classDecl.getName()}:`,
+          error
+        );
+      }
+    }
+
+    return {
+      hasInheritance: inheritanceChain.length > 0,
+      inheritanceChain,
+      inheritanceMappings,
+    };
+  }
+
+  // NEW: Special sanitization for inheritance keys
+  private sanitizeInheritanceKey(inheritanceType: string): string {
+    try {
+      // Handle complex generic inheritance like AsyncState<{name: string, email: string}>
+      let sanitized = inheritanceType
+        .replace(/\s+/g, '_') // Replace spaces with underscores
+        .replace(/[{}\[\]]/g, '_') // Replace object/array brackets
+        .replace(/[<>]/g, '_') // Replace generic brackets
+        .replace(/[,;:]/g, '_') // Replace punctuation
+        .replace(/[^\w_]/g, '_') // Replace any remaining special chars
+        .replace(/_+/g, '_') // Remove multiple underscores
+        .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
+
+      // Special handling for common patterns
+      sanitized = sanitized
+        .replace(/string/g, 'str')
+        .replace(/number/g, 'num')
+        .replace(/boolean/g, 'bool')
+        .replace(/Array/g, 'Arr');
+
+      return sanitized || 'UnknownInheritance';
+    } catch (error) {
+      return inheritanceType.replace(/[^\w]/g, '_');
     }
   }
 
@@ -417,27 +592,36 @@ export class InterfaceResolver {
     }
   }
 
-  // Enhanced resolution that supports both interface and class-based lookup
+  // Enhanced resolution that supports interface, class, and inheritance-based lookup
   resolveImplementation(
     interfaceType: string
   ): InterfaceImplementation | undefined {
     const sanitizedKey = this.sanitizeKey(interfaceType);
+    const inheritanceSanitizedKey = this.sanitizeInheritanceKey(interfaceType);
 
     // First try: Find interface-based implementation
     for (const [key, implementation] of this.interfaces) {
-      if (implementation.sanitizedKey === sanitizedKey && !implementation.isClassBased) {
+      if (implementation.sanitizedKey === sanitizedKey && !implementation.isClassBased && !implementation.isInheritanceBased) {
         return implementation;
       }
     }
 
-    // Second try: Find class-based implementation (exact class name match)
+    // Second try: Find inheritance-based implementation
+    for (const [key, implementation] of this.interfaces) {
+      if (implementation.isInheritanceBased && 
+          (implementation.sanitizedKey === sanitizedKey || implementation.sanitizedKey === inheritanceSanitizedKey)) {
+        return implementation;
+      }
+    }
+
+    // Third try: Find class-based implementation (exact class name match)
     for (const [key, implementation] of this.interfaces) {
       if (implementation.sanitizedKey === sanitizedKey && implementation.isClassBased) {
         return implementation;
       }
     }
 
-    // Third try: Fallback to any implementation with matching key
+    // Fourth try: Fallback to any implementation with matching key
     for (const [key, implementation] of this.interfaces) {
       if (implementation.sanitizedKey === sanitizedKey) {
         return implementation;
@@ -506,6 +690,22 @@ export class InterfaceResolver {
       }
     }
     return undefined;
+  }
+
+  // NEW: Helper method to get implementations by base class
+  getImplementationsByBaseClass(
+    baseClassName: string
+  ): InterfaceImplementation[] {
+    const implementations: InterfaceImplementation[] = [];
+    
+    for (const [key, implementation] of this.interfaces) {
+      if (implementation.isInheritanceBased && 
+          implementation.baseClass === baseClassName) {
+        implementations.push(implementation);
+      }
+    }
+    
+    return implementations;
   }
 
   // Public API methods
