@@ -5,6 +5,7 @@ import {
   DataList,
   UserProfile,
 } from "./components/EnhancedFunctionalComponent";
+import { ExampleUseAsyncChain } from "./hooks/useAsyncChain";
 function Foo() {
   return (
     <div
@@ -70,6 +71,7 @@ function App() {
       <UserProfile userId="foo1" title="it works" services={SERVICES} />
       <DataList category="bar" services={SERVICES} />
       <SimpleTest message="baz" />
+      <ExampleUseAsyncChain />
       <Foo />
     </div>
   );
