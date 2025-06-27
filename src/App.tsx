@@ -73,7 +73,7 @@ function App() {
       <DataList category="bar" services={SERVICES} />
       <SimpleTest message="baz" />
       <ExampleUseAsyncChain />
-      <ExampleObservableFC/>
+      <ExampleObservableFC services={SERVICES}/>
       <Foo />
     </div>
   );

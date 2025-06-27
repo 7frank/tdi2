@@ -1,4 +1,4 @@
-// tools/dependency-tree-builder.ts - Fixed version with proper key handling
+// tools/dependency-tree-builder.ts - FIXED to include class-based services
 
 import {
   InterfaceResolver,
@@ -97,47 +97,62 @@ export class DependencyTreeBuilder {
     const implementations = this.interfaceResolver.getInterfaceImplementations();
     const dependencies = this.interfaceResolver.getServiceDependencies();
 
-    // FIXED: Group implementations by interface name to handle multiple implementations
-    const implementationsByInterface = new Map<string, InterfaceImplementation[]>();
-    
+    // FIXED: Process ALL implementations, not just interface-based ones
     for (const [uniqueKey, implementation] of implementations) {
-      const interfaceKey = implementation.sanitizedKey;
-      if (!implementationsByInterface.has(interfaceKey)) {
-        implementationsByInterface.set(interfaceKey, []);
-      }
-      implementationsByInterface.get(interfaceKey)!.push(implementation);
-    }
-
-    // FIXED: Create configurations using interface names as tokens
-    for (const [interfaceKey, impls] of implementationsByInterface) {
-      // For multiple implementations, choose the first one (or implement @Primary logic later)
-      const chosenImpl = impls[0];
+      // Use the interface name as the token (for interface-based) or class name (for class-based)
+      const token = implementation.isClassBased ? implementation.implementationClass : implementation.interfaceName;
       
-      if (impls.length > 1 && this.options.verbose) {
-        console.log(`⚠️  Multiple implementations for ${interfaceKey}:`);
-        impls.forEach(impl => 
-          console.log(`   - ${impl.implementationClass}${impl === chosenImpl ? ' (chosen)' : ''}`)
-        );
+      // Check if we already have a configuration for this token
+      if (this.configurations.has(token)) {
+        // Handle multiple implementations - could implement @Primary logic here
+        if (this.options.verbose) {
+          console.log(`⚠️  Multiple implementations for ${token}, keeping existing`);
+        }
+        continue;
       }
 
-      const dependency = dependencies.get(chosenImpl.implementationClass);
+      const dependency = dependencies.get(implementation.implementationClass);
       const dependencyTokens = dependency ? dependency.interfaceDependencies : [];
 
       const config: DIConfiguration = {
-        token: interfaceKey, // FIXED: Use interface name as token for lookups
-        implementation: chosenImpl,
+        token,
+        implementation,
         dependencies: dependencyTokens,
-        factory: this.generateFactoryName(chosenImpl.implementationClass),
+        factory: this.generateFactoryName(implementation.implementationClass),
         scope: "singleton", // Default scope
       };
 
-      // FIXED: Store by interface name (token) for easy lookup during topological sort
-      this.configurations.set(interfaceKey, config);
+      this.configurations.set(token, config);
 
       if (this.options.verbose) {
-        console.log(`🔧 Config: ${interfaceKey} -> ${chosenImpl.implementationClass}`);
+        console.log(`🔧 Config: ${token} -> ${implementation.implementationClass}`);
         if (dependencyTokens.length > 0) {
           console.log(`   Dependencies: ${dependencyTokens.join(", ")}`);
+        }
+      }
+    }
+
+    // FIXED: Also handle the case where multiple implementations exist for the same interface
+    // Group by interface/class name to handle multiple implementations
+    const implementationsByToken = new Map<string, InterfaceImplementation[]>();
+    
+    for (const [uniqueKey, implementation] of implementations) {
+      const token = implementation.isClassBased ? implementation.implementationClass : implementation.interfaceName;
+      
+      if (!implementationsByToken.has(token)) {
+        implementationsByToken.set(token, []);
+      }
+      implementationsByToken.get(token)!.push(implementation);
+    }
+
+    // Log multiple implementations
+    for (const [token, impls] of implementationsByToken) {
+      if (impls.length > 1 && !impls[0].isClassBased) { // Only log for interface-based (class-based should be unique)
+        if (this.options.verbose) {
+          console.log(`⚠️  Multiple implementations for ${token}:`);
+          impls.forEach((impl, index) => 
+            console.log(`   - ${impl.implementationClass}${index === 0 ? ' (chosen)' : ''}`)
+          );
         }
       }
     }
@@ -172,13 +187,18 @@ export class DependencyTreeBuilder {
       factories.push(factoryCode);
 
       // Generate DI map entry
+      const interfaceName = config.implementation.isClassBased 
+        ? config.implementation.implementationClass 
+        : config.implementation.interfaceName;
+
       diMapEntries.push(`  '${config.token}': {
     factory: ${config.factory},
     scope: '${config.scope}',
     dependencies: [${config.dependencies.map((dep) => `'${dep}'`).join(", ")}],
-    interfaceName: '${config.implementation.interfaceName}',
+    interfaceName: '${interfaceName}',
     implementationClass: '${config.implementation.implementationClass}',
-    isAutoResolved: true
+    isAutoResolved: true,
+    isClassBased: ${config.implementation.isClassBased || false}
   }`);
     }
 
@@ -204,6 +224,17 @@ ${Array.from(this.configurations.values())
   .map(
     (config) =>
       `  '${config.implementation.interfaceName}': '${config.implementation.implementationClass}'`
+  )
+  .join(",\n")}
+};
+
+// Class-based services mapping (for debugging)
+export const CLASS_MAPPING = {
+${Array.from(this.configurations.values())
+  .filter(config => config.implementation.isClassBased)
+  .map(
+    (config) =>
+      `  '${config.implementation.implementationClass}': '${config.implementation.implementationClass}'`
   )
   .join(",\n")}
 };

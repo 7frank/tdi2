@@ -1,4 +1,4 @@
-// tools/interface-resolver.ts - Fixed version addressing test failures
+// tools/interface-resolver.ts - FIXED to support both interface-based and class-based DI
 
 import {
   Project,
@@ -18,6 +18,7 @@ export interface InterfaceImplementation {
   isGeneric: boolean;
   typeParameters: string[];
   sanitizedKey: string;
+  isClassBased?: boolean; // NEW: Indicates if this is a class-based registration
 }
 
 export interface ServiceDependency {
@@ -67,7 +68,7 @@ export class InterfaceResolver {
         `${this.options.srcDir}/**/*.{ts,tsx}`
       );
 
-      // First pass: collect all interface implementations
+      // First pass: collect all interface implementations AND standalone services
       await this.collectInterfaceImplementations();
 
       // Second pass: collect service dependencies
@@ -152,25 +153,51 @@ export class InterfaceResolver {
       // Get implemented interfaces
       const implementedInterfaces = this.getImplementedInterfaces(classDecl);
 
-      for (const interfaceInfo of implementedInterfaces) {
-        const sanitizedKey = this.sanitizeKey(interfaceInfo.fullType);
+      if (implementedInterfaces.length > 0) {
+        // EXISTING: Register interface-based implementations
+        for (const interfaceInfo of implementedInterfaces) {
+          const sanitizedKey = this.sanitizeKey(interfaceInfo.fullType);
+
+          const implementation: InterfaceImplementation = {
+            interfaceName: interfaceInfo.name,
+            implementationClass: className,
+            filePath: sourceFile.getFilePath(),
+            isGeneric: interfaceInfo.isGeneric,
+            typeParameters: interfaceInfo.typeParameters,
+            sanitizedKey,
+            isClassBased: false,
+          };
+
+          // Use interface name + class name as unique key to allow multiple implementations
+          const uniqueKey = `${sanitizedKey}_${className}`;
+          this.interfaces.set(uniqueKey, implementation);
+
+          if (this.options.verbose) {
+            console.log(
+              `📝 ${className} implements ${interfaceInfo.fullType} (key: ${sanitizedKey})`
+            );
+          }
+        }
+      } else {
+        // NEW: Register class-based implementation (class acts as its own interface)
+        const sanitizedKey = this.sanitizeKey(className);
 
         const implementation: InterfaceImplementation = {
-          interfaceName: interfaceInfo.name,
+          interfaceName: className, // Class name acts as interface name
           implementationClass: className,
           filePath: sourceFile.getFilePath(),
-          isGeneric: interfaceInfo.isGeneric,
-          typeParameters: interfaceInfo.typeParameters,
+          isGeneric: false, // Classes are typically not generic for DI purposes
+          typeParameters: [],
           sanitizedKey,
+          isClassBased: true, // Mark as class-based
         };
 
-        // FIXED: Use interface name + class name as unique key to allow multiple implementations
         const uniqueKey = `${sanitizedKey}_${className}`;
         this.interfaces.set(uniqueKey, implementation);
 
         if (this.options.verbose) {
           console.log(
-            `📝 ${className} implements ${interfaceInfo.fullType} (key: ${sanitizedKey})`
+            `📝 ${className} registered as class-based service (key: ${sanitizedKey})`
           );
         }
       }
@@ -390,6 +417,36 @@ export class InterfaceResolver {
     }
   }
 
+  // Enhanced resolution that supports both interface and class-based lookup
+  resolveImplementation(
+    interfaceType: string
+  ): InterfaceImplementation | undefined {
+    const sanitizedKey = this.sanitizeKey(interfaceType);
+
+    // First try: Find interface-based implementation
+    for (const [key, implementation] of this.interfaces) {
+      if (implementation.sanitizedKey === sanitizedKey && !implementation.isClassBased) {
+        return implementation;
+      }
+    }
+
+    // Second try: Find class-based implementation (exact class name match)
+    for (const [key, implementation] of this.interfaces) {
+      if (implementation.sanitizedKey === sanitizedKey && implementation.isClassBased) {
+        return implementation;
+      }
+    }
+
+    // Third try: Fallback to any implementation with matching key
+    for (const [key, implementation] of this.interfaces) {
+      if (implementation.sanitizedKey === sanitizedKey) {
+        return implementation;
+      }
+    }
+
+    return undefined;
+  }
+
   // Alternative approach: Create a method to normalize generic types consistently
   private normalizeGenericType(type: string): string {
     // Strategy: All generic type parameters become 'any' for matching purposes
@@ -460,21 +517,6 @@ export class InterfaceResolver {
     return this.dependencies;
   }
 
-  resolveImplementation(
-    interfaceType: string
-  ): InterfaceImplementation | undefined {
-    const sanitizedKey = this.sanitizeKey(interfaceType);
-
-    // Find the first implementation for this interface
-    for (const [key, implementation] of this.interfaces) {
-      if (implementation.sanitizedKey === sanitizedKey) {
-        return implementation;
-      }
-    }
-
-    return undefined;
-  }
-
   getDependencyTree(): DependencyNode[] {
     const nodes: DependencyNode[] = [];
 
@@ -522,7 +564,7 @@ export class InterfaceResolver {
       }
     }
 
-    // FIXED: Improved circular dependency detection
+    // Improved circular dependency detection
     const visited = new Set<string>();
     const recursionStack = new Set<string>();
 

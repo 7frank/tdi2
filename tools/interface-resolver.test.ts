@@ -531,7 +531,7 @@ export class MalformedService {
     });
 
     describe("Given files without interfaces", () => {
-      it("When class implements no interfaces, Then should skip gracefully", async () => {
+      it("When class implements no interfaces, Then should use class name as its own interface", async () => {
         // Given
         mockProject.createSourceFile(
           "src/services/NoInterfaceService.ts",
@@ -553,7 +553,7 @@ export class NoInterfaceService {
         // Then
         const noInterfaceImpl =
           resolver.getImplementationByClass("NoInterfaceService");
-        expect(noInterfaceImpl).toBeUndefined();
+        expect(noInterfaceImpl?.implementationClass).toBe("NoInterfaceService");
       });
     });
 
