@@ -19,18 +19,19 @@
 
   - **FIXME** tests currently are mostly ai slop and add no values
 
-  - fix test files
+  - **fix test files**
     - [x] interface-resolver.test.ts
     - [ ] missing test file dependency-tree-builder-test.ts generate one
     - [ ] 7frank/tdi2/tools/functional-di-enhanced-transformer.ts
       - fixtures and work isolated test previously working implementation and the latest 2 commits
         - revert c11c95bbe07502336f68ddbc4aa413fb2f986009
         - revert 8a180ad8f47d098a3133fac7956f3a2052678f37
-        - before these all but todo app where working
-      - [ ] check test runner that it has tests for all fixtures
+        - before these all but todo app where working. also "feature/enhance-di" is in an ok state but needs merging with main
       - split test runner into setup and several "describe" per fixture
       - bun test ./tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.test.ts
       - bun test ./tools/functional-di-enhanced-transformer/comprehensive-functional-di-test.ts
+      - [ ] check test runner that it has tests for all fixtures
+      - if enough test succeed and the dev is working again then separate function into logical blocks and separate files
 
 - fix issue where when deleting .vite folder interface files break
   - maybe one plugin doesnt use the project tsconfig properly
@@ -48,3 +49,4 @@
 - inline
 - inline destructure
 - separate props interface
+- use falso in tests and fixtures, we don'T want the ai to hard code any solutions

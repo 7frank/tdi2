@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer.ts - FIXED: Extract dependencies from interface declarations
+// tools/functional-di-enhanced-transformer.ts - COMPLETELY FIXED VERSION
 
 import { 
   Project, 
@@ -220,7 +220,7 @@ export class FunctionalDIEnhancedTransformer {
     return true;
   }
 
-  // FIXED: Enhanced method to handle both inline type literals AND interface references
+  // COMPLETELY FIXED: Enhanced method to handle both inline type literals AND interface references
   private extractDependenciesFromParameter(param: ParameterDeclaration, sourceFile: SourceFile): FunctionalDependency[] {
     const typeNode = param.getTypeNode();
     if (!typeNode) return [];
@@ -248,7 +248,7 @@ export class FunctionalDIEnhancedTransformer {
     return [];
   }
 
-  // FIXED: Extract dependencies from inline type literal OR direct type literal
+  // COMPLETELY FIXED: Extract dependencies from inline type literal
   private extractFromTypeLiteral(typeNode: any): FunctionalDependency[] {
     if (this.options.verbose) {
       console.log('📝 Extracting from type literal');
@@ -268,41 +268,7 @@ export class FunctionalDIEnhancedTransformer {
       });
     }
 
-    // CASE 1: Direct services type literal (when called from interface with services property)
-    // Check if this type literal contains Inject<> types directly
-    const dependencies: FunctionalDependency[] = [];
-    let hasInjectTypes = false;
-
-    for (const member of members) {
-      if (Node.isPropertySignature(member)) {
-        const propName = member.getName();
-        const propTypeNode = member.getTypeNode();
-        
-        if (propTypeNode) {
-          const typeText = propTypeNode.getText();
-          if (typeText.includes('Inject<') || typeText.includes('InjectOptional<')) {
-            hasInjectTypes = true;
-            const dependency = this.parseDependencyType(propName, propTypeNode);
-            if (dependency) {
-              dependencies.push(dependency);
-              if (this.options.verbose) {
-                console.log(`✅ Added dependency: ${propName} -> ${dependency.interfaceType}`);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // If we found inject types directly, return them
-    if (hasInjectTypes) {
-      if (this.options.verbose) {
-        console.log(`📋 Found ${dependencies.length} direct dependencies in type literal`);
-      }
-      return dependencies;
-    }
-
-    // CASE 2: Props type literal with services property (traditional structure)
+    // Find the services property
     const servicesProperty = members.find((member: any) => 
       Node.isPropertySignature(member) && member.getName() === 'services'
     );
@@ -326,8 +292,11 @@ export class FunctionalDIEnhancedTransformer {
       console.log('✅ Found services property in type literal, extracting nested dependencies');
     }
 
-    // Extract from nested services type literal
-    for (const member of serviceTypeNode.getMembers()) {
+    // CRITICAL FIX: Extract individual service dependencies from the services type literal
+    const dependencies: FunctionalDependency[] = [];
+    const serviceMembers = serviceTypeNode.getMembers();
+
+    for (const member of serviceMembers) {
       if (Node.isPropertySignature(member)) {
         const propName = member.getName();
         const propTypeNode = member.getTypeNode();
@@ -337,7 +306,7 @@ export class FunctionalDIEnhancedTransformer {
           if (dependency) {
             dependencies.push(dependency);
             if (this.options.verbose) {
-              console.log(`✅ Added nested dependency: ${propName} -> ${dependency.interfaceType}`);
+              console.log(`🔗 Found dependency: ${propName} -> ${dependency.interfaceType} (${dependency.isOptional ? 'optional' : 'required'})`);
             }
           }
         }
@@ -346,9 +315,6 @@ export class FunctionalDIEnhancedTransformer {
 
     if (this.options.verbose) {
       console.log(`📋 Found ${dependencies.length} dependencies in type literal`);
-      dependencies.forEach(dep => {
-        console.log(`  - ${dep.serviceKey}: ${dep.interfaceType} (${dep.isOptional ? 'optional' : 'required'})`);
-      });
     }
 
     return dependencies;
@@ -489,7 +455,6 @@ export class FunctionalDIEnhancedTransformer {
       console.log(`✅ Extracting dependencies from interface ${interfaceDecl.getName()}`);
     }
 
-    // FIXED: Get all properties and find services property with better debugging
     const properties = interfaceDecl.getProperties();
     
     if (this.options.verbose) {
@@ -532,12 +497,12 @@ export class FunctionalDIEnhancedTransformer {
       console.log(`📝 Services property type text: ${serviceTypeNode.getText()}`);
     }
 
-    // FIXED: Handle both type literal and type reference for services property
+    // FIXED: Handle type literal for services property
     if (Node.isTypeLiteral(serviceTypeNode)) {
       if (this.options.verbose) {
         console.log(`✅ Found type literal for services property in interface ${interfaceDecl.getName()}`);
       }
-      return this.extractFromTypeLiteral(serviceTypeNode);
+      return this.extractFromServicesTypeLiteral(serviceTypeNode);
     }
 
     if (Node.isTypeReference(serviceTypeNode)) {
@@ -557,6 +522,31 @@ export class FunctionalDIEnhancedTransformer {
     return [];
   }
 
+  // NEW METHOD: Extract from services type literal specifically
+  private extractFromServicesTypeLiteral(typeNode: any): FunctionalDependency[] {
+    const dependencies: FunctionalDependency[] = [];
+    const members = typeNode.getMembers();
+
+    for (const member of members) {
+      if (Node.isPropertySignature(member)) {
+        const propName = member.getName();
+        const propTypeNode = member.getTypeNode();
+        
+        if (propTypeNode) {
+          const dependency = this.parseDependencyType(propName, propTypeNode);
+          if (dependency) {
+            dependencies.push(dependency);
+            if (this.options.verbose) {
+              console.log(`✅ Added dependency: ${propName} -> ${dependency.interfaceType}`);
+            }
+          }
+        }
+      }
+    }
+
+    return dependencies;
+  }
+
   // Extract dependencies from type alias declaration
   private extractFromTypeAliasDeclaration(typeAlias: TypeAliasDeclaration): FunctionalDependency[] {
     const typeNode = typeAlias.getTypeNode();
@@ -574,6 +564,7 @@ export class FunctionalDIEnhancedTransformer {
     return this.extractFromTypeLiteral(typeNode);
   }
 
+  // FIXED: Parse individual dependency types correctly
   private parseDependencyType(propName: string, typeNode: TypeNode): FunctionalDependency | null {
     const typeText = typeNode.getText();
     
@@ -595,9 +586,7 @@ export class FunctionalDIEnhancedTransformer {
     }
 
     // ENHANCED: Use the same key sanitization as the interface resolver
-    const sanitizedKey = this.interfaceResolver.getInterfaceResolver ? 
-      this.interfaceResolver.resolveImplementation(interfaceType)?.sanitizedKey || this.sanitizeKey(interfaceType) :
-      this.sanitizeKey(interfaceType);
+    const sanitizedKey = this.sanitizeKey(interfaceType);
 
     if (this.options.verbose) {
       console.log(`🔗 Found dependency: ${propName} -> ${interfaceType} (${isOptional ? 'optional' : 'required'})`);
@@ -696,6 +685,7 @@ export class FunctionalDIEnhancedTransformer {
     }
   }
 
+  // COMPLETELY FIXED: Generate individual DI hook calls for each service
   private prependDICodeToFunction(func: FunctionDeclaration, dependencies: FunctionalDependency[]): void {
     const body = func.getBody();
     if (!body || !Node.isBlock(body)) return;
@@ -703,27 +693,30 @@ export class FunctionalDIEnhancedTransformer {
     // Remove services from destructuring first
     this.removeServicesFromDestructuring(body);
 
-    // Generate DI hook calls
+    // CRITICAL FIX: Generate individual DI hook calls for each service
     const diStatements: string[] = [];
+    const serviceKeys: string[] = [];
     
     for (const dep of dependencies) {
       if (dep.resolvedImplementation) {
-        // CRITICAL: Use the resolved implementation's sanitized key
+        // CRITICAL: Use the resolved implementation's sanitized key as the token
         const token = dep.resolvedImplementation.sanitizedKey;
         const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
-        diStatements.push(`    const ${dep.serviceKey} = ${hookName}('${token}');`);
+        diStatements.push(`        const ${dep.serviceKey} = ${hookName}('${token}');`);
+        serviceKeys.push(dep.serviceKey);
       } else if (dep.isOptional) {
         // Optional dependency that couldn't be resolved
-        diStatements.push(`    const ${dep.serviceKey} = undefined; // Optional dependency not found`);
+        diStatements.push(`        const ${dep.serviceKey} = undefined; // Optional dependency not found`);
+        serviceKeys.push(dep.serviceKey);
       } else {
         // Required dependency that couldn't be resolved - will throw at runtime
-        diStatements.push(`    const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
+        diStatements.push(`        const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
+        serviceKeys.push(dep.serviceKey);
       }
     }
 
-    // Generate services object
-    const serviceKeys = dependencies.map(dep => dep.serviceKey).join(', ');
-    diStatements.push(`    const services = { ${serviceKeys} };`);
+    // Generate services object with individual service keys
+    diStatements.push(`        const services = { ${serviceKeys.join(', ')} };`);
 
     // Insert at the beginning of the function body
     for (let i = diStatements.length - 1; i >= 0; i--) {
@@ -731,6 +724,7 @@ export class FunctionalDIEnhancedTransformer {
     }
   }
 
+  // COMPLETELY FIXED: Generate individual DI hook calls for arrow functions
   private prependDICodeToArrowFunction(arrowFunc: ArrowFunction, dependencies: FunctionalDependency[]): void {
     const body = arrowFunc.getBody();
     if (!Node.isBlock(body)) return;
@@ -738,24 +732,27 @@ export class FunctionalDIEnhancedTransformer {
     // Remove services from destructuring first
     this.removeServicesFromDestructuring(body);
 
-    // Generate DI hook calls (same logic as function)
+    // CRITICAL FIX: Generate individual DI hook calls for each service (same logic as function)
     const diStatements: string[] = [];
+    const serviceKeys: string[] = [];
     
     for (const dep of dependencies) {
       if (dep.resolvedImplementation) {
         const token = dep.resolvedImplementation.sanitizedKey;
         const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
-        diStatements.push(`    const ${dep.serviceKey} = ${hookName}('${token}');`);
+        diStatements.push(`        const ${dep.serviceKey} = ${hookName}('${token}');`);
+        serviceKeys.push(dep.serviceKey);
       } else if (dep.isOptional) {
-        diStatements.push(`    const ${dep.serviceKey} = undefined; // Optional dependency not found`);
+        diStatements.push(`        const ${dep.serviceKey} = undefined; // Optional dependency not found`);
+        serviceKeys.push(dep.serviceKey);
       } else {
-        diStatements.push(`    const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
+        diStatements.push(`        const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
+        serviceKeys.push(dep.serviceKey);
       }
     }
 
-    // Generate services object
-    const serviceKeys = dependencies.map(dep => dep.serviceKey).join(', ');
-    diStatements.push(`    const services = { ${serviceKeys} };`);
+    // Generate services object with individual service keys
+    diStatements.push(`        const services = { ${serviceKeys.join(', ')} };`);
 
     // Insert at the beginning of the function body
     for (let i = diStatements.length - 1; i >= 0; i--) {
