@@ -1,6 +1,7 @@
-// src/App.tsx - Updated to include the Todo App
+// src/App.tsx - Updated with Router and DI Dependency Viewer
 
 import "./App.css";
+import { Router } from "./components/Router";
 import { DIExampleCard } from "./components/DIExampleCard";
 import { DICardBody } from "./components/DICardBody";
 import { SimpleTest } from "./components/SimpleTestComponent";
@@ -11,25 +12,147 @@ import {
 import { ExampleUseAsyncChain } from "./experimental-utils/async/ExampleUseAsyncChain";
 import { ExampleObservableFC } from "./experimental-utils/observable/ExampleObservableFC";
 import { TodoApp } from "./todo/components/TodoApp";
+import DIDependencyViewer from "./components/di-dependency-viewer/DIDependencyViewer";
+
+// Import the actual DI config
+import { DI_CONFIG } from './.tdi2/di-config';
 
 /** DI marker to prevent TypeScript errors */
 const SERVICES = {} as any;
 
-function App() {
+// Homepage component
+function Homepage() {
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+    <div style={{ padding: '20px' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h1 style={{ color: '#333', marginBottom: '16px' }}>
-          🎯 TDI2 - Interface-Based Dependency Injection
+          Welcome to TDI2 Demo
         </h1>
         <p style={{ color: '#666', fontSize: '18px', maxWidth: '800px', margin: '0 auto' }}>
-          Showcase of automatic interface-to-implementation resolution, class-based DI, 
+          Explore automatic interface-to-implementation resolution, class-based DI, 
           and functional component dependency injection patterns.
         </p>
       </div>
 
-      {/* Todo App - Full Featured Example */}
+      {/* Quick Navigation Cards */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+        gap: '20px',
+        marginBottom: '40px' 
+      }}>
+        <div style={{ 
+          padding: '20px', 
+          backgroundColor: '#f8f9fa', 
+          borderRadius: '8px', 
+          border: '2px solid #4CAF50',
+          textAlign: 'center' 
+        }}>
+          <h3>🎯 Complete Todo App</h3>
+          <p style={{ fontSize: '14px', color: '#666', margin: '8px 0' }}>
+            Full-featured application with IndexedDB persistence and reactive state
+          </p>
+        </div>
+        
+        <div style={{ 
+          padding: '20px', 
+          backgroundColor: '#f8f9fa', 
+          borderRadius: '8px', 
+          border: '2px solid #2196F3',
+          textAlign: 'center' 
+        }}>
+          <h3>🔌 Interface Examples</h3>
+          <p style={{ fontSize: '14px', color: '#666', margin: '8px 0' }}>
+            Interface-based dependency injection with automatic resolution
+          </p>
+        </div>
+        
+        <div style={{ 
+          padding: '20px', 
+          backgroundColor: '#f8f9fa', 
+          borderRadius: '8px', 
+          border: '2px solid #FF9800',
+          textAlign: 'center' 
+        }}>
+          <h3>📊 Dependency Viewer</h3>
+          <p style={{ fontSize: '14px', color: '#666', margin: '8px 0' }}>
+            Interactive visualization of your DI dependency graph
+          </p>
+        </div>
+      </div>
+
+      {/* Features Overview */}
+      <div style={{ 
+        marginTop: '60px', 
+        padding: '24px', 
+        backgroundColor: '#f5f5f5', 
+        borderRadius: '8px' 
+      }}>
+        <h3 style={{ color: '#333', marginBottom: '16px', textAlign: 'center' }}>
+          🚀 TDI2 Features Demonstrated
+        </h3>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+          gap: '16px',
+          marginTop: '20px' 
+        }}>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>🎯 Interface Resolution</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              Automatic mapping from TypeScript interfaces to implementations
+            </p>
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>🏗️ Class-Based DI</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              Direct class registration without interface requirements
+            </p>
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>⚡ Zero Configuration</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              No manual token management or container setup needed
+            </p>
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>🔄 Hot Reload</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              Automatic retransformation during development
+            </p>
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>💾 Persistence</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              IndexedDB integration with caching layer
+            </p>
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>🌊 Reactive State</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              AsyncState pattern for reactive UIs
+            </p>
+          </div>
+        </div>
+        
+        <div style={{ marginTop: '24px', fontSize: '14px', color: '#666', textAlign: 'center' }}>
+          <p>
+            <strong>Debug URLs:</strong> 
+            <a href="http://localhost:5173/_di_debug" style={{ marginLeft: '8px', color: '#4CAF50' }}>Debug Info</a> | 
+            <a href="http://localhost:5173/_di_interfaces" style={{ marginLeft: '8px', color: '#4CAF50' }}>Interface Mappings</a> | 
+            <a href="http://localhost:5173/_di_configs" style={{ marginLeft: '8px', color: '#4CAF50' }}>Configurations</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Todo App Page
+function TodoAppPage() {
+  return (
+    <div style={{ padding: '20px' }}>
       <DIExampleCard
         title="Complete Todo Application"
         description="Full-featured todo app demonstrating TDI2 with IndexedDB persistence, AsyncState pattern, and interface-based DI"
@@ -91,8 +214,14 @@ function TodoApp(props: {
           <TodoApp services={SERVICES} />
         </DICardBody>
       </DIExampleCard>
+    </div>
+  );
+}
 
-      {/* Interface-Based DI Examples */}
+// Interface Examples Page
+function InterfaceExamplesPage() {
+  return (
+    <div style={{ padding: '20px' }}>
       <DIExampleCard
         title="Interface-Based User Profile"
         description="Demonstrates automatic interface resolution with caching and logging dependencies"
@@ -183,8 +312,14 @@ function TodoApp(props: {
           <SimpleTest message="Hello from automatic DI!" />
         </DICardBody>
       </DIExampleCard>
+    </div>
+  );
+}
 
-      {/* Class-Based DI Examples */}
+// Class-Based Examples Page
+function ClassBasedExamplesPage() {
+  return (
+    <div style={{ padding: '20px' }}>
       <DIExampleCard
         title="Observable State Management"
         description="Class-based DI with reactive state management using AsyncState pattern"
@@ -216,7 +351,6 @@ function Component(props: {
         </DICardBody>
       </DIExampleCard>
 
-      {/* Async Chain Example */}
       <DIExampleCard
         title="Async Chain Pattern"
         description="Demonstrates fluent async operations with error handling and state management"
@@ -243,71 +377,54 @@ await asyncState
           <ExampleUseAsyncChain />
         </DICardBody>
       </DIExampleCard>
-
-      {/* Footer */}
-      <div style={{ 
-        marginTop: '60px', 
-        padding: '24px', 
-        backgroundColor: '#f5f5f5', 
-        borderRadius: '8px', 
-        textAlign: 'center' 
-      }}>
-        <h3 style={{ color: '#333', marginBottom: '16px' }}>🚀 TDI2 Features Demonstrated</h3>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-          gap: '16px',
-          marginTop: '20px' 
-        }}>
-          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <strong>🎯 Interface Resolution</strong>
-            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
-              Automatic mapping from TypeScript interfaces to implementations
-            </p>
-          </div>
-          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <strong>🏗️ Class-Based DI</strong>
-            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
-              Direct class registration without interface requirements
-            </p>
-          </div>
-          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <strong>⚡ Zero Configuration</strong>
-            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
-              No manual token management or container setup needed
-            </p>
-          </div>
-          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <strong>🔄 Hot Reload</strong>
-            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
-              Automatic retransformation during development
-            </p>
-          </div>
-          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <strong>💾 Persistence</strong>
-            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
-              IndexedDB integration with caching layer
-            </p>
-          </div>
-          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <strong>🌊 Reactive State</strong>
-            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
-              AsyncState pattern for reactive UIs
-            </p>
-          </div>
-        </div>
-        
-        <div style={{ marginTop: '24px', fontSize: '14px', color: '#666' }}>
-          <p>
-            <strong>Debug URLs:</strong> 
-            <a href="http://localhost:5173/_di_debug" style={{ marginLeft: '8px', color: '#4CAF50' }}>Debug Info</a> | 
-            <a href="http://localhost:5173/_di_interfaces" style={{ marginLeft: '8px', color: '#4CAF50' }}>Interface Mappings</a> | 
-            <a href="http://localhost:5173/_di_configs" style={{ marginLeft: '8px', color: '#4CAF50' }}>Configurations</a>
-          </p>
-        </div>
-      </div>
     </div>
   );
+}
+
+// Dependency Viewer Page
+function DependencyViewerPage() {
+  return (
+    <div style={{ height: '100vh', padding: '0' }}>
+      <DIDependencyViewer diConfig={DI_CONFIG} />
+    </div>
+  );
+}
+
+function App() {
+  const routes = [
+    {
+      path: '/',
+      component: <Homepage />,
+      title: 'Home',
+      description: 'Welcome to TDI2 - Interface-Based Dependency Injection Demo'
+    },
+    {
+      path: '/todo-app',
+      component: <TodoAppPage />,
+      title: 'Todo App',
+      description: 'Complete Todo Application with IndexedDB persistence and reactive state'
+    },
+    {
+      path: '/interface-examples',
+      component: <InterfaceExamplesPage />,
+      title: 'Interface Examples',
+      description: 'Interface-based dependency injection with automatic resolution'
+    },
+    {
+      path: '/class-examples',
+      component: <ClassBasedExamplesPage />,
+      title: 'Class Examples',
+      description: 'Class-based DI and reactive state management patterns'
+    },
+    {
+      path: '/dependency-viewer',
+      component: <DependencyViewerPage />,
+      title: 'Dependency Viewer',
+      description: 'Interactive visualization of your DI dependency graph'
+    }
+  ];
+
+  return <Router routes={routes} defaultRoute="/" />;
 }
 
 export default App;
