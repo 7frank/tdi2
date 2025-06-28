@@ -4,17 +4,17 @@
  * Marker interface for dependency injection in function parameters
  * Usage: function MyComponent(services: {logger: Inject<LoggerInterface>}) {}
  */
-export interface Inject<T> extends T {
+export type Inject<T> = T & {
   readonly __inject__: unique symbol;
-}
+};
 
 /**
- * Marker interface for optional dependency injection
+ * Marker type for optional dependency injection
  * Usage: function MyComponent(services: {logger?: InjectOptional<LoggerInterface>}) {}
  */
-export interface InjectOptional<T> extends Partial<T> {
+export type InjectOptional<T> = T & {
   readonly __injectOptional__: unique symbol;
-}
+};
 
 /**
  * Service configuration for functional components
@@ -37,7 +37,7 @@ export type ExtractServices<T extends ServiceDependencies> = {
  * Function component with DI support
  * This is what the transformer would look for and transform
  */
-export interface DIFunction<TServices extends ServiceDependencies, TProps = {}> {
+export interface DIFunction<TServices extends ServiceDependencies, TProps = object> {
   (props: TProps & { services?: ExtractServices<TServices> }): JSX.Element;
 }
 
@@ -47,14 +47,14 @@ export interface DIFunction<TServices extends ServiceDependencies, TProps = {}> 
  * const MyComponent: DIComponent<{logger: Inject<LoggerInterface>}, {title: string}> = 
  *   ({title, services}) => { ... }
  */
-export type DIComponent<TServices extends ServiceDependencies, TProps = {}> = 
+export type DIComponent<TServices extends ServiceDependencies, TProps = object> = 
   DIFunction<TServices, TProps>;
 
 /**
  * Transform a regular React component to support DI
  * This could be used as a higher-order function or detected by the transformer
  */
-export function withDI<TServices extends ServiceDependencies, TProps = {}>(
+export function withDI<TServices extends ServiceDependencies, TProps = object>(
   component: (props: TProps & { services: ExtractServices<TServices> }) => JSX.Element,
   serviceConfig: TServices
 ): React.ComponentType<TProps> {

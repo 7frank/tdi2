@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer.ts - Interface-based functional DI
+// tools/functional-di-enhanced-transformer.ts - FIXED: Correct import path resolution
 
 import { 
   Project, 
@@ -318,6 +318,7 @@ export class FunctionalDIEnhancedTransformer {
     return type.replace(/[^\w\s]/gi, '_');
   }
 
+  // FIXED: Calculate correct relative import path based on file location
   private ensureDIImports(sourceFile: SourceFile): void {
     const existingImports = sourceFile.getImportDeclarations();
     const hasDIImport = existingImports.some(imp => 
@@ -325,8 +326,25 @@ export class FunctionalDIEnhancedTransformer {
     );
 
     if (!hasDIImport) {
+      // FIXED: Calculate relative path from current file to DI context
+      const currentFilePath = sourceFile.getFilePath();
+      const srcDir = path.resolve(this.options.srcDir!);
+      const diContextPath = path.join(srcDir, 'di', 'context');
+      
+      // Calculate relative path
+      const currentFileDir = path.dirname(currentFilePath);
+      const relativePath = path.relative(currentFileDir, diContextPath)
+        .replace(/\\/g, '/'); // Normalize to forward slashes
+      
+      // Ensure the path starts with ./ or ../
+      const normalizedPath = relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
+      
+      if (this.options.verbose) {
+        console.log(`📦 Adding DI import to ${sourceFile.getBaseName()}: ${normalizedPath}`);
+      }
+
       sourceFile.addImportDeclaration({
-        moduleSpecifier: '../di/context',
+        moduleSpecifier: normalizedPath,
         namedImports: ['useService', 'useOptionalService']
       });
     }

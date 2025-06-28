@@ -1,6 +1,6 @@
 // src/di/types.ts - Updated for interface-based DI
 
-export type Constructor<T = {}> = new (...args: any[]) => T;
+export type Constructor<T = object> = new (...args: any[]) => T;
 
 export interface ServiceMetadata {
   token?: string | symbol; // Optional - auto-resolved from interface if not provided
