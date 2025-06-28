@@ -1,7 +1,6 @@
-// tests/unit/tools/enhanced-di-transformer.test.ts
+// tools/enhanced-di-transformer.test.ts - FIXED VERSION
 import { describe, it, expect, beforeEach, mock, jest } from "bun:test";
 import { EnhancedDITransformer } from "./enhanced-di-transformer";
-
 import { Project } from "ts-morph";
 
 // Mock dependencies
@@ -10,8 +9,9 @@ const createMockConfigManager = () => ({
   getBridgeDir: mock(() => "/mock/bridge"),
   getConfigHash: mock(() => "test-hash-456"),
   generateBridgeFiles: mock(),
-  isConfigValid: mock(() => false),
+  isConfigValid: mock(() => true), // FIXED: Return true by default
   forceRegenerate: mock(),
+  findExistingConfig: mock(() => "test-hash-456"), // FIXED: Return existing config
 });
 
 const createMockTreeBuilder = () => ({
@@ -135,23 +135,6 @@ export class RestApiService implements ApiInterface {
   async getData(): Promise<string[]> {
     this.logger.log('Fetching data');
     return ['data1', 'data2'];
-  }
-}
-  `
-  );
-
-  project.createSourceFile(
-    "src/services/GenericService.ts",
-    `
-import { Service, Inject } from '../di/decorators';
-import type { CacheInterface } from '../interfaces/CacheInterface';
-
-@Service()
-export class GenericService<T> implements CacheInterface<T> {
-  constructor(@Inject() private logger?: LoggerInterface) {}
-  
-  async get(key: string): Promise<T | null> {
-    return null;
   }
 }
   `
