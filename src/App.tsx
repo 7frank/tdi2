@@ -1,3 +1,5 @@
+// src/App.tsx - Enhanced with DI Example Cards
+
 import "./App.css";
 
 import { SimpleTest } from "./components/SimpleTestComponent";
@@ -53,19 +55,220 @@ function Foo() {
 
 function App() {
   return (
-    <div
-      style={{
-        marginTop: "20px",
-        padding: "10px",
-        border: "2px solid #ff6b6b",
-        borderRadius: "5px",
-      }}
-    >
-      <h3>🎯 Functional DI Example</h3>
-      <UserProfile userId="foo1" title="it works" />
-      <DataList category="bar" />
-      <SimpleTest message="baz" />
-      <Foo />
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <h1 style={{ color: '#333', marginBottom: '16px' }}>
+          🎯 TDI2 - Interface-Based Dependency Injection
+        </h1>
+        <p style={{ color: '#666', fontSize: '18px', maxWidth: '800px', margin: '0 auto' }}>
+          Showcase of automatic interface-to-implementation resolution, class-based DI, 
+          and functional component dependency injection patterns.
+        </p>
+      </div>
+
+      {/* Interface-Based DI Examples */}
+      <DIExampleCard
+        title="Interface-Based User Profile"
+        description="Demonstrates automatic interface resolution with caching and logging dependencies"
+        diPattern="Interface → Implementation"
+        variant="interface"
+      >
+        <DICardBody
+          pattern="ExampleApiInterface → UserApiServiceImpl"
+          explanation="The component declares it needs ExampleApiInterface, LoggerInterface, and CacheInterface. TDI2 automatically resolves these to their implementations without manual token mapping. This showcases the core benefit of interface-based DI: clean separation between contract and implementation."
+          dependencies={[
+            { name: 'ExampleApiInterface', type: 'required', resolvedTo: 'UserApiServiceImpl' },
+            { name: 'LoggerInterface', type: 'optional', resolvedTo: 'ConsoleLogger' },
+            { name: 'CacheInterface<any>', type: 'optional', resolvedTo: 'MemoryCache' }
+          ]}
+          codeExample={`function UserProfile(props: {
+  userId: string;
+  services: {
+    api: Inject<ExampleApiInterface>;
+    logger?: InjectOptional<LoggerInterface>;
+    cache?: InjectOptional<CacheInterface<any>>;
+  };
+}) {
+  // TDI2 automatically injects:
+  // - UserApiServiceImpl for ExampleApiInterface
+  // - ConsoleLogger for LoggerInterface
+  // - MemoryCache for CacheInterface
+}`}
+          variant="interface"
+        >
+          <UserProfile userId="user-123" title="Interface DI Example" services={SERVICES} />
+        </DICardBody>
+      </DIExampleCard>
+
+      <DIExampleCard
+        title="Multi-Service Data List"
+        description="Shows dependency injection with multiple required and optional services"
+        diPattern="Multi-Interface DI"
+        variant="class"
+      >
+        <DICardBody
+          pattern="Required + Optional Dependencies"
+          explanation="Combines required API and Logger services with optional Cache service. Demonstrates how TDI2 handles optional dependencies gracefully - if the cache isn't available, the component continues to work without it. This pattern is ideal for progressive enhancement."
+          dependencies={[
+            { name: 'ExampleApiInterface', type: 'required', resolvedTo: 'ExampleApiService' },
+            { name: 'LoggerInterface', type: 'required', resolvedTo: 'ConsoleLogger' },
+            { name: 'CacheInterface<string[]>', type: 'optional', resolvedTo: 'MemoryCache' }
+          ]}
+          codeExample={`const DataList = (props: {
+  category: string;
+  services: {
+    api: Inject<ExampleApiInterface>;      // Required
+    logger: Inject<LoggerInterface>;       // Required  
+    cache?: InjectOptional<CacheInterface<string[]>>; // Optional
+  };
+}) => {
+  // If cache is available, use it for performance
+  // If not available, continue without caching
+}`}
+          variant="class"
+        >
+          <DataList category="products" services={SERVICES} />
+        </DICardBody>
+      </DIExampleCard>
+
+      <DIExampleCard
+        title="Simple Token-Free Injection"
+        description="Minimal example showing how easy DI becomes without manual token management"
+        diPattern="Zero-Config DI"
+        variant="interface"
+      >
+        <DICardBody
+          pattern="Zero Configuration"
+          explanation="Just declare the interface you need - no tokens, no manual registration, no container setup. TDI2 scans your codebase, finds the implementation, and wires everything up automatically. This is the ultimate developer experience for dependency injection."
+          dependencies={[
+            { name: 'ExampleApiInterface', type: 'required', resolvedTo: 'ExampleApiService' }
+          ]}
+          codeExample={`export function SimpleTest(props: {
+  message: string;
+  services: {
+    api: Inject<ExampleApiInterface>; // That's it!
+  };
+}) {
+  // TDI2 automatically finds ExampleApiService
+  // No tokens, no manual wiring, no configuration
+}`}
+          variant="interface"
+        >
+          <SimpleTest message="Hello from automatic DI!" />
+        </DICardBody>
+      </DIExampleCard>
+
+      {/* Class-Based DI Examples */}
+      <DIExampleCard
+        title="Observable State Management"
+        description="Class-based DI with reactive state management using AsyncState pattern"
+        diPattern="Class → Class"
+        variant="observable"
+      >
+        <DICardBody
+          pattern="Direct Class Registration"
+          explanation="Services extend AsyncState for reactive state management. Classes are registered directly as their own tokens - no interfaces needed. This pattern is perfect when you have concrete implementations that don't need abstraction, or when working with stateful services that manage their own lifecycle."
+          dependencies={[
+            { name: 'ApiService', type: 'required', resolvedTo: 'ApiService' },
+            { name: 'UserService', type: 'required', resolvedTo: 'UserService' }
+          ]}
+          codeExample={`@Service()
+export class ApiService extends AsyncState<string> {
+  // Class acts as both interface and implementation
+  async fetchData(): Promise<string> { ... }
+}
+
+// Usage in component:
+function Component(props: {
+  services: {
+    apiService: Inject<ApiService>; // Direct class reference
+  };
+}) { ... }`}
+          variant="observable"
+        >
+          <ExampleObservableFC services={SERVICES} />
+        </DICardBody>
+      </DIExampleCard>
+
+      {/* Async Chain Example */}
+      <DIExampleCard
+        title="Async Chain Pattern"
+        description="Demonstrates fluent async operations with error handling and state management"
+        diPattern="Fluent Async API"
+        variant="async"
+      >
+        <DICardBody
+          pattern="Fluent Reactive Pattern"
+          explanation="Chainable async operations with built-in loading, success, and error states. Shows how DI can work with complex async patterns and reactive programming. This pattern combines the power of async/await with reactive state management for smooth UX."
+          dependencies={[]}
+          codeExample={`const asyncState = useAsyncChain<string>();
+
+// Fluent API with automatic state management
+await asyncState
+  .trigger(() => fetchData())
+  .success(data => data.trim())
+  .map(d => <button>{d}</button>)
+  .error(error => error.message)
+  .map(m => <div style={{color: 'red'}}>{m}</div>)
+  .pending(() => <div>Loading...</div>)
+  .idle(() => <div>Click to start</div>);`}
+          variant="async"
+        >
+          <ExampleUseAsyncChain />
+        </DICardBody>
+      </DIExampleCard>
+
+      {/* Footer */}
+      <div style={{ 
+        marginTop: '60px', 
+        padding: '24px', 
+        backgroundColor: '#f5f5f5', 
+        borderRadius: '8px', 
+        textAlign: 'center' 
+      }}>
+        <h3 style={{ color: '#333', marginBottom: '16px' }}>🚀 TDI2 Features Demonstrated</h3>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+          gap: '16px',
+          marginTop: '20px' 
+        }}>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>🎯 Interface Resolution</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              Automatic mapping from TypeScript interfaces to implementations
+            </p>
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>🏗️ Class-Based DI</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              Direct class registration without interface requirements
+            </p>
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>⚡ Zero Configuration</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              No manual token management or container setup needed
+            </p>
+          </div>
+          <div style={{ padding: '12px', backgroundColor: 'white', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <strong>🔄 Hot Reload</strong>
+            <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0 0' }}>
+              Automatic retransformation during development
+            </p>
+          </div>
+        </div>
+        
+        <div style={{ marginTop: '24px', fontSize: '14px', color: '#666' }}>
+          <p>
+            <strong>Debug URLs:</strong> 
+            <a href="http://localhost:5173/_di_debug" style={{ marginLeft: '8px', color: '#4CAF50' }}>Debug Info</a> | 
+            <a href="http://localhost:5173/_di_interfaces" style={{ marginLeft: '8px', color: '#4CAF50' }}>Interface Mappings</a> | 
+            <a href="http://localhost:5173/_di_configs" style={{ marginLeft: '8px', color: '#4CAF50' }}>Configurations</a>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
