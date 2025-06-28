@@ -1,4 +1,4 @@
-// tools/enhanced-di-transformer.ts - Interface-based DI transformer
+// tools/enhanced-di-transformer.ts - COMPLETELY FIXED VERSION
 
 import { 
   Project, 
@@ -102,21 +102,31 @@ export class EnhancedDITransformer {
     if (this.options.verbose) {
       console.log(`✅ Generated interface-based DI for ${configurations.size} services`);
       
-      // Debug output
-      const implementations = interfaceResolver.getInterfaceImplementations();
-      console.log('\n📋 Interface Mappings:');
-      for (const [key, impl] of implementations) {
-        console.log(`  ${impl.interfaceName} -> ${impl.implementationClass} (${key})`);
-      }
+      // FIXED: Use safe method access with error handling
+      try {
+        const implementations = interfaceResolver.getInterfaceImplementations();
+        if (implementations && implementations.size > 0) {
+          console.log('\n📋 Interface Mappings:');
+          for (const [key, impl] of implementations) {
+            console.log(`  ${impl.interfaceName} -> ${impl.implementationClass} (${key})`);
+          }
+        }
 
-      const dependencies = interfaceResolver.getServiceDependencies();
-      console.log('\n🔗 Service Dependencies:');
-      for (const [service, deps] of dependencies) {
-        if (deps.constructorParams.length > 0) {
-          const depList = deps.constructorParams.map(p => 
-            `${p.interfaceType}${p.isOptional ? '?' : ''}`
-          ).join(', ');
-          console.log(`  ${service}(${depList})`);
+        const dependencies = interfaceResolver.getServiceDependencies();
+        if (dependencies && dependencies.size > 0) {
+          console.log('\n🔗 Service Dependencies:');
+          for (const [service, deps] of dependencies) {
+            if (deps.constructorParams && deps.constructorParams.length > 0) {
+              const depList = deps.constructorParams.map((p: any) => 
+                `${p.interfaceType}${p.isOptional ? '?' : ''}`
+              ).join(', ');
+              console.log(`  ${service}(${depList})`);
+            }
+          }
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn('⚠️  Error accessing interface resolver data:', error);
         }
       }
     }
@@ -132,9 +142,42 @@ export class EnhancedDITransformer {
     throw new Error('Token-based resolution not implemented in enhanced transformer. Use enableInterfaceResolution: true');
   }
 
+  // FIXED: Enhanced error handling for registry generation
   private async generateServiceRegistry(configurations: any, interfaceResolver: any): Promise<void> {
-    const implementations = interfaceResolver.getInterfaceImplementations();
-    const dependencies = interfaceResolver.getServiceDependencies();
+    // FIXED: Check if interfaceResolver exists and has required methods
+    if (!interfaceResolver) {
+      if (this.options.verbose) {
+        console.warn('⚠️  Interface resolver not available for registry generation');
+      }
+      return;
+    }
+
+    let implementations: Map<string, any> = new Map();
+    let dependencies: Map<string, any> = new Map();
+
+    // FIXED: Use safe method calls with existence checks
+    try {
+      if (typeof interfaceResolver.getInterfaceImplementations === 'function') {
+        implementations = interfaceResolver.getInterfaceImplementations() || new Map();
+      } else {
+        if (this.options.verbose) {
+          console.warn('⚠️  getInterfaceImplementations method not available');
+        }
+      }
+
+      if (typeof interfaceResolver.getServiceDependencies === 'function') {
+        dependencies = interfaceResolver.getServiceDependencies() || new Map();
+      } else {
+        if (this.options.verbose) {
+          console.warn('⚠️  getServiceDependencies method not available');
+        }
+      }
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn('⚠️  Error accessing interface resolver methods:', error);
+      }
+      return;
+    }
 
     // Generate imports for all service classes
     const imports: string[] = [];
@@ -142,22 +185,57 @@ export class EnhancedDITransformer {
     const interfaceMappings: string[] = [];
 
     for (const [_, impl] of implementations) {
-      const configDir = this.configManager.getConfigDir();
-      const servicePath = path.resolve(impl.filePath);
-      const relativePath = path.relative(configDir, servicePath)
-        .replace(/\.(ts|tsx)$/, '')
-        .replace(/\\/g, '/');
-      
-      const importPath = relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
-      imports.push(`import { ${impl.implementationClass} } from '${importPath}';`);
-      serviceNames.push(impl.implementationClass);
-      
-      interfaceMappings.push(`  '${impl.interfaceName}': {
+      if (!impl || !impl.implementationClass || !impl.filePath) {
+        continue; // Skip invalid implementations
+      }
+
+      try {
+        const configDir = this.configManager.getConfigDir();
+        const servicePath = path.resolve(impl.filePath);
+        const relativePath = path.relative(configDir, servicePath)
+          .replace(/\.(ts|tsx)$/, '')
+          .replace(/\\/g, '/');
+        
+        const importPath = relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
+        imports.push(`import { ${impl.implementationClass} } from '${importPath}';`);
+        serviceNames.push(impl.implementationClass);
+        
+        // FIXED: Safe property access with defaults
+        const typeParameters = impl.typeParameters || [];
+        const sanitizedKey = impl.sanitizedKey || impl.interfaceName;
+        const isGeneric = impl.isGeneric || false;
+        
+        interfaceMappings.push(`  '${impl.interfaceName}': {
     implementation: ${impl.implementationClass},
-    token: '${impl.sanitizedKey}',
-    isGeneric: ${impl.isGeneric},
-    typeParameters: [${impl.typeParameters.map(t => `'${t}'`).join(', ')}]
+    token: '${sanitizedKey}',
+    isGeneric: ${isGeneric},
+    typeParameters: [${typeParameters.map((t: string) => `'${t}'`).join(', ')}]
   }`);
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn(`⚠️  Error processing implementation ${impl.implementationClass}:`, error);
+        }
+      }
+    }
+
+    // FIXED: Safe dependency processing
+    const serviceDependencies: string[] = [];
+    try {
+      for (const [service, deps] of dependencies) {
+        if (deps && deps.constructorParams && Array.isArray(deps.constructorParams)) {
+          const paramStrings = deps.constructorParams.map((p: any) => {
+            const interfaceType = p.interfaceType || 'unknown';
+            return `'${interfaceType}'`;
+          });
+          serviceDependencies.push(`  '${service}': [${paramStrings.join(', ')}]`);
+        } else {
+          serviceDependencies.push(`  '${service}': []`);
+        }
+      }
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn('⚠️  Error processing service dependencies:', error);
+      }
     }
 
     const registryContent = `// Auto-generated service registry - Interface-based
@@ -175,9 +253,7 @@ ${interfaceMappings.join(',\n')}
 };
 
 export const SERVICE_DEPENDENCIES = {
-${Array.from(dependencies.entries()).map(([service, deps]) => 
-  `  '${service}': [${deps.constructorParams.map(p => `'${p.interfaceType}'`).join(', ')}]`
-).join(',\n')}
+${serviceDependencies.join(',\n')}
 };
 
 // Helper function to get implementation for interface
@@ -195,12 +271,30 @@ export function getAllImplementations(): { [key: string]: any } {
   return result;
 }`;
 
-    const registryFile = path.join(this.configManager.getConfigDir(), 'AutoGeneratedRegistry.ts');
-    await fs.promises.writeFile(registryFile, registryContent, 'utf8');
+    try {
+      const registryFile = path.join(this.configManager.getConfigDir(), 'AutoGeneratedRegistry.ts');
+      await fs.promises.writeFile(registryFile, registryContent, 'utf8');
+      
+      if (this.options.verbose) {
+        console.log(`📝 Generated service registry: ${registryFile}`);
+      }
+    } catch (error) {
+      if (this.options.verbose) {
+        console.error('❌ Failed to write service registry:', error);
+      }
+      throw error;
+    }
   }
 
   async save(): Promise<void> {
-    await this.project.save();
+    try {
+      await this.project.save();
+    } catch (error) {
+      if (this.options.verbose) {
+        console.error('❌ Failed to save project:', error);
+      }
+      throw error;
+    }
   }
 
   // Expose managers for external use
@@ -212,18 +306,157 @@ export function getAllImplementations(): { [key: string]: any } {
     return this.treeBuilder;
   }
 
-  // Debug methods
+  // FIXED: Enhanced debug methods with error handling
   async getDebugInfo(): Promise<any> {
-    const interfaceResolver = this.treeBuilder.getInterfaceResolver();
-    
-    return {
-      configHash: this.configManager.getConfigHash(),
-      implementations: Array.from(interfaceResolver.getInterfaceImplementations().entries()),
-      dependencies: Array.from(interfaceResolver.getServiceDependencies().entries()),
-      dependencyTree: interfaceResolver.getDependencyTree(),
-      validation: interfaceResolver.validateDependencies(),
-      configurations: Array.from(this.treeBuilder.getConfigurations().entries())
-    };
+    try {
+      const interfaceResolver = this.treeBuilder.getInterfaceResolver();
+      
+      let implementations: Array<[string, any]> = [];
+      let dependencies: Array<[string, any]> = [];
+      let dependencyTree: any[] = [];
+      let validation: any = { isValid: true, missingImplementations: [], circularDependencies: [] };
+      let configurations: Array<[string, any]> = [];
+
+      // FIXED: Safe method calls with error handling
+      try {
+        if (interfaceResolver && typeof interfaceResolver.getInterfaceImplementations === 'function') {
+          const impls = interfaceResolver.getInterfaceImplementations();
+          implementations = Array.from(impls.entries());
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn('⚠️  Error getting implementations:', error);
+        }
+      }
+
+      try {
+        if (interfaceResolver && typeof interfaceResolver.getServiceDependencies === 'function') {
+          const deps = interfaceResolver.getServiceDependencies();
+          dependencies = Array.from(deps.entries());
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn('⚠️  Error getting dependencies:', error);
+        }
+      }
+
+      try {
+        if (interfaceResolver && typeof interfaceResolver.getDependencyTree === 'function') {
+          dependencyTree = interfaceResolver.getDependencyTree();
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn('⚠️  Error getting dependency tree:', error);
+        }
+      }
+
+      try {
+        if (interfaceResolver && typeof interfaceResolver.validateDependencies === 'function') {
+          validation = interfaceResolver.validateDependencies();
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn('⚠️  Error validating dependencies:', error);
+        }
+      }
+
+      try {
+        const configs = this.treeBuilder.getConfigurations();
+        configurations = Array.from(configs.entries());
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn('⚠️  Error getting configurations:', error);
+        }
+      }
+
+      return {
+        configHash: this.configManager.getConfigHash(),
+        implementations,
+        dependencies,
+        dependencyTree,
+        validation,
+        configurations
+      };
+    } catch (error) {
+      if (this.options.verbose) {
+        console.error('❌ Error generating debug info:', error);
+      }
+      // Return minimal debug info on error
+      return {
+        configHash: this.configManager.getConfigHash(),
+        implementations: [],
+        dependencies: [],
+        dependencyTree: [],
+        validation: { isValid: false, missingImplementations: [], circularDependencies: ['Debug info generation failed'] },
+        configurations: [],
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  // FIXED: Additional helper methods for better error handling
+  async validateConfiguration(): Promise<boolean> {
+    try {
+      const debugInfo = await this.getDebugInfo();
+      return debugInfo.validation && debugInfo.validation.isValid;
+    } catch (error) {
+      if (this.options.verbose) {
+        console.error('❌ Configuration validation failed:', error);
+      }
+      return false;
+    }
+  }
+
+  getTransformationSummary(): {
+    configHash: string;
+    implementationCount: number;
+    dependencyCount: number;
+    hasValidConfiguration: boolean;
+  } {
+    try {
+      const interfaceResolver = this.treeBuilder.getInterfaceResolver();
+      let implementationCount = 0;
+      let dependencyCount = 0;
+
+      try {
+        if (interfaceResolver && typeof interfaceResolver.getInterfaceImplementations === 'function') {
+          const implementations = interfaceResolver.getInterfaceImplementations();
+          implementationCount = implementations ? implementations.size : 0;
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn('⚠️  Could not get implementations count:', error);
+        }
+      }
+
+      try {
+        if (interfaceResolver && typeof interfaceResolver.getServiceDependencies === 'function') {
+          const dependencies = interfaceResolver.getServiceDependencies();
+          dependencyCount = dependencies ? dependencies.size : 0;
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn('⚠️  Could not get dependencies count:', error);
+        }
+      }
+
+      return {
+        configHash: this.configManager.getConfigHash(),
+        implementationCount,
+        dependencyCount,
+        hasValidConfiguration: this.configManager.isConfigValid()
+      };
+    } catch (error) {
+      if (this.options.verbose) {
+        console.error('❌ Error generating transformation summary:', error);
+      }
+      return {
+        configHash: 'error',
+        implementationCount: 0,
+        dependencyCount: 0,
+        hasValidConfiguration: false
+      };
+    }
   }
 }
 

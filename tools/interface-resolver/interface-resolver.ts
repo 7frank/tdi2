@@ -501,9 +501,58 @@ export class InterfaceResolver {
     return implementations;
   }
 
-  // Public API methods
+/**
+   * 
+   * Get all interface implementations as a Map for legacy compatibility
+   */
   getInterfaceImplementations(): Map<string, InterfaceImplementation> {
-    return this.interfaces;
+    // Return a copy of the implementations map
+    return new Map(this.interfaces);
+  }
+
+  /**
+   * FIXED: Get implementations organized by interface name for easier access
+   */
+  getImplementationsByInterfaceName(): Map<string, InterfaceImplementation[]> {
+    const groupedImplementations = new Map<string, InterfaceImplementation[]>();
+    
+    for (const [key, implementation] of this.interfaces) {
+      const interfaceName = implementation.interfaceName;
+      
+      if (!groupedImplementations.has(interfaceName)) {
+        groupedImplementations.set(interfaceName, []);
+      }
+      
+      groupedImplementations.get(interfaceName)!.push(implementation);
+    }
+    
+    return groupedImplementations;
+  }
+
+  /**
+   * FIXED: Get all unique interface names
+   */
+  getAllInterfaceNames(): string[] {
+    const interfaceNames = new Set<string>();
+    
+    for (const [key, implementation] of this.interfaces) {
+      interfaceNames.add(implementation.interfaceName);
+    }
+    
+    return Array.from(interfaceNames);
+  }
+
+  /**
+   * FIXED: Get all unique implementation class names
+   */
+  getAllImplementationClasses(): string[] {
+    const implementationClasses = new Set<string>();
+    
+    for (const [key, implementation] of this.interfaces) {
+      implementationClasses.add(implementation.implementationClass);
+    }
+    
+    return Array.from(implementationClasses);
   }
 
   getServiceDependencies(): Map<string, ServiceDependency> {

@@ -20,6 +20,8 @@
   - **FIXME** tests currently are mostly ai slop and add no values
 
   - **fix test files**
+
+    - [ ] context.test.tsx\_
     - [x] interface-resolver.test.ts
     - [ ] missing test file dependency-tree-builder-test.ts generate one
     - [ ] 7frank/tdi2/tools/functional-di-enhanced-transformer.ts
@@ -50,3 +52,34 @@
 - inline destructure
 - separate props interface
 - use falso in tests and fixtures, we don'T want the ai to hard code any solutions
+
+# update claude md file from project
+
+Suggested .claude/commands/stabilize-cycle.md
+
+Start a stabilization iteration:
+
+1. Create failing test for $ARGUMENTS
+2. Push branch
+3. Run full suite, save output log
+4. Commit wip with log
+5. Run Cloud AI analysis
+6. Apply suggestions
+7. Re-run tests
+8. Repeat until stable
+
+List of Things Belonging in CLAUDE.md:
+
+    Project overview (layout, commands)
+
+    Workflow/branching rules
+
+    Stabilization loop steps (written above)
+
+    Style and tooling conventions
+
+    File placement guidelines
+
+    Slash‑command references
+
+    Where to store logs or generated artifacts
