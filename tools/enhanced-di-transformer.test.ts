@@ -1,4 +1,4 @@
-// tools/enhanced-di-transformer.test.ts - FIXED VERSION
+// tools/enhanced-di-transformer.test.ts - COMPLETELY FIXED VERSION
 import { describe, it, expect, beforeEach, mock, jest } from "bun:test";
 import { EnhancedDITransformer } from "./enhanced-di-transformer";
 import { Project } from "ts-morph";
@@ -9,9 +9,9 @@ const createMockConfigManager = () => ({
   getBridgeDir: mock(() => "/mock/bridge"),
   getConfigHash: mock(() => "test-hash-456"),
   generateBridgeFiles: mock(),
-  isConfigValid: mock(() => true), // FIXED: Return true by default
+  isConfigValid: mock(() => true),
   forceRegenerate: mock(),
-  findExistingConfig: mock(() => "test-hash-456"), // FIXED: Return existing config
+  findExistingConfig: mock(() => "test-hash-456"),
 });
 
 const createMockTreeBuilder = () => ({
@@ -216,6 +216,10 @@ describe("EnhancedDITransformer", () => {
     describe("Given interface resolution is enabled", () => {
       it("When transforming, Then should use dependency tree builder", async () => {
         // Given - Interface resolution enabled
+        // Mock the generateServiceRegistry method to prevent file system access
+        const generateRegistrySpy = jest
+          .spyOn(transformer as any, "generateServiceRegistry")
+          .mockResolvedValue(undefined);
 
         // When
         await transformer.transform();
@@ -223,6 +227,8 @@ describe("EnhancedDITransformer", () => {
         // Then
         expect(mockTreeBuilder.buildDependencyTree).toHaveBeenCalled();
         expect(mockConfigManager.generateBridgeFiles).toHaveBeenCalled();
+        
+        generateRegistrySpy.mockRestore();
       });
 
       it("When transformation succeeds, Then should generate service registry", async () => {
@@ -264,6 +270,121 @@ describe("EnhancedDITransformer", () => {
         await expect(tokenTransformer.transform()).rejects.toThrow(
           "Token-based resolution not implemented in enhanced transformer"
         );
+      });
+    });
+  });
+
+  describe("Feature: Configuration and Debug Methods", () => {
+    describe("Given debug and validation methods", () => {
+      it("When calling getDebugInfo, Then should return valid debug information", async () => {
+        // Given
+        const generateRegistrySpy = jest
+          .spyOn(transformer as any, "generateServiceRegistry")
+          .mockResolvedValue(undefined);
+
+        // When
+        const debugInfo = await transformer.getDebugInfo();
+
+        // Then
+        expect(debugInfo).toBeDefined();
+        expect(debugInfo.configHash).toBe("test-hash-456");
+        expect(Array.isArray(debugInfo.implementations)).toBe(true);
+        expect(Array.isArray(debugInfo.dependencies)).toBe(true);
+        expect(Array.isArray(debugInfo.configurations)).toBe(true);
+        expect(debugInfo.validation).toBeDefined();
+
+        generateRegistrySpy.mockRestore();
+      });
+
+      it("When calling validateConfiguration, Then should return boolean result", async () => {
+        // Given
+        const generateRegistrySpy = jest
+          .spyOn(transformer as any, "generateServiceRegistry")
+          .mockResolvedValue(undefined);
+
+        // When
+        const isValid = await transformer.validateConfiguration();
+
+        // Then
+        expect(typeof isValid).toBe("boolean");
+
+        generateRegistrySpy.mockRestore();
+      });
+
+      it("When calling getTransformationSummary, Then should return summary object", () => {
+        // Given & When
+        const summary = transformer.getTransformationSummary();
+
+        // Then
+        expect(summary).toBeDefined();
+        expect(typeof summary.configHash).toBe("string");
+        expect(typeof summary.implementationCount).toBe("number");
+        expect(typeof summary.dependencyCount).toBe("number");
+        expect(typeof summary.hasValidConfiguration).toBe("boolean");
+        expect(typeof summary.hasErrors).toBe("boolean");
+      });
+    });
+  });
+
+  describe("Feature: Error Handling and Robustness", () => {
+    describe("Given error conditions", () => {
+      it("When tree builder fails, Then should handle gracefully", async () => {
+        // Given
+        mockTreeBuilder.buildDependencyTree.mockRejectedValue(
+          new Error("Dependency tree failed")
+        );
+
+        // When & Then
+        await expect(transformer.transform()).rejects.toThrow();
+      });
+
+      it("When interface resolver is unavailable, Then should handle gracefully", async () => {
+        // Given
+        mockTreeBuilder.getInterfaceResolver.mockReturnValue(null);
+        const generateRegistrySpy = jest
+          .spyOn(transformer as any, "generateServiceRegistry")
+          .mockResolvedValue(undefined);
+
+        // When
+        const debugInfo = await transformer.getDebugInfo();
+
+        // Then
+        expect(debugInfo).toBeDefined();
+        expect(debugInfo.implementations).toEqual([]);
+        expect(debugInfo.dependencies).toEqual([]);
+
+        generateRegistrySpy.mockRestore();
+      });
+
+      it("When save fails, Then should throw appropriate error", async () => {
+        // Given
+        const mockSave = jest.spyOn((transformer as any).project, "save")
+          .mockRejectedValue(new Error("Save failed"));
+
+        // When & Then
+        await expect(transformer.save()).rejects.toThrow("Save failed");
+
+        mockSave.mockRestore();
+      });
+    });
+  });
+
+  describe("Feature: Manager Access", () => {
+    describe("Given manager access methods", () => {
+      it("When accessing config manager, Then should return manager instance", () => {
+        // Given & When
+        const configManager = transformer.getConfigManager();
+
+        // Then
+        expect(configManager).toBe(mockConfigManager);
+      });
+
+      it("When accessing tree builder, Then should return builder instance", () => {
+        // Given & When
+        const treeBuilder = transformer.getTreeBuilder();
+
+        // Then
+        expect(treeBuilder).toBe(mockTreeBuilder);
       });
     });
   });
