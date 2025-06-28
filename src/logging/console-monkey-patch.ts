@@ -38,6 +38,8 @@ export class ConsoleMonkeyPatch {
   /**
    * Apply monkey patch to console methods
    */
+  // src/logging/console-monkey-patch.ts - Updated patch method
+
   patch(): void {
     if (this.isPatched) {
       console.warn("Console is already monkey-patched");
@@ -62,13 +64,21 @@ export class ConsoleMonkeyPatch {
     // Monkey patch console.log
     if (this.config.log) {
       console.log = (...args: any[]) => {
+        // If console-only, just use original console
+        if (this.config.log === "console") {
+          this.originalConsole!.log(...args);
+          return;
+        }
+
+        // Log to OpenTelemetry
         const message = this.formatMessage(args);
         logger.info(message, {
           source: "console.log",
           args: this.serializeArgs(args),
         });
 
-        if (this.config.log === "console" || this.config.log === "both") {
+        // Also log to console if 'both'
+        if (this.config.log === "both") {
           this.originalConsole!.log(...args);
         }
       };
@@ -77,13 +87,18 @@ export class ConsoleMonkeyPatch {
     // Monkey patch console.debug
     if (this.config.debug) {
       console.debug = (...args: any[]) => {
+        if (this.config.debug === "console") {
+          this.originalConsole!.debug(...args);
+          return;
+        }
+
         const message = this.formatMessage(args);
         logger.debug(message, {
           source: "console.debug",
           args: this.serializeArgs(args),
         });
 
-        if (this.config.debug === "console" || this.config.debug === "both") {
+        if (this.config.debug === "both") {
           this.originalConsole!.debug(...args);
         }
       };
@@ -92,13 +107,18 @@ export class ConsoleMonkeyPatch {
     // Monkey patch console.info
     if (this.config.info) {
       console.info = (...args: any[]) => {
+        if (this.config.info === "console") {
+          this.originalConsole!.info(...args);
+          return;
+        }
+
         const message = this.formatMessage(args);
         logger.info(message, {
           source: "console.info",
           args: this.serializeArgs(args),
         });
 
-        if (this.config.info === "console" || this.config.info === "both") {
+        if (this.config.info === "both") {
           this.originalConsole!.info(...args);
         }
       };
@@ -107,13 +127,18 @@ export class ConsoleMonkeyPatch {
     // Monkey patch console.warn
     if (this.config.warn) {
       console.warn = (...args: any[]) => {
+        if (this.config.warn === "console") {
+          this.originalConsole!.warn(...args);
+          return;
+        }
+
         const message = this.formatMessage(args);
         logger.warn(message, {
           source: "console.warn",
           args: this.serializeArgs(args),
         });
 
-        if (this.config.warn === "console" || this.config.warn === "both") {
+        if (this.config.warn === "both") {
           this.originalConsole!.warn(...args);
         }
       };
@@ -122,6 +147,11 @@ export class ConsoleMonkeyPatch {
     // Monkey patch console.error
     if (this.config.error) {
       console.error = (...args: any[]) => {
+        if (this.config.error === "console") {
+          this.originalConsole!.error(...args);
+          return;
+        }
+
         const message = this.formatMessage(args);
         const error = args.find((arg) => arg instanceof Error);
         logger.error(message, error, {
@@ -129,7 +159,7 @@ export class ConsoleMonkeyPatch {
           args: this.serializeArgs(args),
         });
 
-        if (this.config.error === "console" || this.config.error === "both") {
+        if (this.config.error === "both") {
           this.originalConsole!.error(...args);
         }
       };
@@ -138,6 +168,11 @@ export class ConsoleMonkeyPatch {
     // Monkey patch console.table
     if (this.config.table) {
       console.table = (...args: any[]) => {
+        if (this.config.table === "console") {
+          this.originalConsole!.table(...args);
+          return;
+        }
+
         const message = `Table: ${this.formatMessage(args)}`;
         logger.info(message, {
           source: "console.table",
@@ -145,7 +180,7 @@ export class ConsoleMonkeyPatch {
           args: this.serializeArgs(args),
         });
 
-        if (this.config.table === "console" || this.config.table === "both") {
+        if (this.config.table === "both") {
           this.originalConsole!.table(...args);
         }
       };
@@ -153,7 +188,7 @@ export class ConsoleMonkeyPatch {
 
     this.isPatched = true;
 
-    // Log the monkey patch activation
+    // Log the monkey patch activation (only to OpenTelemetry)
     logger.info("Console monkey patch activated", {
       config: this.config,
       loggerName: this.loggerName,

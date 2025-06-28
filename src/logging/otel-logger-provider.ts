@@ -34,21 +34,21 @@ export class OTelLoggerProvider {
 
   constructor(config: LoggerConfig = {}) {
     this.config = {
-      serviceName: 'tdi2-app',
-      serviceVersion: '1.0.0',
+      serviceName: "tdi2-app",
+      serviceVersion: "1.0.0",
       enableDiagnostics: false,
-      diagnosticLevel: 'ERROR',
+      diagnosticLevel: "ERROR",
       consoleMonkeyPatch: {
-        log: 'otel',
-        debug: 'otel',
-        info: 'otel',
-        warn: 'otel',
-        error: 'otel',
-        table: 'otel'
+        log: "otel",
+        debug: "otel",
+        info: "otel",
+        warn: "otel",
+        error: "otel",
+        table: "otel",
       },
       resource: {},
-      processors: [{ type: 'console' }],
-      ...config
+      processors: [{ type: "console" }],
+      ...config,
     };
 
     this.setupDiagnostics();
@@ -66,14 +66,22 @@ export class OTelLoggerProvider {
 
   private mapDiagLevel(level: string): DiagLogLevel {
     switch (level) {
-      case 'NONE': return DiagLogLevel.NONE;
-      case 'ERROR': return DiagLogLevel.ERROR;
-      case 'WARN': return DiagLogLevel.WARN;
-      case 'INFO': return DiagLogLevel.INFO;
-      case 'DEBUG': return DiagLogLevel.DEBUG;
-      case 'VERBOSE': return DiagLogLevel.VERBOSE;
-      case 'ALL': return DiagLogLevel.ALL;
-      default: return DiagLogLevel.ERROR;
+      case "NONE":
+        return DiagLogLevel.NONE;
+      case "ERROR":
+        return DiagLogLevel.ERROR;
+      case "WARN":
+        return DiagLogLevel.WARN;
+      case "INFO":
+        return DiagLogLevel.INFO;
+      case "DEBUG":
+        return DiagLogLevel.DEBUG;
+      case "VERBOSE":
+        return DiagLogLevel.VERBOSE;
+      case "ALL":
+        return DiagLogLevel.ALL;
+      default:
+        return DiagLogLevel.ERROR;
     }
   }
 
@@ -89,29 +97,31 @@ export class OTelLoggerProvider {
   }
 
   private setupLoggerProvider(): void {
-    this.loggerProvider = new LoggerProvider({ 
-      resource: this.resource 
+    this.loggerProvider = new LoggerProvider({
+      resource: this.resource,
     });
   }
 
   private setupProcessors(): void {
     for (const processorConfig of this.config.processors) {
       switch (processorConfig.type) {
-        case 'console':
+        case "console":
           this.loggerProvider.addLogRecordProcessor(
             new SimpleLogRecordProcessor(new ConsoleLogRecordExporter())
           );
           break;
         // Future: Add file and remote processors
         default:
-          console.warn(`Unsupported log processor type: ${processorConfig.type}`);
+          console.warn(
+            `Unsupported log processor type: ${processorConfig.type}`
+          );
       }
     }
   }
 
   public initialize(): void {
     if (this.isInitialized) {
-      console.warn('OTelLoggerProvider is already initialized');
+      console.warn("OTelLoggerProvider is already initialized");
       return;
     }
 
@@ -119,10 +129,10 @@ export class OTelLoggerProvider {
     logsAPI.logs.setGlobalLoggerProvider(this.loggerProvider);
 
     // Setup console monkey patch if any console method is configured
-    const hasMonkeyPatchConfig = Object.values(this.config.consoleMonkeyPatch || {}).some(mode => 
-      mode === 'console' || mode === 'both' || mode === 'otel'
-    );
-    
+    const hasMonkeyPatchConfig = Object.values(
+      this.config.consoleMonkeyPatch || {}
+    ).some((mode) => mode === "console" || mode === "both" || mode === "otel");
+
     if (hasMonkeyPatchConfig) {
       this.setupConsoleMonkeyPatch();
     }
@@ -130,18 +140,18 @@ export class OTelLoggerProvider {
     this.isInitialized = true;
 
     // Log initialization
-    const logger = this.getLogger('otel-logger-provider');
-    logger.info('OpenTelemetry Logger Provider initialized', {
+    const logger = this.getLogger("otel-logger-provider");
+    logger.info("OpenTelemetry Logger Provider initialized", {
       serviceName: this.config.serviceName,
       serviceVersion: this.config.serviceVersion,
       consoleMonkeyPatch: this.config.consoleMonkeyPatch,
-      processors: this.config.processors.map(p => p.type)
+      processors: this.config.processors.map((p) => p.type),
     });
   }
 
   private setupConsoleMonkeyPatch(): void {
     if (this.originalConsole) {
-      console.warn('Console is already monkey-patched');
+      console.warn("Console is already monkey-patched");
       return;
     }
 
@@ -152,19 +162,27 @@ export class OTelLoggerProvider {
       info: console.info.bind(console),
       warn: console.warn.bind(console),
       error: console.error.bind(console),
-      table: console.table.bind(console)
+      table: console.table.bind(console),
     };
 
-    const logger = this.getLogger('console-proxy');
+    const logger = this.getLogger("console-proxy");
     const config = this.config.consoleMonkeyPatch!;
 
     // Monkey patch console.log
     if (config.log) {
       console.log = (...args: any[]) => {
+        // If console-only, just use original console - no OpenTelemetry
+        if (config.log === "console") {
+          this.originalConsole!.log(...args);
+          return;
+        }
+
+        // Otherwise, log to OpenTelemetry
         const message = this.formatConsoleMessage(args);
-        logger.info(message, { source: 'console.log' });
-        
-        if (config.log === 'console' || config.log === 'both') {
+        logger.info(message, { source: "console.log" });
+
+        // Also log to console if 'both'
+        if (config.log === "both") {
           this.originalConsole!.log(...args);
         }
       };
@@ -173,10 +191,15 @@ export class OTelLoggerProvider {
     // Monkey patch console.debug
     if (config.debug) {
       console.debug = (...args: any[]) => {
+        if (config.debug === "console") {
+          this.originalConsole!.debug(...args);
+          return;
+        }
+
         const message = this.formatConsoleMessage(args);
-        logger.debug(message, { source: 'console.debug' });
-        
-        if (config.debug === 'console' || config.debug === 'both') {
+        logger.debug(message, { source: "console.debug" });
+
+        if (config.debug === "both") {
           this.originalConsole!.debug(...args);
         }
       };
@@ -185,10 +208,15 @@ export class OTelLoggerProvider {
     // Monkey patch console.info
     if (config.info) {
       console.info = (...args: any[]) => {
+        if (config.info === "console") {
+          this.originalConsole!.info(...args);
+          return;
+        }
+
         const message = this.formatConsoleMessage(args);
-        logger.info(message, { source: 'console.info' });
-        
-        if (config.info === 'console' || config.info === 'both') {
+        logger.info(message, { source: "console.info" });
+
+        if (config.info === "both") {
           this.originalConsole!.info(...args);
         }
       };
@@ -197,10 +225,15 @@ export class OTelLoggerProvider {
     // Monkey patch console.warn
     if (config.warn) {
       console.warn = (...args: any[]) => {
+        if (config.warn === "console") {
+          this.originalConsole!.warn(...args);
+          return;
+        }
+
         const message = this.formatConsoleMessage(args);
-        logger.warn(message, { source: 'console.warn' });
-        
-        if (config.warn === 'console' || config.warn === 'both') {
+        logger.warn(message, { source: "console.warn" });
+
+        if (config.warn === "both") {
           this.originalConsole!.warn(...args);
         }
       };
@@ -209,11 +242,16 @@ export class OTelLoggerProvider {
     // Monkey patch console.error
     if (config.error) {
       console.error = (...args: any[]) => {
+        if (config.error === "console") {
+          this.originalConsole!.error(...args);
+          return;
+        }
+
         const message = this.formatConsoleMessage(args);
-        const error = args.find(arg => arg instanceof Error);
-        logger.error(message, error, { source: 'console.error' });
-        
-        if (config.error === 'console' || config.error === 'both') {
+        const error = args.find((arg) => arg instanceof Error);
+        logger.error(message, error, { source: "console.error" });
+
+        if (config.error === "both") {
           this.originalConsole!.error(...args);
         }
       };
@@ -222,10 +260,15 @@ export class OTelLoggerProvider {
     // Monkey patch console.table
     if (config.table) {
       console.table = (...args: any[]) => {
+        if (config.table === "console") {
+          this.originalConsole!.table(...args);
+          return;
+        }
+
         const message = `Table: ${this.formatConsoleMessage(args)}`;
-        logger.info(message, { source: 'console.table', tableData: args[0] });
-        
-        if (config.table === 'console' || config.table === 'both') {
+        logger.info(message, { source: "console.table", tableData: args[0] });
+
+        if (config.table === "both") {
           this.originalConsole!.table(...args);
         }
       };
@@ -233,15 +276,17 @@ export class OTelLoggerProvider {
   }
 
   private formatConsoleMessage(args: any[]): string {
-    return args.map(arg => {
-      if (typeof arg === 'string') return arg;
-      if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
-      try {
-        return JSON.stringify(arg, null, 2);
-      } catch {
-        return String(arg);
-      }
-    }).join(' ');
+    return args
+      .map((arg) => {
+        if (typeof arg === "string") return arg;
+        if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
+        try {
+          return JSON.stringify(arg, null, 2);
+        } catch {
+          return String(arg);
+        }
+      })
+      .join(" ");
   }
 
   private shouldLogToConsole(messageLevel: LogLevel): boolean {
@@ -251,7 +296,7 @@ export class OTelLoggerProvider {
       INFO: 2,
       WARN: 3,
       ERROR: 4,
-      FATAL: 5
+      FATAL: 5,
     };
 
     const configLevel = levelPriority[this.config.consoleLogLevel];
@@ -260,9 +305,9 @@ export class OTelLoggerProvider {
     return msgLevel >= configLevel;
   }
 
-  public getLogger(name: string = 'default', context?: LogContext): TDILogger {
+  public getLogger(name: string = "default", context?: LogContext): TDILogger {
     const cacheKey = `${name}:${JSON.stringify(context || {})}`;
-    
+
     if (this.loggers.has(cacheKey)) {
       return this.loggers.get(cacheKey)!;
     }
@@ -282,7 +327,7 @@ export class OTelLoggerProvider {
 
   public restoreConsole(): void {
     if (!this.originalConsole) {
-      console.warn('Console was not monkey-patched');
+      console.warn("Console was not monkey-patched");
       return;
     }
 
@@ -295,15 +340,15 @@ export class OTelLoggerProvider {
 
     this.originalConsole = null;
 
-    const logger = this.getLogger('otel-logger-provider');
-    logger.info('Console methods restored to original implementations');
+    const logger = this.getLogger("otel-logger-provider");
+    logger.info("Console methods restored to original implementations");
   }
 
   public updateConfig(newConfig: Partial<LoggerConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    
-    const logger = this.getLogger('otel-logger-provider');
-    logger.info('Logger configuration updated', { newConfig });
+
+    const logger = this.getLogger("otel-logger-provider");
+    logger.info("Logger configuration updated", { newConfig });
   }
 
   public async shutdown(): Promise<void> {
@@ -318,10 +363,10 @@ export class OTelLoggerProvider {
 
       // Shutdown logger provider
       await this.loggerProvider.shutdown();
-      
+
       this.isInitialized = false;
     } catch (error) {
-      console.error('Error during logger provider shutdown:', error);
+      console.error("Error during logger provider shutdown:", error);
     }
   }
 
@@ -329,7 +374,7 @@ export class OTelLoggerProvider {
     try {
       await this.loggerProvider.forceFlush();
     } catch (error) {
-      console.error('Error during force flush:', error);
+      console.error("Error during force flush:", error);
     }
   }
 
