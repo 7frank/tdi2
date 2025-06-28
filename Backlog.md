@@ -52,6 +52,7 @@
 - inline destructure
 - separate props interface
 - use falso in tests and fixtures, we don'T want the ai to hard code any solutions
+- article on dev.to with todoapp and core features
 
 # update claude md file from project
 
