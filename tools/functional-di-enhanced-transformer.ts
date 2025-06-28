@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer.ts - COMPLETELY FIXED VERSION
+// tools/functional-di-enhanced-transformer.ts - COMPLETELY FIXED VERSION with proper method access
 
 import { 
   Project, 
@@ -110,12 +110,29 @@ export class FunctionalDIEnhancedTransformer {
       console.log(`✅ Transformed ${this.transformationCount} functions in ${this.transformedFiles.size} files`);
       console.log(`🏗️  Config directory: ${this.configManager.getConfigDir()}`);
       
-      // Show resolved interfaces
-      const implementations = this.interfaceResolver.getInterfaceImplementations();
-      if (implementations.size > 0) {
-        console.log('\n📋 Available Interface Implementations:');
-        for (const [key, impl] of implementations) {
-          console.log(`  ${impl.interfaceName} -> ${impl.implementationClass}`);
+      // FIXED: Safe method access for interface information
+      try {
+        if (this.interfaceResolver && typeof this.interfaceResolver.getInterfaceImplementations === 'function') {
+          const implementations = this.interfaceResolver.getInterfaceImplementations();
+          if (implementations instanceof Map && implementations.size > 0) {
+            console.log('\n📋 Available Interface Implementations:');
+            let count = 0;
+            for (const [key, impl] of implementations) {
+              if (count < 10) { // Limit output
+                console.log(`  ${impl.interfaceName} -> ${impl.implementationClass}`);
+                count++;
+              }
+            }
+            if (implementations.size > 10) {
+              console.log(`  ... and ${implementations.size - 10} more`);
+            }
+          }
+        } else if (this.options.verbose) {
+          console.warn('⚠️  getInterfaceImplementations method not available');
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn('⚠️  Error accessing interface implementations:', error);
         }
       }
     }
@@ -607,7 +624,20 @@ export class FunctionalDIEnhancedTransformer {
     const resolved: FunctionalDependency[] = [];
 
     for (const dependency of dependencies) {
-      const implementation = this.interfaceResolver.resolveImplementation(dependency.interfaceType);
+      // FIXED: Safe method access for resolveImplementation
+      let implementation: InterfaceImplementation | undefined;
+      
+      try {
+        if (this.interfaceResolver && typeof this.interfaceResolver.resolveImplementation === 'function') {
+          implementation = this.interfaceResolver.resolveImplementation(dependency.interfaceType);
+        } else if (this.options.verbose) {
+          console.warn(`⚠️  resolveImplementation method not available on interface resolver`);
+        }
+      } catch (error) {
+        if (this.options.verbose) {
+          console.warn(`⚠️  Error resolving implementation for ${dependency.interfaceType}:`, error);
+        }
+      }
       
       if (implementation) {
         dependency.resolvedImplementation = implementation;
@@ -702,21 +732,21 @@ export class FunctionalDIEnhancedTransformer {
         // CRITICAL: Use the resolved implementation's sanitized key as the token
         const token = dep.resolvedImplementation.sanitizedKey;
         const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
-        diStatements.push(`        const ${dep.serviceKey} = ${hookName}('${token}');`);
+        diStatements.push(`            const ${dep.serviceKey} = ${hookName}('${token}');`);
         serviceKeys.push(dep.serviceKey);
       } else if (dep.isOptional) {
         // Optional dependency that couldn't be resolved
-        diStatements.push(`        const ${dep.serviceKey} = undefined; // Optional dependency not found`);
+        diStatements.push(`            const ${dep.serviceKey} = undefined; // Optional dependency not found`);
         serviceKeys.push(dep.serviceKey);
       } else {
         // Required dependency that couldn't be resolved - will throw at runtime
-        diStatements.push(`        const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
+        diStatements.push(`            const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
         serviceKeys.push(dep.serviceKey);
       }
     }
 
     // Generate services object with individual service keys
-    diStatements.push(`        const services = { ${serviceKeys.join(', ')} };`);
+    diStatements.push(`            const services = { ${serviceKeys.join(', ')} };`);
 
     // Insert at the beginning of the function body
     for (let i = diStatements.length - 1; i >= 0; i--) {
@@ -740,19 +770,19 @@ export class FunctionalDIEnhancedTransformer {
       if (dep.resolvedImplementation) {
         const token = dep.resolvedImplementation.sanitizedKey;
         const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
-        diStatements.push(`        const ${dep.serviceKey} = ${hookName}('${token}');`);
+        diStatements.push(`            const ${dep.serviceKey} = ${hookName}('${token}');`);
         serviceKeys.push(dep.serviceKey);
       } else if (dep.isOptional) {
-        diStatements.push(`        const ${dep.serviceKey} = undefined; // Optional dependency not found`);
+        diStatements.push(`            const ${dep.serviceKey} = undefined; // Optional dependency not found`);
         serviceKeys.push(dep.serviceKey);
       } else {
-        diStatements.push(`        const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
+        diStatements.push(`            const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
         serviceKeys.push(dep.serviceKey);
       }
     }
 
     // Generate services object with individual service keys
-    diStatements.push(`        const services = { ${serviceKeys.join(', ')} };`);
+    diStatements.push(`            const services = { ${serviceKeys.join(', ')} };`);
 
     // Insert at the beginning of the function body
     for (let i = diStatements.length - 1; i >= 0; i--) {
@@ -875,19 +905,34 @@ ${transformedContent}`;
     }
   }
 
+  // FIXED: Enhanced summary with safe method access
   getTransformationSummary(): { 
     count: number; 
     functions: string[]; 
     transformedFiles: string[];
     resolvedDependencies: number;
   } {
-    const implementations = this.interfaceResolver.getInterfaceImplementations();
+    let resolvedDependencies = 0;
+    
+    // FIXED: Safe method access for getting implementations count
+    try {
+      if (this.interfaceResolver && typeof this.interfaceResolver.getInterfaceImplementations === 'function') {
+        const implementations = this.interfaceResolver.getInterfaceImplementations();
+        if (implementations instanceof Map) {
+          resolvedDependencies = implementations.size;
+        }
+      }
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn('⚠️  Error getting resolved dependencies count:', error);
+      }
+    }
     
     return {
       count: this.transformationCount,
       functions: [],
       transformedFiles: Array.from(this.transformedFiles.keys()),
-      resolvedDependencies: implementations.size
+      resolvedDependencies
     };
   }
 
