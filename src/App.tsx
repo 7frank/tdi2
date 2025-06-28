@@ -1,18 +1,57 @@
 // src/App.tsx - Enhanced with DI Example Cards
 
 import "./App.css";
-import { DIExampleCard } from "./components/DIExampleCard";
-import { DICardBody } from "./components/DICardBody";
+
 import { SimpleTest } from "./components/SimpleTestComponent";
 import {
   DataList,
   UserProfile,
 } from "./components/EnhancedFunctionalComponent";
-import { ExampleUseAsyncChain } from "./experimental-utils/async/ExampleUseAsyncChain";
-import { ExampleObservableFC } from "./experimental-utils/observable/ExampleObservableFC";
-
-/** DI marker to prevent TypeScript errors */
-const SERVICES = {} as any;
+function Foo() {
+  return (
+    <div
+      style={{
+        padding: "10px",
+        backgroundColor: "#f0f0f0",
+        margin: "10px",
+      }}
+    >
+      <h4>🔮 POC: Marker Interface Components</h4>
+      <p>
+        <em>These would be auto-transformed by the enhanced transformer:</em>
+      </p>
+      <code
+        style={{
+          display: "block",
+          padding: "10px",
+          backgroundColor: "#fff",
+          fontSize: "12px",
+        }}
+      >
+        {`function UserCard(props: { 
+  userId: string; 
+  services: { api: Inject<ExampleApiInterface> } 
+}) { ... }`}
+      </code>
+      <p>
+        <em>↓ Transformed to ↓</em>
+      </p>
+      <code
+        style={{
+          display: "block",
+          padding: "10px",
+          backgroundColor: "#fff",
+          fontSize: "12px",
+        }}
+      >
+        {`function UserCard({ userId }: { userId: string }) {
+  const api = useService('ExampleApiService');
+  // Original component logic with injected services
+}`}
+      </code>
+    </div>
+  );
+}
 
 function App() {
   return (

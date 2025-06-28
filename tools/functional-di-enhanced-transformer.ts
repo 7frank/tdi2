@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer.ts - FIXED: Correct import path resolution
+// tools/functional-di-enhanced-transformer.ts - Interface-based functional DI
 
 import { 
   Project, 
@@ -312,6 +312,10 @@ export class FunctionalDIEnhancedTransformer {
     }
 
     return resolved;
+  }
+
+  private sanitizeKey(type: string): string {
+    return type.replace(/[^\w\s]/gi, '_');
   }
 
   private sanitizeKey(type: string): string {
