@@ -7,6 +7,7 @@ import {
   VariableDeclaration,
   ArrowFunction,
   ParameterDeclaration,
+  Node,
 } from 'ts-morph';
 import * as path from 'path';
 import { ConfigManager } from '../config-manager';
@@ -165,8 +166,8 @@ export class FunctionalDIEnhancedTransformer {
     for (const varStatement of sourceFile.getVariableStatements()) {
       for (const declaration of varStatement.getDeclarations()) {
         const initializer = declaration.getInitializer();
-        if (initializer && (initializer.getKind() === 220)) { // ArrowFunction
-          if (this.transformArrowFunction(declaration, initializer as ArrowFunction, sourceFile)) {
+        if (initializer && Node.isArrowFunction(initializer)) {
+          if (this.transformArrowFunction(declaration, initializer, sourceFile)) {
             hasTransformations = true;
             this.transformationCount++;
             
