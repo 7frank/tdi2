@@ -1,4 +1,4 @@
-// src/main.tsx - Enhanced with debugging
+// src/main.tsx - Minimal changes to add logging
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -7,6 +7,19 @@ import App from './App.tsx';
 import { DIProvider, CompileTimeDIContainer } from './di/index.ts';
 // Import from bridge file instead of generated directory
 import { DI_CONFIG } from './.tdi2/di-config';
+
+// ADDED: Import and initialize logging with fine-grained console control
+import { initLogging } from './logging';
+initLogging({
+  consoleMonkeyPatch: {
+    log: 'console',    // console.log() goes only to OpenTelemetry
+    debug: 'console',  // console.debug() goes only to OpenTelemetry  
+    info: 'console',   // console.info() goes only to OpenTelemetry
+    warn: 'console',   // console.warn() goes to both OpenTelemetry and browser console
+    error: 'console',  // console.error() goes to both OpenTelemetry and browser console
+    table: 'console'   // console.table() goes only to OpenTelemetry
+  }
+});
 
 // Create and configure the DI container
 const container = new CompileTimeDIContainer();
