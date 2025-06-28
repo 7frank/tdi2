@@ -1,7 +1,7 @@
 // tools/functional-di-enhanced-transformer/comprehensive-functional-di-test.ts - FIXED VERSION
 
 import { describe, it, expect, beforeEach } from "bun:test";
-import { FunctionalDIEnhancedTransformer } from "../functional-di-enhanced-transformer";
+import { FunctionalDIEnhancedTransformer } from "./functional-di-enhanced-transformer";
 import { Project } from "ts-morph";
 import {
   TEST_PATTERNS,

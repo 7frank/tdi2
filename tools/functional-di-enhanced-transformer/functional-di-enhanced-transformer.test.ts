@@ -1,6 +1,6 @@
 // tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.test.ts - FIXED VERSION
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import { FunctionalDIEnhancedTransformer } from "../functional-di-enhanced-transformer";
+import { FunctionalDIEnhancedTransformer } from "./functional-di-enhanced-transformer";
 import { Project } from "ts-morph";
 
 // Mock fixtures - we'll create these as string content since we can't import actual files in test
