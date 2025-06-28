@@ -88,10 +88,8 @@ const ENV_CONFIGS: Record<string, LoggerConfig> = {
 
 export interface InitOptions {
   environment?: 'development' | 'production' | 'test' | 'auto';
-  consoleLogLevel?: LogLevel; // Deprecated: use consoleMonkeyPatch instead
   serviceName?: string;
   serviceVersion?: string;
-  enableConsoleMonkeyPatch?: boolean; // Deprecated: use consoleMonkeyPatch instead
   consoleMonkeyPatch?: ConsoleMonkeyPatchConfig;
   enableDiagnostics?: boolean;
   customConfig?: Partial<LoggerConfig>;
@@ -122,36 +120,6 @@ export function initLogging(options: InitOptions = {}): TDILoggerService {
       enableDiagnostics: options.enableDiagnostics 
     })
   };
-
-  // Handle backward compatibility for deprecated options
-  if (options.consoleLogLevel !== undefined) {
-    console.warn('consoleLogLevel is deprecated. Use consoleMonkeyPatch config instead.');
-    if (!finalConfig.consoleMonkeyPatch) {
-      const shouldShowInConsole = ['WARN', 'ERROR', 'FATAL'].includes(options.consoleLogLevel);
-      finalConfig.consoleMonkeyPatch = {
-        log: 'otel',
-        debug: 'otel',
-        info: 'otel',
-        warn: shouldShowInConsole ? 'both' : 'otel',
-        error: shouldShowInConsole ? 'both' : 'otel',
-        table: 'otel'
-      };
-    }
-  }
-
-  if (options.enableConsoleMonkeyPatch !== undefined) {
-    console.warn('enableConsoleMonkeyPatch is deprecated. Use consoleMonkeyPatch config instead.');
-    if (options.enableConsoleMonkeyPatch && !finalConfig.consoleMonkeyPatch) {
-      finalConfig.consoleMonkeyPatch = {
-        log: 'otel',
-        debug: 'otel',
-        info: 'otel',
-        warn: 'both',
-        error: 'both',
-        table: 'otel'
-      };
-    }
-  }
 
   if (options.consoleMonkeyPatch) {
     finalConfig.consoleMonkeyPatch = {
@@ -229,46 +197,11 @@ export const logging = {
   },
 
   /**
-   * Initialize with custom console log level only (deprecated - use withConsoleMonkeyPatch)
-   */
-  withConsoleLevel: (level: LogLevel) => {
-    console.warn('withConsoleLevel is deprecated. Use withConsoleMonkeyPatch instead.');
-    const showInConsole = ['WARN', 'ERROR', 'FATAL'].includes(level);
-    return initLogging({
-      consoleMonkeyPatch: {
-        log: 'otel',
-        debug: 'otel',
-        info: 'otel',
-        warn: showInConsole ? 'both' : 'otel',
-        error: showInConsole ? 'both' : 'otel',
-        table: 'otel'
-      }
-    });
-  },
-
-  /**
    * Initialize with fine-grained console monkey patch control
    */
   withConsoleMonkeyPatch: (config: ConsoleMonkeyPatchConfig) => {
     return initLogging({
       consoleMonkeyPatch: config
-    });
-  },
-
-  /**
-   * Initialize with monkey-patching enabled/disabled (deprecated)
-   */
-  withMonkeyPatch: (enabled: boolean = true) => {
-    console.warn('withMonkeyPatch is deprecated. Use withConsoleMonkeyPatch instead.');
-    return initLogging({
-      consoleMonkeyPatch: enabled ? {
-        log: 'otel',
-        debug: 'otel',
-        info: 'otel',
-        warn: 'both',
-        error: 'both',
-        table: 'otel'
-      } : undefined
     });
   },
 

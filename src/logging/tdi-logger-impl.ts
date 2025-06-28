@@ -8,20 +8,17 @@ export class TDILoggerImpl implements TDILogger {
   private readonly otelLogger: Logger;
   private readonly name: string;
   private readonly context: LogContext;
-  private readonly consoleLogLevel: LogLevel;
   private readonly originalConsole: ConsolePatch | null;
 
   constructor(
     otelLogger: Logger,
     name: string,
     context: LogContext = {},
-    consoleLogLevel: LogLevel = 'WARN' as LogLevel,
     originalConsole: ConsolePatch | null = null
   ) {
     this.otelLogger = otelLogger;
     this.name = name;
     this.context = { ...context };
-    this.consoleLogLevel = consoleLogLevel;
     this.originalConsole = originalConsole;
   }
 
@@ -123,8 +120,8 @@ export class TDILoggerImpl implements TDILogger {
       attributes
     });
 
-    // Also log to original console if level allows and console is patched
-    if (this.shouldLogToConsole(entry.severityText) && this.originalConsole) {
+    // Also log to original console if available (for backwards compatibility)
+    if (this.originalConsole) {
       this.logToOriginalConsole(entry);
     }
   }
@@ -135,7 +132,6 @@ export class TDILoggerImpl implements TDILogger {
       this.otelLogger,
       this.name,
       mergedContext,
-      this.consoleLogLevel,
       this.originalConsole
     );
   }
@@ -209,22 +205,6 @@ export class TDILoggerImpl implements TDILogger {
     }
   }
 
-  private shouldLogToConsole(messageLevel: LogLevel): boolean {
-    const levelPriority = {
-      TRACE: 0,
-      DEBUG: 1,
-      INFO: 2,
-      WARN: 3,
-      ERROR: 4,
-      FATAL: 5
-    };
-
-    const configLevel = levelPriority[this.consoleLogLevel];
-    const msgLevel = levelPriority[messageLevel];
-
-    return msgLevel >= configLevel;
-  }
-
   private logToOriginalConsole(entry: LogEntry): void {
     if (!this.originalConsole) return;
 
@@ -252,7 +232,6 @@ export class TDILoggerImpl implements TDILogger {
     }
   }
 
-  // Utility methods for structured logging
   public logWithTiming<T>(
     operation: string,
     fn: () => T | Promise<T>,

@@ -12,12 +12,12 @@ import { DI_CONFIG } from './.tdi2/di-config';
 import { initLogging } from './logging';
 initLogging({
   consoleMonkeyPatch: {
-    log: 'otel',    // console.log() goes only to OpenTelemetry
-    debug: 'otel',  // console.debug() goes only to OpenTelemetry  
-    info: 'otel',   // console.info() goes only to OpenTelemetry
-    warn: 'both',   // console.warn() goes to both OpenTelemetry and browser console
-    error: 'both',  // console.error() goes to both OpenTelemetry and browser console
-    table: 'otel'   // console.table() goes only to OpenTelemetry
+    log: 'console',    // console.log() goes only to OpenTelemetry
+    debug: 'console',  // console.debug() goes only to OpenTelemetry  
+    info: 'console',   // console.info() goes only to OpenTelemetry
+    warn: 'console',   // console.warn() goes to both OpenTelemetry and browser console
+    error: 'console',  // console.error() goes to both OpenTelemetry and browser console
+    table: 'console'   // console.table() goes only to OpenTelemetry
   }
 });
 

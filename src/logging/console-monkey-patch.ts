@@ -1,25 +1,36 @@
-// src/logging/console-monkey-patch.ts - Standalone Console Monkey Patch Utility
+// src/logging/console-monkey-patch.ts - Recreated Console Monkey Patch Utility
 
-import type { LogLevel, ConsolePatch, LogContext } from './types';
-import { getLogger } from './init';
+import type {
+  ConsoleOutputMode,
+  ConsolePatch,
+  LogContext,
+  ConsoleMonkeyPatchConfig,
+} from "./types";
+import { getLogger } from "./init";
 
 /**
- * Standalone console monkey-patch utility that can be used independently
- * or integrated with the full TDI2 logging system
+ * Console monkey-patch utility with fine-grained control over output routing
  */
 export class ConsoleMonkeyPatch {
   private originalConsole: ConsolePatch | null = null;
   private isPatched = false;
-  private logLevel: LogLevel;
+  private config: ConsoleMonkeyPatchConfig;
   private loggerName: string;
   private globalContext: LogContext;
 
   constructor(
-    logLevel: LogLevel = 'WARN' as LogLevel,
-    loggerName: string = 'console-proxy',
+    config: ConsoleMonkeyPatchConfig = {
+      log: "otel",
+      debug: "otel",
+      info: "otel",
+      warn: "otel",
+      error: "otel",
+      table: "otel",
+    },
+    loggerName: string = "console-proxy",
     globalContext: LogContext = {}
   ) {
-    this.logLevel = logLevel;
+    this.config = config;
     this.loggerName = loggerName;
     this.globalContext = globalContext;
   }
@@ -29,7 +40,7 @@ export class ConsoleMonkeyPatch {
    */
   patch(): void {
     if (this.isPatched) {
-      console.warn('Console is already monkey-patched');
+      console.warn("Console is already monkey-patched");
       return;
     }
 
@@ -39,66 +50,114 @@ export class ConsoleMonkeyPatch {
       debug: console.debug.bind(console),
       info: console.info.bind(console),
       warn: console.warn.bind(console),
-      error: console.error.bind(console)
+      error: console.error.bind(console),
+      table: console.table.bind(console),
     };
 
-    const logger = getLogger().createChildLogger(this.loggerName, this.globalContext);
+    const logger = getLogger().createChildLogger(
+      this.loggerName,
+      this.globalContext
+    );
 
-    // Monkey patch console methods
-    console.log = (...args: any[]) => {
-      const message = this.formatMessage(args);
-      logger.info(message, { source: 'console.log', args: this.serializeArgs(args) });
-      
-      // Also log to original console if level allows
-      if (this.shouldLogToConsole('INFO')) {
-        this.originalConsole!.log(...args);
-      }
-    };
+    // Monkey patch console.log
+    if (this.config.log) {
+      console.log = (...args: any[]) => {
+        const message = this.formatMessage(args);
+        logger.info(message, {
+          source: "console.log",
+          args: this.serializeArgs(args),
+        });
 
-    console.debug = (...args: any[]) => {
-      const message = this.formatMessage(args);
-      logger.debug(message, { source: 'console.debug', args: this.serializeArgs(args) });
-      
-      if (this.shouldLogToConsole('DEBUG')) {
-        this.originalConsole!.debug(...args);
-      }
-    };
+        if (this.config.log === "console" || this.config.log === "both") {
+          this.originalConsole!.log(...args);
+        }
+      };
+    }
 
-    console.info = (...args: any[]) => {
-      const message = this.formatMessage(args);
-      logger.info(message, { source: 'console.info', args: this.serializeArgs(args) });
-      
-      if (this.shouldLogToConsole('INFO')) {
-        this.originalConsole!.info(...args);
-      }
-    };
+    // Monkey patch console.debug
+    if (this.config.debug) {
+      console.debug = (...args: any[]) => {
+        const message = this.formatMessage(args);
+        logger.debug(message, {
+          source: "console.debug",
+          args: this.serializeArgs(args),
+        });
 
-    console.warn = (...args: any[]) => {
-      const message = this.formatMessage(args);
-      logger.warn(message, { source: 'console.warn', args: this.serializeArgs(args) });
-      
-      if (this.shouldLogToConsole('WARN')) {
-        this.originalConsole!.warn(...args);
-      }
-    };
+        if (this.config.debug === "console" || this.config.debug === "both") {
+          this.originalConsole!.debug(...args);
+        }
+      };
+    }
 
-    console.error = (...args: any[]) => {
-      const message = this.formatMessage(args);
-      const error = args.find(arg => arg instanceof Error);
-      logger.error(message, error, { source: 'console.error', args: this.serializeArgs(args) });
-      
-      if (this.shouldLogToConsole('ERROR')) {
-        this.originalConsole!.error(...args);
-      }
-    };
+    // Monkey patch console.info
+    if (this.config.info) {
+      console.info = (...args: any[]) => {
+        const message = this.formatMessage(args);
+        logger.info(message, {
+          source: "console.info",
+          args: this.serializeArgs(args),
+        });
+
+        if (this.config.info === "console" || this.config.info === "both") {
+          this.originalConsole!.info(...args);
+        }
+      };
+    }
+
+    // Monkey patch console.warn
+    if (this.config.warn) {
+      console.warn = (...args: any[]) => {
+        const message = this.formatMessage(args);
+        logger.warn(message, {
+          source: "console.warn",
+          args: this.serializeArgs(args),
+        });
+
+        if (this.config.warn === "console" || this.config.warn === "both") {
+          this.originalConsole!.warn(...args);
+        }
+      };
+    }
+
+    // Monkey patch console.error
+    if (this.config.error) {
+      console.error = (...args: any[]) => {
+        const message = this.formatMessage(args);
+        const error = args.find((arg) => arg instanceof Error);
+        logger.error(message, error, {
+          source: "console.error",
+          args: this.serializeArgs(args),
+        });
+
+        if (this.config.error === "console" || this.config.error === "both") {
+          this.originalConsole!.error(...args);
+        }
+      };
+    }
+
+    // Monkey patch console.table
+    if (this.config.table) {
+      console.table = (...args: any[]) => {
+        const message = `Table: ${this.formatMessage(args)}`;
+        logger.info(message, {
+          source: "console.table",
+          tableData: args[0],
+          args: this.serializeArgs(args),
+        });
+
+        if (this.config.table === "console" || this.config.table === "both") {
+          this.originalConsole!.table(...args);
+        }
+      };
+    }
 
     this.isPatched = true;
 
     // Log the monkey patch activation
-    logger.info('Console monkey patch activated', {
-      logLevel: this.logLevel,
+    logger.info("Console monkey patch activated", {
+      config: this.config,
       loggerName: this.loggerName,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -107,7 +166,7 @@ export class ConsoleMonkeyPatch {
    */
   unpatch(): void {
     if (!this.isPatched || !this.originalConsole) {
-      console.warn('Console is not monkey-patched');
+      console.warn("Console is not monkey-patched");
       return;
     }
 
@@ -117,26 +176,37 @@ export class ConsoleMonkeyPatch {
     console.info = this.originalConsole.info;
     console.warn = this.originalConsole.warn;
     console.error = this.originalConsole.error;
+    console.table = this.originalConsole.table;
 
     // Log restoration using original console
-    this.originalConsole.info('Console monkey patch removed, original methods restored');
+    this.originalConsole.info(
+      "Console monkey patch removed, original methods restored"
+    );
 
     this.originalConsole = null;
     this.isPatched = false;
   }
 
   /**
-   * Update the log level for console output
+   * Update the monkey patch configuration
    */
-  setLogLevel(level: LogLevel): void {
-    this.logLevel = level;
-    
+  updateConfig(config: Partial<ConsoleMonkeyPatchConfig>): void {
+    this.config = { ...this.config, ...config };
+
     if (this.isPatched) {
-      const logger = getLogger().createChildLogger(this.loggerName, this.globalContext);
-      logger.info('Console monkey patch log level updated', { 
-        newLogLevel: level,
-        timestamp: new Date().toISOString()
+      const logger = getLogger().createChildLogger(
+        this.loggerName,
+        this.globalContext
+      );
+      logger.info("Console monkey patch configuration updated", {
+        newConfig: config,
+        fullConfig: this.config,
+        timestamp: new Date().toISOString(),
       });
+
+      // Re-patch with new configuration
+      this.unpatch();
+      this.patch();
     }
   }
 
@@ -145,12 +215,15 @@ export class ConsoleMonkeyPatch {
    */
   setGlobalContext(context: LogContext): void {
     this.globalContext = { ...this.globalContext, ...context };
-    
+
     if (this.isPatched) {
-      const logger = getLogger().createChildLogger(this.loggerName, this.globalContext);
-      logger.debug('Console monkey patch context updated', { 
+      const logger = getLogger().createChildLogger(
+        this.loggerName,
+        this.globalContext
+      );
+      logger.debug("Console monkey patch context updated", {
         newContext: context,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }
@@ -166,16 +239,16 @@ export class ConsoleMonkeyPatch {
    * Get current configuration
    */
   getConfig(): {
-    logLevel: LogLevel;
+    config: ConsoleMonkeyPatchConfig;
     loggerName: string;
     globalContext: LogContext;
     isPatched: boolean;
   } {
     return {
-      logLevel: this.logLevel,
+      config: { ...this.config },
       loggerName: this.loggerName,
       globalContext: { ...this.globalContext },
-      isPatched: this.isPatched
+      isPatched: this.isPatched,
     };
   }
 
@@ -192,7 +265,8 @@ export class ConsoleMonkeyPatch {
       debug: console.debug,
       info: console.info,
       warn: console.warn,
-      error: console.error
+      error: console.error,
+      table: console.table,
     };
 
     try {
@@ -202,6 +276,7 @@ export class ConsoleMonkeyPatch {
       console.info = this.originalConsole.info;
       console.warn = this.originalConsole.warn;
       console.error = this.originalConsole.error;
+      console.table = this.originalConsole.table;
 
       return fn();
     } finally {
@@ -211,6 +286,7 @@ export class ConsoleMonkeyPatch {
       console.info = currentConsole.info;
       console.warn = currentConsole.warn;
       console.error = currentConsole.error;
+      console.table = currentConsole.table;
     }
   }
 
@@ -228,23 +304,69 @@ export class ConsoleMonkeyPatch {
     }
   }
 
+  /**
+   * Get original console methods (for manual usage)
+   */
+  getOriginalConsole(): ConsolePatch | null {
+    return this.originalConsole;
+  }
+
+  /**
+   * Check what methods are currently patched
+   */
+  getPatchedMethods(): string[] {
+    const patched: string[] = [];
+    if (this.config.log) patched.push("log");
+    if (this.config.debug) patched.push("debug");
+    if (this.config.info) patched.push("info");
+    if (this.config.warn) patched.push("warn");
+    if (this.config.error) patched.push("error");
+    if (this.config.table) patched.push("table");
+    return patched;
+  }
+
+  /**
+   * Get routing configuration for a specific method
+   */
+  getMethodRouting(
+    method: keyof ConsoleMonkeyPatchConfig
+  ): ConsoleOutputMode | undefined {
+    return this.config[method];
+  }
+
+  /**
+   * Set routing for a specific console method
+   */
+  setMethodRouting(
+    method: keyof ConsoleMonkeyPatchConfig,
+    mode: ConsoleOutputMode
+  ): void {
+    this.updateConfig({ [method]: mode });
+  }
+
   private formatMessage(args: any[]): string {
-    return args.map(arg => {
-      if (typeof arg === 'string') return arg;
-      if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
-      if (arg === null) return 'null';
-      if (arg === undefined) return 'undefined';
-      try {
-        return JSON.stringify(arg, null, 2);
-      } catch {
-        return String(arg);
-      }
-    }).join(' ');
+    return args
+      .map((arg) => {
+        if (typeof arg === "string") return arg;
+        if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
+        if (arg === null) return "null";
+        if (arg === undefined) return "undefined";
+        try {
+          return JSON.stringify(arg, null, 2);
+        } catch {
+          return String(arg);
+        }
+      })
+      .join(" ");
   }
 
   private serializeArgs(args: any[]): any[] {
-    return args.map(arg => {
-      if (typeof arg === 'string' || typeof arg === 'number' || typeof arg === 'boolean') {
+    return args.map((arg) => {
+      if (
+        typeof arg === "string" ||
+        typeof arg === "number" ||
+        typeof arg === "boolean"
+      ) {
         return arg;
       }
       if (arg instanceof Error) {
@@ -252,7 +374,7 @@ export class ConsoleMonkeyPatch {
           name: arg.name,
           message: arg.message,
           stack: arg.stack,
-          cause: arg.cause
+          cause: arg.cause,
         };
       }
       if (arg === null || arg === undefined) {
@@ -261,25 +383,9 @@ export class ConsoleMonkeyPatch {
       try {
         return JSON.parse(JSON.stringify(arg));
       } catch {
-        return '[Non-serializable Object]';
+        return "[Non-serializable Object]";
       }
     });
-  }
-
-  private shouldLogToConsole(messageLevel: LogLevel): boolean {
-    const levelPriority = {
-      TRACE: 0,
-      DEBUG: 1,
-      INFO: 2,
-      WARN: 3,
-      ERROR: 4,
-      FATAL: 5
-    };
-
-    const configLevel = levelPriority[this.logLevel];
-    const msgLevel = levelPriority[messageLevel];
-
-    return msgLevel >= configLevel;
   }
 }
 
@@ -291,15 +397,21 @@ let globalMonkeyPatch: ConsoleMonkeyPatch | null = null;
  */
 export const consoleMonkeyPatch = {
   /**
-   * Initialize and apply console monkey patch with specified log level
+   * Initialize and apply console monkey patch with specified configuration
    */
-  init: (logLevel: LogLevel = 'WARN' as LogLevel, loggerName?: string, context?: LogContext) => {
+  init: (
+    config: ConsoleMonkeyPatchConfig,
+    loggerName?: string,
+    context?: LogContext
+  ) => {
     if (globalMonkeyPatch) {
-      console.warn('Console monkey patch already initialized');
+      console.warn(
+        "Console monkey patch already initialized. Use updateConfig() to modify."
+      );
       return globalMonkeyPatch;
     }
 
-    globalMonkeyPatch = new ConsoleMonkeyPatch(logLevel, loggerName, context);
+    globalMonkeyPatch = new ConsoleMonkeyPatch(config, loggerName, context);
     globalMonkeyPatch.patch();
     return globalMonkeyPatch;
   },
@@ -311,17 +423,19 @@ export const consoleMonkeyPatch = {
     if (globalMonkeyPatch) {
       globalMonkeyPatch.unpatch();
       globalMonkeyPatch = null;
+    } else {
+      console.warn("Console monkey patch not initialized");
     }
   },
 
   /**
-   * Update log level for existing monkey patch
+   * Update configuration for existing monkey patch
    */
-  setLogLevel: (level: LogLevel) => {
+  updateConfig: (config: Partial<ConsoleMonkeyPatchConfig>) => {
     if (globalMonkeyPatch) {
-      globalMonkeyPatch.setLogLevel(level);
+      globalMonkeyPatch.updateConfig(config);
     } else {
-      console.warn('Console monkey patch not initialized');
+      console.warn("Console monkey patch not initialized. Use init() first.");
     }
   },
 
@@ -332,7 +446,7 @@ export const consoleMonkeyPatch = {
     if (globalMonkeyPatch) {
       globalMonkeyPatch.setGlobalContext(context);
     } else {
-      console.warn('Console monkey patch not initialized');
+      console.warn("Console monkey patch not initialized");
     }
   },
 
@@ -368,21 +482,130 @@ export const consoleMonkeyPatch = {
       return globalMonkeyPatch.withContext(context, fn);
     }
     return fn();
-  }
+  },
+
+  /**
+   * Get list of currently patched methods
+   */
+  getPatchedMethods: (): string[] => {
+    return globalMonkeyPatch?.getPatchedMethods() ?? [];
+  },
+
+  /**
+   * Set routing for a specific console method
+   */
+  setMethodRouting: (
+    method: keyof ConsoleMonkeyPatchConfig,
+    mode: ConsoleOutputMode
+  ) => {
+    if (globalMonkeyPatch) {
+      globalMonkeyPatch.setMethodRouting(method, mode);
+    } else {
+      console.warn("Console monkey patch not initialized");
+    }
+  },
+
+  /**
+   * Get routing configuration for a specific method
+   */
+  getMethodRouting: (
+    method: keyof ConsoleMonkeyPatchConfig
+  ): ConsoleOutputMode | undefined => {
+    return globalMonkeyPatch?.getMethodRouting(method);
+  },
 };
 
 // Convenience functions for immediate use
-export const patchConsole = (logLevel: LogLevel = 'WARN' as LogLevel) => 
-  consoleMonkeyPatch.init(logLevel);
+export const patchConsole = (config: ConsoleMonkeyPatchConfig) =>
+  consoleMonkeyPatch.init(config);
 
-export const unpatchConsole = () => 
-  consoleMonkeyPatch.remove();
+export const unpatchConsole = () => consoleMonkeyPatch.remove();
 
-export const setConsoleLogLevel = (level: LogLevel) => 
-  consoleMonkeyPatch.setLogLevel(level);
+export const updateConsoleConfig = (
+  config: Partial<ConsoleMonkeyPatchConfig>
+) => consoleMonkeyPatch.updateConfig(config);
 
-export const withOriginalConsole = <T>(fn: () => T): T => 
+export const withOriginalConsole = <T>(fn: () => T): T =>
   consoleMonkeyPatch.withOriginal(fn);
 
-export const withConsoleContext = <T>(context: LogContext, fn: () => T): T => 
+export const withConsoleContext = <T>(context: LogContext, fn: () => T): T =>
   consoleMonkeyPatch.withContext(context, fn);
+
+// Specific method routing shortcuts
+export const setConsoleRouting = {
+  log: (mode: ConsoleOutputMode) =>
+    consoleMonkeyPatch.setMethodRouting("log", mode),
+  debug: (mode: ConsoleOutputMode) =>
+    consoleMonkeyPatch.setMethodRouting("debug", mode),
+  info: (mode: ConsoleOutputMode) =>
+    consoleMonkeyPatch.setMethodRouting("info", mode),
+  warn: (mode: ConsoleOutputMode) =>
+    consoleMonkeyPatch.setMethodRouting("warn", mode),
+  error: (mode: ConsoleOutputMode) =>
+    consoleMonkeyPatch.setMethodRouting("error", mode),
+  table: (mode: ConsoleOutputMode) =>
+    consoleMonkeyPatch.setMethodRouting("table", mode),
+};
+
+// Preset configurations
+export const consolePresets = {
+  /**
+   * Silent mode - everything to OpenTelemetry only
+   */
+  silent: (): ConsoleMonkeyPatchConfig => ({
+    log: "otel",
+    debug: "otel",
+    info: "otel",
+    warn: "otel",
+    error: "otel",
+    table: "otel",
+  }),
+
+  /**
+   * Development mode - warnings and errors to console
+   */
+  development: (): ConsoleMonkeyPatchConfig => ({
+    log: "otel",
+    debug: "otel",
+    info: "otel",
+    warn: "both",
+    error: "both",
+    table: "otel",
+  }),
+
+  /**
+   * Production mode - only errors to console
+   */
+  production: (): ConsoleMonkeyPatchConfig => ({
+    log: "otel",
+    debug: "otel",
+    info: "otel",
+    warn: "otel",
+    error: "both",
+    table: "otel",
+  }),
+
+  /**
+   * Debug mode - everything to both
+   */
+  debug: (): ConsoleMonkeyPatchConfig => ({
+    log: "both",
+    debug: "both",
+    info: "both",
+    warn: "both",
+    error: "both",
+    table: "both",
+  }),
+
+  /**
+   * Console only mode - everything to console only (bypass OpenTelemetry)
+   */
+  consoleOnly: (): ConsoleMonkeyPatchConfig => ({
+    log: "console",
+    debug: "console",
+    info: "console",
+    warn: "console",
+    error: "console",
+    table: "console",
+  }),
+};

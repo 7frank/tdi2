@@ -1,8 +1,8 @@
 // src/logging/tdi-logger-service.ts - DI-integrated Logger Service
 
-import { Service } from '../di/decorators';
-import type { TDILogger, LoggerConfig, LogContext, LogLevel } from './types';
-import { OTelLoggerProvider } from './otel-logger-provider';
+import { Service } from "../di/decorators";
+import type { TDILogger, LoggerConfig, LogContext, LogLevel } from "./types";
+import { OTelLoggerProvider } from "./otel-logger-provider";
 
 // Define the logger interface for DI
 export interface LoggerInterface extends TDILogger {
@@ -20,15 +20,12 @@ export class TDILoggerService implements LoggerInterface {
   private currentLogger: TDILogger;
   private loggerName: string;
 
-  constructor(
-    loggerName: string = 'tdi-app',
-    config?: LoggerConfig
-  ) {
+  constructor(loggerName: string = "tdi-app", config?: LoggerConfig) {
     this.loggerName = loggerName;
-    
+
     // Initialize OpenTelemetry logger provider
     this.loggerProvider = new OTelLoggerProvider(config);
-    
+
     // Only initialize once globally
     if (!TDILoggerService.instance) {
       this.loggerProvider.initialize();
@@ -36,7 +33,10 @@ export class TDILoggerService implements LoggerInterface {
     }
 
     // Get the current logger instance
-    this.currentLogger = this.loggerProvider.getLogger(loggerName, this.globalContext);
+    this.currentLogger = this.loggerProvider.getLogger(
+      loggerName,
+      this.globalContext
+    );
   }
 
   // Static factory method for easy DI configuration
@@ -44,8 +44,8 @@ export class TDILoggerService implements LoggerInterface {
     if (TDILoggerService.instance) {
       return TDILoggerService.instance;
     }
-    
-    return new TDILoggerService('tdi-app', config);
+
+    return new TDILoggerService("tdi-app", config);
   }
 
   // Static method to get singleton instance
@@ -71,27 +71,31 @@ export class TDILoggerService implements LoggerInterface {
   }
 
   error(message: string, error?: Error, context?: LogContext): void {
-    this.currentLogger.error(message, error, this.mergeWithGlobalContext(context));
+    this.currentLogger.error(
+      message,
+      error,
+      this.mergeWithGlobalContext(context)
+    );
   }
 
   fatal(message: string, error?: Error, context?: LogContext): void {
-    this.currentLogger.fatal(message, error, this.mergeWithGlobalContext(context));
+    this.currentLogger.fatal(
+      message,
+      error,
+      this.mergeWithGlobalContext(context)
+    );
   }
 
-  log(entry: import('./types').LogEntry): void {
+  log(entry: import("./types").LogEntry): void {
     const entryWithContext = {
       ...entry,
-      context: this.mergeWithGlobalContext(entry.context)
+      context: this.mergeWithGlobalContext(entry.context),
     };
     this.currentLogger.log(entryWithContext);
   }
 
   withContext(context: LogContext): TDILogger {
     return this.currentLogger.withContext(this.mergeWithGlobalContext(context));
-  }
-
-  isLevelEnabled(level: LogLevel): boolean {
-    return this.currentLogger.isLevelEnabled(level);
   }
 
   getContext(): LogContext {
@@ -101,16 +105,18 @@ export class TDILoggerService implements LoggerInterface {
   // Service-specific methods
   createChildLogger(name: string, context?: LogContext): LoggerInterface {
     const childContext = this.mergeWithGlobalContext(context);
-    const childLogger = this.loggerProvider.getLogger(name, childContext);
-    
+
     return new TDILoggerService(name, undefined);
   }
 
   setGlobalContext(context: LogContext): void {
     this.globalContext = { ...this.globalContext, ...context };
-    
+
     // Update current logger with new global context
-    this.currentLogger = this.loggerProvider.getLogger(this.loggerName, this.globalContext);
+    this.currentLogger = this.loggerProvider.getLogger(
+      this.loggerName,
+      this.globalContext
+    );
   }
 
   getGlobalContext(): LogContext {
@@ -119,15 +125,6 @@ export class TDILoggerService implements LoggerInterface {
 
   updateConfig(config: Partial<LoggerConfig>): void {
     this.loggerProvider.updateConfig(config);
-  }
-
-  // Console monkey-patch management
-  enableConsoleMonkeyPatch(): void {
-    this.loggerProvider.updateConfig({ enableConsoleMonkeyPatch: true });
-  }
-
-  disableConsoleMonkeyPatch(): void {
-    this.loggerProvider.restoreConsole();
   }
 
   isConsolePatched(): boolean {
@@ -148,7 +145,7 @@ export class TDILoggerService implements LoggerInterface {
   logDIRegistration(
     interfaceName: string,
     implementationClass: string,
-    registrationType: 'interface' | 'class' | 'inheritance' | 'state',
+    registrationType: "interface" | "class" | "inheritance" | "state",
     context?: LogContext
   ): void {
     this.debug(`DI Registration: ${interfaceName} -> ${implementationClass}`, {
@@ -156,7 +153,7 @@ export class TDILoggerService implements LoggerInterface {
       interfaceName,
       implementationClass,
       registrationType,
-      type: 'di_registration'
+      type: "di_registration",
     });
   }
 
@@ -167,15 +164,19 @@ export class TDILoggerService implements LoggerInterface {
     duration?: number,
     context?: LogContext
   ): void {
-    const level = success ? 'debug' : 'warn';
-    this[level](`DI Resolution: ${token} -> ${success ? resolvedClass : 'FAILED'}`, undefined, {
-      ...context,
-      token,
-      resolvedClass,
-      success,
-      duration,
-      type: 'di_resolution'
-    });
+    const level = success ? "debug" : "warn";
+    this[level](
+      `DI Resolution: ${token} -> ${success ? resolvedClass : "FAILED"}`,
+      undefined,
+      {
+        ...context,
+        token,
+        resolvedClass,
+        success,
+        duration,
+        type: "di_resolution",
+      }
+    );
   }
 
   logServiceCreation(
@@ -190,13 +191,13 @@ export class TDILoggerService implements LoggerInterface {
       dependencies,
       dependencyCount: dependencies.length,
       duration,
-      type: 'service_creation'
+      type: "service_creation",
     });
   }
 
   logComponentTransformation(
     componentName: string,
-    transformationType: 'functional' | 'class',
+    transformationType: "functional" | "class",
     dependenciesInjected: string[],
     context?: LogContext
   ): void {
@@ -206,7 +207,7 @@ export class TDILoggerService implements LoggerInterface {
       transformationType,
       dependenciesInjected,
       injectionCount: dependenciesInjected.length,
-      type: 'component_transformation'
+      type: "component_transformation",
     });
   }
 
@@ -217,14 +218,14 @@ export class TDILoggerService implements LoggerInterface {
     selectedImplementation?: string,
     context?: LogContext
   ): void {
-    const level = implementationFound ? 'debug' : 'warn';
+    const level = implementationFound ? "debug" : "warn";
     this[level](`Interface Resolution: ${interfaceType}`, undefined, {
       ...context,
       interfaceType,
       implementationFound,
       candidateCount,
       selectedImplementation,
-      type: 'interface_resolution'
+      type: "interface_resolution",
     });
   }
 
@@ -239,42 +240,46 @@ export class TDILoggerService implements LoggerInterface {
       configKey,
       oldValue: JSON.stringify(oldValue),
       newValue: JSON.stringify(newValue),
-      type: 'configuration_change'
+      type: "configuration_change",
     });
   }
 
   // Performance logging for TDI2 operations
   logTransformationPerformance(
-    phase: 'scan' | 'resolve' | 'generate' | 'write',
+    phase: "scan" | "resolve" | "generate" | "write",
     duration: number,
     filesProcessed?: number,
     context?: LogContext
   ): void {
-    this.logPerformance(`transformation_${phase}`, duration, 'ms', {
+    this.logPerformance(`transformation_${phase}`, duration, "ms", {
       ...context,
       phase,
       filesProcessed,
-      type: 'transformation_performance'
+      type: "transformation_performance",
     });
   }
 
   logContainerPerformance(
-    operation: 'resolve' | 'create' | 'cache_hit' | 'cache_miss',
+    operation: "resolve" | "create" | "cache_hit" | "cache_miss",
     serviceToken: string,
     duration: number,
     context?: LogContext
   ): void {
-    this.logPerformance(`container_${operation}`, duration, 'ms', {
+    this.logPerformance(`container_${operation}`, duration, "ms", {
       ...context,
       operation,
       serviceToken,
-      type: 'container_performance'
+      type: "container_performance",
     });
   }
 
   // Error logging with categorization
   logDIError(
-    errorType: 'resolution_failed' | 'circular_dependency' | 'missing_implementation' | 'instantiation_failed',
+    errorType:
+      | "resolution_failed"
+      | "circular_dependency"
+      | "missing_implementation"
+      | "instantiation_failed",
     errorMessage: string,
     error?: Error,
     context?: LogContext
@@ -282,13 +287,13 @@ export class TDILoggerService implements LoggerInterface {
     this.error(`DI Error [${errorType}]: ${errorMessage}`, error, {
       ...context,
       errorType,
-      category: 'di_error',
-      type: 'error'
+      category: "di_error",
+      type: "error",
     });
   }
 
   logTransformationError(
-    errorType: 'parse_error' | 'generation_error' | 'file_write_error',
+    errorType: "parse_error" | "generation_error" | "file_write_error",
     fileName: string,
     errorMessage: string,
     error?: Error,
@@ -298,8 +303,8 @@ export class TDILoggerService implements LoggerInterface {
       ...context,
       errorType,
       fileName,
-      category: 'transformation_error',
-      type: 'error'
+      category: "transformation_error",
+      type: "error",
     });
   }
 
@@ -313,20 +318,20 @@ export class TDILoggerService implements LoggerInterface {
       ...context,
       category,
       debugInfo: info,
-      type: 'debug_info'
+      type: "debug_info",
     });
   }
 
   logMemoryUsage(context?: LogContext): void {
-    if (typeof process !== 'undefined' && process.memoryUsage) {
+    if (typeof process !== "undefined" && process.memoryUsage) {
       const memUsage = process.memoryUsage();
-      this.info('Memory Usage', {
+      this.info("Memory Usage", {
         ...context,
         rss: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
         heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
         heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
         external: `${Math.round(memUsage.external / 1024 / 1024)}MB`,
-        type: 'memory_usage'
+        type: "memory_usage",
       });
     }
   }
@@ -355,43 +360,37 @@ export class TDILoggerService implements LoggerInterface {
     },
     fatal: (message: string, error?: Error, context?: LogContext) => {
       TDILoggerService.instance?.fatal(message, error, context);
-    }
+    },
   };
 
   // Configuration presets
   static createDevelopmentLogger(): TDILoggerService {
     return TDILoggerService.create({
-      serviceName: 'tdi2-dev',
-      serviceVersion: '1.0.0-dev',
-      consoleLogLevel: 'DEBUG' as LogLevel,
+      serviceName: "tdi2-dev",
+      serviceVersion: "1.0.0-dev",
       enableDiagnostics: true,
-      diagnosticLevel: 'DEBUG',
-      enableConsoleMonkeyPatch: true,
-      processors: [{ type: 'console' }]
+      diagnosticLevel: "DEBUG",
+      processors: [{ type: "console" }],
     });
   }
 
   static createProductionLogger(): TDILoggerService {
     return TDILoggerService.create({
-      serviceName: 'tdi2-prod',
-      serviceVersion: '1.0.0',
-      consoleLogLevel: 'WARN' as LogLevel,
+      serviceName: "tdi2-prod",
+      serviceVersion: "1.0.0",
       enableDiagnostics: false,
-      diagnosticLevel: 'ERROR',
-      enableConsoleMonkeyPatch: true,
-      processors: [{ type: 'console' }]
+      diagnosticLevel: "ERROR",
+      processors: [{ type: "console" }],
     });
   }
 
   static createTestLogger(): TDILoggerService {
     return TDILoggerService.create({
-      serviceName: 'tdi2-test',
-      serviceVersion: '1.0.0-test',
-      consoleLogLevel: 'ERROR' as LogLevel,
+      serviceName: "tdi2-test",
+      serviceVersion: "1.0.0-test",
       enableDiagnostics: false,
-      diagnosticLevel: 'NONE',
-      enableConsoleMonkeyPatch: false,
-      processors: [{ type: 'console' }]
+      diagnosticLevel: "NONE",
+      processors: [{ type: "console" }],
     });
   }
 }

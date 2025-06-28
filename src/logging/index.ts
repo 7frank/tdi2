@@ -49,7 +49,7 @@ import {
   consoleMonkeyPatch,
   patchConsole,
   unpatchConsole,
-  setConsoleLogLevel,
+  updateConsoleConfig,
   withOriginalConsole,
   withConsoleContext,
 } from "./console-monkey-patch";
@@ -59,13 +59,10 @@ export {
   consoleMonkeyPatch,
   patchConsole,
   unpatchConsole,
-  setConsoleLogLevel,
+  updateConsoleConfig,
   withOriginalConsole,
   withConsoleContext,
 };
-
-// Examples for reference
-export { examples } from "./example-usage";
 
 // Convenience re-exports for common patterns
 export const Logger = {
@@ -106,7 +103,7 @@ export const Logger = {
   // Console monkey patch
   patchConsole,
   unpatchConsole,
-  setConsoleLevel: setConsoleLogLevel,
+  updateConsoleConfig,
 };
 
 // Default export for easy importing

@@ -41,10 +41,8 @@ export interface ConsoleMonkeyPatchConfig {
 export interface LoggerConfig {
   serviceName?: string;
   serviceVersion?: string;
-  consoleLogLevel?: LogLevel; // Deprecated: use consoleMonkeyPatch instead
   enableDiagnostics?: boolean;
   diagnosticLevel?: 'NONE' | 'ERROR' | 'WARN' | 'INFO' | 'DEBUG' | 'VERBOSE' | 'ALL';
-  enableConsoleMonkeyPatch?: boolean; // Deprecated: use consoleMonkeyPatch instead
   consoleMonkeyPatch?: ConsoleMonkeyPatchConfig;
   resource?: Record<string, any>;
   processors?: LogProcessorConfig[];
