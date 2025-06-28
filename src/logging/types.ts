@@ -27,13 +27,25 @@ export interface LogContext {
   [key: string]: any;
 }
 
+export type ConsoleOutputMode = 'otel' | 'console' | 'both';
+
+export interface ConsoleMonkeyPatchConfig {
+  log?: ConsoleOutputMode;
+  debug?: ConsoleOutputMode;
+  info?: ConsoleOutputMode;
+  warn?: ConsoleOutputMode;
+  error?: ConsoleOutputMode;
+  table?: ConsoleOutputMode;
+}
+
 export interface LoggerConfig {
   serviceName?: string;
   serviceVersion?: string;
-  consoleLogLevel?: LogLevel;
+  consoleLogLevel?: LogLevel; // Deprecated: use consoleMonkeyPatch instead
   enableDiagnostics?: boolean;
   diagnosticLevel?: 'NONE' | 'ERROR' | 'WARN' | 'INFO' | 'DEBUG' | 'VERBOSE' | 'ALL';
-  enableConsoleMonkeyPatch?: boolean;
+  enableConsoleMonkeyPatch?: boolean; // Deprecated: use consoleMonkeyPatch instead
+  consoleMonkeyPatch?: ConsoleMonkeyPatchConfig;
   resource?: Record<string, any>;
   processors?: LogProcessorConfig[];
 }
@@ -68,6 +80,7 @@ export interface ConsolePatch {
   info: typeof console.info;
   warn: typeof console.warn;
   error: typeof console.error;
+  table: typeof console.table;
 }
 
 export interface LoggerProvider {

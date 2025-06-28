@@ -1,6 +1,6 @@
 // src/logging/init.ts - Logging System Initialization
 
-import type { LoggerConfig, LogLevel } from './types';
+import type { LoggerConfig, LogLevel, ConsoleMonkeyPatchConfig } from './types';
 import { TDILoggerService } from './tdi-logger-service';
 
 // Environment detection
@@ -25,10 +25,16 @@ const ENV_CONFIGS: Record<string, LoggerConfig> = {
   development: {
     serviceName: 'tdi2-dev',
     serviceVersion: '1.0.0-dev',
-    consoleLogLevel: 'DEBUG' as LogLevel,
     enableDiagnostics: true,
     diagnosticLevel: 'DEBUG',
-    enableConsoleMonkeyPatch: true,
+    consoleMonkeyPatch: {
+      log: 'otel',
+      debug: 'otel',
+      info: 'otel',
+      warn: 'both',
+      error: 'both',
+      table: 'otel'
+    },
     resource: {
       'deployment.environment': 'development',
       'service.namespace': 'tdi2',
@@ -40,10 +46,16 @@ const ENV_CONFIGS: Record<string, LoggerConfig> = {
   production: {
     serviceName: 'tdi2-prod',
     serviceVersion: '1.0.0',
-    consoleLogLevel: 'WARN' as LogLevel,
     enableDiagnostics: false,
     diagnosticLevel: 'ERROR',
-    enableConsoleMonkeyPatch: true,
+    consoleMonkeyPatch: {
+      log: 'otel',
+      debug: 'otel',
+      info: 'otel',
+      warn: 'both',
+      error: 'both',
+      table: 'otel'
+    },
     resource: {
       'deployment.environment': 'production',
       'service.namespace': 'tdi2',
@@ -55,10 +67,16 @@ const ENV_CONFIGS: Record<string, LoggerConfig> = {
   test: {
     serviceName: 'tdi2-test',
     serviceVersion: '1.0.0-test',
-    consoleLogLevel: 'ERROR' as LogLevel,
     enableDiagnostics: false,
     diagnosticLevel: 'NONE',
-    enableConsoleMonkeyPatch: false,
+    consoleMonkeyPatch: {
+      log: 'otel',
+      debug: 'otel',
+      info: 'otel',
+      warn: 'otel',
+      error: 'otel',
+      table: 'otel'
+    },
     resource: {
       'deployment.environment': 'test',
       'service.namespace': 'tdi2',
@@ -70,10 +88,11 @@ const ENV_CONFIGS: Record<string, LoggerConfig> = {
 
 export interface InitOptions {
   environment?: 'development' | 'production' | 'test' | 'auto';
-  consoleLogLevel?: LogLevel;
+  consoleLogLevel?: LogLevel; // Deprecated: use consoleMonkeyPatch instead
   serviceName?: string;
   serviceVersion?: string;
-  enableConsoleMonkeyPatch?: boolean;
+  enableConsoleMonkeyPatch?: boolean; // Deprecated: use consoleMonkeyPatch instead
+  consoleMonkeyPatch?: ConsoleMonkeyPatchConfig;
   enableDiagnostics?: boolean;
   customConfig?: Partial<LoggerConfig>;
   autoDetectEnvironment?: boolean;
@@ -97,16 +116,49 @@ export function initLogging(options: InitOptions = {}): TDILoggerService {
   const finalConfig: LoggerConfig = {
     ...baseConfig,
     ...options.customConfig,
-    ...(options.consoleLogLevel && { consoleLogLevel: options.consoleLogLevel }),
     ...(options.serviceName && { serviceName: options.serviceName }),
     ...(options.serviceVersion && { serviceVersion: options.serviceVersion }),
-    ...(options.enableConsoleMonkeyPatch !== undefined && { 
-      enableConsoleMonkeyPatch: options.enableConsoleMonkeyPatch 
-    }),
     ...(options.enableDiagnostics !== undefined && { 
       enableDiagnostics: options.enableDiagnostics 
     })
   };
+
+  // Handle backward compatibility for deprecated options
+  if (options.consoleLogLevel !== undefined) {
+    console.warn('consoleLogLevel is deprecated. Use consoleMonkeyPatch config instead.');
+    if (!finalConfig.consoleMonkeyPatch) {
+      const shouldShowInConsole = ['WARN', 'ERROR', 'FATAL'].includes(options.consoleLogLevel);
+      finalConfig.consoleMonkeyPatch = {
+        log: 'otel',
+        debug: 'otel',
+        info: 'otel',
+        warn: shouldShowInConsole ? 'both' : 'otel',
+        error: shouldShowInConsole ? 'both' : 'otel',
+        table: 'otel'
+      };
+    }
+  }
+
+  if (options.enableConsoleMonkeyPatch !== undefined) {
+    console.warn('enableConsoleMonkeyPatch is deprecated. Use consoleMonkeyPatch config instead.');
+    if (options.enableConsoleMonkeyPatch && !finalConfig.consoleMonkeyPatch) {
+      finalConfig.consoleMonkeyPatch = {
+        log: 'otel',
+        debug: 'otel',
+        info: 'otel',
+        warn: 'both',
+        error: 'both',
+        table: 'otel'
+      };
+    }
+  }
+
+  if (options.consoleMonkeyPatch) {
+    finalConfig.consoleMonkeyPatch = {
+      ...finalConfig.consoleMonkeyPatch,
+      ...options.consoleMonkeyPatch
+    };
+  }
 
   // Create logger service
   globalLogger = TDILoggerService.create(finalConfig);
@@ -115,8 +167,7 @@ export function initLogging(options: InitOptions = {}): TDILoggerService {
   globalLogger.info('TDI2 Logging System Initialized', {
     environment,
     serviceName: finalConfig.serviceName,
-    consoleLogLevel: finalConfig.consoleLogLevel,
-    enableConsoleMonkeyPatch: finalConfig.enableConsoleMonkeyPatch,
+    consoleMonkeyPatch: finalConfig.consoleMonkeyPatch,
     enableDiagnostics: finalConfig.enableDiagnostics
   });
 
@@ -178,20 +229,46 @@ export const logging = {
   },
 
   /**
-   * Initialize with custom console log level only
+   * Initialize with custom console log level only (deprecated - use withConsoleMonkeyPatch)
    */
   withConsoleLevel: (level: LogLevel) => {
+    console.warn('withConsoleLevel is deprecated. Use withConsoleMonkeyPatch instead.');
+    const showInConsole = ['WARN', 'ERROR', 'FATAL'].includes(level);
     return initLogging({
-      consoleLogLevel: level
+      consoleMonkeyPatch: {
+        log: 'otel',
+        debug: 'otel',
+        info: 'otel',
+        warn: showInConsole ? 'both' : 'otel',
+        error: showInConsole ? 'both' : 'otel',
+        table: 'otel'
+      }
     });
   },
 
   /**
-   * Initialize with monkey-patching enabled/disabled
+   * Initialize with fine-grained console monkey patch control
    */
-  withConsoleMonkeyPatch: (enabled: boolean = true) => {
+  withConsoleMonkeyPatch: (config: ConsoleMonkeyPatchConfig) => {
     return initLogging({
-      enableConsoleMonkeyPatch: enabled
+      consoleMonkeyPatch: config
+    });
+  },
+
+  /**
+   * Initialize with monkey-patching enabled/disabled (deprecated)
+   */
+  withMonkeyPatch: (enabled: boolean = true) => {
+    console.warn('withMonkeyPatch is deprecated. Use withConsoleMonkeyPatch instead.');
+    return initLogging({
+      consoleMonkeyPatch: enabled ? {
+        log: 'otel',
+        debug: 'otel',
+        info: 'otel',
+        warn: 'both',
+        error: 'both',
+        table: 'otel'
+      } : undefined
     });
   },
 

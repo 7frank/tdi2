@@ -1,6 +1,7 @@
 // src/logging/tdi-logger-impl.ts - TDI Logger Implementation
 
-import type { Logger } from '@opentelemetry/api';
+import type { Logger } from '@opentelemetry/api-logs';
+import * as logsAPI from '@opentelemetry/api-logs';
 import type { TDILogger, LogLevel, LogEntry, LogContext, ConsolePatch } from './types';
 
 export class TDILoggerImpl implements TDILogger {
@@ -110,8 +111,12 @@ export class TDILoggerImpl implements TDILogger {
       ...entry.attributes
     };
 
-    // Emit to OpenTelemetry
+    // Map severity to OpenTelemetry severity number
+    const severityNumber = this.mapSeverityToNumber(entry.severityText);
+
+    // Emit to OpenTelemetry with correct API
     this.otelLogger.emit({
+      severityNumber,
       severityText: entry.severityText,
       body: entry.body,
       timestamp,
@@ -189,6 +194,19 @@ export class TDILoggerImpl implements TDILogger {
     }
     
     return flattened;
+  }
+
+  private mapSeverityToNumber(severityText: LogLevel): number {
+    // Map severity text to OpenTelemetry severity numbers
+    switch (severityText) {
+      case 'TRACE': return logsAPI.SeverityNumber.TRACE;
+      case 'DEBUG': return logsAPI.SeverityNumber.DEBUG;
+      case 'INFO': return logsAPI.SeverityNumber.INFO;
+      case 'WARN': return logsAPI.SeverityNumber.WARN;
+      case 'ERROR': return logsAPI.SeverityNumber.ERROR;
+      case 'FATAL': return logsAPI.SeverityNumber.FATAL;
+      default: return logsAPI.SeverityNumber.INFO;
+    }
   }
 
   private shouldLogToConsole(messageLevel: LogLevel): boolean {
