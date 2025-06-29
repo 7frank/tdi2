@@ -49,5 +49,5 @@ export interface FilterState {
   showOptional: boolean;
   showRequired: boolean;
   search: string;
-  layout: 'hierarchical' | 'circular' | 'grid';
+  layout: 'hierarchical' | 'tree' | 'circular' | 'grid';
 }

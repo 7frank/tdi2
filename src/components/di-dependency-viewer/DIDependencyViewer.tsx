@@ -105,6 +105,17 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
           y: centerY + radius * Math.sin(angle),
         });
       }
+    } else if (layout === 'tree') {
+      // Simple tree layout: spread nodes vertically with minimal horizontal spacing
+      const spacing = 180;
+      const startY = 100;
+      
+      for (let i = 0; i < nodeCount; i++) {
+        positions.push({
+          x: centerX,
+          y: startY + i * spacing,
+        });
+      }
     } else { // grid
       const cols = Math.ceil(Math.sqrt(nodeCount));
       
