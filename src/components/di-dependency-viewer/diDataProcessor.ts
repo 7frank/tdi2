@@ -13,6 +13,10 @@ export function processDIConfig(diConfig: any): DIDebugInfo {
   const missingImplementations: string[] = [];
   const circularDependencies: string[] = [];
 
+  // Track unique implementation classes to avoid duplicates
+  const processedImplementations = new Set<string>();
+  const implementationToToken = new Map<string, string>();
+
   // Process each service in the DI config
   Object.entries(diConfig).forEach(([token, config]: [string, any]) => {
     if (!config || typeof config !== 'object') {
@@ -21,11 +25,13 @@ export function processDIConfig(diConfig: any): DIDebugInfo {
     }
 
     try {
+      const implementationClass = config.implementationClass || token;
+      
       // Extract implementation info
       const implementation: InterfaceImplementation = {
         interfaceName: config.interfaceName || token,
-        implementationClass: config.implementationClass || token,
-        filePath: extractFilePath(config.implementationClass || token),
+        implementationClass,
+        filePath: extractFilePath(implementationClass),
         isGeneric: config.isGeneric || false,
         typeParameters: config.typeParameters || [],
         sanitizedKey: token,
@@ -39,24 +45,33 @@ export function processDIConfig(diConfig: any): DIDebugInfo {
       };
 
       implementations.push([token, implementation]);
+      
+      // Track implementation class to primary token mapping
+      if (!implementationToToken.has(implementationClass)) {
+        implementationToToken.set(implementationClass, token);
+      }
 
-      // Extract dependency info if available
+      // Extract dependency info if available - only for unique implementation classes
       if (config.dependencies && Array.isArray(config.dependencies) && config.dependencies.length > 0) {
-        const constructorParams = config.dependencies.map((depToken: string) => ({
-          paramName: extractParamName(depToken),
-          interfaceType: extractInterfaceType(depToken),
-          isOptional: false, // Default to required - could be enhanced
-          sanitizedKey: depToken,
-        }));
+        // Only create dependency entry if we haven't processed this implementation class yet
+        if (!processedImplementations.has(implementationClass)) {
+          const constructorParams = config.dependencies.map((depToken: string, index: number) => ({
+            paramName: extractParamName(depToken, index),
+            interfaceType: extractInterfaceType(depToken),
+            isOptional: false, // Default to required - could be enhanced
+            sanitizedKey: depToken,
+          }));
 
-        const dependency: ServiceDependency = {
-          serviceClass: config.implementationClass || token,
-          interfaceDependencies: config.dependencies,
-          filePath: extractFilePath(config.implementationClass || token),
-          constructorParams,
-        };
+          const dependency: ServiceDependency = {
+            serviceClass: implementationClass,
+            interfaceDependencies: config.dependencies,
+            filePath: extractFilePath(implementationClass),
+            constructorParams,
+          };
 
-        dependencies.push([config.implementationClass || token, dependency]);
+          dependencies.push([implementationClass, dependency]);
+          processedImplementations.add(implementationClass);
+        }
       }
 
     } catch (error) {
@@ -128,18 +143,58 @@ function extractFilePath(className: string): string {
   return `/src/services/${serviceName}.ts`;
 }
 
-function extractParamName(depToken: string): string {
+function extractParamName(depToken: string, index: number = 0): string {
   // Convert token to reasonable parameter name
-  return depToken
+  let paramName = depToken
     .replace(/Interface$/, '')
     .replace(/Service$/, '')
+    .replace(/Type$/, '')
+    .replace(/^AsyncState_/, '')
+    .replace(/_/g, '')
     .replace(/^([A-Z])/, (match) => match.toLowerCase())
-    .replace(/([A-Z])/g, (match) => match.toLowerCase());
+    .replace(/([A-Z])/g, (match, offset) => offset > 0 ? match.toLowerCase() : match);
+
+  // Fallback to generic name if result is empty or invalid
+  if (!paramName || paramName.length < 2) {
+    paramName = `dep${index}`;
+  }
+
+  return paramName;
 }
 
 function extractInterfaceType(depToken: string): string {
-  // Clean up the token to look like an interface type
-  return depToken.replace(/_/g, '<').replace(/([^<>]+)/, '$1>').replace(/></, ', ');
+  // Handle common patterns in the DI config
+  
+  // AsyncState patterns
+  if (depToken.startsWith('AsyncState_')) {
+    const stateType = depToken.replace('AsyncState_', '');
+    return `AsyncState<${stateType}>`;
+  }
+  
+  // Generic patterns with underscores (e.g., CacheInterface_UserData)
+  const genericMatch = depToken.match(/^([A-Za-z]+Interface)_(.+)$/);
+  if (genericMatch) {
+    const [, interfaceName, typeParam] = genericMatch;
+    return `${interfaceName}<${typeParam}>`;
+  }
+  
+  // Service type patterns
+  if (depToken.endsWith('ServiceType')) {
+    return depToken;
+  }
+  
+  // Interface patterns
+  if (depToken.endsWith('Interface')) {
+    return depToken;
+  }
+  
+  // Service patterns
+  if (depToken.endsWith('Service')) {
+    return depToken;
+  }
+  
+  // Default: return as-is
+  return depToken;
 }
 
 function generateConfigHash(diConfig: any): string {

@@ -126,8 +126,21 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
   useEffect(() => {
     if (!diData) return;
 
-    // Filter implementations
-    const filteredImplementations = diData.implementations.filter(([key, impl]) => {
+    console.log('🔍 Creating nodes and edges from data:', diData);
+
+    // Filter implementations - remove duplicates by implementation class
+    const uniqueImplementations = new Map<string, [string, InterfaceImplementation]>();
+    
+    diData.implementations.forEach(([key, impl]) => {
+      // Use implementation class as unique key, prefer interface-based registrations
+      const existingEntry = uniqueImplementations.get(impl.implementationClass);
+      
+      if (!existingEntry || (!impl.isClassBased && existingEntry[1].isClassBased)) {
+        uniqueImplementations.set(impl.implementationClass, [key, impl]);
+      }
+    });
+
+    const filteredImplementations = Array.from(uniqueImplementations.values()).filter(([key, impl]) => {
       // Type filter
       const typeMatches = (
         (filters.types.interface && !impl.isClassBased && !impl.isInheritanceBased && !impl.isStateBased) ||
@@ -144,6 +157,8 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
       return typeMatches && searchMatches;
     });
 
+    console.log('🔍 Filtered implementations:', filteredImplementations.length);
+
     // Create nodes
     const positions = generateLayout(filters.layout, filteredImplementations.length);
     const newNodes: Node[] = filteredImplementations.map(([key, impl], index) => ({
@@ -154,27 +169,82 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
         ...impl,
         label: impl.implementationClass,
       },
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
     }));
+
+    console.log('🔍 Created nodes:', newNodes.length);
 
     // Create edges from dependencies
     const newEdges: Edge[] = [];
-    const serviceToKey = new Map(filteredImplementations.map(([key, impl]) => [impl.implementationClass, key]));
-    const keyToService = new Map(diData.implementations.map(([key, impl]) => [impl.sanitizedKey, impl.implementationClass]));
+    const visibleServices = new Set(filteredImplementations.map(([, impl]) => impl.implementationClass));
+    
+    // Create comprehensive mapping from dependency token to implementation class
+    const tokenToService = new Map<string, string>();
+    
+    // First pass: direct mappings
+    diData.implementations.forEach(([token, impl]) => {
+      tokenToService.set(token, impl.implementationClass);
+      
+      // Also map the sanitized key if different
+      if (impl.sanitizedKey !== token) {
+        tokenToService.set(impl.sanitizedKey, impl.implementationClass);
+      }
+      
+      // Map the interface name to the implementation
+      if (impl.interfaceName !== token && impl.interfaceName !== impl.implementationClass) {
+        tokenToService.set(impl.interfaceName, impl.implementationClass);
+      }
+    });
+
+    console.log('🔍 Token to service mapping entries:', Array.from(tokenToService.entries()).slice(0, 10));
 
     diData.dependencies.forEach(([serviceClass, dependency]) => {
-      if (!serviceToKey.has(serviceClass)) return;
+      // Only show edges for visible services
+      if (!visibleServices.has(serviceClass)) {
+        return;
+      }
 
-      dependency.constructorParams.forEach((param) => {
-        const targetService = keyToService.get(param.sanitizedKey);
-        if (!targetService || !serviceToKey.has(targetService)) return;
+      console.log(`🔗 Processing dependencies for ${serviceClass}:`, dependency.interfaceDependencies);
+
+      dependency.constructorParams.forEach((param, paramIndex) => {
+        // Try multiple strategies to find the target service
+        let targetService = tokenToService.get(param.sanitizedKey);
+        
+        if (!targetService) {
+          // Try the interface type
+          targetService = tokenToService.get(param.interfaceType);
+        }
+        
+        if (!targetService) {
+          // Try looking for a partial match for sanitized keys
+          for (const [token, service] of tokenToService.entries()) {
+            if (token.includes(param.sanitizedKey) || param.sanitizedKey.includes(token)) {
+              targetService = service;
+              console.log(`🔍 Found partial match: ${param.sanitizedKey} -> ${token} -> ${service}`);
+              break;
+            }
+          }
+        }
+        
+        if (!targetService) {
+          console.warn(`⚠️  No service found for dependency token: ${param.sanitizedKey} (interface: ${param.interfaceType})`);
+          console.log(`🔍 Available tokens:`, Array.from(tokenToService.keys()).filter(k => k.toLowerCase().includes(param.sanitizedKey.toLowerCase().split('_')[0])));
+          return;
+        }
+
+        if (!visibleServices.has(targetService)) {
+          console.log(`🔍 Target service ${targetService} not visible, skipping edge`);
+          return;
+        }
 
         const shouldShow = (param.isOptional && filters.showOptional) || (!param.isOptional && filters.showRequired);
-        if (!shouldShow) return;
+        if (!shouldShow) {
+          return;
+        }
 
-        newEdges.push({
-          id: `${serviceClass}-${param.sanitizedKey}`,
+        const edgeId = `${targetService}-${serviceClass}-${paramIndex}`;
+        
+        const edge: Edge = {
+          id: edgeId,
           source: targetService,
           target: serviceClass,
           type: 'smoothstep',
@@ -192,9 +262,14 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
             type: 'arrowclosed',
             color: param.isOptional ? '#9CA3AF' : '#374151',
           },
-        });
+        };
+
+        newEdges.push(edge);
+        console.log(`✅ Created edge: ${targetService} -> ${serviceClass} (${param.paramName})`);
       });
     });
+
+    console.log('🔍 Created edges:', newEdges.length);
 
     setNodes(newNodes);
     setEdges(newEdges);
@@ -217,7 +292,7 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
   }
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full h-screen" style = {{height:968,width: 1200}}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

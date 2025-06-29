@@ -1,5 +1,6 @@
 // src/components/di-dependency-viewer/ServiceNode.tsx
 import React from 'react';
+import { Handle, Position } from '@xyflow/react';
 
 interface ServiceNodeProps {
   data: {
@@ -32,13 +33,37 @@ export const ServiceNode: React.FC<ServiceNodeProps> = ({ data }) => {
 
   return (
     <div
-      className="px-4 py-2 shadow-lg rounded-lg border-2 min-w-[200px]"
+      className="px-4 py-2 shadow-lg rounded-lg border-2 min-w-[200px] relative"
       style={{
         backgroundColor: getNodeColor(),
         borderColor: getNodeColor(),
         color: 'white',
       }}
     >
+      {/* Input handle (for incoming dependencies) */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{
+          background: '#fff',
+          border: `2px solid ${getNodeColor()}`,
+          width: 10,
+          height: 10,
+        }}
+      />
+      
+      {/* Output handle (for outgoing dependencies) */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{
+          background: '#fff',
+          border: `2px solid ${getNodeColor()}`,
+          width: 10,
+          height: 10,
+        }}
+      />
+
       <div className="flex items-center gap-2 mb-1">
         <span>{getNodeIcon()}</span>
         <div className="font-bold text-sm">{data.implementationClass}</div>
