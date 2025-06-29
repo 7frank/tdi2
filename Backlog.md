@@ -4,8 +4,6 @@
 
 ### [❌] add react xyflow dependency view
 
-### [❌] add open telemetry
-
 ### [❌] FIXME after hot reloading most of the service are no longer avail `rm -rf node_modules/.vite/` && `npm run di:reset && npm run dev` circumbvents this
 
 ### [❌] compile to npm package and publish
@@ -15,6 +13,8 @@
 ### [❌] Lazy decorator and marker
 
 ### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (nject<AsyncState<{ name: string; email: string }>>;)
+
+### [❌] hack the stack for console to get proper line numbers when logging error and so on not the monkey patched
 
 ### [❌] FIXME duplicated keys see generated list of services
 
@@ -62,6 +62,8 @@ List of Things Belonging in CLAUDE.md:
     Where to store logs or generated artifacts
 
 ## Done
+
+### [✅] add open telemetry
 
 ### [✅] write tests for different styles of inject markers
 

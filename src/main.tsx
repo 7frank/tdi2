@@ -23,7 +23,7 @@ initLogging({
 
 // Create and configure the DI container
 const container = new CompileTimeDIContainer();
-
+container.
 // Enhanced debug logging
 console.log('🔧 Setting up DI container...');
 console.log('📋 Available DI_CONFIG:', Object.keys(DI_CONFIG));
