@@ -30,6 +30,18 @@
 
 ### [❌] use falso in tests and fixtures, we don't want the ai to hard code any solutions
 
+### [❌] split into monorepo
+
+- tdi2-core
+- tdi2-react
+  - logic plugins and compoennts to make react fc di work
+- tdi2-react-utils
+  - e.g. di dependency viewer and elk dpendencies
+- tdi2-documentation
+  - contain core examples for all features
+- todo-app
+  - comprehensive implementation of tdi react and native di
+
 ### [❌] update claude md file from project
 
 Suggested .claude/commands/stabilize-cycle.md
