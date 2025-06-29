@@ -30,7 +30,8 @@
 
 ### [❌] use falso in tests and fixtures, we don't want the ai to hard code any solutions
 
-### [❌] split into monorepo
+### [❌] split the code base into a npm monorepo
+
 
 - tdi2-core
 - tdi2-react
@@ -41,6 +42,15 @@
   - contain core examples for all features
 - todo-app
   - comprehensive implementation of tdi react and native di
+
+> suggest different module structure if that makes sense to you
+> create linux shell scripts for the heavy liftig of the refactoring enumerate the scripts and create an artifact for each
+> dont recreate files solely for imports let that be handled by the shell scripts
+
+
+
+> first generate directory structure so that we can refactor at all
+
 
 ### [❌] update claude md file from project
 
