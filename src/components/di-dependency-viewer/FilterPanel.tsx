@@ -93,9 +93,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFiltersChan
             })}
             className="w-full px-2 py-1 text-xs border rounded"
           >
-            <option value="hierarchical">Hierarchical</option>
-            <option value="tree">Tree</option>
-            <option value="circular">Circular</option>
+            <option value="tree">Tree (Vertical)</option>
+            <option value="hierarchical">Hierarchical (Horizontal)</option>
+            <option value="circular">Radial</option>
+            <option value="force">Force</option>
             <option value="grid">Grid</option>
           </select>
         </div>

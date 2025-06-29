@@ -10,8 +10,10 @@ import {
   Position,
   ConnectionLineType,
   Panel,
+  useReactFlow,
   type Node,
   type Edge,
+  ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { FilterPanel } from './FilterPanel';
@@ -19,6 +21,9 @@ import { StatsPanel } from './StatsPanel';
 import { ServiceNode } from './ServiceNode';
 import { processDIConfig } from './diDataProcessor';
 import type { DIDebugInfo, FilterState } from './types';
+
+// Import ELK.js
+import ELK from 'elkjs/lib/elk.bundled.js';
 
 const nodeTypes = {
   service: ServiceNode,
@@ -28,9 +33,10 @@ interface DIDependencyViewerProps {
   diConfig: any; // The actual DI_CONFIG from the import
 }
 
-export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps) {
+function DIDependencyViewerComponent({ diConfig }: DIDependencyViewerProps) {
+  const { getNodes, setNodes, getEdges, fitView } = useReactFlow();
   const [diData, setDiData] = useState<DIDebugInfo | null>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [nodes, setNodesState, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<FilterState>({
@@ -45,6 +51,93 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
     search: '',
     layout: 'hierarchical',
   });
+
+  const elk = useMemo(() => new ELK(), []);
+
+  // ELK layout options for different layouts
+  const getLayoutOptions = useCallback((layout: string) => {
+    const baseOptions = {
+      'elk.spacing.nodeNode': 80,
+      'elk.layered.spacing.nodeNodeBetweenLayers': 150,
+    };
+
+    switch (layout) {
+      case 'tree':
+        return {
+          ...baseOptions,
+          'elk.algorithm': 'layered',
+          'elk.direction': 'DOWN',
+          'elk.layered.spacing.nodeNodeBetweenLayers': 200,
+        };
+      case 'hierarchical':
+        return {
+          ...baseOptions,
+          'elk.algorithm': 'layered',
+          'elk.direction': 'RIGHT',
+        };
+      case 'circular':
+        return {
+          ...baseOptions,
+          'elk.algorithm': 'org.eclipse.elk.radial',
+        };
+      case 'force':
+        return {
+          ...baseOptions,
+          'elk.algorithm': 'org.eclipse.elk.force',
+        };
+      case 'grid':
+        return {
+          ...baseOptions,
+          'elk.algorithm': 'org.eclipse.elk.box',
+          'elk.box.packingMode': 'SIMPLE',
+        };
+      default:
+        return {
+          ...baseOptions,
+          'elk.algorithm': 'layered',
+          'elk.direction': 'DOWN',
+        };
+    }
+  }, []);
+
+  // Apply ELK layout
+  const applyLayout = useCallback(async (layoutType: string) => {
+    const currentNodes = getNodes();
+    const currentEdges = getEdges();
+    
+    if (currentNodes.length === 0) return;
+
+    const layoutOptions = getLayoutOptions(layoutType);
+    
+    const graph = {
+      id: 'root',
+      layoutOptions,
+      children: currentNodes.map((node) => ({
+        ...node,
+        // ELK needs width and height - use defaults if not measured
+        width: node.measured?.width || 250,
+        height: node.measured?.height || 100,
+      })),
+      edges: currentEdges,
+    };
+
+    try {
+      const layoutedGraph = await elk.layout(graph);
+      
+      // Update node positions
+      const layoutedNodes = layoutedGraph.children.map((node: any) => ({
+        ...node,
+        position: { x: node.x, y: node.y },
+      }));
+
+      setNodes(layoutedNodes);
+      
+      // Fit view after a short delay to ensure layout is applied
+      setTimeout(() => fitView(), 100);
+    } catch (error) {
+      console.error('ELK layout failed:', error);
+    }
+  }, [elk, getNodes, getEdges, setNodes, fitView, getLayoutOptions]);
 
   // Process DI config data
   useEffect(() => {
@@ -74,65 +167,6 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
     processData();
   }, [diConfig]);
 
-  // Generate layout positions
-  const generateLayout = useCallback((layout: string, nodeCount: number) => {
-    const positions = [];
-    const centerX = 400;
-    const centerY = 300;
-    
-    if (layout === 'hierarchical') {
-      const levels = Math.ceil(Math.sqrt(nodeCount));
-      const nodesPerLevel = Math.ceil(nodeCount / levels);
-      
-      for (let i = 0; i < nodeCount; i++) {
-        const level = Math.floor(i / nodesPerLevel);
-        const posInLevel = i % nodesPerLevel;
-        const offsetX = (posInLevel - nodesPerLevel / 2) * 250;
-        const offsetY = level * 150;
-        
-        positions.push({
-          x: centerX + offsetX,
-          y: centerY + offsetY,
-        });
-      }
-    } else if (layout === 'circular') {
-      const radius = Math.max(200, nodeCount * 30);
-      
-      for (let i = 0; i < nodeCount; i++) {
-        const angle = (i / nodeCount) * 2 * Math.PI;
-        positions.push({
-          x: centerX + radius * Math.cos(angle),
-          y: centerY + radius * Math.sin(angle),
-        });
-      }
-    } else if (layout === 'tree') {
-      // Simple tree layout: spread nodes vertically with minimal horizontal spacing
-      const spacing = 180;
-      const startY = 100;
-      
-      for (let i = 0; i < nodeCount; i++) {
-        positions.push({
-          x: centerX,
-          y: startY + i * spacing,
-        });
-      }
-    } else { // grid
-      const cols = Math.ceil(Math.sqrt(nodeCount));
-      
-      for (let i = 0; i < nodeCount; i++) {
-        const row = Math.floor(i / cols);
-        const col = i % cols;
-        
-        positions.push({
-          x: centerX + (col - cols / 2) * 300,
-          y: centerY + row * 200,
-        });
-      }
-    }
-    
-    return positions;
-  }, []);
-
   // Process data and create nodes/edges
   useEffect(() => {
     if (!diData) return;
@@ -140,7 +174,7 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
     console.log('🔍 Creating nodes and edges from data:', diData);
 
     // Filter implementations - remove duplicates by implementation class
-    const uniqueImplementations = new Map<string, [string, InterfaceImplementation]>();
+    const uniqueImplementations = new Map<string, [string, any]>();
     
     diData.implementations.forEach(([key, impl]) => {
       // Use implementation class as unique key, prefer interface-based registrations
@@ -170,12 +204,11 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
 
     console.log('🔍 Filtered implementations:', filteredImplementations.length);
 
-    // Create nodes
-    const positions = generateLayout(filters.layout, filteredImplementations.length);
+    // Create nodes with initial positions (ELK will reposition them)
     const newNodes: Node[] = filteredImplementations.map(([key, impl], index) => ({
       id: impl.implementationClass,
       type: 'service',
-      position: positions[index] || { x: 0, y: 0 },
+      position: { x: index * 100, y: index * 100 }, // Temporary positions
       data: {
         ...impl,
         label: impl.implementationClass,
@@ -238,7 +271,6 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
         
         if (!targetService) {
           console.warn(`⚠️  No service found for dependency token: ${param.sanitizedKey} (interface: ${param.interfaceType})`);
-          console.log(`🔍 Available tokens:`, Array.from(tokenToService.keys()).filter(k => k.toLowerCase().includes(param.sanitizedKey.toLowerCase().split('_')[0])));
           return;
         }
 
@@ -282,9 +314,21 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
 
     console.log('🔍 Created edges:', newEdges.length);
 
-    setNodes(newNodes);
+    setNodesState(newNodes);
     setEdges(newEdges);
-  }, [diData, filters, generateLayout, setNodes, setEdges]);
+    
+    // Apply layout after nodes are set
+    setTimeout(() => {
+      applyLayout(filters.layout);
+    }, 100);
+  }, [diData, filters.types, filters.search, filters.showOptional, filters.showRequired, setNodesState, setEdges]);
+
+  // Apply layout when layout type changes
+  useEffect(() => {
+    if (nodes.length > 0) {
+      applyLayout(filters.layout);
+    }
+  }, [filters.layout, applyLayout, nodes.length]);
 
   if (isLoading) {
     return (
@@ -303,7 +347,7 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
   }
 
   return (
-    <div className="w-full h-screen" style = {{height:968,width: 1200}}>
+    <div className="w-full h-screen" style={{height: 968, width: 1200}}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -337,7 +381,44 @@ export default function DIDependencyViewer({ diConfig }: DIDependencyViewerProps
           Services: {nodes.length} | 
           Dependencies: {edges.length}
         </Panel>
+        
+        <Panel position="bottom-right" className="bg-white p-2 rounded shadow">
+          <div className="flex gap-2 text-xs">
+            <button 
+              onClick={() => setFilters(f => ({ ...f, layout: 'tree' }))}
+              className="px-2 py-1 bg-blue-100 rounded hover:bg-blue-200"
+            >
+              Tree ⬇️
+            </button>
+            <button 
+              onClick={() => setFilters(f => ({ ...f, layout: 'hierarchical' }))}
+              className="px-2 py-1 bg-green-100 rounded hover:bg-green-200"
+            >
+              Horizontal ➡️
+            </button>
+            <button 
+              onClick={() => setFilters(f => ({ ...f, layout: 'circular' }))}
+              className="px-2 py-1 bg-purple-100 rounded hover:bg-purple-200"
+            >
+              Radial 🌐
+            </button>
+            <button 
+              onClick={() => setFilters(f => ({ ...f, layout: 'force' }))}
+              className="px-2 py-1 bg-red-100 rounded hover:bg-red-200"
+            >
+              Force ⚡
+            </button>
+          </div>
+        </Panel>
       </ReactFlow>
     </div>
+  );
+}
+
+export default function DIDependencyViewer(props: DIDependencyViewerProps) {
+  return (
+    <ReactFlowProvider>
+      <DIDependencyViewerComponent {...props} />
+    </ReactFlowProvider>
   );
 }
