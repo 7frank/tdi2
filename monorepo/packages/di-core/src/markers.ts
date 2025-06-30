@@ -1,5 +1,7 @@
 // src/di/markers.ts - Marker interface types for functional DI
 
+import { JSX } from "react";
+
 /**
  * Marker interface for dependency injection in function parameters
  * Usage: function MyComponent(services: {logger: Inject<LoggerInterface>}) {}
@@ -28,38 +30,47 @@ export interface ServiceDependencies {
  * Utility type to extract the actual types from Inject markers
  */
 export type ExtractServices<T extends ServiceDependencies> = {
-  [K in keyof T]: T[K] extends Inject<infer U> ? U : 
-                  T[K] extends InjectOptional<infer U> ? U | undefined : 
-                  never;
+  [K in keyof T]: T[K] extends Inject<infer U>
+    ? U
+    : T[K] extends InjectOptional<infer U>
+      ? U | undefined
+      : never;
 };
 
 /**
  * Function component with DI support
  * This is what the transformer would look for and transform
  */
-export interface DIFunction<TServices extends ServiceDependencies, TProps = object> {
+export interface DIFunction<
+  TServices extends ServiceDependencies,
+  TProps = object,
+> {
   (props: TProps & { services?: ExtractServices<TServices> }): JSX.Element;
 }
 
 /**
  * Helper type for creating DI-enabled function components
  * Example:
- * const MyComponent: DIComponent<{logger: Inject<LoggerInterface>}, {title: string}> = 
+ * const MyComponent: DIComponent<{logger: Inject<LoggerInterface>}, {title: string}> =
  *   ({title, services}) => { ... }
  */
-export type DIComponent<TServices extends ServiceDependencies, TProps = object> = 
-  DIFunction<TServices, TProps>;
+export type DIComponent<
+  TServices extends ServiceDependencies,
+  TProps = object,
+> = DIFunction<TServices, TProps>;
 
 /**
  * Transform a regular React component to support DI
  * This could be used as a higher-order function or detected by the transformer
  */
 export function withDI<TServices extends ServiceDependencies, TProps = object>(
-  component: (props: TProps & { services: ExtractServices<TServices> }) => JSX.Element,
+  component: (
+    props: TProps & { services: ExtractServices<TServices> }
+  ) => JSX.Element,
   serviceConfig: TServices
 ): React.ComponentType<TProps> {
   // This would be implemented by the runtime DI system
-  throw new Error('withDI should be transformed at build time');
+  throw new Error("withDI should be transformed at build time");
 }
 
 // Example usage types:
