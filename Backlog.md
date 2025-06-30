@@ -2,7 +2,7 @@
 
 ## ordered log
 
-### [❌] add react xyflow dependency view
+### [❌] add valtio to useService hook to potentially truly make this approach unique
 
 ### [❌] FIXME after hot reloading most of the service are no longer avail `rm -rf node_modules/.vite/` && `npm run di:reset && npm run dev` circumbvents this
 
@@ -30,9 +30,9 @@
 
 ### [❌] use falso in tests and fixtures, we don't want the ai to hard code any solutions
 
-### [❌] split into monorepo
+### [❌] split the code base into a npm monorepo
 
-- tdi2-core
+- [✅] tdi2-core
 - tdi2-react
   - logic plugins and compoennts to make react fc di work
 - tdi2-react-utils
@@ -41,6 +41,22 @@
   - contain core examples for all features
 - todo-app
   - comprehensive implementation of tdi react and native di
+
+> suggest different module structure if that makes sense to you
+> create linux shell scripts for the heavy liftig of the refactoring enumerate the scripts and create an artifact for each
+> dont recreate files solely for imports let that be handled by the shell scripts
+
+#### actions taken
+
+- divide and conquery
+- fits in your head
+- do one thing but one thing good
+
+> first generate directory structure so that we can refactor at all `git ls-files`
+
+> Prompt: maybe first move files into proper directory structure and fix dependencies and only later add package.json for each ? but lets do this incrementally first create the script for the directory strucutre and the one to move the files
+
+> Prompt: the package.json files for each package and and app for now should not contain any build stripts. instead i want to just import the plain files from there, the monorepo should for now only be used structurally. this in mind create the package json files only with the dependencies required for this package
 
 ### [❌] update claude md file from project
 
@@ -75,7 +91,9 @@ List of Things Belonging in CLAUDE.md:
 
 ## Done
 
-### [✅] add open telemetry
+### [✅] add react xyflow dependency view
+
+### add open telemetry
 
 ### [✅] write tests for different styles of inject markers
 
@@ -112,6 +130,11 @@ List of Things Belonging in CLAUDE.md:
 
 ```
 
+###
+
+- convert whole project to turborepo
+  - everything is one app one app
+
 - di-config.ts contains static inits of our service which we also only want with the token approach not the approach that generates a dependency tree of all dependencies
 - we should rather let it use the classname/interface/"generic interface" the initial tdi apporoach uses
 - and pass the token diffrently if one "scope" is required
@@ -124,3 +147,27 @@ List of Things Belonging in CLAUDE.md:
 
 - this will allow us to potnetially disable errors via linter down the line
 - something along the line of https://claude.ai/chat/50198f4c-258d-462e-b4cf-03fa2a0613b7
+
+Service()
+class UserService implements UserServiceInterface
+{
+public state ...;
+loadUser(userId):void
+
+}
+
+// userId would no longer be passed to the
+interface UserProfileProps{services:{userService:Inject<UserServiceInterface>} }
+
+export function UserProfile({ services:{userService} }: ) {
+
+React.useEffect(() => {
+userService.loadUser(userId);
+}, [userId]);
+
+// Valtio automatically tracks these accesses for re-rendering
+const user = useSnapshot(userService.state).users.get(userId);
+const loading = useSnapshot(userService.state).loading.has(userId);
+
+return loading ? <Spinner /> : <UserCard user={user} />;
+}
