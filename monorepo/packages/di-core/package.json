@@ -9,9 +9,12 @@
     ".": "./src/index.ts",
     "./decorators": "./src/decorators.ts",
     "./types": "./src/types.ts",
-    "./markers": "./src/markers.ts"
+    "./markers": "./src/markers.ts",
+    "./container": "./src/container.ts"
   },
   "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
     "test": "bun test",
     "lint": "echo 'No linting configured yet'"
   },

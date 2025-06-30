@@ -4,12 +4,14 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
-import { DIProvider, CompileTimeDIContainer } from "./di/index.ts";
+import { CompileTimeDIContainer } from "@tdi2/di-core/container";
+import { DIProvider } from "./di/context.tsx";
 // Import from bridge file instead of generated directory
 import { DI_CONFIG } from "./.tdi2/di-config";
 
 // ADDED: Import and initialize logging with fine-grained console control
 import { initLogging } from "./logging";
+
 initLogging({
   consoleMonkeyPatch: {
     log: "console", // console.log() goes only to OpenTelemetry

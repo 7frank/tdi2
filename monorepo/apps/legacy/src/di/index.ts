@@ -1,10 +1,8 @@
 // src/di/index.ts
 
 // Export core DI functionality
-export * from '@tdi2/di-core/types';
+export * from "@tdi2/di-core/types";
 
-export * from './container';
-export * from './context.tsx';
+export * from "./context.tsx";
 
-// Re-export for convenience
-export { CompileTimeDIContainer as DIContainer } from './container';
+

@@ -1,8 +1,8 @@
 // src/di/context.tsx - Enhanced with functional DI support
 
-import React, { createContext, useContext, ReactNode } from "react";
-import { type DIContainer } from '@tdi2/di-core/types';
-import { CompileTimeDIContainer } from "./container";
+import { createContext, useContext, type ReactNode } from "react";
+import { type DIContainer } from "@tdi2/di-core/types";
+import { CompileTimeDIContainer } from "@tdi2/di-core/container";
 
 const DIContext = createContext<DIContainer | null>(null);
 
@@ -60,16 +60,16 @@ export function useOptionalService<T>(
  * Hook to resolve multiple services at once
  * Useful for functional components with many dependencies
  */
-export function useServices<T extends Record<string, any>>(
-  serviceMap: { [K in keyof T]: string | symbol }
-): T {
+export function useServices<T extends Record<string, any>>(serviceMap: {
+  [K in keyof T]: string | symbol;
+}): T {
   const container = useDI();
   const services = {} as T;
-  
+
   for (const [key, token] of Object.entries(serviceMap)) {
     services[key as keyof T] = container.resolve(token);
   }
-  
+
   return services;
 }
 
@@ -86,7 +86,7 @@ export function useFunctionalDI<T extends Record<string, any>>(
 ): T {
   const container = useDI();
   const services = {} as T;
-  
+
   for (const dep of dependencies) {
     if (dep.optional) {
       try {
@@ -101,6 +101,6 @@ export function useFunctionalDI<T extends Record<string, any>>(
       services[dep.key] = container.resolve(dep.token);
     }
   }
-  
+
   return services;
 }

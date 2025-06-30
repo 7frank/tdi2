@@ -25,9 +25,9 @@ export interface DIContainer {
   // Enhanced methods for interface resolution
   registerByInterface<T>(
     interfaceName: string,
-    implementation: Constructor<T>,
+    implementation: () => T,
     scope?: "singleton" | "transient" | "scoped"
-  ): void;
+  ): void 
   resolveByInterface<T>(interfaceName: string): T;
   hasInterface(interfaceName: string): boolean;
 }
