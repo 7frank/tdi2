@@ -6,8 +6,10 @@
     "dev": "turbo run dev",
     "test": "turbo run test",
     "lint": "turbo run lint",
+    "check-types": "turbo run check-types",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "clean": "turbo run clean",
+    "clean:deps": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf apps/*/node_modules"
   },
   "devDependencies": {
     "prettier": "^3.6.0",

@@ -1,4 +1,4 @@
-// src/logging/types.ts - OpenTelemetry Logger Types
+// @tdi2/logging - Type definitions
 
 export enum LogLevel {
   TRACE = 'TRACE',
@@ -85,4 +85,12 @@ export interface LoggerProvider {
   getLogger(name?: string, context?: LogContext): TDILogger;
   shutdown(): Promise<void>;
   forceFlush(): Promise<void>;
+}
+
+// Enhanced types for TDI2 integration
+export interface TDI2LoggerConfig extends LoggerConfig {
+  // Additional TDI2-specific configuration
+  diLoggingEnabled?: boolean;
+  transformationLoggingEnabled?: boolean;
+  componentLoggingEnabled?: boolean;
 }

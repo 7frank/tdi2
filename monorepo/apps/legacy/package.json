@@ -9,6 +9,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "check-types": "tsc --noEmit",
+    "clean": "rm -rf dist && rm -rf .next && rm -rf node_modules/.vite",
     "// === Enhanced DI Scripts ===": "",
     "di:build-prepare": "npm run di:enhanced",
     "di:transform": "tsx tools/di-transformer.ts",
@@ -39,6 +41,8 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@tdi2/di-core": "workspace:*",
+    "@tdi2/logging": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/api-logs": "^0.202.0",
     "@opentelemetry/resources": "^2.0.1",
