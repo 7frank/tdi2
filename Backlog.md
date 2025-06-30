@@ -4,6 +4,8 @@
 
 ### [❌] add valtio to useService hook to potentially truly make this approach unique
 
+- find out if the useServicce code works and if todoapp is broken
+
 ### [❌] FIXME after hot reloading most of the service are no longer avail `rm -rf node_modules/.vite/` && `npm run di:reset && npm run dev` circumbvents this
 
 ### [❌] compile to npm package and publish
@@ -33,14 +35,14 @@
 ### [❌] split the code base into a npm monorepo
 
 - [✅] tdi2-core
-- tdi2-react
-  - logic plugins and compoennts to make react fc di work
 - tdi2-react-utils
   - e.g. di dependency viewer and elk dpendencies
 - tdi2-documentation
   - contain core examples for all features
 - todo-app
   - comprehensive implementation of tdi react and native di
+- logging
+  - otel **FIXME** dependencies broken in generator for services that are not in legacy
 
 > suggest different module structure if that makes sense to you
 > create linux shell scripts for the heavy liftig of the refactoring enumerate the scripts and create an artifact for each
