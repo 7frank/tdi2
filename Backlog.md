@@ -46,7 +46,17 @@
 > create linux shell scripts for the heavy liftig of the refactoring enumerate the scripts and create an artifact for each
 > dont recreate files solely for imports let that be handled by the shell scripts
 
+#### actions taken
+
+- divide and conquery
+- fits in your head
+- do one thing but one thing good
+
 > first generate directory structure so that we can refactor at all `git ls-files`
+
+> Prompt: maybe first move files into proper directory structure and fix dependencies and only later add package.json for each ? but lets do this incrementally first create the script for the directory strucutre and the one to move the files
+
+> Prompt: the package.json files for each package and and app for now should not contain any build stripts. instead i want to just import the plain files from there, the monorepo should for now only be used structurally. this in mind create the package json files only with the dependencies required for this package
 
 ### [❌] update claude md file from project
 
