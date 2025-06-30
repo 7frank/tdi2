@@ -1,6 +1,6 @@
 // src/di/container.ts - FIXED to properly load all services
 
-import type { DIContainer, ServiceFactory, DIMap } from "./types";
+import type { DIContainer, ServiceFactory, DIMap } from '@tdi2/di-core/types';
 
 export class CompileTimeDIContainer implements DIContainer {
   private services = new Map<string | symbol, any>();

@@ -1,7 +1,7 @@
 // src/di/index.ts
 
 // Export core DI functionality
-export * from './types';
+export * from '@tdi2/di-core/types';
 
 export * from './container';
 export * from './context.tsx';
