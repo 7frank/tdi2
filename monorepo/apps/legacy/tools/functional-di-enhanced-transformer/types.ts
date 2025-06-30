@@ -11,6 +11,7 @@ export interface FunctionalDependency {
 }
 
 export interface TransformationOptions {
+  /** The  source dir where we also store our root .tdi folder */
   srcDir?: string;
   outputDir?: string;
   generateDebugFiles?: boolean;

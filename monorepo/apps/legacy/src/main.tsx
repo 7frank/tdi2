@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { CompileTimeDIContainer } from "@tdi2/di-core/container";
-import { DIProvider } from "./di/context.tsx";
+import { DIProvider } from "@tdi2/di-core/context";
 // Import from bridge file instead of generated directory
 import { DI_CONFIG } from "./.tdi2/di-config";
 

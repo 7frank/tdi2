@@ -10,7 +10,8 @@
     "./decorators": "./src/decorators.ts",
     "./types": "./src/types.ts",
     "./markers": "./src/markers.ts",
-    "./container": "./src/container.ts"
+    "./container": "./src/container.ts",
+    "./context": "./src/context.tsx"
   },
   "scripts": {
     "dev": "tsup --watch",

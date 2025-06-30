@@ -1,5 +1,5 @@
 // src/di/context.tsx - Enhanced with functional DI support
-
+import * as React from  "react";
 import { createContext, useContext, type ReactNode } from "react";
 import { type DIContainer } from "@tdi2/di-core/types";
 import { CompileTimeDIContainer } from "@tdi2/di-core/container";
