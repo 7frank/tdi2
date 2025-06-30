@@ -128,6 +128,12 @@ List of Things Belonging in CLAUDE.md:
 
 ```
 
+### 
+
+- convert whole project to turborepo
+  - everything is one app one app
+
+
 - di-config.ts contains static inits of our service which we also only want with the token approach not the approach that generates a dependency tree of all dependencies
 - we should rather let it use the classname/interface/"generic interface" the initial tdi apporoach uses
 - and pass the token diffrently if one "scope" is required
