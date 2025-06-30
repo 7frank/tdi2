@@ -4,6 +4,8 @@
 
 ### [❌] add react xyflow dependency view
 
+### [❌] add valtio to useService hook to potentially truly make this approach unique
+
 ### [❌] FIXME after hot reloading most of the service are no longer avail `rm -rf node_modules/.vite/` && `npm run di:reset && npm run dev` circumbvents this
 
 ### [❌] compile to npm package and publish
@@ -146,3 +148,30 @@ List of Things Belonging in CLAUDE.md:
 
 - this will allow us to potnetially disable errors via linter down the line
 - something along the line of https://claude.ai/chat/50198f4c-258d-462e-b4cf-03fa2a0613b7
+
+Service()
+class UserService implements UserServiceInterface
+{
+public state ...;
+loadUser(userId):void
+
+}
+
+// userId would no longer be passed to the 
+interface UserProfileProps{services:{userService:Inject<UserServiceInterface>} }
+
+
+export function UserProfile({ services:{userService} }: ) {
+
+  
+  React.useEffect(() => {
+    userService.loadUser(userId);
+  }, [userId]);
+
+  // Valtio automatically tracks these accesses for re-rendering
+  const user = useSnapshot(userService.state).users.get(userId);
+  const loading = useSnapshot(userService.state).loading.has(userId);
+
+  return loading ? <Spinner /> : <UserCard user={user} />;
+}
+
