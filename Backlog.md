@@ -2,8 +2,6 @@
 
 ## ordered log
 
-### [❌] add react xyflow dependency view
-
 ### [❌] add valtio to useService hook to potentially truly make this approach unique
 
 ### [❌] FIXME after hot reloading most of the service are no longer avail `rm -rf node_modules/.vite/` && `npm run di:reset && npm run dev` circumbvents this
@@ -34,7 +32,7 @@
 
 ### [❌] split the code base into a npm monorepo
 
-- tdi2-core
+- [✅] tdi2-core
 - tdi2-react
   - logic plugins and compoennts to make react fc di work
 - tdi2-react-utils
@@ -93,7 +91,9 @@ List of Things Belonging in CLAUDE.md:
 
 ## Done
 
-### [✅] add open telemetry
+### [✅] add react xyflow dependency view
+
+### add open telemetry
 
 ### [✅] write tests for different styles of inject markers
 
@@ -130,11 +130,10 @@ List of Things Belonging in CLAUDE.md:
 
 ```
 
-### 
+###
 
 - convert whole project to turborepo
   - everything is one app one app
-
 
 - di-config.ts contains static inits of our service which we also only want with the token approach not the approach that generates a dependency tree of all dependencies
 - we should rather let it use the classname/interface/"generic interface" the initial tdi apporoach uses
@@ -157,21 +156,18 @@ loadUser(userId):void
 
 }
 
-// userId would no longer be passed to the 
+// userId would no longer be passed to the
 interface UserProfileProps{services:{userService:Inject<UserServiceInterface>} }
-
 
 export function UserProfile({ services:{userService} }: ) {
 
-  
-  React.useEffect(() => {
-    userService.loadUser(userId);
-  }, [userId]);
+React.useEffect(() => {
+userService.loadUser(userId);
+}, [userId]);
 
-  // Valtio automatically tracks these accesses for re-rendering
-  const user = useSnapshot(userService.state).users.get(userId);
-  const loading = useSnapshot(userService.state).loading.has(userId);
+// Valtio automatically tracks these accesses for re-rendering
+const user = useSnapshot(userService.state).users.get(userId);
+const loading = useSnapshot(userService.state).loading.has(userId);
 
-  return loading ? <Spinner /> : <UserCard user={user} />;
+return loading ? <Spinner /> : <UserCard user={user} />;
 }
-
