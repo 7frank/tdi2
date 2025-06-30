@@ -1,12 +1,33 @@
-##
+# Timeline of React Dependency Injection Exploration
 
-- back in 2019 i had the idea what if we could do react DI
-  - i fiddled with https://astexplorer.net/ and found yes this could be a thing
-  - although possible with babel at the time i did not follow this idea
-- in 2021 i gave some talks about why react hooks are "cancer" and why they draw everything inward and are coupling tightly
-  - and what to do about that, how to decouple react SOLID style
-- later in feb 2023 i entertained the idea of autowiring like spring boot a rough poc came of that https://github.com/7frank/tdi
-- now after yet again 2 years (june 2025) and briefly comming back to the react ecosysstem while mostly on svelte
+## 2019 — Initial Concept
 
-  - after talking to a colleage and still hearing of the pains of the react ecosystem still feeling that react often used but selddom implemented in a decent manner in growing projects
-    - i again gave DI and specially with react a try and https://github.com/7frank/tdi2 came out of it
+- Thought experiment: "What if we could do React DI?"
+- Explored via [AST Explorer](https://astexplorer.net/) — confirmed feasibility
+- Babel-based implementation was possible
+- Idea shelved, not pursued
+
+## 2021 — Critique of React Hooks
+
+- Public talks on how React Hooks are pathological
+  - Hooks induce inward pull and tight coupling
+  - Violate SOLID principles
+- Proposed decoupling strategies
+  - Applied SOLID principles to React design patterns
+
+## February 2023 — Spring Boot–style Autowiring PoC
+
+- Revisited the idea through autowiring
+- Built [TDI (Typed Dependency Injection)](https://github.com/7frank/tdi)
+  - Rough proof of concept
+  - Applied DI container ideas to React
+
+## June 2025 — Return with TDI2
+
+- Brief return to React ecosystem after time in Svelte
+- Conversations revealed persistent structural issues in React
+  - High adoption, low design maturity in large projects
+- Found [article](https://dev.to/9zemian5/typescript-deserves-a-better-dependency-injection-framework-29bp)
+- Reinvestigated DI in React
+- Released [TDI2](https://github.com/7frank/tdi2)
+  - More refined, production-consumable DI solution
