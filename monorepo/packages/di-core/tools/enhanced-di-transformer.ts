@@ -507,7 +507,7 @@ export function getRegistryStats(): {
         configurations,
         // Additional debug info
         interfaceResolverAvailable: !!interfaceResolver,
-        interfaceResolverMethods: interfaceResolver ? Object.getOwnPropertyNames(interfaceResolver).filter(name => typeof interfaceResolver[name] === 'function') : [],
+        interfaceResolverMethods: interfaceResolver ? Object.getOwnPropertyNames(interfaceResolver).filter(name => typeof (interfaceResolver as any)[name] === 'function') : [],
         timestamp: new Date().toISOString()
       };
     } catch (error) {

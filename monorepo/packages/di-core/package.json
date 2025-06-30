@@ -12,10 +12,10 @@
     "./markers": "./src/markers.ts",
     "./container": "./src/container.ts",
     "./context": "./src/context.tsx",
-    "./tools/enhanced-di-transformer": "./tools/enhanced-di-transformer.ts",
-    "./tools/functional-di-enhanced-transformer": "./tools/functional-di-enhanced-transformer/index.ts",
-    "./tools/config-manager": "./tools/config-manager.ts"
-    
+    "./tools": {
+      "import": "./dist/tools/index.js",
+      "types": "./dist/tools/index.d.ts"
+    }
   },
   "scripts": {
     "dev": "tsup --watch",
@@ -36,7 +36,11 @@
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
     "@types/react": "^19.1.8",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5"
+  },
+  "peerDependencies": {
+    "vite": "^6.0.0"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -20,4 +20,11 @@ export default defineConfig([
     //     },
     //     onSuccess: "chmod +x dist/index.js",
   },
+  {
+    entry: ["tools/index.ts"],
+    format: ["esm"],
+    dts: true,
+    outDir: "dist/tools",
+    clean: false,
+  },
 ]);
