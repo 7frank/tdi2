@@ -1,7 +1,7 @@
 import type { Plugin } from "vite";
-import { EnhancedDITransformer } from "./tools/enhanced-di-transformer";
-import { FunctionalDIEnhancedTransformer } from "./tools/functional-di-enhanced-transformer";
-import { ConfigManager } from "./tools/config-manager";
+import { EnhancedDITransformer } from "@tdi2/di-core/tools/enhanced-di-transformer";
+import { FunctionalDIEnhancedTransformer } from "@tdi2/di-core/tools/functional-di-enhanced-transformer";
+import { ConfigManager } from "@tdi2/di-core/tools/config-manager";
 import * as fs from "fs";
 import * as path from "path";
 

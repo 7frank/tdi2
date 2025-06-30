@@ -11,7 +11,11 @@
     "./types": "./src/types.ts",
     "./markers": "./src/markers.ts",
     "./container": "./src/container.ts",
-    "./context": "./src/context.tsx"
+    "./context": "./src/context.tsx",
+    "./tools/enhanced-di-transformer": "./tools/enhanced-di-transformer.ts",
+    "./tools/functional-di-enhanced-transformer": "./tools/functional-di-enhanced-transformer/index.ts",
+    "./tools/config-manager": "./tools/config-manager.ts"
+    
   },
   "scripts": {
     "dev": "tsup --watch",
