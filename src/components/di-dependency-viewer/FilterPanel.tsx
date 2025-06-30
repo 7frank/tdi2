@@ -10,7 +10,7 @@ interface FilterPanelProps {
 
 export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFiltersChange }) => {
   return (
-    <Panel position="top-left" className="bg-white p-4 rounded-lg shadow-lg border min-w-[300px]">
+    <div className="bg-white p-4 rounded-lg shadow-lg border min-w-[300px]">
       <h3 className="font-bold text-lg mb-3">🔍 Filters</h3>
       
       <div className="space-y-3">
@@ -101,6 +101,6 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFiltersChan
           </select>
         </div>
       </div>
-    </Panel>
+    </div>
   );
 };
