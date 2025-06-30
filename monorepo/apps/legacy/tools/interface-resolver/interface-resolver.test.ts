@@ -51,7 +51,7 @@ export interface ApiInterface {
   project.createSourceFile(
     "src/services/ConsoleLogger.ts",
     `
-import { Service, Inject } from '../di/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 import type { LoggerInterface } from '../interfaces/LoggerInterface';
 
 @Service()
@@ -70,7 +70,7 @@ export class ConsoleLogger implements LoggerInterface {
   project.createSourceFile(
     "src/services/MemoryCache.ts",
     `
-import { Service } from '../di/decorators';
+import { Service } from "@tdi2/di-core/decorators";
 import type { CacheInterface } from '../interfaces/CacheInterface';
 
 @Service()
@@ -96,7 +96,7 @@ export class MemoryCache<T> implements CacheInterface<T> {
   project.createSourceFile(
     "src/services/ApiService.ts",
     `
-import { Service, Inject } from '../di/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 import type { ApiInterface } from '../interfaces/ApiInterface';
 import type { LoggerInterface } from '../interfaces/LoggerInterface';
 import type { CacheInterface } from '../interfaces/CacheInterface';
@@ -125,7 +125,7 @@ export class ApiService implements ApiInterface {
   project.createSourceFile(
     "src/services/FileLogger.ts",
     `
-import { Service, Primary } from '../di/decorators';
+import { Service, Primary } from "@tdi2/di-core/decorators";
 import type { LoggerInterface } from '../interfaces/LoggerInterface';
 
 @Service()
@@ -158,7 +158,7 @@ export class NonDIService {
   project.createSourceFile(
     "src/services/CircularA.ts",
     `
-import { Service, Inject } from '../di/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 
 export interface CircularAInterface {
   methodA(): void;
@@ -182,7 +182,7 @@ export class CircularA implements CircularAInterface {
   project.createSourceFile(
     "src/services/CircularB.ts",
     `
-import { Service, Inject } from '../di/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 import type { CircularAInterface, CircularBInterface } from './CircularA';
 
 @Service()
@@ -457,7 +457,7 @@ describe("InterfaceResolver", () => {
         mockProject.createSourceFile(
           "src/services/BrokenService.ts",
           `
-import { Service, Inject } from '../di/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 
 export interface NonExistentInterface {
   doSomething(): void;
@@ -537,7 +537,7 @@ export class MalformedService {
         mockProject.createSourceFile(
           "src/services/NoInterfaceService.ts",
           `
-import { Service } from '../di/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 
 @Service()
 export class NoInterfaceService {
@@ -590,7 +590,7 @@ export class NoInterfaceService {
           mockProject.createSourceFile(
             `src/services/Service${i}.ts`,
             `
-import { Service, Inject } from '../di/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 import type { LoggerInterface } from '../interfaces/LoggerInterface';
 
 export interface Service${i}Interface {

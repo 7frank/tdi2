@@ -1,6 +1,6 @@
 // src/todo/services/TodoServices.ts - AsyncState-based services following TDI2 pattern
 
-import { Service, Inject } from '../../di/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 import { AsyncState } from '../../experimental-utils/observable/useObservableState';
 import type {
   Todo,

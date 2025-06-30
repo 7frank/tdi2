@@ -1,6 +1,6 @@
 // src/experimental-utils/observable/exampleServices.ts - Interface-based UserServiceType
 
-import { Service } from "../../di";
+import { Service } from "@tdi2/di-core/decorators";
 import { AsyncState } from "./useObservableState";
 
 // Utility for delay

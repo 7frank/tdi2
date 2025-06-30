@@ -109,7 +109,7 @@ const createMockProject = () => {
   project.createSourceFile(
     "src/services/ConsoleLogger.ts",
     `
-import { Service } from '../di/decorators';
+import { Service } from "@tdi2/di-core/decorators";
 import type { LoggerInterface } from '../interfaces/LoggerInterface';
 
 @Service()
@@ -124,7 +124,7 @@ export class ConsoleLogger implements LoggerInterface {
   project.createSourceFile(
     "src/services/RestApiService.ts",
     `
-import { Service, Inject } from '../di/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 import type { ApiInterface } from '../interfaces/ApiInterface';
 import type { LoggerInterface } from '../interfaces/LoggerInterface';
 

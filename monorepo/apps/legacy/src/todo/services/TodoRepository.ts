@@ -1,6 +1,6 @@
 // src/todo/services/TodoRepository.ts - IndexedDB implementation for Todo persistence
 
-import { Service, Inject } from '../../di/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 import type { 
   Todo, 
   TodoFilter, 
