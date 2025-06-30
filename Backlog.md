@@ -32,7 +32,6 @@
 
 ### [❌] split the code base into a npm monorepo
 
-
 - tdi2-core
 - tdi2-react
   - logic plugins and compoennts to make react fc di work
@@ -47,10 +46,7 @@
 > create linux shell scripts for the heavy liftig of the refactoring enumerate the scripts and create an artifact for each
 > dont recreate files solely for imports let that be handled by the shell scripts
 
-
-
-> first generate directory structure so that we can refactor at all
-
+> first generate directory structure so that we can refactor at all `git ls-files`
 
 ### [❌] update claude md file from project
 
