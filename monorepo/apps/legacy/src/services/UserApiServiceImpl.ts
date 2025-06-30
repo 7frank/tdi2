@@ -1,6 +1,6 @@
 // src/services/UserApiServiceImpl.ts - Example of interface-based implementation
 
-import { Service, Inject } from '../di/decorators';
+import { Service, Inject } from '@tdi2/di-core/decorators';
 import type { ExampleApiInterface } from './ExampleApiInterface';
 
 // Define additional interfaces

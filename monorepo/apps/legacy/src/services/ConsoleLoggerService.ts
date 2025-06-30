@@ -1,6 +1,6 @@
 // src/services/ConsoleLoggerService.ts
 
-import { Service } from '../di/decorators';
+import { Service } from '@tdi2/di-core/decorators';
 import { type LoggerService } from './ExampleApiService';
 
 @Service()

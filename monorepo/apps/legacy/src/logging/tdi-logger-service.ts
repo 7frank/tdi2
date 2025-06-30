@@ -1,6 +1,6 @@
 // src/logging/tdi-logger-service.ts - DI-integrated Logger Service
 
-import { Service } from "../di/decorators";
+import { Service } from '@tdi2/di-core/decorators';
 import type { TDILogger, LoggerConfig, LogContext, LogLevel } from "./types";
 import { OTelLoggerProvider } from "./otel-logger-provider";
 

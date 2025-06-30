@@ -1,6 +1,6 @@
 // src/services/ExampleApiService.ts
 
-import { Service, Inject } from "../di/decorators";
+import { Service, Inject } from '@tdi2/di-core/decorators';
 import { type ExampleApiInterface } from "./ExampleApiInterface";
 
 // Example of a dependency that could be injected
