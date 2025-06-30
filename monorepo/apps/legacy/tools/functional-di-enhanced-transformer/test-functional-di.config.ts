@@ -332,7 +332,7 @@ export class IntegrationTestHelper {
     return `
 // ${name}
 import React from 'react';
-import type { Inject, InjectOptional } from '../di/markers';
+import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
 ${pattern}
     `;
@@ -412,7 +412,7 @@ export class PerformanceTestHelper {
       components.push(`
 // ${componentName} - ${pattern.name}
 import React from 'react';
-import type { Inject, InjectOptional } from '../di/markers';
+import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
 export function ${componentName}(props: {
   id: string;
@@ -526,7 +526,7 @@ export class RealWorldScenarios {
         `
 // TodoApp.tsx
 import React from 'react';
-import type { Inject } from '../di/markers';
+import type { Inject, } from "@tdi2/di-core/markers";
 
 interface TodoAppProps {
   services: {
@@ -547,7 +547,7 @@ export function TodoApp(props: TodoAppProps) {
         `
 // TodoList.tsx
 import React from 'react';
-import type { Inject } from '../di/markers';
+import type { Inject, } from "@tdi2/di-core/markers";
 
 export function TodoList(props: {
   onEditTodo?: (todo: any) => void;
@@ -562,7 +562,7 @@ export function TodoList(props: {
         `
 // TodoForm.tsx
 import React from 'react';
-import type { Inject } from '../di/markers';
+import type { Inject, } from "@tdi2/di-core/markers";
 
 export function TodoForm(props: {
   editingTodo?: any;
@@ -587,7 +587,7 @@ export function TodoForm(props: {
         `
 // ProductCatalog.tsx
 import React from 'react';
-import type { Inject, InjectOptional } from '../di/markers';
+import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
 export function ProductCatalog(props: {
   categoryId: string;
@@ -610,7 +610,7 @@ export function ProductCatalog(props: {
         `
 // ShoppingCart.tsx
 import React from 'react';
-import type { Inject } from '../di/markers';
+import type { Inject, } from "@tdi2/di-core/markers";
 
 export function ShoppingCart(props: {
   isOpen: boolean;

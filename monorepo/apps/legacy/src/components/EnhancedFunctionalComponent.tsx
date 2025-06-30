@@ -1,7 +1,7 @@
 // src/components/EnhancedFunctionalComponent.tsx - Interface-based functional DI
 
 import { useState, useEffect } from "react";
-import type { Inject, InjectOptional } from "../di/markers";
+import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
 // Import interfaces (not implementations!)
 import type { ExampleApiInterface } from "../services/ExampleApiInterface";

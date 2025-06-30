@@ -1,6 +1,6 @@
 // src/experimental-utils/observable/ExampleObservableFC.tsx - Interface-based Injection
 
-import type { Inject } from "../../di/markers";
+import type { Inject } from "@tdi2/di-core/markers";
 import type {
   ApiService,
   UserServiceState,

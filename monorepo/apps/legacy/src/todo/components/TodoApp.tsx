@@ -1,7 +1,7 @@
 // src/todo/components/TodoApp.tsx - Main Todo application component
 
 import React, { useState } from 'react';
-import type { Inject } from '../../di/markers';
+import type { Inject } from "@tdi2/di-core/markers";
 import type { 
   TodoServiceType, 
   TodoFormServiceType,

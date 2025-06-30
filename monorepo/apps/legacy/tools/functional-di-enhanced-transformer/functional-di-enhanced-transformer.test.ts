@@ -38,7 +38,7 @@ const createInlineFixtures = (project: Project) => {
     "src/components/InlineWithDestructuring.tsx",
     `
 import React from 'react';
-import type { Inject, InjectOptional } from '../di/markers';
+import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
 export function InlineWithDestructuring(props: {
   message: string;
@@ -65,7 +65,7 @@ export function InlineWithDestructuring(props: {
     "src/components/InlineWithoutDestructuring.tsx",
     `
 import React from 'react';
-import type { Inject, InjectOptional } from '../di/markers';
+import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
 export function InlineWithoutDestructuring(props: {
   title: string;
@@ -90,7 +90,7 @@ export function InlineWithoutDestructuring(props: {
     "src/components/InlineAllRequired.tsx",
     `
 import React from 'react';
-import type { Inject } from '../di/markers';
+import type { Inject, } from "@tdi2/di-core/markers";
 
 export function InlineAllRequired(props: {
   id: string;
@@ -113,7 +113,7 @@ const createSeparateInterfaceFixtures = (project: Project) => {
   project.createSourceFile(
     "src/components/ComponentInterfaces.ts",
     `
-import type { Inject, InjectOptional } from '../di/markers';
+import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
 export interface SimpleComponentProps {
   title: string;
@@ -221,7 +221,7 @@ export function NonDIServices(props: {
     "src/components/MultipleParams.tsx",
     `
 import React from 'react';
-import type { Inject } from '../di/markers';
+import type { Inject, } from "@tdi2/di-core/markers";
 
 export function MultipleParams(
   props: { title: string },
@@ -240,7 +240,7 @@ export function MultipleParams(
     "src/components/MixedServices.tsx",
     `
 import React from 'react';
-import type { Inject, InjectOptional } from '../di/markers';
+import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
 export function MixedServices(props: {
   config: any;
@@ -543,7 +543,7 @@ describe("FunctionalDIEnhancedTransformer", () => {
           "src/components/ComplexGenerics.tsx",
           `
 import React from 'react';
-import type { Inject, InjectOptional } from '../di/markers';
+import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
 export function ComplexGenerics(props: {
   services: {
@@ -585,7 +585,7 @@ export function ComplexGenerics(props: {
           "src/components/MissingDependencies.tsx",
           `
 import React from 'react';
-import type { Inject, InjectOptional } from '../di/markers';
+import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
 export function MissingDependencies(props: {
   services: {
@@ -695,7 +695,7 @@ export function MissingDependencies(props: {
           "src/features/user/UserComponent.tsx",
           `
 import React from 'react';
-import type { Inject } from '../../di/markers';
+import type { Inject } from "@tdi2/di-core/markers";
 
 export function UserComponent(props: {
   services: {
@@ -712,7 +712,7 @@ export function UserComponent(props: {
           "src/shared/components/SharedComponent.tsx",
           `
 import React from 'react';
-import type { Inject } from '../../di/markers';
+import type { Inject } from "@tdi2/di-core/markers";
 
 export function SharedComponent(props: {
   services: {
@@ -763,7 +763,7 @@ export function SharedComponent(props: {
           "src/components/ProblematicComponent.tsx",
           `
 import React from 'react';
-import type { Inject } from '../di/markers';
+import type { Inject, } from "@tdi2/di-core/markers";
 
 export function ProblematicComponent(props: {
   // Complex destructuring that might cause issues

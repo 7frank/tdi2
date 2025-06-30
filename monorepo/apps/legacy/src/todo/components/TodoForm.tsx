@@ -1,7 +1,7 @@
 // src/todo/components/TodoForm.tsx - Form component for creating/editing todos
 
 import React, { useState, useEffect } from 'react';
-import type { Inject } from '../../di/markers';
+import type { Inject } from "@tdi2/di-core/markers";
 import type { 
   TodoFormServiceType, 
   TodoServiceType,
