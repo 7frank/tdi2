@@ -1,5 +1,5 @@
 {
-  "name": "monorepo",
+  "name": "tdi2",
   "private": true,
   "scripts": {
     "build": "turbo run build",
