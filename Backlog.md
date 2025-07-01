@@ -8,6 +8,11 @@
 - proxy class directly for performance reasons
   - dont do `[instance]=useState(proxy()) ; service=useSnapshot(instance)` which wil lgenerate a proxy per DI reference
 
+- [❌] FIXME TodoApp TodoService2 isnt properly injected
+  - write tests for TodoApp service as well as todoapp2 service and compare them and see that both are working
+    - [✅] test FC via inject
+    - FC via useService
+
 ### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
 ```typescript
