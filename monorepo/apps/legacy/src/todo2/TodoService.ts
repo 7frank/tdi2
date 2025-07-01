@@ -30,16 +30,10 @@ export class TodoService2 implements TodoServiceInterface {
     @Inject() private todoRepository: TodoRepositoryInterface2,
     @Inject() private notificationService: NotificationServiceInterface
   ) {
-    // this.loadTodos();
-    // this.watchStatsChanges();
-    this.updateStats();
+    this.loadTodos().then(() => {
+      this.updateStats();
+    });
   }
-
-  // private watchStatsChanges(): void {
-  //   subscribe(this.state, () => {
-  //     this.updateStats();
-  //   });
-  // }
 
   private updateStats(): void {
     const total = this.state.todos.length;
@@ -136,6 +130,7 @@ export class TodoService2 implements TodoServiceInterface {
     } finally {
       this.state.loading = false;
     }
+    this.updateStats();
   }
 
   async toggleTodo(id: string): Promise<void> {
@@ -176,7 +171,9 @@ export class TodoService2 implements TodoServiceInterface {
   }
 
   setFilter(status: "all" | "active" | "completed"): void {
-    this.state.filter.status = status;
+    // Note: by destructuring we seem to trigger reactivity via the proxy
+    this.state.filter = { ...this.state.filter, status };
+    // this.state.filter.status = status;
   }
 
   setSearch(search: string): void {

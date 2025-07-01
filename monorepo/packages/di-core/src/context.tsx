@@ -1,5 +1,5 @@
 // src/di/context.tsx - Enhanced with functional DI support
-import * as React from  "react";
+import * as React from "react";
 import { createContext, useContext, type ReactNode } from "react";
 import { type DIContainer } from "@tdi2/di-core/types";
 import { CompileTimeDIContainer } from "@tdi2/di-core/container";
@@ -31,15 +31,19 @@ export function useDI(): DIContainer {
 /**
  * Hook to resolve a service from the DI container
  */
-export function useService<T>(
+export function useService<T extends object>(
   token: string | symbol | (new (...args: any[]) => T)
 ): T {
   const container = useDI();
 
-  const [_proxy]=React.useState(proxy(container.resolve<T>(token)))
+  const [_proxy] = React.useState<T>(proxy<T>(container.resolve<T>(token)));
   // Note keep this for the state updates to work?
-  const readOnlyState = useSnapshot(_proxy)
-  console.log(`Resolving service Proxy: ${String(token)}`, _proxy);
+  const readOnlyState = useSnapshot<T>(_proxy);
+  console.log(
+    `useService:  ${String(token)}`,
+    _proxy,
+    readOnlyState
+  );
   return _proxy;
 }
 

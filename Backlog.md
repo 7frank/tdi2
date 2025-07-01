@@ -12,16 +12,27 @@
   - write tests for TodoApp service as well as todoapp2 service and compare them and see that both are working
     - [✅] test FC via inject
     - FC via useService
-  - maybe the valtio version of useService is broken? 
+  - maybe the valtio version of useService is broken?
 
-- [valtio](https://www.npmjs.com/package/valtio) 
+- [valtio](https://www.npmjs.com/package/valtio)
 - https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx
 
 - **FIXME** [proxy and state need to be managed properly](https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx#using-class)
+  - we have it as far as that most of todo app is working but still the TodoStats are only handles after a todo was added
+  - handler e.g. click handler dont seem to trigger state update which makes sense but forces us to maybe still use the second proxy from useSnapshot
 - mobx as alternative requires to wrap the fc in observer() then could work
--  
 
+- **FIXME** or rather a note atm, destructuring is reactive setting props directly in a service is not due to reasons
+  - we might be able to add a compile step later that utilized destructuring and thus triggers this automatically
+  - but first try to live with that and find out why
 
+```
+  setFilter(status: "all" | "active" | "completed"): void {
+    // Note: by destructuring we seem to trigger reactivity via the proxy
+    this.state.filter = { ...this.state.filter, status };
+    // this.state.filter.status = status;
+  }
+```
 
 ### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
