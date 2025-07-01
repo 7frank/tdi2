@@ -12,6 +12,7 @@
   - write tests for TodoApp service as well as todoapp2 service and compare them and see that both are working
     - [✅] test FC via inject
     - FC via useService
+  - maybe the valtio version of useService is broken? 
 
 ### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
