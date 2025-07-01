@@ -4,7 +4,9 @@
 
 ### [❌] add valtio to useService hook to potentially truly make this approach unique
 
-- find out if the useServicce code works and if todoapp is broken
+- find out if the useService code works and if todoapp is broken
+- proxy class directly for performance reasons
+  - dont do `[instance]=useState(proxy()) ; service=useSnapshot(instance)` which wil lgenerate a proxy per DI reference
 
 ### [❌] FIXME after hot reloading most of the service are no longer avail `rm -rf node_modules/.vite/` && `npm run di:reset && npm run dev` circumbvents this
 
@@ -90,6 +92,17 @@ List of Things Belonging in CLAUDE.md:
     Slash‑command references
 
     Where to store logs or generated artifacts
+
+### [❌] [out-of-scope] Immutability
+
+https://github.com/aleclarson/valtio-kit
+
+### [❌] [out-of-scope] ast plugin to search for valtios useSnapshot and optimize re-renders
+
+- currently injection a service and using valtio, will re-render components fully each time one property of the state changes
+- This is definitely out of scope until the core api is stable and proved a decent adoption if any
+- This plugin also could be a standalone and would not necessarily have to be coupled to our code base
+- this compile step would leave us mostly with what svelte does (maybe still more effective)
 
 ## Done
 
