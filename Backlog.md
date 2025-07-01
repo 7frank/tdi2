@@ -31,6 +31,8 @@ e.g.:
 1 TodoService implements TodoServiceInterface
 2 TodoService implements TodoServiceType
 
+### [❌] FIXME could not fast refrest useDi export incoopatible
+
 ### [❌] compile to npm package and publish
 
 ### [❌] Profile decorator and marker
