@@ -3,11 +3,11 @@ import type {
   Todo,
   CreateTodoRequest,
   UpdateTodoRequest,
-  TodoRepositoryInterface,
+  TodoRepositoryInterface2,
 } from "./types";
 
 @Service()
-export class TodoRepository implements TodoRepositoryInterface {
+export class TodoRepository implements TodoRepositoryInterface2 {
   private storageKey = "tdi2-todos";
 
   async getAll(): Promise<Todo[]> {

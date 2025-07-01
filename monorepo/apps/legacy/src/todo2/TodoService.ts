@@ -6,7 +6,7 @@ import type {
     CreateTodoRequest,
     UpdateTodoRequest,
     TodoServiceInterface,
-    TodoRepositoryInterface,
+    TodoRepositoryInterface2,
     NotificationServiceInterface
 } from './types';
 
@@ -27,7 +27,7 @@ export class TodoService2 implements TodoServiceInterface {
   };
 
   constructor(
-    @Inject() private todoRepository: TodoRepositoryInterface,
+    @Inject() private todoRepository: TodoRepositoryInterface2,
     @Inject() private notificationService: NotificationServiceInterface
   ) {
     this.loadTodos();

@@ -81,7 +81,7 @@ export interface AppStateServiceInterface {
 }
 
 // Repository Interface
-export interface TodoRepositoryInterface {
+export interface TodoRepositoryInterface2 {
   getAll(): Promise<Todo[]>;
   create(request: CreateTodoRequest): Promise<Todo>;
   update(request: UpdateTodoRequest): Promise<Todo>;
