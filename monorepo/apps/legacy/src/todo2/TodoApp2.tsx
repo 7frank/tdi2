@@ -7,6 +7,8 @@ import type {
   Todo,
 } from "./types";
 
+import { useSnapshot } from "valtio";
+
 import "./styles.css";
 
 // ===== ROOT APP COMPONENT - ZERO PROPS =====
@@ -162,9 +164,9 @@ interface TodoFiltersProps {
 
 function TodoFilters(props: TodoFiltersProps) {
   const {
-    services: { todoService },
+    services: {  todoService },
   } = props;
-
+todoService=useSnapshot(todoService)
   const filter = todoService.state.filter;
 
   return (
@@ -215,7 +217,7 @@ function TodoStats(props: TodoStatsProps) {
   } = props;
 
   const stats = todoService.state.stats;
-
+console.log("TodoStats", stats);
   return (
     <div className="todo-stats">
       <span className="stat">Total: {stats.total}</span>
