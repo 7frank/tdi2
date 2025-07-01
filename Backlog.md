@@ -8,9 +8,7 @@
 - proxy class directly for performance reasons
   - dont do `[instance]=useState(proxy()) ; service=useSnapshot(instance)` which wil lgenerate a proxy per DI reference
 
-### [❌] FIXME
-
-// FIXME this structure requires a test and a fix as it is not properly transformed
+### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
 ```typescript
 interface AppProps {
@@ -25,6 +23,13 @@ export function TodoApp2({
   services: { todoService, appState, notifications },
 }: AppProps) {}
 ```
+
+### [❌] FIXME having two different classes of the same name will one not be resolved properly
+
+e.g.:
+
+1 TodoService implements TodoServiceInterface
+2 TodoService implements TodoServiceType
 
 ### [❌] compile to npm package and publish
 
