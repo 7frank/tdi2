@@ -166,7 +166,7 @@ function TodoFilters(props: TodoFiltersProps) {
   const {
     services: {  todoService },
   } = props;
-todoService=useSnapshot(todoService)
+
   const filter = todoService.state.filter;
 
   return (

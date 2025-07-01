@@ -14,6 +14,15 @@
     - FC via useService
   - maybe the valtio version of useService is broken? 
 
+- [valtio](https://www.npmjs.com/package/valtio) 
+- https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx
+
+- **FIXME** [proxy and state need to be managed properly](https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx#using-class)
+- mobx as alternative requires to wrap the fc in observer() then could work
+-  
+
+
+
 ### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
 ```typescript
