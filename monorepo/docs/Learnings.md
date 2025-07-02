@@ -1,4 +1,4 @@
-## Learnings
+# Learnings Claude.AI
 
 ## Vibe Coding
 
@@ -38,6 +38,8 @@
 - use offtime for strategic planning
   - or if you feel lucky clean up your code base
 
+- if you have the feeling that the context gets to small for the next question decide to cut it and start a new chat
+
 ## clean up
 
 - claud generates a lot of noice
@@ -54,3 +56,29 @@
 - commit often
 - feature branch often
 - revert if necessary
+
+## knowledge
+
+- you need to know how to fix things
+  - sometines the last 2 lines are missing after 10 minutes of generting code
+  - sometimes a keyword is a reserved word
+
+- continue, continue, ...
+- know SOLID
+  - know how to separate concerns
+  - separate functional units
+
+- when you think you are in a dead end
+  - stash / clean and retry ai generating wirth a slightly different prompt
+- year 2000 you are a computer science person => you can google better than others
+- year 2012 you are a computer science person => you can google "stackoverflow"
+- year 2035 you are a computer science person => you can write short ticket descriptions that are now no longer handled by the team but your bot
+
+## quirks
+
+- sometimes after hitting "continue" the code is fragmented
+  - you either can see the section that does ahve to be moved
+  - or if you still ahve context length available you "recreate artifact name"
+- if your implementation was generated decently and the last test is broken because of quota
+  - try to remove the last test and fix the file / some tests are better than none
+  - create a new chat and tell the bot with the requirements from the last chat to implement the missing tests 
