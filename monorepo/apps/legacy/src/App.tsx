@@ -9,8 +9,6 @@ import {
   DataList,
   UserProfile,
 } from "./components/EnhancedFunctionalComponent";
-import { ExampleUseAsyncChain } from "./experimental-utils/async/ExampleUseAsyncChain";
-import { TodoApp } from "./todo/components/TodoApp";
 import { TodoApp2 } from "./todo2/TodoApp2";
 import DIDependencyViewer from "./components/di-dependency-viewer/DIDependencyViewer";
 
@@ -172,19 +170,7 @@ function Homepage() {
               Automatic retransformation during development
             </p>
           </div>
-          <div
-            style={{
-              padding: "12px",
-              backgroundColor: "white",
-              borderRadius: "6px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            }}
-          >
-            <strong>💾 Persistence</strong>
-            <p style={{ fontSize: "14px", color: "#666", margin: "8px 0 0 0" }}>
-              IndexedDB integration with caching layer
-            </p>
-          </div>
+         
           <div
             style={{
               padding: "12px",
@@ -195,7 +181,7 @@ function Homepage() {
           >
             <strong>🌊 Reactive State</strong>
             <p style={{ fontSize: "14px", color: "#666", margin: "8px 0 0 0" }}>
-              AsyncState pattern for reactive UIs
+              Using valtio internally for reactive UIs
             </p>
           </div>
         </div>

@@ -58,11 +58,17 @@ export function TodoApp2({
   - there is this makeAutoObservable which we might be able to inject into the class constructor of new "@Service" annotated classes at compile time
   - there also is the Observer FC that we need to inject into FC that use "Inject" - Marker for observablility to work
 
-### clean up & remove
+### [❌] clean up & remove
 
-- useObservableState and its usage
-- AsyncState
-- useAsyncServiceInterface
+- [✅] useObservableState and its usage
+
+- [✅] useAsyncServiceInterface
+- [❌] remove AsyncState special cases, or fix them in di-core, they where never meant to be this specific in the first place
+- [❌] fix or remove debug endpoints
+  - http://localhost:5173/\_di_debug
+  - http://localhost:5173/\_di_interfaces
+  - http://localhost:5173/\_di_configs"
+  - if removed, remove middleware endpoints too
 
 ### [❌] create do's and don't for valtio proxies / document quirks
 
