@@ -19,3 +19,6 @@
 - [Impact?](./monorepo/docs/Impact.md)
   - [❌] highly overselling / too confident
   - [❌] needs redaction
+
+- [Comparison](./monorepo/docs/React%20Service%20Injection%20vs%20Traditional%20State%20Management.md)
+  - [❌] needs redaction

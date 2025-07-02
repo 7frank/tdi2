@@ -5,8 +5,7 @@
 ### DI bugs & side effects
 
 #### extract shared logic from di-core tools for class and FC Inject
-
-✅ Complete Interface Variant Support
+#### ✅ Complete Interface Variant Support
 
 > make sure that Inject marker and decorator approachvariants work there are some already implemented. The generic interface i think is implemented too specific with "AsyncState". maybe ts-morph has a method that takes the AST "implements FOOO" and calls a method "implementsToString(astSnippet)"
 
@@ -93,6 +92,10 @@ Uses ts-morph AST methods instead of hardcoded "AsyncState" logic
 classDecl.getImplements() instead of string parsing
 heritage.getTypeNodes() for proper AST traversal
 Handles complex nested generics correctly
+
+
+also for the @Service decorator as well as the Inject<T> marker make sure that you use the AST after you found a string of that value that you make sure in the AST that the marker/decorator comes from @tdi2/di-core , resolve the full file name the decorator /marker is from and make the comparison configurable like an array so that if i change the package name or move the file i only have to change the value in the array diTypesLocatation["@tdi2/di-core/.../decoratorfile","...nmarkerlocation*.*"]  ) so that we not only watch for a string
+
 
 #### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
