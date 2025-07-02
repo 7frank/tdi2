@@ -6,9 +6,24 @@
 
 #### extract shared logic from di-core tools for class and FC Inject
 
-- https://claude.ai/chat/d2a54fb0-89a7-4f83-a655-80007e9daa24 initial 
+- https://claude.ai/chat/d2a54fb0-89a7-4f83-a655-80007e9daa24 initial
 - https://claude.ai/chat/abacaacf-3869-491f-bd0b-4200cd9744c1 but did not have shared type pushed
 
+> rather separate this type: 'class-injection' | 'function-hooks'; into twoo subcvlasses if they share lots of logic besides generateInjection which should be in each subclass? if im not mistaken. also make shure that the interfaces variants work so Foointerface<Bar,Baz,..> and FOOInterface, as well as no implements, there are some already implemented. the generic interface i think is implemented too specific with "AsyncState" if im not mistaken . maybe ts-morph has a method that takes the AST "implements FOOO" and calls a method "implementsToString(astSnippet)".. create an ordered plan for refactoring that i can follow. skip the details well come to them
+
+✅ Complete Interface Variant Support
+
+FooInterface<Bar,Baz,..> ← Generic with multiple type params
+FooInterface ← Simple interface
+extends BaseClass<T> ← Inheritance-based
+No implements ← Standalone services
+Uses ts-morph AST methods instead of hardcoded "AsyncState" logic
+
+✅ AST-Driven Approach
+
+classDecl.getImplements() instead of string parsing
+heritage.getTypeNodes() for proper AST traversal
+Handles complex nested generics correctly
 
 #### [❌] FIXME TodoApp TodoService2 isnt properly injected
 

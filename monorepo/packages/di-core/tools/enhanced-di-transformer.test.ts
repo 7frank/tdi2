@@ -309,14 +309,16 @@ describe("EnhancedDITransformer", () => {
           enableInterfaceResolution: false,
         });
 
-        // FIXED: Mock the interfaceResolver to simulate the check
+        // FIXED: Mock the interfaceResolver to simulate the check with all required methods
         (tokenTransformer as any).interfaceResolver = {
           scanProject: jest.fn().mockResolvedValue(undefined),
           validateDependencies: jest.fn().mockReturnValue({
             isValid: false,
             missingImplementations: [],
             circularDependencies: []
-          })
+          }),
+          getInterfaceImplementations: jest.fn().mockReturnValue(new Map()),
+          getServiceDependencies: jest.fn().mockReturnValue(new Map())
         };
 
         // Mock other required methods to prevent actual execution
@@ -356,8 +358,12 @@ describe("EnhancedDITransformer", () => {
         // Given
         // Mock the interfaceResolver methods to return expected data
         (transformer as any).interfaceResolver = {
-          getInterfaceImplementations: jest.fn().mockReturnValue(new Map()),
-          getServiceDependencies: jest.fn().mockReturnValue(new Map()),
+          getInterfaceImplementations: jest.fn().mockReturnValue(new Map([
+            ["TestInterface", { interfaceName: "TestInterface", implementationClass: "TestService" }]
+          ])),
+          getServiceDependencies: jest.fn().mockReturnValue(new Map([
+            ["TestService", { serviceClass: "TestService", constructorParams: [] }]
+          ])),
           validateDependencies: jest.fn().mockReturnValue({
             isValid: true,
             missingImplementations: [],
@@ -368,6 +374,9 @@ describe("EnhancedDITransformer", () => {
         // Mock serviceRegistry methods
         (transformer as any).serviceRegistry = {
           validateRegistry: jest.fn().mockReturnValue({
+            isValid: true,
+            errors: [],
+            warnings: [],
             stats: { totalServices: 0 }
           }),
           getConfiguration: jest.fn().mockReturnValue({
@@ -397,14 +406,23 @@ describe("EnhancedDITransformer", () => {
             isValid: true,
             missingImplementations: [],
             circularDependencies: []
-          })
+          }),
+          getInterfaceImplementations: jest.fn().mockReturnValue(new Map()),
+          getServiceDependencies: jest.fn().mockReturnValue(new Map())
         };
 
         (transformer as any).serviceRegistry = {
           validateRegistry: jest.fn().mockReturnValue({
             isValid: true,
             errors: [],
-            warnings: []
+            warnings: [],
+            stats: { totalServices: 0 }
+          }),
+          getConfiguration: jest.fn().mockReturnValue({
+            services: new Map(),
+            interfaceMapping: new Map(),
+            classMapping: new Map(),
+            dependencyGraph: new Map()
           })
         };
 
@@ -425,7 +443,12 @@ describe("EnhancedDITransformer", () => {
           ])),
           getServiceDependencies: jest.fn().mockReturnValue(new Map([
             ["TestService", { serviceClass: "TestService", constructorParams: [] }]
-          ]))
+          ])),
+          validateDependencies: jest.fn().mockReturnValue({
+            isValid: true,
+            missingImplementations: [],
+            circularDependencies: []
+          })
         };
 
         // When
@@ -466,6 +489,7 @@ describe("EnhancedDITransformer", () => {
         // Then
         expect(debugInfo).toBeDefined();
         expect(debugInfo.error).toBeDefined();
+        expect(debugInfo.configHash).toBe("test-hash-456");
       });
 
       it("When save fails, Then should throw appropriate error", async () => {
