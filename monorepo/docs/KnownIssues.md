@@ -1,0 +1,3 @@
+- di detection is buggy, not all type and interafce syntax are supported and wil lcreate hard to debug errors
+- valtios reactive state is currently not fully implemented, thus reactivity not alawys fully working
+- lots of cluttered code
