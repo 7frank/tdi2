@@ -91,9 +91,11 @@ const state = proxy(serviceInstance);
 const snap = useSnapshot(state);
 ```
 
+di-core tests generate transformed files in the wrong directory "../../"
+
 ### [❌] hack the stack for console to get proper line numbers when logging error and so on not the monkey patched
 
-### [❌] ervaluate framework
+### [❌] evaluate framework
 
 [EvaluationPlan](./monorepo/docs/EvaluationPlan.md)
 
