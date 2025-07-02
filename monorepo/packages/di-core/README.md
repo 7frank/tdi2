@@ -18,3 +18,6 @@ npm install @tdi2/di-core
 import { TDI2_VERSION } from '@tdi2/di-core';
 console.log(TDI2_VERSION);
 ```
+
+
+run `bun .cli.ts`

@@ -1,3 +1,4 @@
 node_modules/
 monorepo/tmp.sh
 *.di-transformed.tsx
+.tdi2/

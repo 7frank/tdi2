@@ -58,6 +58,8 @@ export function TodoApp2({
 
 ### [❌] test mobx in favor of valtio
 
+> maybe the opproblem with valtio is more a hot reloading problem than actually valtios fault
+
 - https://www.npmjs.com/package/mobx-react-lite
 - valtio needs a "proxy" state and a "snap" for reactivity
 - mobx might be able to only use one "state-proxy"
