@@ -50,6 +50,20 @@ export function TodoApp2({
 
 ### [❌] Lazy decorator and marker
 
+### [❌] test mobx in favor of valtio
+
+- https://www.npmjs.com/package/mobx-react-lite
+- valtio needs a "proxy" state and a "snap" for reactivity
+- mobx might be able to only use one "state-proxy"
+  - there is this makeAutoObservable which we might be able to inject into the class constructor of new "@Service" annotated classes at compile time
+  - there also is the Observer FC that we need to inject into FC that use "Inject" - Marker for observablility to work
+
+### clean up & remove
+
+- useObservableState and its usage
+- AsyncState
+- useAsyncServiceInterface
+
 ### [❌] create do's and don't for valtio proxies / document quirks
 
 - or rather a note atm, destructuring is reactive setting props directly in a service is not due to reasons

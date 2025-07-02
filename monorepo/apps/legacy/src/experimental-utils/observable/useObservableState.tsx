@@ -34,7 +34,10 @@ abstract class ObservableState<T> {
   }
 }
 
-// Enhanced Async State Management with interface support
+/**
+ * Enhanced Async State Management with interface support
+ * @deprecated Use useSnapshot instead.
+ */
 type AsyncData<T> = {
   data?: T;
   error?: Error;
@@ -46,7 +49,12 @@ type AsyncData<T> = {
   operationCount: number;
 };
 
-// Enhanced AsyncState class that can be used as a base for interface implementations
+/**
+ *
+ * Enhanced AsyncState class that can be used as a base for interface implementations
+ *
+ * @deprecated Use useSnapshot instead.
+ */
 export abstract class AsyncState<TState> extends ObservableState<
   AsyncData<TState>
 > {
@@ -167,7 +175,12 @@ export abstract class AsyncState<TState> extends ObservableState<
   }
 }
 
-// Enhanced React Hook for Observable State with better type support
+/**
+ * Enhanced React Hook for Observable State with better type support
+ * @deprecated In favor of valtio's useSnapshot.
+ * @param observable
+ * @returns
+ */
 export function useObservableState<T>(observable: ObservableState<T>): T & {
   refresh: () => void;
   isStale: boolean;
@@ -203,25 +216,12 @@ export function useObservableState<T>(observable: ObservableState<T>): T & {
   } as T & { refresh: () => void; isStale: boolean };
 }
 
-// Enhanced hook specifically for AsyncState services with interface support
-export function useAsyncState<TState>(
-  service: AsyncState<TState>
-): AsyncData<TState> & {
-  refresh: () => void;
-  isStale: boolean;
-  reset: () => void;
-  service: AsyncState<TState>;
-} {
-  const state = useObservableState(service);
-
-  return {
-    ...state,
-    reset: () => service.reset(),
-    service: service,
-  };
-}
-
-// Enhanced hook for interface-based async services
+/**
+ * Enhanced hook for interface-based async services
+ * @deprecated Use useSnapshot instead.
+ * @param service
+ * @returns
+ */
 export function useAsyncServiceInterface<TInterface extends AsyncState<any>>(
   service: TInterface
 ): AsyncData<ExtractAsyncStateType<TInterface>> & {
@@ -239,56 +239,9 @@ export function useAsyncServiceInterface<TInterface extends AsyncState<any>>(
   };
 }
 
-// Hook for managing multiple async states with interface support
-export function useMultipleAsyncStates<
-  T extends Record<string, AsyncState<any>>
->(
-  services: T
-): {
-  [K in keyof T]: T[K] extends AsyncState<infer TState>
-    ? AsyncData<TState> & { refresh: () => void; isStale: boolean }
-    : never;
-} & {
-  isAnyLoading: boolean;
-  hasAnyError: boolean;
-  allSuccessful: boolean;
-  resetAll: () => void;
-} {
-  const states = {} as any;
-  let isAnyLoading = false;
-  let hasAnyError = false;
-  let allSuccessful = true;
-
-  // Subscribe to all services
-  for (const [key, service] of Object.entries(services)) {
-    const state = useObservableState(service);
-    states[key] = {
-      ...state,
-      reset: () => (service as any).reset(),
-    };
-
-    if (state.isLoading) isAnyLoading = true;
-    if (state.isError) hasAnyError = true;
-    if (!state.isSuccess) allSuccessful = false;
-  }
-
-  const resetAll = () => {
-    Object.values(services).forEach((service) => (service as any).reset());
-  };
-
-  return {
-    ...states,
-    isAnyLoading,
-    hasAnyError,
-    allSuccessful,
-    resetAll,
-  };
-}
-
 // Utility type for extracting state type from AsyncState services
-export type ExtractAsyncStateType<T> = T extends AsyncState<infer TState>
-  ? TState
-  : never;
+export type ExtractAsyncStateType<T> =
+  T extends AsyncState<infer TState> ? TState : never;
 
 // Utility type for extracting the complete interface from a service type
 export type ExtractServiceInterface<T> = T extends AsyncState<any> ? T : never;
@@ -302,7 +255,7 @@ export abstract class AsyncStateService<TState> extends AsyncState<TState> {
 // Type helper for creating typed async state services with interfaces
 export type TypedAsyncStateService<
   TState,
-  TInterface = {}
+  TInterface = {},
 > = AsyncState<TState> & TInterface;
 
 // Interface-based service factory (for advanced use cases)
