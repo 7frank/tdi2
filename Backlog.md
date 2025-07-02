@@ -65,6 +65,8 @@ e.g.:
 
 ### [❌] Lazy decorator and marker
 
+### [❌] service implements multiple interfaces
+
 ### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (nject<AsyncState<{ name: string; email: string }>>;)
 
 ### [❌] hack the stack for console to get proper line numbers when logging error and so on not the monkey patched
