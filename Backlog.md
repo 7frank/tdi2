@@ -7,7 +7,7 @@
 #### extract shared logic from di-core tools for class and FC Inject
 #### ✅ Complete Interface Variant Support
 
-> make sure that Inject marker and decorator approachvariants work there are some already implemented. The generic interface i think is implemented too specific with "AsyncState". maybe ts-morph has a method that takes the AST "implements FOOO" and calls a method "implementsToString(astSnippet)"
+> make sure that Inject marker and decorator approach variants work there are some already implemented. The generic interface i think is implemented too specific with "AsyncState". maybe ts-morph has a method that takes the AST "implements FOOO" and calls a method "implementsToString(astSnippet)"
 
 Here is an exhaustive list of what kind the DI decorator @Service and and react marker Inject<T> should work with and enable DI properly
 
@@ -97,6 +97,9 @@ Handles complex nested generics correctly
 also for the @Service decorator as well as the Inject<T> marker make sure that you use the AST after you found a string of that value that you make sure in the AST that the marker/decorator comes from @tdi2/di-core , resolve the full file name the decorator /marker is from and make the comparison configurable like an array so that if i change the package name or move the file i only have to change the value in the array diTypesLocatation["@tdi2/di-core/.../decoratorfile","...nmarkerlocation*.*"]  ) so that we not only watch for a string
 
 
+split existing tests for decorators and markers 9n separate files, while at it externalize the fixtures into separate files ./fixtures/<name of approach>.ts.txt
+if test fit in one of the categoriy merge decide which test would be best and keep that
+
 #### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
 - it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them
@@ -118,6 +121,8 @@ e.g.:
 - if say we have two "implements UserRepoInterface"
 
 #### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
+
+- 
 
 ### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
