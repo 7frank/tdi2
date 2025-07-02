@@ -312,6 +312,21 @@ describe("FunctionalDIEnhancedTransformer", () => {
           sanitizedKey: 'LoggerInterface',
         }],
       ])),
+      // FIXED: Add the missing getServiceDependencies method
+      getServiceDependencies: mock(() => new Map([
+        ['ExampleApiService', {
+          serviceClass: 'ExampleApiService',
+          interfaceDependencies: [],
+          filePath: '/src/services/ExampleApiService.ts',
+          constructorParams: []
+        }],
+        ['ConsoleLogger', {
+          serviceClass: 'ConsoleLogger',
+          interfaceDependencies: [],
+          filePath: '/src/services/ConsoleLogger.ts',
+          constructorParams: []
+        }],
+      ])),
     };
 
     (transformer as any).interfaceResolver = mockInterfaceResolver;
