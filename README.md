@@ -1,3 +1,5 @@
+# TDI2 - React Service Injection Framework
+
 - [WHAT?](./monorepo/docs/Teaser.md)
   - [✅] focusing on the gist
 
@@ -7,7 +9,7 @@
   - [❌] highly overselling / too confident
   - [❌] needs redaction
 - [DI](./monorepo/docs/Whitepaper.md)
-  - [✅] explains the basis and first important step for the react funktionlality
+  - [✅] explains the basis and first important step for the react functionality
   - [❌] needs redaction
 - [React-DI](./monorepo/docs/React-Whitepaper.md)
   - [✅] the core innovation in detail
@@ -16,5 +18,4 @@
 - [Example](./monorepo/docs/React-Example.md)
   - [❌] ensure this is still correct
 
-- [KnownIssues](./monorepo/docs/KnownIssues.md)  
-
+- [KnownIssues](./monorepo/docs/KnownIssues.md)
