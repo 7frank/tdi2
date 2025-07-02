@@ -6,17 +6,86 @@
 
 #### extract shared logic from di-core tools for class and FC Inject
 
-- https://claude.ai/chat/d2a54fb0-89a7-4f83-a655-80007e9daa24 initial
-- https://claude.ai/chat/abacaacf-3869-491f-bd0b-4200cd9744c1 but did not have shared type pushed
-
-> rather separate this type: 'class-injection' | 'function-hooks'; into twoo subcvlasses if they share lots of logic besides generateInjection which should be in each subclass? if im not mistaken. also make shure that the interfaces variants work so Foointerface<Bar,Baz,..> and FOOInterface, as well as no implements, there are some already implemented. the generic interface i think is implemented too specific with "AsyncState" if im not mistaken . maybe ts-morph has a method that takes the AST "implements FOOO" and calls a method "implementsToString(astSnippet)".. create an ordered plan for refactoring that i can follow. skip the details well come to them
-
 ✅ Complete Interface Variant Support
 
-FooInterface<Bar,Baz,..> ← Generic with multiple type params
-FooInterface ← Simple interface
-extends BaseClass<T> ← Inheritance-based
-No implements ← Standalone services
+> make sure that Inject marker and decorator approachvariants work there are some already implemented. The generic interface i think is implemented too specific with "AsyncState". maybe ts-morph has a method that takes the AST "implements FOOO" and calls a method "implementsToString(astSnippet)"
+
+Here is an exhaustive list of what kind the DI decorator @Service and and react marker Inject<T> should work with and enable DI properly
+
+Inject<T> marker and class X implements|extends classOrInterface decorator
+
+```typescript
+// Standalone class
+@Service()
+class StandaloneService {}
+
+// Implements simple interface
+@Service()
+class SimpleInterfaceService implements FooInterface {}
+
+// Implements generic interface
+@Service()
+class GenericInterfaceService implements FooInterface<A, B> {}
+
+// Extends base class
+@Service()
+class BaseClassService extends BaseClass {}
+
+// Extends generic base class
+@Service()
+class GenericBaseClassService extends BaseClass<A, B> {}
+
+// Implements and extends
+@Service()
+class ImplementsAndExtendsService
+  extends BaseClass<A>
+  implements FooInterface<B> {}
+
+// Implements multiple interfaces
+@Service()
+class MultiInterfaceService implements FooInterface, BarInterface {}
+
+// Implements interface with nested generics
+@Service()
+class NestedGenericInterfaceService implements FooInterface<Bar<Baz<C>>> {}
+```
+
+```typescript
+// Single service injection via props (function)
+function Component(props: { service: Inject<FooInterface> }) {
+  const { service } = props;
+  return <div />;
+}
+
+// Single service injection via props (arrow function)
+const Component = (props: { service: Inject<FooInterface<A, B>> }) => {
+  const { service } = props;
+  return <div />;
+}
+
+// Destructured single service directly in parameter
+const Component = ({ service }: { service: Inject<FooInterface> }) => {
+  return <div />;
+}
+
+// Multiple services via nested object
+function Component(props: { services: { foo: Inject<FooInterface>, bar: Inject<BarInterface> } }) {
+  const { services: { foo, bar } } = props;
+  return <div />;
+}
+
+// Multiple services with generics
+const Component = ({ services }: { services: { foo: Inject<FooInterface<A>>, bar: Inject<BarInterface<B>> } }) => {
+  return <div />;
+}
+
+// Nested generic injection
+const Component = ({ service }: { service: Inject<FooInterface<Bar<Baz>>> }) => {
+  return <div />;
+}
+
+```
+
 Uses ts-morph AST methods instead of hardcoded "AsyncState" logic
 
 ✅ AST-Driven Approach
