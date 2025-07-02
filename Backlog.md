@@ -2,37 +2,29 @@
 
 ## ordered log
 
-### [❌] add valtio to useService hook to potentially truly make this approach unique
+### DI bugs & side effects
 
-- find out if the useService code works and if todoapp is broken
-- proxy class directly for performance reasons
-  - dont do `[instance]=useState(proxy()) ; service=useSnapshot(instance)` which wil lgenerate a proxy per DI reference
+#### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
-- [❌] FIXME TodoApp TodoService2 isnt properly injected
-  - write tests for TodoApp service as well as todoapp2 service and compare them and see that both are working
-    - [✅] test FC via inject
-    - FC via useService
-  - maybe the valtio version of useService is broken?
+- it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them
 
-- [valtio](https://www.npmjs.com/package/valtio)
-- https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx
+#### [❌] FIXME having two different classes of the same name will one not be resolved properly
 
-- **FIXME** [proxy and state need to be managed properly](https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx#using-class)
-  - we have it as far as that most of todo app is working but still the TodoStats are only handles after a todo was added
-  - handler e.g. click handler dont seem to trigger state update which makes sense but forces us to maybe still use the second proxy from useSnapshot
-- mobx as alternative requires to wrap the fc in observer() then could work
+e.g.:
 
-- **FIXME** or rather a note atm, destructuring is reactive setting props directly in a service is not due to reasons
-  - we might be able to add a compile step later that utilized destructuring and thus triggers this automatically
-  - but first try to live with that and find out why
+1 TodoService implements TodoServiceInterface
+2 TodoService implements TodoServiceType
 
-```
-  setFilter(status: "all" | "active" | "completed"): void {
-    // Note: by destructuring we seem to trigger reactivity via the proxy
-    this.state.filter = { ...this.state.filter, status };
-    // this.state.filter.status = status;
-  }
-```
+#### [❌] FIXME duplicated keys see generated list of services
+
+- potential duplicate
+
+#### [❌] is DI scope using import path
+
+- potential duplicate
+- if say we have two "implements UserRepoInterface"
+
+#### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
 
 ### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
@@ -50,14 +42,7 @@ export function TodoApp2({
 }: AppProps) {}
 ```
 
-### [❌] FIXME having two different classes of the same name will one not be resolved properly
-
-e.g.:
-
-1 TodoService implements TodoServiceInterface
-2 TodoService implements TodoServiceType
-
-### [❌] FIXME could not fast refrest useDi export incoopatible
+### [❌] FIXME could not fast refrest useDi export incompatible
 
 ### [❌] compile to npm package and publish
 
@@ -65,19 +50,36 @@ e.g.:
 
 ### [❌] Lazy decorator and marker
 
-### [❌] service implements multiple interfaces
+### [❌] create do's and don't for valtio proxies / document quirks
 
-### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (nject<AsyncState<{ name: string; email: string }>>;)
+- or rather a note atm, destructuring is reactive setting props directly in a service is not due to reasons
+  - we might be able to add a compile step later that utilized destructuring and thus triggers this automatically
+
+```typescript
+  setFilter(status: "all" | "active" | "completed"): void {
+    // Note: by destructuring we seem to trigger reactivity via the proxy
+    this.state.filter = { ...this.state.filter, status };
+    // this.state.filter.status = status;
+  }
+```
+
+### [❌] explore implications of not using the value provided by useSnapshot in code
+
+```typescript
+serviceInstance=...
+const state = proxy(serviceInstance);
+const snap = useSnapshot(state);
+```
 
 ### [❌] hack the stack for console to get proper line numbers when logging error and so on not the monkey patched
 
-### [❌] FIXME duplicated keys see generated list of services
+### [❌] ervaluate framework
+
+[EvaluationPlan](./monorepo/docs/EvaluationPlan.md)
 
 ### [❌] article on dev.to with todoapp and core features
 
-### [❌] is DI scope using import path
-
-- if say we have two "implements UserRepoInterface"
+- use existing docs
 
 ### [❌] **fix test files** missing test file dependency-tree-builder-test.ts generate one
 
@@ -144,6 +146,17 @@ List of Things Belonging in CLAUDE.md:
 
     Where to store logs or generated artifacts
 
+### [❌] service should be able to "implements" multiple interfaces and Inject<I1,I2,I3>
+
+- check out how spring handles this, maybe easier as documentation artifact/recipe:
+
+```typescript
+ interface AllInterfaces extends Foo,Bar,Baz"
+
+ @Service()
+ class MyService implements AllInterfaces
+```
+
 ### [❌] [out-of-scope] Immutability
 
 https://github.com/aleclarson/valtio-kit
@@ -155,7 +168,18 @@ https://github.com/aleclarson/valtio-kit
 - This plugin also could be a standalone and would not necessarily have to be coupled to our code base
 - this compile step would leave us mostly with what svelte does (maybe still more effective)
 
+---
+
 ## Done
+
+### [✅] add valtio to useService hook to potentially truly make this approach unique
+
+- find out if the useService code works and if todoapp is broken
+- proxy class directly for performance reasons
+  - dont do `[instance]=useState(proxy()) ; service=useSnapshot(instance)` which wil lgenerate a proxy per DI reference
+
+- [valtio](https://www.npmjs.com/package/valtio)
+- https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx
 
 ### [✅] add react xyflow dependency view
 

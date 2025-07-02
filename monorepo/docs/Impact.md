@@ -69,14 +69,14 @@ function UserProfile() {
 
 ### 🏭 Disruption of Major Libraries and Patterns
 
-**Libraries That Become Obsolete:**
+**Libraries That Become Obsolete in certain scenarios:**
 
 - **Redux/Zustand/Recoil** → Replaced by reactive services
 - **React Query/SWR** → Data fetching moves to services
 - **Context API boilerplate** → Auto-injected services
 - **Custom hooks for state** → Service methods
 
-**Frameworks That Must Adapt:**
+**Frameworks That could Adapt:**
 
 - **Next.js/Remix** → Must integrate TDI2 compile-time transformation
 - **Component libraries** → Need to support service injection patterns
