@@ -6,6 +6,9 @@
 
 #### extract shared logic from di-core tools for class and FC Inject
 
+- https://claude.ai/chat/d2a54fb0-89a7-4f83-a655-80007e9daa24 initial 
+- https://claude.ai/chat/abacaacf-3869-491f-bd0b-4200cd9744c1 but did not have shared type pushed
+
 
 #### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
