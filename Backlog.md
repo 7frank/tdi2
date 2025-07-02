@@ -4,6 +4,9 @@
 
 ### DI bugs & side effects
 
+#### extract shared logic from di-core tools for class and FC Inject
+
+
 #### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
 - it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them
