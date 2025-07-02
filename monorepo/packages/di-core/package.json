@@ -25,12 +25,16 @@
   },
   "keywords": [
     "dependency-injection",
-    "typescript"
+    "typescript",
+    "react",
+    "valtio",
+    "proxy-state"
   ],
   "author": "TDI2 Team",
   "license": "MIT",
   "dependencies": {
-    "ts-morph": "^21.0.1"
+    "ts-morph": "^21.0.1",
+    "valtio": "^2.1.2"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -40,7 +44,8 @@
     "vite": "^6.3.5"
   },
   "peerDependencies": {
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "react": "^18.0.0 || ^19.0.0"
   },
   "engines": {
     "node": ">=18.0.0"

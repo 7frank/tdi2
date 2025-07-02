@@ -1,8 +1,9 @@
 // src/di/context.tsx - Enhanced with functional DI support
-import * as React from  "react";
+import * as React from "react";
 import { createContext, useContext, type ReactNode } from "react";
 import { type DIContainer } from "@tdi2/di-core/types";
 import { CompileTimeDIContainer } from "@tdi2/di-core/container";
+import { proxy, useSnapshot } from "valtio";
 
 const DIContext = createContext<DIContainer | null>(null);
 
@@ -30,11 +31,11 @@ export function useDI(): DIContainer {
 /**
  * Hook to resolve a service from the DI container
  */
-export function useService<T>(
-  token: string | symbol | (new (...args: any[]) => T)
-): T {
+export function useService(token: string | symbol) {
   const container = useDI();
-  return container.resolve<T>(token);
+  const [_] = React.useState(proxy(container.resolve(token)));
+  useSnapshot(_);
+  return _;
 }
 
 /**
