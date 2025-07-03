@@ -4,7 +4,7 @@
 
 ### [❌] DI bugs & side effects
 
-#### fix remaining tests for markers and decorators and actually replace the implementation in dev
+#### [ ] fix remaining tests for markers and decorators and actually replace the implementation in dev
 
 #### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
@@ -55,13 +55,17 @@ export function TodoApp2({
 
 ### [❌] Lazy decorator and marker
 
-### evaluate different pattern in combination or as alternative to valtio reactivity
+### [❌] evaluate different pattern in combination or as alternative to valtio reactivity
 
 - Valtio vs or instead of observable or either or a combination of them
   - reason: observerr pattern within the class services would be nice to have "subscribe.."
   - rxjs streams or ralway oriented style might be an improvement in readability and maintainability
     - **BUT** that should problably be more convention than core comile logic
   - https://chatgpt.com/share/6865b204-ac20-8009-87c3-9602fa61813f
+- an **extension** via additional plugin or and flag could be similar to svelte
+  - if service.observableVal => return <>{service.observableVal}</>
+  - then transform to foo=useSubscribe({service.observableVal}) return <>{foo}</>
+  - this would make classes more subscripotion/onChange friendly internally
 
 ### [❌] test mobx in favor of valtio
 
