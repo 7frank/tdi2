@@ -34,6 +34,9 @@ export function useDI(): DIContainer {
 export function useService(token: string | symbol) {
   const container = useDI();
   const [_] = React.useState(proxy(container.resolve(token)));
+  if (_ === undefined) {
+    throw new Error(`Service not found: ${String(token)}`);
+  }
   useSnapshot(_);
   return _;
 }

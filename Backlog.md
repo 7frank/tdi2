@@ -4,8 +4,6 @@
 
 ### [❌] DI bugs & side effects
 
-#### [ ] fix remaining tests for markers and decorators and actually replace the implementation in dev
-
 #### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
 - it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them
@@ -29,7 +27,10 @@ e.g.:
 
 #### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
 
--
+evaluate scenarios
+
+- to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
+- or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
 
 ### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
@@ -58,7 +59,7 @@ export function TodoApp2({
 ### [❌] evaluate different pattern in combination or as alternative to valtio reactivity
 
 - Valtio vs or instead of observable or either or a combination of them
-  - reason: observerr pattern within the class services would be nice to have "subscribe.."
+  - reason: observer pattern within the class services would be nice to have "subscribe.."
   - rxjs streams or ralway oriented style might be an improvement in readability and maintainability
     - **BUT** that should problably be more convention than core comile logic
   - https://chatgpt.com/share/6865b204-ac20-8009-87c3-9602fa61813f
@@ -76,6 +77,13 @@ export function TodoApp2({
 - mobx might be able to only use one "state-proxy"
   - there is this makeAutoObservable which we might be able to inject into the class constructor of new "@Service" annotated classes at compile time
   - there also is the Observer FC that we need to inject into FC that use "Inject" - Marker for observablility to work
+
+### [❌] cli
+
+- which implements "which implemetnation belongs to <interface> " search
+- use cas edriven more feature, goal reduce DI friction for DX
+
+"faster" what causes this? **and** alternative to dependency viewer
 
 ### [❌] clean up & remove
 
@@ -212,6 +220,8 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] fix remaining tests for markers and decorators and actually replace the implementation in dev
 
 ### [✅] extract shared logic from di-core tools for class and FC Inject
 
