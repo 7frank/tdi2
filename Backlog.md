@@ -99,6 +99,9 @@ also for the @Service decorator as well as the Inject<T> marker make sure that y
 split existing tests for decorators and markers 9n separate files, while at it externalize the fixtures into separate files ./fixtures/<name of approach>.ts.txt
 if test fit in one of the categoriy merge decide which test would be best and keep that
 
+continue here make new chat window and let claude generate the rest of the test file based on the fixtures missing
+https://claude.ai/chat/acf5b96b-c97b-4d10-9664-5885330dde07
+
 #### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
 - it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them
@@ -146,6 +149,14 @@ export function TodoApp2({
 ### [❌] Profile decorator and marker
 
 ### [❌] Lazy decorator and marker
+
+### evaluate different pattern in combination or as alternative to valtio reactivity
+
+- Valtio vs or instead of observable or either or a combination of them
+  - reason: observerr pattern within the class services would be nice to have "subscribe.."
+  - rxjs streams or ralway oriented style might be an improvement in readability and maintainability
+    - **BUT** that should problably be more convention than core comile logic
+  - https://chatgpt.com/share/6865b204-ac20-8009-87c3-9602fa61813f
 
 ### [❌] test mobx in favor of valtio
 

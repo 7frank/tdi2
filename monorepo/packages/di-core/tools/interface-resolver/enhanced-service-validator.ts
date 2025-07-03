@@ -1,13 +1,17 @@
-// tools/interface-resolver/enhanced-service-validator.ts - AST-driven decorator validation
+// tools/interface-resolver/enhanced-service-validator.ts - FIXED VERSION
 
 import {
   ClassDeclaration,
   ParameterDeclaration,
   Node,
   SourceFile,
-  ImportDeclaration
+  ImportDeclaration,
 } from "ts-morph";
-import { ServiceDependency, InterfaceImplementation, ValidationResult } from "./interface-resolver-types";
+import {
+  ServiceDependency,
+  InterfaceImplementation,
+  ValidationResult,
+} from "./interface-resolver-types";
 import type { DISourceConfiguration } from "./enhanced-interface-extractor";
 
 export class EnhancedServiceValidator {
@@ -23,21 +27,21 @@ export class EnhancedServiceValidator {
         "@tdi2/di-core/decorators",
         "@tdi2/di-core",
         "./decorators",
-        "../decorators"
+        "../decorators",
       ],
       markerSources: [
-        "@tdi2/di-core/markers", 
+        "@tdi2/di-core/markers",
         "@tdi2/di-core",
         "./markers",
-        "../markers"
+        "../markers",
       ],
       validateSources: true,
-      ...sourceConfig
+      ...sourceConfig,
     };
   }
 
   /**
-   * Check if a class has a valid service decorator with source validation
+   * Check if a class has a valid service decorator with source validation - FIXED
    */
   hasServiceDecorator(classDecl: ClassDeclaration): boolean {
     const sourceFile = classDecl.getSourceFile();
@@ -54,12 +58,16 @@ export class EnhancedServiceValidator {
           if (this.sourceConfig.validateSources) {
             if (this.validateDecoratorSource(decoratorName, sourceFile)) {
               if (this.verbose) {
-                console.log(`✅ Valid service decorator: @${decoratorName} in ${classDecl.getName()}`);
+                console.log(
+                  `✅ Valid service decorator: @${decoratorName} in ${classDecl.getName()}`
+                );
               }
               return true;
             } else {
               if (this.verbose) {
-                console.warn(`⚠️  Invalid source for @${decoratorName} in ${classDecl.getName()}`);
+                console.warn(
+                  `⚠️  Invalid source for @${decoratorName} in ${classDecl.getName()}`
+                );
               }
             }
           } else {
@@ -68,7 +76,10 @@ export class EnhancedServiceValidator {
         }
       } catch (error) {
         if (this.verbose) {
-          console.warn(`⚠️  Error processing decorator in ${classDecl.getName()}:`, error);
+          console.warn(
+            `⚠️  Error processing decorator in ${classDecl.getName()}:`,
+            error
+          );
         }
       }
     }
@@ -77,7 +88,7 @@ export class EnhancedServiceValidator {
   }
 
   /**
-   * Check if a parameter has a valid inject decorator with source validation
+   * Check if a parameter has a valid inject decorator with source validation - FIXED
    */
   hasInjectDecorator(param: ParameterDeclaration): boolean {
     const sourceFile = param.getSourceFile();
@@ -94,12 +105,16 @@ export class EnhancedServiceValidator {
           if (this.sourceConfig.validateSources) {
             if (this.validateDecoratorSource(decoratorName, sourceFile)) {
               if (this.verbose) {
-                console.log(`✅ Valid inject decorator: @${decoratorName} on parameter ${param.getName()}`);
+                console.log(
+                  `✅ Valid inject decorator: @${decoratorName} on parameter ${param.getName()}`
+                );
               }
               return true;
             } else {
               if (this.verbose) {
-                console.warn(`⚠️  Invalid source for @${decoratorName} on parameter ${param.getName()}`);
+                console.warn(
+                  `⚠️  Invalid source for @${decoratorName} on parameter ${param.getName()}`
+                );
               }
             }
           } else {
@@ -117,61 +132,33 @@ export class EnhancedServiceValidator {
   }
 
   /**
-   * Validate that a marker type comes from a valid DI source
-   */
-  validateMarkerTypeSource(markerType: string, sourceFile: SourceFile): boolean {
-    if (!this.sourceConfig.validateSources) {
-      return true;
-    }
-
-    try {
-      // Extract marker name (Inject, InjectOptional)
-      const markerMatch = markerType.match(/^(InjectOptional?)<.+>$/);
-      if (!markerMatch) return false;
-      
-      const markerName = markerMatch[1];
-      
-      // Check cache
-      const cacheKey = `${sourceFile.getFilePath()}:${markerName}:marker`;
-      if (this.validationCache.has(cacheKey)) {
-        return this.validationCache.get(cacheKey)!;
-      }
-
-      // Find import declaration
-      const imports = sourceFile.getImportDeclarations();
-      const isValid = this.isMarkerFromValidSource(markerName, imports);
-      
-      this.validationCache.set(cacheKey, isValid);
-      
-      if (this.verbose && !isValid) {
-        console.warn(`⚠️  Marker ${markerName} not from valid source in ${sourceFile.getBaseName()}`);
-      }
-      
-      return isValid;
-    } catch (error) {
-      if (this.verbose) {
-        console.warn(`⚠️  Failed to validate marker source:`, error);
-      }
-      return false;
-    }
-  }
-
-  /**
-   * Get decorator name from decorator node using AST
+   * Get decorator name from decorator node using AST - ENHANCED
    */
   private getDecoratorName(decorator: any): string | null {
     try {
       const expression = decorator.getExpression();
-      
+
       if (Node.isCallExpression(expression)) {
         // @Service() or @Inject('token')
         const expr = expression.getExpression();
-        return Node.isIdentifier(expr) ? expr.getText() : null;
+
+        // Handle namespace imports: @DI.Service()
+        if (Node.isPropertyAccessExpression(expr)) {
+          return expr.getName();
+        }
+
+        // Handle aliased imports: @DIService()
+        if (Node.isIdentifier(expr)) {
+          return expr.getText();
+        }
       } else if (Node.isIdentifier(expression)) {
         // @Service or @Inject
         return expression.getText();
+      } else if (Node.isPropertyAccessExpression(expression)) {
+        // @DI.Service
+        return expression.getName();
       }
-      
+
       return null;
     } catch (error) {
       return null;
@@ -179,42 +166,47 @@ export class EnhancedServiceValidator {
   }
 
   /**
-   * Validate decorator source using import analysis
+   * Validate decorator source using import analysis - ENHANCED
    */
-  private validateDecoratorSource(decoratorName: string, sourceFile: SourceFile): boolean {
+  private validateDecoratorSource(
+    decoratorName: string,
+    sourceFile: SourceFile
+  ): boolean {
     const cacheKey = `${sourceFile.getFilePath()}:${decoratorName}:decorator`;
-    
+
     if (this.validationCache.has(cacheKey)) {
       return this.validationCache.get(cacheKey)!;
     }
 
     const imports = sourceFile.getImportDeclarations();
     const isValid = this.isDecoratorFromValidSource(decoratorName, imports);
-    
+
     this.validationCache.set(cacheKey, isValid);
     return isValid;
   }
 
   /**
-   * Check if decorator is imported from valid source
+   * Check if decorator is imported from valid source - ENHANCED
    */
   private isDecoratorFromValidSource(
-    decoratorName: string, 
+    decoratorName: string,
     imports: ImportDeclaration[]
   ): boolean {
     for (const importDecl of imports) {
       const moduleSpecifier = importDecl.getModuleSpecifierValue();
-      
+
       // Check if import is from valid decorator source
-      if (!this.sourceConfig.decoratorSources.some(source => 
-        this.moduleMatchesSource(moduleSpecifier, source)
-      )) {
+      if (
+        !this.sourceConfig.decoratorSources.some((source) =>
+          this.moduleMatchesSource(moduleSpecifier, source)
+        )
+      ) {
         continue;
       }
 
       // Check if decorator is in named imports
       const namedImports = importDecl.getNamedImports();
-      if (namedImports.some(ni => ni.getName() === decoratorName)) {
+      if (namedImports.some((ni) => ni.getName() === decoratorName)) {
         return true;
       }
 
@@ -227,47 +219,17 @@ export class EnhancedServiceValidator {
       // Check namespace import (e.g., import * as DI from "@tdi2/di-core")
       const namespaceImport = importDecl.getNamespaceImport();
       if (namespaceImport) {
+        // For namespace imports, we need to check if the decorator was accessed via the namespace
+        // This is a simplified check - in practice, we'd need more sophisticated AST analysis
         return true; // Assume valid if imported via namespace
       }
-    }
 
-    return false;
-  }
-
-  /**
-   * Check if marker is imported from valid source
-   */
-  private isMarkerFromValidSource(
-    markerName: string, 
-    imports: ImportDeclaration[]
-  ): boolean {
-    for (const importDecl of imports) {
-      const moduleSpecifier = importDecl.getModuleSpecifierValue();
-      
-      // Check if import is from valid marker source
-      if (!this.sourceConfig.markerSources.some(source => 
-        this.moduleMatchesSource(moduleSpecifier, source)
-      )) {
-        continue;
-      }
-
-      // Check if marker is in named imports
-      const namedImports = importDecl.getNamedImports();
-      if (namedImports.some(ni => ni.getName() === markerName)) {
-        return true;
-      }
-
-      // Check if it's a type-only import
-      if (importDecl.isTypeOnly()) {
-        const typeImports = importDecl.getNamedImports();
-        if (typeImports.some(ni => ni.getName() === markerName)) {
-          return true;
-        }
-      }
-
-      // Check namespace import for type markers
-      const namespaceImport = importDecl.getNamespaceImport();
-      if (namespaceImport) {
+      // ENHANCED: Check for aliased imports (import { Service as DIService })
+      const aliasedImport = namedImports.find((ni) => {
+        const alias = ni.getAliasNode();
+        return alias && alias.getText() === decoratorName;
+      });
+      if (aliasedImport) {
         return true;
       }
     }
@@ -278,19 +240,22 @@ export class EnhancedServiceValidator {
   /**
    * Check if module specifier matches a source pattern
    */
-  private moduleMatchesSource(moduleSpecifier: string, source: string): boolean {
+  private moduleMatchesSource(
+    moduleSpecifier: string,
+    source: string
+  ): boolean {
     // Exact match
     if (moduleSpecifier === source) {
       return true;
     }
 
     // Starts with source (for sub-paths)
-    if (moduleSpecifier.startsWith(source + '/')) {
+    if (moduleSpecifier.startsWith(source + "/")) {
       return true;
     }
 
     // Relative path matches
-    if (source.startsWith('./') || source.startsWith('../')) {
+    if (source.startsWith("./") || source.startsWith("../")) {
       return moduleSpecifier === source;
     }
 
@@ -302,20 +267,20 @@ export class EnhancedServiceValidator {
    */
   private isServiceDecoratorName(decoratorName: string): boolean {
     const serviceDecorators = [
-      'Service',
-      'AutoWireService', 
-      'Component',
-      'Injectable',
-      'Repository',
-      'Controller',
-      'Provider',
-      'Singleton',
-      'Scoped',
-      'Transient'
+      "Service",
+      "AutoWireService",
+      "Component",
+      "Injectable",
+      "Repository",
+      "Controller",
+      "Provider",
+      "Singleton",
+      "Scoped",
+      "Transient",
     ];
-    
-    return serviceDecorators.some(name => 
-      decoratorName === name || decoratorName.includes(name)
+
+    return serviceDecorators.some(
+      (name) => decoratorName === name || decoratorName.includes(name)
     );
   }
 
@@ -324,17 +289,17 @@ export class EnhancedServiceValidator {
    */
   private isInjectDecoratorName(decoratorName: string): boolean {
     const injectDecorators = [
-      'Inject',
-      'AutoWireInject',
-      'Autowired',
-      'Dependency',
-      'Resource',
-      'Value',
-      'Qualifier'
+      "Inject",
+      "AutoWireInject",
+      "Autowired",
+      "Dependency",
+      "Resource",
+      "Value",
+      "Qualifier",
     ];
-    
-    return injectDecorators.some(name => 
-      decoratorName === name || decoratorName.includes(name)
+
+    return injectDecorators.some(
+      (name) => decoratorName === name || decoratorName.includes(name)
     );
   }
 
@@ -365,7 +330,10 @@ export class EnhancedServiceValidator {
     }
 
     // Check for circular dependencies
-    const circularDeps = this.findCircularDependencies(dependencies, interfaces);
+    const circularDeps = this.findCircularDependencies(
+      dependencies,
+      interfaces
+    );
     circular.push(...circularDeps);
 
     return {
@@ -433,51 +401,7 @@ export class EnhancedServiceValidator {
   }
 
   /**
-   * Update source configuration
-   */
-  updateSourceConfiguration(config: Partial<DISourceConfiguration>): void {
-    this.sourceConfig = { ...this.sourceConfig, ...config };
-    this.validationCache.clear(); // Clear cache when config changes
-  }
-
-  /**
-   * Get current source configuration
-   */
-  getSourceConfiguration(): DISourceConfiguration {
-    return { ...this.sourceConfig };
-  }
-
-  /**
-   * Clear validation cache
-   */
-  clearValidationCache(): void {
-    this.validationCache.clear();
-  }
-
-  /**
-   * Get validation statistics
-   */
-  getValidationStats(): {
-    cacheSize: number;
-    validatedDecorators: number;
-    validatedMarkers: number;
-    sourceValidationEnabled: boolean;
-  } {
-    const decoratorCount = Array.from(this.validationCache.keys())
-      .filter(key => key.includes(':decorator')).length;
-    const markerCount = Array.from(this.validationCache.keys())
-      .filter(key => key.includes(':marker')).length;
-
-    return {
-      cacheSize: this.validationCache.size,
-      validatedDecorators: decoratorCount,
-      validatedMarkers: markerCount,
-      sourceValidationEnabled: this.sourceConfig.validateSources
-    };
-  }
-
-  /**
-   * Comprehensive service validation with source checking
+   * Comprehensive service validation with source checking - FIXED
    */
   validateServiceWithSources(classDecl: ClassDeclaration): {
     isValid: boolean;
@@ -488,7 +412,7 @@ export class EnhancedServiceValidator {
   } {
     const issues: string[] = [];
     const suggestions: string[] = [];
-    const className = classDecl.getName() || 'Unknown';
+    const className = classDecl.getName() || "Unknown";
     const sourceFile = classDecl.getSourceFile();
 
     // Check for service decorator
@@ -505,10 +429,17 @@ export class EnhancedServiceValidator {
       for (const decorator of decorators) {
         const decoratorName = this.getDecoratorName(decorator);
         if (decoratorName && this.isServiceDecoratorName(decoratorName)) {
-          decoratorFromValidSource = this.validateDecoratorSource(decoratorName, sourceFile);
+          decoratorFromValidSource = this.validateDecoratorSource(
+            decoratorName,
+            sourceFile
+          );
           if (!decoratorFromValidSource) {
-            issues.push(`@${decoratorName} decorator in ${className} not from valid source`);
-            suggestions.push(`Import @${decoratorName} from one of: ${this.sourceConfig.decoratorSources.join(', ')}`);
+            issues.push(
+              `@${decoratorName} decorator in ${className} not from valid source`
+            );
+            suggestions.push(
+              `Import @${decoratorName} from one of: ${this.sourceConfig.decoratorSources.join(", ")}`
+            );
           }
           break;
         }
@@ -518,13 +449,15 @@ export class EnhancedServiceValidator {
     // Validate constructor parameters
     const constructors = classDecl.getConstructors();
     if (constructors.length > 1) {
-      issues.push(`${className} has multiple constructors (only one is supported)`);
+      issues.push(
+        `${className} has multiple constructors (only one is supported)`
+      );
     }
 
     if (constructors.length === 1) {
       const constructor = constructors[0];
       const parameters = constructor.getParameters();
-      
+
       for (const param of parameters) {
         const paramValidation = this.validateInjectParameterWithSources(param);
         if (!paramValidation.isValid) {
@@ -539,7 +472,7 @@ export class EnhancedServiceValidator {
       hasServiceDecorator,
       decoratorFromValidSource,
       issues,
-      suggestions
+      suggestions,
     };
   }
 
@@ -573,10 +506,17 @@ export class EnhancedServiceValidator {
       for (const decorator of decorators) {
         const decoratorName = this.getDecoratorName(decorator);
         if (decoratorName && this.isInjectDecoratorName(decoratorName)) {
-          decoratorFromValidSource = this.validateDecoratorSource(decoratorName, sourceFile);
+          decoratorFromValidSource = this.validateDecoratorSource(
+            decoratorName,
+            sourceFile
+          );
           if (!decoratorFromValidSource) {
-            issues.push(`@${decoratorName} decorator on ${paramName} not from valid source`);
-            suggestions.push(`Import @${decoratorName} from one of: ${this.sourceConfig.decoratorSources.join(', ')}`);
+            issues.push(
+              `@${decoratorName} decorator on ${paramName} not from valid source`
+            );
+            suggestions.push(
+              `Import @${decoratorName} from one of: ${this.sourceConfig.decoratorSources.join(", ")}`
+            );
           }
           break;
         }
@@ -589,10 +529,14 @@ export class EnhancedServiceValidator {
       suggestions.push(`Add type annotation to parameter ${paramName}`);
     } else {
       // Check for primitive types (usually not intended for DI)
-      const primitiveTypes = ['string', 'number', 'boolean', 'any'];
+      const primitiveTypes = ["string", "number", "boolean", "any"];
       if (primitiveTypes.includes(paramType.toLowerCase())) {
-        issues.push(`Parameter ${paramName} has primitive type ${paramType} - consider using a service interface`);
-        suggestions.push(`Create an interface for ${paramName} instead of using primitive type ${paramType}`);
+        issues.push(
+          `Parameter ${paramName} has primitive type ${paramType} - consider using a service interface`
+        );
+        suggestions.push(
+          `Create an interface for ${paramName} instead of using primitive type ${paramType}`
+        );
       }
     }
 
@@ -601,7 +545,141 @@ export class EnhancedServiceValidator {
       hasInjectDecorator,
       decoratorFromValidSource,
       issues,
-      suggestions
+      suggestions,
     };
+  }
+
+  /**
+   * Update source configuration
+   */
+  updateSourceConfiguration(config: Partial<DISourceConfiguration>): void {
+    this.sourceConfig = { ...this.sourceConfig, ...config };
+    this.validationCache.clear(); // Clear cache when config changes
+  }
+
+  /**
+   * Get current source configuration
+   */
+  getSourceConfiguration(): DISourceConfiguration {
+    return { ...this.sourceConfig };
+  }
+
+  /**
+   * Clear validation cache
+   */
+  clearValidationCache(): void {
+    this.validationCache.clear();
+  }
+
+  /**
+   * Get validation statistics
+   */
+  getValidationStats(): {
+    cacheSize: number;
+    validatedDecorators: number;
+    validatedMarkers: number;
+    sourceValidationEnabled: boolean;
+  } {
+    const decoratorCount = Array.from(this.validationCache.keys()).filter(
+      (key) => key.includes(":decorator")
+    ).length;
+    const markerCount = Array.from(this.validationCache.keys()).filter((key) =>
+      key.includes(":marker")
+    ).length;
+
+    return {
+      cacheSize: this.validationCache.size,
+      validatedDecorators: decoratorCount,
+      validatedMarkers: markerCount,
+      sourceValidationEnabled: this.sourceConfig.validateSources,
+    };
+  }
+
+  /**
+   * Validate that a marker type comes from a valid DI source
+   */
+  validateMarkerTypeSource(
+    markerType: string,
+    sourceFile: SourceFile
+  ): boolean {
+    if (!this.sourceConfig.validateSources) {
+      return true;
+    }
+
+    try {
+      // Extract marker name (Inject, InjectOptional)
+      const markerMatch = markerType.match(/^(InjectOptional?)<.+>$/);
+      if (!markerMatch) return false;
+
+      const markerName = markerMatch[1];
+
+      // Check cache
+      const cacheKey = `${sourceFile.getFilePath()}:${markerName}:marker`;
+      if (this.validationCache.has(cacheKey)) {
+        return this.validationCache.get(cacheKey)!;
+      }
+
+      // Find import declaration
+      const imports = sourceFile.getImportDeclarations();
+      const isValid = this.isMarkerFromValidSource(markerName, imports);
+
+      this.validationCache.set(cacheKey, isValid);
+
+      if (this.verbose && !isValid) {
+        console.warn(
+          `⚠️  Marker ${markerName} not from valid source in ${sourceFile.getBaseName()}`
+        );
+      }
+
+      return isValid;
+    } catch (error) {
+      if (this.verbose) {
+        console.warn(`⚠️  Failed to validate marker source:`, error);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Check if marker is imported from valid source
+   */
+  private isMarkerFromValidSource(
+    markerName: string,
+    imports: ImportDeclaration[]
+  ): boolean {
+    for (const importDecl of imports) {
+      const moduleSpecifier = importDecl.getModuleSpecifierValue();
+
+      // Check if import is from valid marker source
+      if (
+        !this.sourceConfig.markerSources.some((source) =>
+          this.moduleMatchesSource(moduleSpecifier, source)
+        )
+      ) {
+        continue;
+      }
+
+      // Check if marker is in named imports
+      const namedImports = importDecl.getNamedImports();
+      if (namedImports.some((ni) => ni.getName() === markerName)) {
+        return true;
+      }
+
+      // Check if it's a type-only import
+      if (importDecl.isTypeOnly()) {
+        const typeImports = importDecl.getNamedImports();
+        if (typeImports.some((ni) => ni.getName() === markerName)) {
+          return true;
+        }
+      }
+
+      // Check namespace import for type markers
+      const namespaceImport = importDecl.getNamespaceImport();
+      if (namespaceImport) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - AST-driven marker validation
+// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - FIXED VERSION
 
 import {
   ParameterDeclaration,
@@ -43,7 +43,7 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * Extract dependencies from function parameter with comprehensive AST analysis
+   * Extract dependencies from function parameter with comprehensive AST analysis - FIXED
    */
   extractDependenciesFromParameter(param: ParameterDeclaration, sourceFile: SourceFile): FunctionalDependency[] {
     const typeNode = param.getTypeNode();
@@ -172,7 +172,7 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * Extract dependency from property signature with source validation
+   * Extract dependency from property signature with source validation - FIXED
    */
   private extractFromPropertySignature(propertySignature: any, sourceFile: SourceFile): FunctionalDependency | null {
     const propName = propertySignature.getName();
@@ -184,6 +184,14 @@ export class EnhancedDependencyExtractor {
     // Parse DI marker types with source validation
     const markerInfo = this.parseMarkerType(typeText, sourceFile);
     if (!markerInfo) return null;
+
+    // FIXED: For source validation failure, skip this dependency
+    if (this.sourceConfig.validateSources && !markerInfo.validSource) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Marker source not validated for ${propName}, skipping`);
+      }
+      return null;
+    }
 
     // Use the same key sanitization as the interface resolver
     const sanitizedKey = this.keySanitizer.sanitizeKey(markerInfo.interfaceType);
@@ -206,7 +214,7 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * Parse marker type with source validation
+   * Parse marker type with source validation - FIXED
    */
   private parseMarkerType(typeText: string, sourceFile: SourceFile): {
     interfaceType: string;
@@ -389,6 +397,14 @@ export class EnhancedDependencyExtractor {
     
     const markerInfo = this.parseMarkerType(typeText, sourceFile);
     if (!markerInfo) return [];
+
+    // FIXED: For source validation failure, return empty array
+    if (this.sourceConfig.validateSources && !markerInfo.validSource) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Marker source not validated for ${paramName}, skipping`);
+      }
+      return [];
+    }
 
     const sanitizedKey = this.keySanitizer.sanitizeKey(markerInfo.interfaceType);
 

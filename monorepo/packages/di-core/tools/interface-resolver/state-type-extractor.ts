@@ -1,4 +1,4 @@
-// tools/interface-resolver/state-type-extractor.ts - ENHANCED VERSION
+// tools/interface-resolver/state-type-extractor.ts - FIXED VERSION with enhanced array handling
 
 import { InterfaceInfo, InheritanceInfo, StateBasedRegistration } from "./interface-resolver-types";
 import { KeySanitizer } from "./key-sanitizer";
@@ -253,8 +253,6 @@ export class StateTypeExtractor {
 
   /**
    * Get recommended service interface for a state type
-   * 
-   * FIXME: This is a simplified version, may need to handle more cases
    */
   getRecommendedServiceInterface(stateType: string, baseClass?: string): string {
     if (baseClass === 'AsyncState') {
