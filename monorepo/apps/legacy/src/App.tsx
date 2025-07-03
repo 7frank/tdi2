@@ -9,15 +9,11 @@ import {
   DataList,
   UserProfile,
 } from "./components/EnhancedFunctionalComponent";
-import { ExampleUseAsyncChain } from "./experimental-utils/async/ExampleUseAsyncChain";
-import { ExampleObservableFC } from "./experimental-utils/observable/ExampleObservableFC";
-import { TodoApp } from "./todo/components/TodoApp";
 import { TodoApp2 } from "./todo2/TodoApp2";
 import DIDependencyViewer from "./components/di-dependency-viewer/DIDependencyViewer";
 
 // Import the actual DI config
 import { DI_CONFIG } from "./.tdi2/di-config";
-
 
 /** DI marker to prevent TypeScript errors */
 const SERVICES = {} as any;
@@ -174,19 +170,7 @@ function Homepage() {
               Automatic retransformation during development
             </p>
           </div>
-          <div
-            style={{
-              padding: "12px",
-              backgroundColor: "white",
-              borderRadius: "6px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            }}
-          >
-            <strong>💾 Persistence</strong>
-            <p style={{ fontSize: "14px", color: "#666", margin: "8px 0 0 0" }}>
-              IndexedDB integration with caching layer
-            </p>
-          </div>
+         
           <div
             style={{
               padding: "12px",
@@ -197,7 +181,7 @@ function Homepage() {
           >
             <strong>🌊 Reactive State</strong>
             <p style={{ fontSize: "14px", color: "#666", margin: "8px 0 0 0" }}>
-              AsyncState pattern for reactive UIs
+              Using valtio internally for reactive UIs
             </p>
           </div>
         </div>
@@ -463,75 +447,6 @@ function InterfaceExamplesPage() {
   );
 }
 
-// Class-Based Examples Page
-function ClassBasedExamplesPage() {
-  return (
-    <div style={{ padding: "20px" }}>
-      <DIExampleCard
-        title="Observable State Management"
-        description="Class-based DI with reactive state management using AsyncState pattern"
-        diPattern="Class → Class"
-        variant="observable"
-      >
-        <DICardBody
-          pattern="Direct Class Registration"
-          explanation="Services extend AsyncState for reactive state management. Classes are registered directly as their own tokens - no interfaces needed. This pattern is perfect when you have concrete implementations that don't need abstraction, or when working with stateful services that manage their own lifecycle."
-          dependencies={[
-            { name: "ApiService", type: "required", resolvedTo: "ApiService" },
-            {
-              name: "AsyncState<UserServiceState>",
-              type: "required",
-              resolvedTo: "UserService",
-            },
-          ]}
-          codeExample={`@Service()
-export class ApiService extends AsyncState<string> {
-  // Class acts as both interface and implementation
-  async fetchData(): Promise<string> { ... }
-}
-
-// Usage in component:
-function Component(props: {
-  services: {
-    apiService: Inject<ApiService>; // Direct class reference
-  };
-}) { ... }`}
-          variant="observable"
-        >
-          <ExampleObservableFC services={SERVICES} />
-        </DICardBody>
-      </DIExampleCard>
-
-      <DIExampleCard
-        title="Async Chain Pattern"
-        description="Demonstrates fluent async operations with error handling and state management"
-        diPattern="Fluent Async API"
-        variant="async"
-      >
-        <DICardBody
-          pattern="Fluent Reactive Pattern"
-          explanation="Chainable async operations with built-in loading, success, and error states. Shows how DI can work with complex async patterns and reactive programming. This pattern combines the power of async/await with reactive state management for smooth UX."
-          dependencies={[]}
-          codeExample={`const asyncState = useAsyncChain<string>();
-
-// Fluent API with automatic state management
-await asyncState
-  .trigger(() => fetchData())
-  .success(data => data.trim())
-  .map(d => <button>{d}</button>)
-  .error(error => error.message)
-  .map(m => <div style={{color: 'red'}}>{m}</div>)
-  .pending(() => <div>Loading...</div>)
-  .idle(() => <div>Click to start</div>);`}
-          variant="async"
-        >
-          <ExampleUseAsyncChain />
-        </DICardBody>
-      </DIExampleCard>
-    </div>
-  );
-}
-
 // Dependency Viewer Page
 function DependencyViewerPage() {
   return (
@@ -564,12 +479,7 @@ function App() {
       description:
         "Interface-based dependency injection with automatic resolution",
     },
-    {
-      path: "/class-examples",
-      component: <ClassBasedExamplesPage />,
-      title: "Class Examples",
-      description: "Class-based DI and reactive state management patterns",
-    },
+
     {
       path: "/dependency-viewer",
       component: <DependencyViewerPage />,

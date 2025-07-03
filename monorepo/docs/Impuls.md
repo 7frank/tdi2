@@ -2,32 +2,30 @@
 
 ## 2019 — Initial Concept
 
-- Thought experiment: "What if we could do React DI?"
-- Explored via [AST Explorer](https://astexplorer.net/) — confirmed feasibility
-- Babel-based implementation was possible
-- Idea shelved, not pursued
+- Explored the idea: "What if React supported dependency injection?"
+- Used [AST Explorer](https://astexplorer.net/) to test feasibility
+- Confirmed a Babel-based implementation was viable
+- Concept was shelved without further pursuit
 
 ## 2021 — Critique of React Hooks
 
-- Public talks on how React Hooks are pathological
-  - Hooks induce inward pull and tight coupling
-  - Violate SOLID principles
-- Proposed decoupling strategies
+- Delivered public talks criticizing React Hooks
+  - Argued Hooks encourage tight coupling and violate SOLID principles
+- Proposed strategies to decouple logic
   - Applied SOLID principles to React design patterns
 
-## February 2023 — Spring Boot–style Autowiring PoC
+## February 2023 — Spring Boot–Style Autowiring PoC
 
-- Revisited the idea through autowiring
+- Revisited the concept using autowiring techniques
 - Built [TDI (Typed Dependency Injection)](https://github.com/7frank/tdi)
-  - Rough proof of concept
-  - Applied DI container ideas to React
+  - Created a basic proof of concept for [Spring Boot like @Autowiring](https://www.baeldung.com/spring-autowire)
+  - Focus on Classes and Interface 
 
 ## June 2025 — Return with TDI2
 
-- Brief return to React ecosystem after time in Svelte
-- Conversations revealed persistent structural issues in React
-  - High adoption, low design maturity in large projects
-- Found [article](https://dev.to/9zemian5/typescript-deserves-a-better-dependency-injection-framework-29bp)
-- Reinvestigated DI in React
+- Returned to the React ecosystem after time with Svelte
+- Noted recurring structural issues in large-scale React projects
+- Discovered [this article](https://dev.to/9zemian5/typescript-deserves-a-better-dependency-injection-framework-29bp) that took my previous attempt a step further
+- Reassessed React's compatibility with DI
 - Released [TDI2](https://github.com/7frank/tdi2)
-  - More refined, production-consumable DI solution
+  - Delivered a more refined, production-ready DI solution **TBA**

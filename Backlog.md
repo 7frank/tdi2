@@ -2,37 +2,34 @@
 
 ## ordered log
 
-### [❌] add valtio to useService hook to potentially truly make this approach unique
+### [❌] DI bugs & side effects
 
-- find out if the useService code works and if todoapp is broken
-- proxy class directly for performance reasons
-  - dont do `[instance]=useState(proxy()) ; service=useSnapshot(instance)` which wil lgenerate a proxy per DI reference
+#### fix remaining tests for markers and decorators and actually replace the implementation in dev
 
-- [❌] FIXME TodoApp TodoService2 isnt properly injected
-  - write tests for TodoApp service as well as todoapp2 service and compare them and see that both are working
-    - [✅] test FC via inject
-    - FC via useService
-  - maybe the valtio version of useService is broken?
+#### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
-- [valtio](https://www.npmjs.com/package/valtio)
-- https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx
+- it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them
+- Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
 
-- **FIXME** [proxy and state need to be managed properly](https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx#using-class)
-  - we have it as far as that most of todo app is working but still the TodoStats are only handles after a todo was added
-  - handler e.g. click handler dont seem to trigger state update which makes sense but forces us to maybe still use the second proxy from useSnapshot
-- mobx as alternative requires to wrap the fc in observer() then could work
+#### [❌] FIXME having two different classes of the same name will one not be resolved properly
 
-- **FIXME** or rather a note atm, destructuring is reactive setting props directly in a service is not due to reasons
-  - we might be able to add a compile step later that utilized destructuring and thus triggers this automatically
-  - but first try to live with that and find out why
+e.g.:
 
-```
-  setFilter(status: "all" | "active" | "completed"): void {
-    // Note: by destructuring we seem to trigger reactivity via the proxy
-    this.state.filter = { ...this.state.filter, status };
-    // this.state.filter.status = status;
-  }
-```
+1 TodoService implements TodoServiceInterface
+2 TodoService implements TodoServiceType
+
+#### [❌] FIXME duplicated keys see generated list of services
+
+- potential duplicate
+
+#### [❌] is DI scope using import path
+
+- potential duplicate
+- if say we have two "implements UserRepoInterface"
+
+#### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
+
+-
 
 ### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
@@ -50,14 +47,7 @@ export function TodoApp2({
 }: AppProps) {}
 ```
 
-### [❌] FIXME having two different classes of the same name will one not be resolved properly
-
-e.g.:
-
-1 TodoService implements TodoServiceInterface
-2 TodoService implements TodoServiceType
-
-### [❌] FIXME could not fast refrest useDi export incoopatible
+### [❌] FIXME could not fast refrest useDi export incompatible
 
 ### [❌] compile to npm package and publish
 
@@ -65,19 +55,68 @@ e.g.:
 
 ### [❌] Lazy decorator and marker
 
-### [❌] service implements multiple interfaces
+### evaluate different pattern in combination or as alternative to valtio reactivity
 
-### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (nject<AsyncState<{ name: string; email: string }>>;)
+- Valtio vs or instead of observable or either or a combination of them
+  - reason: observerr pattern within the class services would be nice to have "subscribe.."
+  - rxjs streams or ralway oriented style might be an improvement in readability and maintainability
+    - **BUT** that should problably be more convention than core comile logic
+  - https://chatgpt.com/share/6865b204-ac20-8009-87c3-9602fa61813f
+
+### [❌] test mobx in favor of valtio
+
+> maybe the opproblem with valtio is more a hot reloading problem than actually valtios fault
+
+- https://www.npmjs.com/package/mobx-react-lite
+- valtio needs a "proxy" state and a "snap" for reactivity
+- mobx might be able to only use one "state-proxy"
+  - there is this makeAutoObservable which we might be able to inject into the class constructor of new "@Service" annotated classes at compile time
+  - there also is the Observer FC that we need to inject into FC that use "Inject" - Marker for observablility to work
+
+### [❌] clean up & remove
+
+- [✅] useObservableState and its usage
+
+- [✅] useAsyncServiceInterface
+- [❌] remove AsyncState special cases, or fix them in di-core, they where never meant to be this specific in the first place
+- [❌] fix or remove debug endpoints
+  - http://localhost:5173/\_di_debug
+  - http://localhost:5173/\_di_interfaces
+  - http://localhost:5173/\_di_configs"
+  - if removed, remove middleware endpoints too
+
+### [❌] create do's and don't for valtio proxies / document quirks
+
+- or rather a note atm, destructuring is reactive setting props directly in a service is not due to reasons
+  - we might be able to add a compile step later that utilized destructuring and thus triggers this automatically
+
+```typescript
+  setFilter(status: "all" | "active" | "completed"): void {
+    // Note: by destructuring we seem to trigger reactivity via the proxy
+    this.state.filter = { ...this.state.filter, status };
+    // this.state.filter.status = status;
+  }
+```
+
+### [❌] explore implications of not using the value provided by useSnapshot in code
+
+```typescript
+serviceInstance=...
+const state = proxy(serviceInstance);
+const snap = useSnapshot(state);
+```
+
+di-core tests generate transformed files in the wrong directory "../../"
 
 ### [❌] hack the stack for console to get proper line numbers when logging error and so on not the monkey patched
 
-### [❌] FIXME duplicated keys see generated list of services
+### [❌] evaluate framework
+
+[EvaluationPlan](./monorepo/docs/EvaluationPlan.md)
 
 ### [❌] article on dev.to with todoapp and core features
 
-### [❌] is DI scope using import path
-
-- if say we have two "implements UserRepoInterface"
+- use existing docs
 
 ### [❌] **fix test files** missing test file dependency-tree-builder-test.ts generate one
 
@@ -144,6 +183,17 @@ List of Things Belonging in CLAUDE.md:
 
     Where to store logs or generated artifacts
 
+### [❌] service should be able to "implements" multiple interfaces and Inject<I1,I2,I3>
+
+- check out how spring handles this, maybe easier as documentation artifact/recipe:
+
+```typescript
+ interface AllInterfaces extends Foo,Bar,Baz"
+
+ @Service()
+ class MyService implements AllInterfaces
+```
+
 ### [❌] [out-of-scope] Immutability
 
 https://github.com/aleclarson/valtio-kit
@@ -155,7 +205,116 @@ https://github.com/aleclarson/valtio-kit
 - This plugin also could be a standalone and would not necessarily have to be coupled to our code base
 - this compile step would leave us mostly with what svelte does (maybe still more effective)
 
+---
+
 ## Done
+
+### [✅] extract shared logic from di-core tools for class and FC Inject
+
+### [✅]Complete Interface Variant Support
+
+> make sure that Inject marker and decorator approach variants work there are some already implemented. The generic interface i think is implemented too specific with "AsyncState". maybe ts-morph has a method that takes the AST "implements FOOO" and calls a method "implementsToString(astSnippet)"
+
+Here is an exhaustive list of what kind the DI decorator @Service and and react marker Inject<T> should work with and enable DI properly
+
+Inject<T> marker and class X implements|extends classOrInterface decorator
+
+```typescript
+// Standalone class
+@Service()
+class StandaloneService {}
+
+// Implements simple interface
+@Service()
+class SimpleInterfaceService implements FooInterface {}
+
+// Implements generic interface
+@Service()
+class GenericInterfaceService implements FooInterface<A, B> {}
+
+// Extends base class
+@Service()
+class BaseClassService extends BaseClass {}
+
+// Extends generic base class
+@Service()
+class GenericBaseClassService extends BaseClass<A, B> {}
+
+// Implements and extends
+@Service()
+class ImplementsAndExtendsService
+  extends BaseClass<A>
+  implements FooInterface<B> {}
+
+// Implements multiple interfaces
+@Service()
+class MultiInterfaceService implements FooInterface, BarInterface {}
+
+// Implements interface with nested generics
+@Service()
+class NestedGenericInterfaceService implements FooInterface<Bar<Baz<C>>> {}
+```
+
+```typescript
+// Single service injection via props (function)
+function Component(props: { service: Inject<FooInterface> }) {
+  const { service } = props;
+  return <div />;
+}
+
+// Single service injection via props (arrow function)
+const Component = (props: { service: Inject<FooInterface<A, B>> }) => {
+  const { service } = props;
+  return <div />;
+}
+
+// Destructured single service directly in parameter
+const Component = ({ service }: { service: Inject<FooInterface> }) => {
+  return <div />;
+}
+
+// Multiple services via nested object
+function Component(props: { services: { foo: Inject<FooInterface>, bar: Inject<BarInterface> } }) {
+  const { services: { foo, bar } } = props;
+  return <div />;
+}
+
+// Multiple services with generics
+const Component = ({ services }: { services: { foo: Inject<FooInterface<A>>, bar: Inject<BarInterface<B>> } }) => {
+  return <div />;
+}
+
+// Nested generic injection
+const Component = ({ service }: { service: Inject<FooInterface<Bar<Baz>>> }) => {
+  return <div />;
+}
+
+```
+
+Uses ts-morph AST methods instead of hardcoded "AsyncState" logic
+
+✅ AST-Driven Approach
+
+classDecl.getImplements() instead of string parsing
+heritage.getTypeNodes() for proper AST traversal
+Handles complex nested generics correctly
+
+also for the @Service decorator as well as the Inject<T> marker make sure that you use the AST after you found a string of that value that you make sure in the AST that the marker/decorator comes from @tdi2/di-core , resolve the full file name the decorator /marker is from and make the comparison configurable like an array so that if i change the package name or move the file i only have to change the value in the array diTypesLocatation["@tdi2/di-core/.../decoratorfile","...nmarkerlocation*.*"] ) so that we not only watch for a string
+
+split existing tests for decorators and markers 9n separate files, while at it externalize the fixtures into separate files ./fixtures/<name of approach>.ts.txt
+if test fit in one of the categoriy merge decide which test would be best and keep that
+
+continue here make new chat window and let claude generate the rest of the test file based on the fixtures missing
+https://claude.ai/chat/acf5b96b-c97b-4d10-9664-5885330dde07
+
+### [✅] add valtio to useService hook to potentially truly make this approach unique
+
+- find out if the useService code works and if todoapp is broken
+- proxy class directly for performance reasons
+  - dont do `[instance]=useState(proxy()) ; service=useSnapshot(instance)` which wil lgenerate a proxy per DI reference
+
+- [valtio](https://www.npmjs.com/package/valtio)
+- https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx
 
 ### [✅] add react xyflow dependency view
 
