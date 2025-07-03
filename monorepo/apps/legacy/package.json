@@ -34,7 +34,7 @@
     "dev:reuse": "npm run dev",
     "// === Testing Scripts ===": "",
     "test:functional": "bun run test-functional-di.tsx",
-    "test:interfaces": "tsx -e \"import {InterfaceResolver} from './tools/interface-resolver.ts'; const r = new InterfaceResolver({verbose: true}); r.scanProject().then(() => { console.log('✅ Interface scanning completed'); console.log('📋 Implementations:', r.getInterfaceImplementations().size); console.log('🔗 Dependencies:', r.getServiceDependencies().size); const validation = r.validateDependencies(); console.log('✅ Validation:', validation.isValid ? 'PASSED' : 'FAILED'); if (!validation.isValid) { console.log('❌ Issues:', validation); } });\"",
+    "test:interfaces": "tsx -e \"import {InterfaceResolver} from '@tdi2/di-core/interface-resolver.ts'; const r = new InterfaceResolver({verbose: true}); r.scanProject().then(() => { console.log('✅ Interface scanning completed'); console.log('📋 Implementations:', r.getInterfaceImplementations().size); console.log('🔗 Dependencies:', r.getServiceDependencies().size); const validation = r.validateDependencies(); console.log('✅ Validation:', validation.isValid ? 'PASSED' : 'FAILED'); if (!validation.isValid) { console.log('❌ Issues:', validation); } });\"",
     "test:io": "bash -c 'select f in $(find . -type f -name \"*.test.ts\"); do [ -n \"$f\" ] && exec bun test \"$f\"; done'",
     "test": "bun test"
   },

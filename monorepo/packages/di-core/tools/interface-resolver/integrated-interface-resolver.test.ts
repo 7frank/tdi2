@@ -1,8 +1,9 @@
 // tests/unit/tools/interface-resolver.test.ts - FIXED VERSION
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import { InterfaceResolver } from "./interface-resolver";
+import { IntegratedInterfaceResolver } from "./integrated-interface-resolver";
 
 import { Project, SourceFile } from "ts-morph";
+import { InterfaceResolverInterface } from "./interface-resolver-types";
 
 // Mock TypeScript source files for testing
 const createMockProject = () => {
@@ -200,11 +201,11 @@ export class CircularB implements CircularBInterface {
 };
 
 describe("InterfaceResolver", () => {
-  let resolver: InterfaceResolver;
+  let resolver: InterfaceResolverInterface;
   let mockProject: Project;
 
   beforeEach(() => {
-    resolver = new InterfaceResolver({
+    resolver = new IntegratedInterfaceResolver({
       verbose: false,
       srcDir: "./src",
     });
@@ -561,7 +562,7 @@ export class NoInterfaceService {
     describe("Given empty project", () => {
       it("When scanning empty codebase, Then should return empty results", async () => {
         // Given
-        const emptyResolver = new InterfaceResolver({
+        const emptyResolver = new IntegratedInterfaceResolver({
           verbose: false,
           srcDir: "./empty",
         });
@@ -670,9 +671,9 @@ export class Service${i} implements Service${i}Interface {
         
         // When & Then - Test various sanitization scenarios
         expect(keySanitizer.sanitizeKey("SimpleInterface")).toBe("SimpleInterface");
-        expect(keySanitizer.sanitizeKey("CacheInterface<T>")).toBe("CacheInterface_any");
-        expect(keySanitizer.sanitizeKey("Repository<User, Config>")).toMatch(/Repository_any/);
-        expect(keySanitizer.sanitizeKey("Complex<{name: string}>")).toMatch(/Complex_any/);
+        expect(keySanitizer.sanitizeKey("CacheInterface<T>")).toBe("CacheInterface_T");
+        expect(keySanitizer.sanitizeKey("Repository<User, Config>")).toMatch(/Repository_User_Config/);
+        expect(keySanitizer.sanitizeKey("Complex<{name: string}>")).toMatch(/Complex_name_string/);
         
         // Test inheritance sanitization - more flexible patterns
         expect(keySanitizer.sanitizeInheritanceKey("AsyncState<UserData>")).toMatch(/AsyncState.*UserData/);
