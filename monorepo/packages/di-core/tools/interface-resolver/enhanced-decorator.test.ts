@@ -1,4 +1,4 @@
-// tools/interface-resolver/enhanced-decorator.test.ts - RECREATED with comprehensive coverage
+// tools/interface-resolver/enhanced-decorator.test.ts - COMPLETE with comprehensive coverage
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Project } from "ts-morph";
@@ -767,38 +767,811 @@ export class ExtractorConfigTestService {}
     });
   });
 
-//   describe("Feature: Comprehensive Service Analysis", () => {
-//     describe("Given full-featured services", () => {
-//       it("When analyzing service with all features, Then should provide complete information", () => {
-//         // Given
-//         const sourceFile = mockProject.createSourceFile(
-//           "src/FullFeatured.ts",
-//           DECORATOR_FIXTURES.IMPLEMENTS_AND_EXTENDS
-//         );
-//         const classDecl = sourceFile.getClasses()[1]; // ImplementsAndExtendsService
+  describe("Feature: Comprehensive Service Analysis", () => {
+    describe("Given full-featured services", () => {
+      it("When analyzing service with all features, Then should provide complete information", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/FullFeatured.ts",
+          DECORATOR_FIXTURES.IMPLEMENTS_AND_EXTENDS
+        );
+        const classDecl = sourceFile.getClasses()[1]; // ImplementsAndExtendsService
 
-//         // When
-//         const serviceValidation = serviceValidator.validateServiceWithSources(classDecl);
-//         const heritage = interfaceExtractor.getAllHeritageInfo(classDecl);
-//         const metadata = interfaceExtractor.getExtractionMetadata(classDecl);
+        // When
+        const serviceValidation = serviceValidator.validateServiceWithSources(classDecl);
+        const heritage = interfaceExtractor.getAllHeritageInfo(classDecl);
+        const metadata = interfaceExtractor.getExtractionMetadata(classDecl);
 
-//         // Then
-//         expect(serviceValidation.isValid).toBe(true);
-//         expect(serviceValidation.hasServiceDecorator).toBe(true);
+        // Then
+        expect(serviceValidation.isValid).toBe(true);
+        expect(serviceValidation.hasServiceDecorator).toBe(true);
         
-//         expect(heritage.implements).toHaveLength(1);
-//         expect(heritage.extends).toHaveLength(1);
-//         expect(heritage.all).toHaveLength(2);
+        expect(heritage.implements).toHaveLength(1);
+        expect(heritage.extends).toHaveLength(1);
+        expect(heritage.all).toHaveLength(2);
         
-//         expect(metadata.className).toBe("ImplementsAndExtendsService");
-//         expect(metadata.implementsCount).toBe(1);
-//         expect(metadata.extendsCount).toBe(1);
-//         expect(metadata.totalInterfaces).toBe(2);
-//         expect(metadata.hasValidSources).toBe(true);
-//       });
+        expect(metadata.className).toBe("ImplementsAndExtendsService");
+        expect(metadata.implementsCount).toBe(1);
+        expect(metadata.extendsCount).toBe(1);
+        expect(metadata.totalInterfaces).toBe(2);
+        expect(metadata.hasValidSources).toBe(true);
+      });
 
-//       it("When checking interface matching on complex service, Then should handle all patterns", () => {
-//         // Given
-//         const sourceFile = mockProject.createSourceFile(
-//           "src/FullFeatured.ts",
-//           DECORATOR_FIXTURES.IMPLEMENTS_AND_EXTENDS
+      it("When checking interface matching on complex service, Then should handle all patterns", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/FullFeatured.ts",
+          DECORATOR_FIXTURES.IMPLEMENTS_AND_EXTENDS
+        );
+        const classDecl = sourceFile.getClasses()[1]; // ImplementsAndExtendsService
+
+        // When
+        const hasInterfacePattern = interfaceExtractor.hasInterfaceMatching(classDecl, /Foo.*Interface/);
+        const hasBasePattern = interfaceExtractor.hasInterfaceMatching(classDecl, "BaseClass");
+        const hasGenericPattern = interfaceExtractor.hasInterfaceMatching(classDecl, /.*<.*>/);
+
+        // Then
+        expect(hasInterfacePattern).toBe(true);
+        expect(hasBasePattern).toBe(true);
+        expect(hasGenericPattern).toBe(true);
+      });
+    });
+  });
+
+  describe("Feature: Advanced AST Analysis", () => {
+    describe("Given complex inheritance hierarchies", () => {
+      it("When analyzing deep inheritance chain, Then should extract all levels", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/DeepInheritance.ts",
+          `
+import { Service } from "@tdi2/di-core/decorators";
+
+export class GrandParent<T> {
+  grandMethod(item: T): T { return item; }
+}
+
+export class Parent<T, U> extends GrandParent<T> {
+  parentMethod(item: U): U { return item; }
+}
+
+export interface DeepInterface<V> {
+  deepMethod(item: V): V;
+}
+
+@Service()
+export class DeepService extends Parent<string, number> implements DeepInterface<boolean> {
+  deepMethod(item: boolean): boolean { return item; }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[2]; // DeepService
+
+        // When
+        const heritage = interfaceExtractor.getAllHeritageInfo(classDecl);
+
+        // Then
+        expect(heritage.implements).toHaveLength(1);
+        expect(heritage.extends).toHaveLength(1);
+        expect(heritage.all).toHaveLength(2);
+        
+        expect(heritage.implements[0].name).toBe("DeepInterface");
+        expect(heritage.implements[0].typeParameters).toEqual(["boolean"]);
+        
+        expect(heritage.extends[0].name).toBe("Parent");
+        expect(heritage.extends[0].typeParameters).toEqual(["string", "number"]);
+      });
+
+      it("When class has multiple generic constraints, Then should handle complex type parameters", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/GenericConstraints.ts",
+          `
+import { Service } from "@tdi2/di-core/decorators";
+
+export interface Serializable {
+  serialize(): string;
+}
+
+export interface Identifiable {
+  id: string;
+}
+
+export interface Repository<T extends Serializable & Identifiable> {
+  save(entity: T): Promise<T>;
+  findById(id: string): Promise<T | null>;
+}
+
+export interface UserEntity extends Serializable, Identifiable {
+  name: string;
+  email: string;
+}
+
+@Service()
+export class UserRepository implements Repository<UserEntity> {
+  async save(entity: UserEntity): Promise<UserEntity> {
+    return entity;
+  }
+  
+  async findById(id: string): Promise<UserEntity | null> {
+    return null;
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0]; // UserRepository
+
+        // When
+        const interfaces = interfaceExtractor.getImplementedInterfaces(classDecl);
+
+        // Then
+        expect(interfaces).toHaveLength(1);
+        expect(interfaces[0].name).toBe("Repository");
+        expect(interfaces[0].fullType).toBe("Repository<UserEntity>");
+        expect(interfaces[0].isGeneric).toBe(true);
+        expect(interfaces[0].typeParameters).toEqual(["UserEntity"]);
+      });
+    });
+
+    describe("Given conditional and union types", () => {
+      it("When interface uses conditional types, Then should extract base interface", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/ConditionalTypes.ts",
+          `
+import { Service } from "@tdi2/di-core/decorators";
+
+export type ApiResponse<T> = T extends string ? { message: T } : { data: T };
+
+export interface ConditionalInterface<T> {
+  process(input: T): ApiResponse<T>;
+}
+
+@Service()
+export class ConditionalService implements ConditionalInterface<string> {
+  process(input: string): { message: string } {
+    return { message: input };
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0];
+
+        // When
+        const interfaces = interfaceExtractor.getImplementedInterfaces(classDecl);
+
+        // Then
+        expect(interfaces).toHaveLength(1);
+        expect(interfaces[0].name).toBe("ConditionalInterface");
+        expect(interfaces[0].typeParameters).toEqual(["string"]);
+      });
+
+      it("When interface uses union types, Then should handle complex type expressions", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/UnionTypes.ts",
+          `
+import { Service } from "@tdi2/di-core/decorators";
+
+export interface UnionInterface<T extends string | number | boolean> {
+  handle(value: T): T;
+}
+
+@Service()
+export class UnionService implements UnionInterface<string | number> {
+  handle(value: string | number): string | number {
+    return value;
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0];
+
+        // When
+        const interfaces = interfaceExtractor.getImplementedInterfaces(classDecl);
+
+        // Then
+        expect(interfaces).toHaveLength(1);
+        expect(interfaces[0].name).toBe("UnionInterface");
+        expect(interfaces[0].typeParameters).toEqual(["string | number"]);
+      });
+    });
+  });
+
+  describe("Feature: Decorator Composition and Metadata", () => {
+    describe("Given services with multiple decorators", () => {
+      it("When service has multiple valid decorators, Then should recognize primary service decorator", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/MultipleDecorators.ts",
+          `
+import { Service, Singleton, Primary } from "@tdi2/di-core/decorators";
+
+export interface LoggerInterface {
+  log(message: string): void;
+}
+
+@Service()
+@Singleton()
+@Primary()
+export class MultiDecoratorLogger implements LoggerInterface {
+  log(message: string): void {
+    console.log(message);
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0];
+
+        // When
+        const hasServiceDecorator = serviceValidator.hasServiceDecorator(classDecl);
+        const validation = serviceValidator.validateServiceWithSources(classDecl);
+
+        // Then
+        expect(hasServiceDecorator).toBe(true);
+        expect(validation.isValid).toBe(true);
+      });
+
+      it("When decorators have parameters, Then should parse decorator arguments", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/DecoratorWithParams.ts",
+          `
+import { Service, Inject, Qualifier } from "@tdi2/di-core/decorators";
+
+export interface DatabaseInterface {
+  query(sql: string): Promise<any[]>;
+}
+
+export interface LoggerInterface {
+  log(message: string): void;
+}
+
+@Service("UserService")
+export class ParameterizedService {
+  constructor(
+    @Inject("primaryDatabase") 
+    @Qualifier("mysql") 
+    private database: DatabaseInterface,
+    
+    @Inject() 
+    private logger: LoggerInterface
+  ) {}
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0];
+        const constructor = classDecl.getConstructors()[0];
+        const params = constructor.getParameters();
+
+        // When
+        const hasServiceDecorator = serviceValidator.hasServiceDecorator(classDecl);
+        const firstParamHasInject = serviceValidator.hasInjectDecorator(params[0]);
+        const secondParamHasInject = serviceValidator.hasInjectDecorator(params[1]);
+
+        // Then
+        expect(hasServiceDecorator).toBe(true);
+        expect(firstParamHasInject).toBe(true);
+        expect(secondParamHasInject).toBe(true);
+      });
+    });
+
+    describe("Given complex decorator scenarios", () => {
+      it("When decorator is imported with alias, Then should still recognize it", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/AliasedDecorator.ts",
+          `
+import { Service as DIService } from "@tdi2/di-core/decorators";
+
+@DIService()
+export class AliasedDecoratorService {
+  doSomething(): void {}
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0];
+
+        // When
+        const hasServiceDecorator = serviceValidator.hasServiceDecorator(classDecl);
+
+        // Then
+        expect(hasServiceDecorator).toBe(true);
+      });
+
+      it("When using namespace imports, Then should recognize decorators", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/NamespaceImport.ts",
+          `
+import * as DI from "@tdi2/di-core/decorators";
+
+@DI.Service()
+export class NamespaceDecoratorService {
+  constructor(@DI.Inject() private dependency: any) {}
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0];
+        const constructor = classDecl.getConstructors()[0];
+        const param = constructor.getParameters()[0];
+
+        // When
+        const hasServiceDecorator = serviceValidator.hasServiceDecorator(classDecl);
+        const hasInjectDecorator = serviceValidator.hasInjectDecorator(param);
+
+        // Then
+        expect(hasServiceDecorator).toBe(true);
+        expect(hasInjectDecorator).toBe(true);
+      });
+    });
+  });
+
+  describe("Feature: Advanced Validation Scenarios", () => {
+    describe("Given edge cases in service definitions", () => {
+      it("When service extends class and implements interface with same name, Then should handle gracefully", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/SameNamePattern.ts",
+          `
+import { Service } from "@tdi2/di-core/decorators";
+
+export class Logger {
+  baseLog(message: string): void {
+    console.log(message);
+  }
+}
+
+export interface Logger {
+  log(message: string): void;
+}
+
+@Service()
+export class LoggerService extends Logger implements Logger {
+  log(message: string): void {
+    this.baseLog(message);
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[1]; // LoggerService
+
+        // When
+        const heritage = interfaceExtractor.getAllHeritageInfo(classDecl);
+
+        // Then
+        expect(heritage.implements).toHaveLength(1);
+        expect(heritage.extends).toHaveLength(1);
+        expect(heritage.implements[0].name).toBe("Logger");
+        expect(heritage.extends[0].name).toBe("Logger");
+      });
+
+      it("When service has generic class with interface constraints, Then should extract type information", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/GenericConstraints.ts",
+          `
+import { Service } from "@tdi2/di-core/decorators";
+
+export interface Validatable {
+  validate(): boolean;
+}
+
+export interface Processable<T> {
+  process(item: T): T;
+}
+
+@Service()
+export class GenericProcessor<T extends Validatable> implements Processable<T> {
+  process(item: T): T {
+    if (item.validate()) {
+      return item;
+    }
+    throw new Error("Invalid item");
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0];
+
+        // When
+        const interfaces = interfaceExtractor.getImplementedInterfaces(classDecl);
+
+        // Then
+        expect(interfaces).toHaveLength(1);
+        expect(interfaces[0].name).toBe("Processable");
+        expect(interfaces[0].typeParameters).toEqual(["T"]);
+      });
+    });
+
+    describe("Given circular reference scenarios", () => {
+      it("When interfaces reference each other, Then should handle without infinite loops", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/CircularInterfaces.ts",
+          `
+import { Service } from "@tdi2/di-core/decorators";
+
+export interface NodeInterface<T> {
+  value: T;
+  parent?: NodeInterface<T>;
+  children: NodeInterface<T>[];
+}
+
+export interface TreeInterface<T> {
+  root: NodeInterface<T>;
+  find(value: T): NodeInterface<T> | null;
+}
+
+@Service()
+export class TreeService<T> implements TreeInterface<T> {
+  root!: NodeInterface<T>;
+  
+  find(value: T): NodeInterface<T> | null {
+    return null;
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0];
+
+        // When & Then - Should not hang or throw
+        expect(() => {
+          const interfaces = interfaceExtractor.getImplementedInterfaces(classDecl);
+          const heritage = interfaceExtractor.getAllHeritageInfo(classDecl);
+          const metadata = interfaceExtractor.getExtractionMetadata(classDecl);
+        }).not.toThrow();
+      });
+    });
+  });
+
+  describe("Feature: Real-World Patterns Integration", () => {
+    describe("Given common enterprise patterns", () => {
+      it("When using Repository pattern with UnitOfWork, Then should extract all interfaces", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/EnterprisePattern.ts",
+          `
+import { Service, Inject } from "@tdi2/di-core/decorators";
+
+export interface Entity {
+  id: string;
+}
+
+export interface Repository<T extends Entity> {
+  add(entity: T): void;
+  remove(entity: T): void;
+  findById(id: string): Promise<T | null>;
+}
+
+export interface UnitOfWork {
+  commit(): Promise<void>;
+  rollback(): Promise<void>;
+}
+
+export interface UserEntity extends Entity {
+  name: string;
+  email: string;
+}
+
+@Service()
+export class UserRepository implements Repository<UserEntity> {
+  constructor(@Inject() private unitOfWork: UnitOfWork) {}
+  
+  add(entity: UserEntity): void {}
+  remove(entity: UserEntity): void {}
+  async findById(id: string): Promise<UserEntity | null> { return null; }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0]; // UserRepository
+
+        // When
+        const interfaces = interfaceExtractor.getImplementedInterfaces(classDecl);
+        const constructor = classDecl.getConstructors()[0];
+        const params = constructor.getParameters();
+
+        // Then
+        expect(interfaces).toHaveLength(1);
+        expect(interfaces[0].name).toBe("Repository");
+        expect(interfaces[0].typeParameters).toEqual(["UserEntity"]);
+        expect(serviceValidator.hasInjectDecorator(params[0])).toBe(true);
+      });
+
+      it("When using Factory pattern with AsyncState, Then should handle complex state inheritance", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/FactoryWithState.ts",
+          `
+import { Service, Inject } from "@tdi2/di-core/decorators";
+
+export class AsyncState<T> {
+  protected state: T | null = null;
+  getState(): T | null { return this.state; }
+  setState(newState: T): void { this.state = newState; }
+}
+
+export interface Factory<T> {
+  create(...args: any[]): T;
+}
+
+export interface ProductState {
+  products: any[];
+  loading: boolean;
+  error?: string;
+}
+
+export interface ProductFactory extends Factory<any> {
+  createProduct(name: string): any;
+}
+
+@Service()
+export class ProductService extends AsyncState<ProductState> implements ProductFactory {
+  constructor(@Inject() private logger: any) {
+    super();
+  }
+  
+  create(...args: any[]): any { return {}; }
+  createProduct(name: string): any { return { name }; }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[1]; // ProductService
+
+        // When
+        const heritage = interfaceExtractor.getAllHeritageInfo(classDecl);
+        const extendedClasses = interfaceExtractor.getExtendedClasses(classDecl);
+        const implementedInterfaces = interfaceExtractor.getImplementedInterfaces(classDecl);
+
+        // Then
+        expect(extendedClasses).toHaveLength(1);
+        expect(extendedClasses[0].name).toBe("AsyncState");
+        expect(extendedClasses[0].typeParameters).toEqual(["ProductState"]);
+        
+        expect(implementedInterfaces).toHaveLength(1);
+        expect(implementedInterfaces[0].name).toBe("ProductFactory");
+        
+        expect(heritage.all).toHaveLength(2);
+      });
+    });
+
+    describe("Given microservice communication patterns", () => {
+      it("When using Command/Query pattern with DI, Then should validate complex dependencies", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/CQRSPattern.ts",
+          `
+import { Service, Inject } from "@tdi2/di-core/decorators";
+
+export interface Command<T> {
+  execute(): Promise<T>;
+}
+
+export interface Query<T> {
+  query(): Promise<T>;
+}
+
+export interface CommandBus {
+  send<T>(command: Command<T>): Promise<T>;
+}
+
+export interface QueryBus {
+  ask<T>(query: Query<T>): Promise<T>;
+}
+
+export interface CreateUserCommand extends Command<string> {
+  userData: any;
+}
+
+export interface GetUserQuery extends Query<any> {
+  userId: string;
+}
+
+@Service()
+export class UserCommandHandler implements Command<string> {
+  constructor(
+    @Inject() private commandBus: CommandBus,
+    @Inject() private queryBus: QueryBus
+  ) {}
+  
+  async execute(): Promise<string> {
+    return "user-id";
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0]; // UserCommandHandler
+
+        // When
+        const validation = serviceValidator.validateServiceWithSources(classDecl);
+        const interfaces = interfaceExtractor.getImplementedInterfaces(classDecl);
+        const constructor = classDecl.getConstructors()[0];
+        const params = constructor.getParameters();
+
+        // Then
+        expect(validation.isValid).toBe(true);
+        expect(interfaces).toHaveLength(1);
+        expect(interfaces[0].name).toBe("Command");
+        expect(interfaces[0].typeParameters).toEqual(["string"]);
+        
+        expect(params).toHaveLength(2);
+        expect(serviceValidator.hasInjectDecorator(params[0])).toBe(true);
+        expect(serviceValidator.hasInjectDecorator(params[1])).toBe(true);
+      });
+    });
+  });
+
+  describe("Feature: Cross-Feature Integration Tests", () => {
+    describe("Given services using all DI features together", () => {
+      it("When service combines interfaces, inheritance, state, and dependencies, Then should handle complete integration", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/FullIntegration.ts",
+          `
+import { Service, Inject } from "@tdi2/di-core/decorators";
+
+export class AsyncState<T> {
+  protected state: T | null = null;
+  getState(): T | null { return this.state; }
+  setState(newState: T): void { this.state = newState; }
+}
+
+export interface Repository<T> {
+  save(entity: T): Promise<T>;
+  findById(id: string): Promise<T | null>;
+}
+
+export interface CacheInterface<T> {
+  get(key: string): T | null;
+  set(key: string, value: T): void;
+}
+
+export interface NotificationInterface {
+  notify(message: string): void;
+}
+
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface UserServiceState {
+  currentUser?: UserData;
+  users: UserData[];
+  loading: boolean;
+}
+
+@Service()
+export class UserService 
+  extends AsyncState<UserServiceState> 
+  implements Repository<UserData> {
+  
+  constructor(
+    @Inject() private cache: CacheInterface<UserData>,
+    @Inject() private notifications: NotificationInterface
+  ) {
+    super();
+    this.setState({
+      users: [],
+      loading: false
+    });
+  }
+  
+  async save(entity: UserData): Promise<UserData> {
+    this.cache.set(entity.id, entity);
+    this.notifications.notify(\`User \${entity.name} saved\`);
+    return entity;
+  }
+  
+  async findById(id: string): Promise<UserData | null> {
+    return this.cache.get(id);
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[1]; // UserService
+
+        // When
+        const validation = serviceValidator.validateServiceWithSources(classDecl);
+        const heritage = interfaceExtractor.getAllHeritageInfo(classDecl);
+        const metadata = interfaceExtractor.getExtractionMetadata(classDecl);
+
+        // Then
+        expect(validation.isValid).toBe(true);
+        expect(validation.hasServiceDecorator).toBe(true);
+        
+        expect(heritage.extends).toHaveLength(1);
+        expect(heritage.extends[0].name).toBe("AsyncState");
+        expect(heritage.extends[0].typeParameters).toEqual(["UserServiceState"]);
+        
+        expect(heritage.implements).toHaveLength(1);
+        expect(heritage.implements[0].name).toBe("Repository");
+        expect(heritage.implements[0].typeParameters).toEqual(["UserData"]);
+        
+        expect(metadata.totalInterfaces).toBe(2);
+        expect(metadata.hasValidSources).toBe(true);
+        
+        const constructor = classDecl.getConstructors()[0];
+        const params = constructor.getParameters();
+        expect(params).toHaveLength(2);
+        expect(params.every(p => serviceValidator.hasInjectDecorator(p))).toBe(true);
+      });
+    });
+  });
+
+  describe("Feature: Regression Prevention", () => {
+    describe("Given previously problematic scenarios", () => {
+      it("When AST parsing encounters unexpected node types, Then should handle gracefully", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/UnexpectedNodes.ts",
+          `
+import { Service } from "@tdi2/di-core/decorators";
+
+// Edge case: computed property names, decorators on getters, etc.
+@Service()
+export class EdgeCaseService {
+  private static instance: EdgeCaseService;
+  
+  static getInstance(): EdgeCaseService {
+    return EdgeCaseService.instance ||= new EdgeCaseService();
+  }
+  
+  @deprecated
+  get computedProp() {
+    return "computed";
+  }
+  
+  ["dynamicMethod"]() {
+    return "dynamic";
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0];
+
+        // When & Then - Should not throw despite unusual patterns
+        expect(() => {
+          const hasServiceDecorator = serviceValidator.hasServiceDecorator(classDecl);
+          const heritage = interfaceExtractor.getAllHeritageInfo(classDecl);
+          const validation = serviceValidator.validateServiceWithSources(classDecl);
+        }).not.toThrow();
+      });
+
+      it("When generic types have very deep nesting, Then should handle without stack overflow", () => {
+        // Given
+        const sourceFile = mockProject.createSourceFile(
+          "src/DeepNesting.ts",
+          `
+import { Service } from "@tdi2/di-core/decorators";
+
+export interface Wrapper<T> {
+  value: T;
+}
+
+export interface DeepGeneric<T> {
+  process(item: Wrapper<Wrapper<Wrapper<Wrapper<T>>>>): T;
+}
+
+@Service()
+export class DeepNestingService implements DeepGeneric<string> {
+  process(item: Wrapper<Wrapper<Wrapper<Wrapper<string>>>>): string {
+    return item.value.value.value.value;
+  }
+}
+          `
+        );
+        const classDecl = sourceFile.getClasses()[0];
+
+        // When
+        const interfaces = interfaceExtractor.getImplementedInterfaces(classDecl);
+
+        // Then
+        expect(interfaces).toHaveLength(1);
+        expect(interfaces[0].name).toBe("DeepGeneric");
+        expect(interfaces[0].typeParameters).toEqual(["string"]);
+      });
+    });
+  });
+});

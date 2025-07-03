@@ -447,11 +447,11 @@ export class EnhancedInterfaceExtractor {
     extends: InterfaceInfo[];
     all: InterfaceInfo[];
   } {
-    const implements = this.getImplementedInterfaces(classDecl);
+    const _implements = this.getImplementedInterfaces(classDecl);
     const _extends = this.getExtendedClasses(classDecl);
-    const all = [...implements, ..._extends];
+    const all = [..._implements, ..._extends];
 
-    return { implements, extends, all };
+    return { implements: _implements, extends:_extends, all };
   }
 
   /**
