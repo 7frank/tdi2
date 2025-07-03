@@ -10,7 +10,10 @@ import {
   SourceFile
 } from 'ts-morph';
 import type { SharedTypeResolver, TypeResolutionRequest } from './SharedTypeResolver';
-import type { InterfaceImplementation } from '../interface-resolver/interface-resolver-types';
+import type { 
+  InterfaceImplementation,
+  InterfaceResolverInterface
+} from '../interface-resolver/interface-resolver-types';
 
 export interface ExtractedDependency {
   serviceKey: string;           // Parameter/property name

@@ -1,5 +1,19 @@
 // tools/interface-resolver-types.ts - Type definitions for interface resolution
 
+/**
+ * Common interface for all resolver implementations
+ */
+export interface InterfaceResolverInterface {
+  scanProject(): Promise<void>;
+  resolveImplementation(
+    interfaceType: string
+  ): InterfaceImplementation | undefined;
+  getInterfaceImplementations(): Map<string, InterfaceImplementation>;
+  getServiceDependencies(): Map<string, ServiceDependency>;
+  validateDependencies(): ValidationResult;
+  getDependencyTree(): DependencyNode[];
+}
+
 export interface InterfaceImplementation {
   interfaceName: string;
   implementationClass: string;

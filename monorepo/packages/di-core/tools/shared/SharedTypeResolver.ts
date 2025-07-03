@@ -1,7 +1,10 @@
 // tools/shared/SharedTypeResolver.ts
 
 import type { InterfaceImplementation } from "../interface-resolver/interface-resolver-types";
-import type { InterfaceResolver } from "../interface-resolver/interface-resolver";
+import type { 
+  InterfaceResolver,
+  InterfaceResolverInterface 
+} from "../interface-resolver/interface-resolver";
 import { KeySanitizer } from "../interface-resolver/key-sanitizer";
 
 export interface TypeResolutionRequest {
@@ -25,7 +28,7 @@ export class SharedTypeResolver {
   private resolutionCache = new Map<string, TypeResolutionResult>();
 
   constructor(
-    private interfaceResolver: InterfaceResolver,
+    private interfaceResolver: InterfaceResolverInterface,
     private options: { verbose?: boolean } = {}
   ) {
     this.keySanitizer = new KeySanitizer();

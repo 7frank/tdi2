@@ -27,7 +27,13 @@
 ## format
 
 - try one artifact per file
+
+## patches
+
 - generating git patch did not work so good for bigger patches
+- mostly due to fake hashes
+  - so instead of `git apply foo.patch`
+  - use `patch -p1 < foo.patch`
 
 ## timing
 
@@ -81,4 +87,4 @@
   - or if you still ahve context length available you "recreate artifact name"
 - if your implementation was generated decently and the last test is broken because of quota
   - try to remove the last test and fix the file / some tests are better than none
-  - create a new chat and tell the bot with the requirements from the last chat to implement the missing tests 
+  - create a new chat and tell the bot with the requirements from the last chat to implement the missing tests

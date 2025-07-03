@@ -26,7 +26,7 @@ import type {
   FunctionComponentMetadata
 } from '../shared/shared-types';
 
-import { InterfaceResolver } from "../interface-resolver/interface-resolver";
+import { IntegratedInterfaceResolver } from "../interface-resolver/integrated-interface-resolver";
 
 // Keep only functional-specific components
 import { ComponentTransformer } from './component-transformer';
@@ -46,7 +46,7 @@ export class FunctionalDIEnhancedTransformer {
   private project: Project;
   private options: SharedTransformationOptions;
   private configManager: ConfigManager;
-  private interfaceResolver: InterfaceResolver;
+  private interfaceResolver: IntegratedInterfaceResolver;
   
   // Shared components (replacing local dependency extraction and type resolution)
   private dependencyExtractor: SharedDependencyExtractor;
@@ -91,7 +91,7 @@ export class FunctionalDIEnhancedTransformer {
     });
 
     // Initialize InterfaceResolver
-    this.interfaceResolver = new InterfaceResolver({
+    this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
       srcDir: this.options.srcDir,
       enableInheritanceDI: this.options.enableInheritanceDI,
@@ -558,7 +558,7 @@ export class FunctionalDIEnhancedTransformer {
     return this.configManager;
   }
 
-  getInterfaceResolver(): InterfaceResolver {
+  getInterfaceResolver(): IntegratedInterfaceResolver {
     return this.interfaceResolver;
   }
 

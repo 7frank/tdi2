@@ -13,7 +13,7 @@ import type {
   ServiceClassMetadata 
 } from "./shared/shared-types";
 
-import { InterfaceResolver } from "./interface-resolver/interface-resolver";
+import { IntegratedInterfaceResolver } from "./interface-resolver/integrated-interface-resolver";
 import type { InterfaceImplementation, ServiceDependency } from "./interface-resolver/interface-resolver-types";
 
 interface TreeNode {
@@ -58,7 +58,7 @@ export class DependencyTreeBuilder {
   };
 
   // Use shared components instead of local interface resolver
-  private interfaceResolver: InterfaceResolver;
+  private interfaceResolver: IntegratedInterfaceResolver;
   private dependencyExtractor: SharedDependencyExtractor;
   private serviceRegistry: SharedServiceRegistry;
   private typeResolver: SharedTypeResolver;
@@ -80,7 +80,7 @@ export class DependencyTreeBuilder {
     };
 
     // Initialize interface resolver
-    this.interfaceResolver = new InterfaceResolver({
+    this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
       srcDir: this.options.srcDir,
       enableInheritanceDI: this.options.enableInheritanceDI,
@@ -432,7 +432,7 @@ export * from '${path
     return this.configurations;
   }
 
-  getInterfaceResolver(): InterfaceResolver {
+  getInterfaceResolver(): IntegratedInterfaceResolver {
     return this.interfaceResolver;
   }
 

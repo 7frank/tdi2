@@ -27,7 +27,7 @@ import type {
   ServiceClassMetadata
 } from './shared/shared-types';
 
-import { InterfaceResolver } from './interface-resolver/interface-resolver';
+import { IntegratedInterfaceResolver } from './interface-resolver/integrated-interface-resolver';
 
 interface TransformerOptions {
   srcDir?: string;
@@ -42,7 +42,7 @@ export class EnhancedDITransformer {
   private project: Project;
   private options: SharedTransformationOptions;
   private configManager: ConfigManager;
-  private interfaceResolver: InterfaceResolver;
+  private interfaceResolver: IntegratedInterfaceResolver;
   
   // Shared components
   private dependencyExtractor: SharedDependencyExtractor;
@@ -80,7 +80,7 @@ export class EnhancedDITransformer {
     });
 
     // Initialize InterfaceResolver
-    this.interfaceResolver = new InterfaceResolver({
+    this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
       srcDir: this.options.srcDir,
       enableInheritanceDI: this.options.enableInheritanceDI,
@@ -469,7 +469,7 @@ export class EnhancedDITransformer {
     return this.configManager;
   }
 
-  getInterfaceResolver(): InterfaceResolver {
+  getInterfaceResolver(): IntegratedInterfaceResolver {
     return this.interfaceResolver;
   }
 
