@@ -530,22 +530,60 @@ export class CustomSourceService {}
   describe("Feature: Error Handling and Edge Cases", () => {
     describe("Given problematic constructor scenarios", () => {
       it("When class has multiple constructors, Then should flag as issue", () => {
-        // Given
-        const sourceFile = mockProject.createSourceFile(
-          "src/MultipleConstructors.ts",
-          DECORATOR_FIXTURES.MULTIPLE_CONSTRUCTORS
-        );
-        const classDecl = sourceFile.getClasses()[0];
+  // Given - Create a class programmatically with ACTUAL multiple constructors
+  const sourceFile = mockProject.createSourceFile(
+    "src/MultipleConstructors.ts",
+    `
+import { Service, Inject } from "@tdi2/di-core/decorators";
 
-        // When
-        const validation = serviceValidator.validateServiceWithSources(classDecl);
+export interface LoggerInterface {
+  log(message: string): void;
+}
 
-        // Then
-        expect(validation.isValid).toBe(false);
-        expect(validation.issues.some(issue => 
-          issue.includes('multiple constructors')
-        )).toBe(true);
-      });
+@Service()
+export class MultipleConstructorsService {
+  private logger: LoggerInterface;
+}
+    `
+  );
+  
+  const classDecl = sourceFile.getClasses()[0];
+  
+  // Force-add multiple constructor implementations using ts-morph API
+  // This creates an invalid TypeScript class with actual multiple constructors
+  classDecl.addConstructor({
+    parameters: [{ 
+      name: "logger", 
+      type: "LoggerInterface",
+      decorators: [{ name: "Inject" }]
+    }],
+    statements: ["this.logger = logger;"]
+  });
+  
+  classDecl.addConstructor({
+    parameters: [
+      { 
+        name: "logger", 
+        type: "LoggerInterface",
+        decorators: [{ name: "Inject" }]
+      },
+      {
+        name: "config",
+        type: "any"
+      }
+    ],
+    statements: ["this.logger = logger;"]
+  });
+
+  // When
+  const validation = serviceValidator.validateServiceWithSources(classDecl);
+
+  // Then
+  expect(validation.isValid).toBe(false);
+  expect(validation.issues.some(issue => 
+    issue.includes('multiple constructors')
+  )).toBe(true);
+});
     });
 
     describe("Given malformed or problematic classes", () => {

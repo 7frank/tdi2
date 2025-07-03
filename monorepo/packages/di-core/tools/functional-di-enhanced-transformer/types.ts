@@ -1,44 +1,41 @@
-// tools/functional-di-enhanced-transformer/types.ts - Type definitions
-
-import type { InterfaceImplementation } from "../interface-resolver/interface-resolver-types";
+// tools/functional-di-enhanced-transformer/types.ts - Types for functional DI transformation
 
 export interface FunctionalDependency {
-  serviceKey: string;
-  interfaceType: string;
-  sanitizedKey: string;
-  isOptional: boolean;
-  resolvedImplementation?: InterfaceImplementation;
+  serviceKey: string; // The property name (e.g., "userService")
+  interfaceType: string; // The interface type (e.g., "UserServiceInterface")
+  sanitizedKey: string; // Sanitized key for lookups
+  isOptional: boolean; // Whether the dependency is optional
 }
 
 export interface TransformationOptions {
-  /** The  source dir where we also store our root .tdi folder */
-  srcDir?: string;
-  outputDir?: string;
-  generateDebugFiles?: boolean;
-  verbose?: boolean;
-  customSuffix?: string;
-}
-
-export interface DICodeGenerationResult {
-  statements: string[];
-  serviceKeys: string[];
-}
-
-export interface ParameterAnalysisResult {
-  hasServicesProperty: boolean;
-  dependencies: FunctionalDependency[];
-  nonServiceProperties: string[];
+  srcDir?: string; // Source directory for file resolution
+  verbose?: boolean; // Enable verbose logging
+  outputDir?: string; // Output directory for transformed files
+  preserveOriginal?: boolean; // Whether to preserve original files
+  transformPatterns?: string[]; // File patterns to transform
+  skipPatterns?: string[]; // File patterns to skip
 }
 
 export interface TypeResolutionContext {
-  sourceFile: any; // SourceFile from ts-morph
-  currentTypeName: string;
-  searchedPaths: Set<string>;
+  currentFile: string; // Current file being processed
+  importMap: Map<string, string>; // Map of type names to import paths
+  resolvedTypes: Set<string>; // Types that have been resolved
+  circularRefs: Set<string>; // Circular reference detection
 }
 
-export interface TransformationContext {
-  sourceFile: any; // SourceFile from ts-morph
-  componentName: string;
-  dependencies: FunctionalDependency[];
-  hasDestructuring: boolean;
+export interface ComponentTransformResult {
+  success: boolean; // Whether transformation succeeded
+  transformedCode?: string; // The transformed code
+  dependencies: FunctionalDependency[]; // Dependencies found
+  errors: string[]; // Any errors encountered
+  warnings: string[]; // Any warnings generated
+}
+
+export interface ProjectTransformResult {
+  totalFiles: number; // Total files processed
+  transformedFiles: number; // Successfully transformed files
+  failedFiles: number; // Files that failed transformation
+  dependencies: Map<string, FunctionalDependency[]>; // Dependencies by file
+  errors: string[]; // Global errors
+  warnings: string[]; // Global warnings
 }

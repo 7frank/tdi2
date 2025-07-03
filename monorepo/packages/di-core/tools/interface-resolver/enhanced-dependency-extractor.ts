@@ -255,7 +255,7 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * Extract dependencies from type reference (external interface)
+   * Extract dependencies from type reference (external interface) - ENHANCED
    */
   private extractFromTypeReference(typeNode: TypeNode, sourceFile: SourceFile): FunctionalDependency[] {
     if (!Node.isTypeReference(typeNode)) return [];

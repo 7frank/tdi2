@@ -1,4 +1,4 @@
-// tools/interface-resolver/enhanced-service-validator.ts - FIXED VERSION
+// tools/interface-resolver/enhanced-service-validator.ts - FIXED VERSION with multiple constructor validation
 
 import {
   ClassDeclaration,
@@ -446,15 +446,18 @@ export class EnhancedServiceValidator {
       }
     }
 
-    // Validate constructor parameters
+    // FIXED: Validate constructor parameters - check for multiple constructors FIRST
     const constructors = classDecl.getConstructors();
     if (constructors.length > 1) {
       issues.push(
         `${className} has multiple constructors (only one is supported)`
       );
+      suggestions.push(
+        `Use a single constructor with optional parameters for ${className}`
+      );
     }
 
-    if (constructors.length === 1) {
+    if (constructors.length >= 1) {
       const constructor = constructors[0];
       const parameters = constructor.getParameters();
 

@@ -21,7 +21,7 @@ describe("Enhanced Marker Approach Tests", () => {
 
     dependencyExtractor = new EnhancedDependencyExtractor({
       srcDir: "./src",
-      verbose: false
+      verbose: false,
     });
   });
 
@@ -37,7 +37,11 @@ describe("Enhanced Marker Approach Tests", () => {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(1);
@@ -56,19 +60,28 @@ describe("Enhanced Marker Approach Tests", () => {
         const variableStatement = sourceFile.getVariableStatements()[0];
         const declaration = variableStatement.getDeclarations()[0];
         const arrowFunc = declaration.getInitializer();
-        
-        if (arrowFunc && arrowFunc.getKind() === 218) { // ArrowFunction
+
+        if (arrowFunc && arrowFunc.getKind() === 218) {
+          // ArrowFunction
           const param = arrowFunc.getParameters()[0];
 
           // When
-          const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+          const dependencies =
+            dependencyExtractor.extractDependenciesFromParameter(
+              param,
+              sourceFile
+            );
 
           // Then
           expect(dependencies).toHaveLength(1);
           expect(dependencies[0].serviceKey).toBe("service");
-          expect(dependencies[0].interfaceType).toBe("FooInterface<string, number>");
+          expect(dependencies[0].interfaceType).toBe(
+            "FooInterface<string, number>"
+          );
           expect(dependencies[0].isOptional).toBe(false);
-          expect(dependencies[0].sanitizedKey).toBe("FooInterface_string_number");
+          expect(dependencies[0].sanitizedKey).toBe(
+            "FooInterface_string_number"
+          );
         }
       });
 
@@ -81,12 +94,17 @@ describe("Enhanced Marker Approach Tests", () => {
         const variableStatement = sourceFile.getVariableStatements()[0];
         const declaration = variableStatement.getDeclarations()[0];
         const arrowFunc = declaration.getInitializer();
-        
-        if (arrowFunc && arrowFunc.getKind() === 218) { // ArrowFunction
+
+        if (arrowFunc && arrowFunc.getKind() === 218) {
+          // ArrowFunction
           const param = arrowFunc.getParameters()[0];
 
           // When
-          const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+          const dependencies =
+            dependencyExtractor.extractDependenciesFromParameter(
+              param,
+              sourceFile
+            );
 
           // Then
           expect(dependencies).toHaveLength(1);
@@ -109,17 +127,21 @@ describe("Enhanced Marker Approach Tests", () => {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(2);
-        
-        const fooService = dependencies.find(d => d.serviceKey === "foo");
+
+        const fooService = dependencies.find((d) => d.serviceKey === "foo");
         expect(fooService).toBeDefined();
         expect(fooService?.interfaceType).toBe("FooInterface");
         expect(fooService?.isOptional).toBe(false);
-        
-        const barService = dependencies.find(d => d.serviceKey === "bar");
+
+        const barService = dependencies.find((d) => d.serviceKey === "bar");
         expect(barService).toBeDefined();
         expect(barService?.interfaceType).toBe("BarInterface");
         expect(barService?.isOptional).toBe(false);
@@ -134,21 +156,26 @@ describe("Enhanced Marker Approach Tests", () => {
         const variableStatement = sourceFile.getVariableStatements()[0];
         const declaration = variableStatement.getDeclarations()[0];
         const arrowFunc = declaration.getInitializer();
-        
-        if (arrowFunc && arrowFunc.getKind() === 218) { // ArrowFunction
+
+        if (arrowFunc && arrowFunc.getKind() === 218) {
+          // ArrowFunction
           const param = arrowFunc.getParameters()[0];
 
           // When
-          const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+          const dependencies =
+            dependencyExtractor.extractDependenciesFromParameter(
+              param,
+              sourceFile
+            );
 
           // Then
           expect(dependencies).toHaveLength(2);
-          
-          const fooService = dependencies.find(d => d.serviceKey === "foo");
+
+          const fooService = dependencies.find((d) => d.serviceKey === "foo");
           expect(fooService?.interfaceType).toBe("FooInterface<string>");
           expect(fooService?.sanitizedKey).toBe("FooInterface_string");
-          
-          const barService = dependencies.find(d => d.serviceKey === "bar");
+
+          const barService = dependencies.find((d) => d.serviceKey === "bar");
           expect(barService?.interfaceType).toBe("BarInterface<number>");
           expect(barService?.sanitizedKey).toBe("BarInterface_number");
         }
@@ -167,12 +194,17 @@ describe("Enhanced Marker Approach Tests", () => {
         const variableStatement = sourceFile.getVariableStatements()[0];
         const declaration = variableStatement.getDeclarations()[0];
         const arrowFunc = declaration.getInitializer();
-        
-        if (arrowFunc && arrowFunc.getKind() === 218) { // ArrowFunction
+
+        if (arrowFunc && arrowFunc.getKind() === 218) {
+          // ArrowFunction
           const param = arrowFunc.getParameters()[0];
 
           // When
-          const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+          const dependencies =
+            dependencyExtractor.extractDependenciesFromParameter(
+              param,
+              sourceFile
+            );
 
           // Then
           expect(dependencies).toHaveLength(1);
@@ -192,20 +224,32 @@ describe("Enhanced Marker Approach Tests", () => {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(3);
-        
-        const userRepo = dependencies.find(d => d.serviceKey === "userRepo");
+
+        const userRepo = dependencies.find((d) => d.serviceKey === "userRepo");
         expect(userRepo?.interfaceType).toBe("Repository<UserEntity>");
         expect(userRepo?.sanitizedKey).toBe("Repository_UserEntity");
-        
-        const configCache = dependencies.find(d => d.serviceKey === "configCache");
-        expect(configCache?.interfaceType).toBe("CacheInterface<Map<string, ConfigData>>");
-        expect(configCache?.sanitizedKey).toBe("CacheInterface_Map_string_ConfigData");
-        
-        const stateManager = dependencies.find(d => d.serviceKey === "stateManager");
+
+        const configCache = dependencies.find(
+          (d) => d.serviceKey === "configCache"
+        );
+        expect(configCache?.interfaceType).toBe(
+          "CacheInterface<Map<string, ConfigData>>"
+        );
+        expect(configCache?.sanitizedKey).toBe(
+          "CacheInterface_Map_string_ConfigData"
+        );
+
+        const stateManager = dependencies.find(
+          (d) => d.serviceKey === "stateManager"
+        );
         expect(stateManager?.interfaceType).toContain("StateManager<{");
         expect(stateManager?.sanitizedKey).toMatch(/StateManager_/);
       });
@@ -224,18 +268,22 @@ describe("Enhanced Marker Approach Tests", () => {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(3);
-        
-        const fooService = dependencies.find(d => d.serviceKey === "foo");
+
+        const fooService = dependencies.find((d) => d.serviceKey === "foo");
         expect(fooService?.isOptional).toBe(false); // Required
-        
-        const barService = dependencies.find(d => d.serviceKey === "bar");
+
+        const barService = dependencies.find((d) => d.serviceKey === "bar");
         expect(barService?.isOptional).toBe(true); // Optional
-        
-        const cacheService = dependencies.find(d => d.serviceKey === "cache");
+
+        const cacheService = dependencies.find((d) => d.serviceKey === "cache");
         expect(cacheService?.isOptional).toBe(true); // Optional
         expect(cacheService?.interfaceType).toBe("CacheInterface<any>");
       });
@@ -250,7 +298,7 @@ describe("Enhanced Marker Approach Tests", () => {
           "src/ComponentProps.ts",
           MARKER_FIXTURES.SEPARATE_INTERFACE_FILE
         );
-        
+
         const componentFile = mockProject.createSourceFile(
           "src/SeparateInterface.tsx",
           MARKER_FIXTURES.SEPARATE_INTERFACE_DEFINITION
@@ -259,16 +307,20 @@ describe("Enhanced Marker Approach Tests", () => {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, componentFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            componentFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(2);
-        
-        const fooService = dependencies.find(d => d.serviceKey === "foo");
+
+        const fooService = dependencies.find((d) => d.serviceKey === "foo");
         expect(fooService?.interfaceType).toBe("FooInterface");
         expect(fooService?.isOptional).toBe(false);
-        
-        const barService = dependencies.find(d => d.serviceKey === "bar");
+
+        const barService = dependencies.find((d) => d.serviceKey === "bar");
         expect(barService?.interfaceType).toBe("BarInterface");
         expect(barService?.isOptional).toBe(true);
       });
@@ -287,7 +339,11 @@ describe("Enhanced Marker Approach Tests", () => {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(1);
@@ -304,7 +360,11 @@ describe("Enhanced Marker Approach Tests", () => {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(0); // Should be rejected due to invalid source
@@ -331,18 +391,24 @@ export function Component(props: { service: Inject<FooInterface> }) {
         const param = func.getParameters()[0];
 
         // When - Before config update
-        const beforeDeps = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
-        
+        const beforeDeps = dependencyExtractor.extractDependenciesFromParameter(
+          param,
+          sourceFile
+        );
+
         // Update config
         dependencyExtractor.updateSourceConfiguration({
-          markerSources: ["custom-package/markers"]
+          markerSources: ["custom-package/markers"],
         });
-        
-        const afterDeps = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+
+        const afterDeps = dependencyExtractor.extractDependenciesFromParameter(
+          param,
+          sourceFile
+        );
 
         // Then
         expect(beforeDeps).toHaveLength(0); // Invalid with original config
-        expect(afterDeps).toHaveLength(1);  // Valid with updated config
+        expect(afterDeps).toHaveLength(1); // Valid with updated config
       });
     });
   });
@@ -359,7 +425,11 @@ export function Component(props: { service: Inject<FooInterface> }) {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(0);
@@ -375,7 +445,11 @@ export function Component(props: { service: Inject<FooInterface> }) {
         const firstParam = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(firstParam, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            firstParam,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(0); // Should not extract from multi-param functions
@@ -391,7 +465,11 @@ export function Component(props: { service: Inject<FooInterface> }) {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(1);
@@ -413,24 +491,30 @@ export function Component(props: { service: Inject<FooInterface> }) {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(2); // Only api (Inject) and cache (InjectOptional)
-        
-        const apiService = dependencies.find(d => d.serviceKey === "api");
+
+        const apiService = dependencies.find((d) => d.serviceKey === "api");
         expect(apiService?.interfaceType).toBe("ApiInterface");
         expect(apiService?.isOptional).toBe(false);
-        
-        const cacheService = dependencies.find(d => d.serviceKey === "cache");
+
+        const cacheService = dependencies.find((d) => d.serviceKey === "cache");
         expect(cacheService?.interfaceType).toBe("CacheInterface<any>");
         expect(cacheService?.isOptional).toBe(true);
-        
+
         // logger and utils should NOT be extracted (no Inject markers)
-        const loggerService = dependencies.find(d => d.serviceKey === "logger");
+        const loggerService = dependencies.find(
+          (d) => d.serviceKey === "logger"
+        );
         expect(loggerService).toBeUndefined();
-        
-        const utilsService = dependencies.find(d => d.serviceKey === "utils");
+
+        const utilsService = dependencies.find((d) => d.serviceKey === "utils");
         expect(utilsService).toBeUndefined();
       });
     });
@@ -448,19 +532,31 @@ export function Component(props: { service: Inject<FooInterface> }) {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(2);
-        
-        const userState = dependencies.find(d => d.serviceKey === "userState");
+
+        const userState = dependencies.find(
+          (d) => d.serviceKey === "userState"
+        );
         expect(userState?.interfaceType).toBe("AsyncState<UserServiceState>");
         expect(userState?.sanitizedKey).toBe("AsyncState_UserServiceState");
         expect(userState?.isOptional).toBe(false);
-        
-        const productState = dependencies.find(d => d.serviceKey === "productState");
-        expect(productState?.interfaceType).toBe("AsyncState<ProductServiceState>");
-        expect(productState?.sanitizedKey).toBe("AsyncState_ProductServiceState");
+
+        const productState = dependencies.find(
+          (d) => d.serviceKey === "productState"
+        );
+        expect(productState?.interfaceType).toBe(
+          "AsyncState<ProductServiceState>"
+        );
+        expect(productState?.sanitizedKey).toBe(
+          "AsyncState_ProductServiceState"
+        );
         expect(productState?.isOptional).toBe(true);
       });
 
@@ -474,17 +570,31 @@ export function Component(props: { service: Inject<FooInterface> }) {
         const param = func.getParameters()[0];
 
         // When
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile);
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          );
 
         // Then
         expect(dependencies).toHaveLength(2);
-        
-        const notifications = dependencies.find(d => d.serviceKey === "notifications");
-        expect(notifications?.interfaceType).toBe("AsyncState<NotificationData[]>");
-        expect(notifications?.sanitizedKey).toBe("AsyncState_NotificationData_Array");
-        
-        const userService = dependencies.find(d => d.serviceKey === "userService");
-        expect(userService?.interfaceType).toBe("BaseService<UserServiceState>");
+
+        const notifications = dependencies.find(
+          (d) => d.serviceKey === "notifications"
+        );
+        expect(notifications?.interfaceType).toBe(
+          "AsyncState<NotificationData[]>"
+        );
+        expect(notifications?.sanitizedKey).toBe(
+          "AsyncState_NotificationData_Array"
+        );
+
+        const userService = dependencies.find(
+          (d) => d.serviceKey === "userService"
+        );
+        expect(userService?.interfaceType).toBe(
+          "BaseService<UserServiceState>"
+        );
         expect(userService?.sanitizedKey).toBe("BaseService_UserServiceState");
       });
     });
@@ -514,8 +624,12 @@ export function Component(props: { service: Inject<FooInterface> }) {
         // When
         dependencyExtractor.extractDependenciesFromParameter(param, sourceFile); // Populate cache
         dependencyExtractor.clearValidationCache(); // Clear cache
-        
-        const dependencies = dependencyExtractor.extractDependenciesFromParameter(param, sourceFile); // Re-extract
+
+        const dependencies =
+          dependencyExtractor.extractDependenciesFromParameter(
+            param,
+            sourceFile
+          ); // Re-extract
 
         // Then
         expect(dependencies).toHaveLength(1); // Should still work after cache clear
