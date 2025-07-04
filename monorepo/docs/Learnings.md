@@ -1,4 +1,4 @@
-# Learnings Claude.AI
+# Learnings of using Claude.AI
 
 ## Vibe Coding
 
