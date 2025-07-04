@@ -4,6 +4,23 @@
 
 ### [❌] DI bugs & side effects
 
+#### [❌] di-core changes broke the dev
+
+- dev is working the same way when not isung the changes from the [integrated dependency injection feature](https://github.com/7frank/tdi2/pull/11/files)
+- but as soon as di-core gets built the vite plugin no longer
+  - processes jsx files
+  - generates transformed.tsx
+
+- maybe the tests are part solution, some related are failing
+- divide and conquery ...
+
+Try this(
+
+> **Learnings maybemake econtext small**
+> - git diff working/failed ) (**only code and test** not text files)
+>   - then take that and dev berfore and dev after
+>   - then "create multiple smaller diff artifacts to fix my di
+
 #### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
 - it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them

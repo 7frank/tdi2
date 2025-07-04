@@ -94,3 +94,4 @@
 - good luck, hope you wrote enough tests
   - if not, write tests for bugs
 - you can always devolve into the state of ["Vibe Coder"](https://www.youtube.com/watch?v=JeNS1ZNHQs8) for a bit and contemplate your life descisions
+- keep your features branches for some time when squashing, you might want to "git bisect" later on
