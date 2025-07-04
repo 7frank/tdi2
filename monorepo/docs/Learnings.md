@@ -28,13 +28,6 @@
 
 - try one artifact per file
 
-## patches
-
-- generating git patch did not work so good for bigger patches
-- mostly due to fake hashes
-  - so instead of `git apply foo.patch`
-  - use `patch -p1 < foo.patch`
-
 ## timing
 
 - claude says your quota runs out you will ahve to wait until then
@@ -62,6 +55,24 @@
 - commit often
 - feature branch often
 - revert if necessary
+
+### patches
+
+- generating git patch did not work so good for bigger patches
+- mostly due to fake hashes
+  - so instead of `git apply foo.patch`
+  - use `patch -p1 < foo.patch`
+
+- smallest possible valid diff with only ts files included in the diff, no hashes
+  `git diff -U0 <source-hash> <dest-hash>  -- '_.ts' ':!_.test.ts' > diff.patch`
+
+```markdown
+- in my repo i made some changes ( related interface-resolver with a new integrated-interface-resolver) that broke the dev ...
+- ** i have added a patch file made with "git diff -U0"** and log output of the program before and after the changes..
+- somehow my files no longer are transformed .
+- **if there are multiple problems then create multiple patch files / artifacts**
+  - **that i can apply with "patch" cli not "git apply"** so that i can fix this step by step
+```
 
 ## knowledge
 
