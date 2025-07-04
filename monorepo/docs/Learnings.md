@@ -74,6 +74,13 @@
   - **that i can apply with "patch" cli not "git apply"** so that i can fix this step by step
 ```
 
+
+- if you dont have a test but want to generate one now this could work
+  - now you are in the position to compare the outputs ad give some context to the bot 
+```
+suggest a file that i should test  integration test with bun:test that should workl before the changes made in any patch including the dest-commit
+```
+
 ## knowledge
 
 - you need to know how to fix things
