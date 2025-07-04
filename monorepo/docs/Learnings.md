@@ -88,3 +88,9 @@
 - if your implementation was generated decently and the last test is broken because of quota
   - try to remove the last test and fix the file / some tests are better than none
   - create a new chat and tell the bot with the requirements from the last chat to implement the missing tests
+
+## troubleshooting
+
+- good luck, hope you wrote enough tests
+  - if not, write tests for bugs
+- you can always devolve into the state of ["Vibe Coder"](https://www.youtube.com/watch?v=JeNS1ZNHQs8) for a bit and contemplate your life descisions
