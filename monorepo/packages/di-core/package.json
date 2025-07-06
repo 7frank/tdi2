@@ -3,15 +3,33 @@
   "version": "2.0.0",
   "description": "TypeScript Dependency Injection 2 - Core DI framework",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./decorators": "./src/decorators.ts",
-    "./types": "./src/types.ts",
-    "./markers": "./src/markers.ts",
-    "./container": "./src/container.ts",
-    "./context": "./src/context.tsx",
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./decorators": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./markers": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./container": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./context": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
     "./tools": {
       "import": "./dist/tools/index.js",
       "types": "./dist/tools/index.d.ts"
