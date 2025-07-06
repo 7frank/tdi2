@@ -28,7 +28,19 @@ A small working example demonstrating the TDI2 dependency injection framework wi
 
 ## Setup
 
-0. clone the repo or `npx degit 7frank/tdi2/examples/tdi2-basic-example di-react-example`
+0. degit or clone the repo by using one of these:
+
+   ```bash
+   npx degit 7frank/tdi2/examples/tdi2-basic-example di-react-example
+   cd di-react-example
+   ```
+
+   **or**
+
+   ```bash
+   git clone https://github.com/7frank/tdi2.git
+   cd  tdi2/examples/tdi2-basic-example
+   ```
 
 1. **Install dependencies**
 
@@ -39,7 +51,7 @@ A small working example demonstrating the TDI2 dependency injection framework wi
 2. **Start development server**
 
    ```bash
-   npm run dev
+   npm run clean && npm run dev
    ```
 
 3. **View the app**
