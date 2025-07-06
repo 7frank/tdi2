@@ -28,7 +28,7 @@ A small working example demonstrating the TDI2 dependency injection framework wi
 
 ## Setup
 
-0. clone the reop or `npx degit 7frank/tdi2/examples/tdi2-basic-example di-react-example`
+0. clone the repo or `npx degit 7frank/tdi2/examples/tdi2-basic-example di-react-example`
 
 1. **Install dependencies**
 
