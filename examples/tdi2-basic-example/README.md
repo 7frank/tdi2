@@ -76,6 +76,39 @@ npm run preview  # Preview production build
 npm run di:clean # Clean generated DI files
 ```
 
+## Current Limitations
+
+```typescript
+// ✅ works, wrap your injected interfaces in a "services" property
+interface AppProps {
+  services: {
+    todoService: Inject<TodoServiceInterface>;
+    appState: Inject<AppStateServiceInterface>;
+    notifications: Inject<NotificationServiceInterface>;
+  };
+}
+
+// ❌ does not work, WIP
+
+interface AppProps {
+  services: {
+    todoService: Inject<TodoServiceInterface>;
+    appState: Inject<AppStateServiceInterface>;
+    notifications: Inject<NotificationServiceInterface>;
+  };
+}
+
+// ✅ works, non-destructured key and destructuring in the function body
+export function TodoApp2(props: AppProps) {
+  const {
+    services: { todoService },
+  } = props;
+}
+
+// ❌ does not work, destucturing in the function arguments list directly
+export function TodoApp2({ services: { todoService } }: AppProps) {}
+```
+
 ## Scripts
 
 - `rm -rf node_modules package-lock.json && npm install`

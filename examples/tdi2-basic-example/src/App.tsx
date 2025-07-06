@@ -3,11 +3,19 @@ import type { Inject } from "@tdi2/di-core/markers";
 import type { CounterServiceInterface } from "./services/CounterService";
 
 interface CounterProps {
-  counterService: Inject<CounterServiceInterface>;
+  services: { counterService: Inject<CounterServiceInterface> };
 }
-
+/**
+ *
+ *
+ *
+ *
+ *
+ */
 export function Counter(props: CounterProps) {
-  const { counterService } = props;
+  const {
+    services: { counterService },
+  } = props;
 
   // No useState, no useEffect - everything comes from service!
   const count = counterService.state.count;
@@ -38,11 +46,13 @@ export function Counter(props: CounterProps) {
 
 // 4. App Component - Also no props needed
 interface AppProps {
-  counterService: Inject<CounterServiceInterface>;
+  services: { counterService: Inject<CounterServiceInterface> };
 }
 
 export default function App(props: AppProps) {
-  const { counterService } = props;
+  const {
+    services: { counterService },
+  } = props;
   return (
     <div>
       <h1>TDI2 + Valtio Demo</h1>
