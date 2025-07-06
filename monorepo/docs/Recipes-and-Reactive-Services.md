@@ -74,6 +74,8 @@ In architecture there is no "one size fits all".
 
 # Reactive Services in Type-Injection Architectures
 
+- [Reactive Misalignment Exmple](./Reactivity-Misalignment.md)
+
 ## Overview
 
 This document outlines decision boundaries for when to architect services as _reactive_ in a TypeScript project using dependency injection (DI), and when to maintain _imperative_ service structures. The guiding pattern assumes a structured service graph—acyclic, possibly hierarchical (tree-like)—informed by clean architecture or hexagonal principles. The focus is on preserving determinism, reducing complexity, and isolating side-effects to system boundaries.
