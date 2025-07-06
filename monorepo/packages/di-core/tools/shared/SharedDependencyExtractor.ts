@@ -7,13 +7,17 @@ import {
   ParameterDeclaration,
   TypeNode,
   Node,
-  SourceFile
+  SourceFile,
+  InterfaceDeclaration,
+  TypeAliasDeclaration
 } from 'ts-morph';
 import type { SharedTypeResolver, TypeResolutionRequest } from './SharedTypeResolver';
 import type { 
   InterfaceImplementation,
   InterfaceResolverInterface
 } from '../interface-resolver/interface-resolver-types';
+import { RecursiveInjectExtractor, ExtractedInjectMarker } from './RecursiveInjectExtractor';
+import * as path from 'path';
 
 export interface ExtractedDependency {
   serviceKey: string;           // Parameter/property name
@@ -23,6 +27,7 @@ export interface ExtractedDependency {
   resolvedImplementation?: InterfaceImplementation;
   extractionSource: 'decorator' | 'marker-type' | 'parameter-type';
   sourceLocation: string;       // For debugging
+  propertyPath?: string[];      // Path to nested property (e.g., ['services', 'api'])
   metadata?: {
     parameterIndex?: number;
     propertyName?: string;
@@ -38,11 +43,23 @@ export interface DependencyExtractionContext {
   verbose?: boolean;
 }
 
+export interface SharedDependencyExtractorOptions {
+  verbose?: boolean;
+  srcDir?: string;
+}
+
 export class SharedDependencyExtractor {
+  private recursiveExtractor: RecursiveInjectExtractor;
+
   constructor(
     private typeResolver: SharedTypeResolver,
-    private options: { verbose?: boolean } = {}
-  ) {}
+    private options: SharedDependencyExtractorOptions = {}
+  ) {
+    this.recursiveExtractor = new RecursiveInjectExtractor({
+      verbose: this.options.verbose,
+      srcDir: this.options.srcDir
+    });
+  }
 
   /**
    * Extract dependencies from class constructor with @Inject decorators
@@ -158,7 +175,7 @@ export class SharedDependencyExtractor {
   }
 
   /**
-   * Extract dependencies from Inject<T> marker types in function parameters
+   * Extract dependencies from Inject<T> marker types in function parameters using recursive extraction
    */
   private extractFromTypeMarkers(
     param: ParameterDeclaration,
@@ -176,55 +193,18 @@ export class SharedDependencyExtractor {
       console.log(`🔍 Analyzing parameter type: ${typeNode.getKindName()}`);
     }
 
-    // Handle inline type literal: props: { services: { api: Inject<ApiInterface> } }
-    if (Node.isTypeLiteral(typeNode)) {
-      const serviceDeps = this.extractFromServicesTypeLiteral(typeNode, sourceFile, context);
-      dependencies.push(...serviceDeps);
-    }
-
-    // Handle type reference: props: ComponentProps (where ComponentProps has services property)
-    if (Node.isTypeReference(typeNode)) {
-      const serviceDeps = this.extractFromTypeReference(typeNode, sourceFile, context);
-      dependencies.push(...serviceDeps);
-    }
-
-    return dependencies;
-  }
-
-  /**
-   * Extract from services property in type literal
-   */
-  private extractFromServicesTypeLiteral(
-    typeNode: TypeNode,
-    sourceFile: SourceFile,
-    context: string
-  ): ExtractedDependency[] {
-    const dependencies: ExtractedDependency[] = [];
+    // Use recursive extraction to find all Inject markers in the type structure
+    const injectMarkers = this.recursiveExtractor.extractFromTypeNode(typeNode, sourceFile);
     
-    if (!Node.isTypeLiteral(typeNode)) return dependencies;
-
-    const members = typeNode.getMembers();
-    const servicesProperty = members.find(member => 
-      Node.isPropertySignature(member) && member.getName() === 'services'
-    );
-
-    if (!servicesProperty || !Node.isPropertySignature(servicesProperty)) {
-      return dependencies;
+    if (this.options.verbose && injectMarkers.length > 0) {
+      console.log(`🎯 Found ${injectMarkers.length} inject markers in parameter type`);
     }
 
-    const serviceTypeNode = servicesProperty.getTypeNode();
-    if (!serviceTypeNode || !Node.isTypeLiteral(serviceTypeNode)) {
-      return dependencies;
-    }
-
-    // Extract each service dependency
-    const serviceMembers = serviceTypeNode.getMembers();
-    for (const serviceMember of serviceMembers) {
-      if (Node.isPropertySignature(serviceMember)) {
-        const dependency = this.extractServiceDependency(serviceMember, sourceFile, context);
-        if (dependency) {
-          dependencies.push(dependency);
-        }
+    // Convert inject markers to extracted dependencies
+    for (const marker of injectMarkers) {
+      const dependency = this.convertInjectMarkerToDependency(marker, sourceFile, context);
+      if (dependency) {
+        dependencies.push(dependency);
       }
     }
 
@@ -232,77 +212,138 @@ export class SharedDependencyExtractor {
   }
 
   /**
-   * Extract service dependency from property signature
+   * Convert an inject marker to an extracted dependency
    */
-  private extractServiceDependency(
-    propertySignature: any,
+  private convertInjectMarkerToDependency(
+    marker: ExtractedInjectMarker,
     sourceFile: SourceFile,
     context: string
   ): ExtractedDependency | null {
-    const propName = propertySignature.getName();
-    const propTypeNode = propertySignature.getTypeNode();
-    if (!propTypeNode) return null;
-
-    const typeText = propTypeNode.getText();
-    
-    // Check for Inject<T> or InjectOptional<T> markers
-    const injectMatch = typeText.match(/^Inject<(.+)>$/);
-    const optionalMatch = typeText.match(/^InjectOptional<(.+)>$/);
-    
-    let interfaceType: string;
-    let isOptional: boolean;
-
-    if (injectMatch) {
-      interfaceType = injectMatch[1];
-      isOptional = false;
-    } else if (optionalMatch) {
-      interfaceType = optionalMatch[1];
-      isOptional = true;
-    } else {
-      // Not a DI marker type
-      return null;
-    }
-
     // Resolve the interface type
     const resolutionRequest: TypeResolutionRequest = {
-      interfaceType,
-      context: context === 'function-parameter' ? 'function-parameter' : 'function-parameter',
-      isOptional,
-      sourceLocation: `${sourceFile.getBaseName()}:${propertySignature.getStartLineNumber()}`,
+      interfaceType: marker.interfaceType,
+      context: context as any,
+      isOptional: marker.isOptional,
+      sourceLocation: marker.sourceLocation,
       sourceFile: sourceFile.getFilePath()
     };
 
     const resolution = this.typeResolver.resolveType(resolutionRequest);
 
+    if (this.options.verbose) {
+      console.log(`🔗 Converting marker: ${marker.propertyPath.join('.')} -> ${marker.interfaceType} (${marker.isOptional ? 'optional' : 'required'})`);
+    }
+
     return {
-      serviceKey: propName,
-      interfaceType,
+      serviceKey: marker.serviceKey,
+      interfaceType: marker.interfaceType,
       sanitizedKey: resolution.sanitizedKey,
-      isOptional,
+      isOptional: marker.isOptional,
       resolvedImplementation: resolution.implementation,
       extractionSource: 'marker-type',
-      sourceLocation: resolutionRequest.sourceLocation,
+      sourceLocation: marker.sourceLocation,
+      propertyPath: marker.propertyPath,
       metadata: {
-        propertyName: propName
+        propertyName: marker.serviceKey
       }
     };
   }
 
   /**
-   * Extract from type reference (external interface)
+   * Extract from type reference (external interface) using recursive extraction
    */
   private extractFromTypeReference(
     typeNode: TypeNode,
     sourceFile: SourceFile,
     context: string
   ): ExtractedDependency[] {
-    // TODO: Implement type reference resolution
-    // This would involve finding the interface/type alias definition
-    // and extracting services property from it
+    if (!Node.isTypeReference(typeNode)) return [];
+
+    const typeName = typeNode.getTypeName().getText();
+    
     if (this.options.verbose) {
-      console.log(`🔍 Type reference extraction not yet implemented: ${typeNode.getText()}`);
+      console.log(`🔍 Resolving type reference: ${typeName}`);
     }
-    return [];
+
+    // Use recursive extractor to find and extract all inject markers
+    const injectMarkers = this.recursiveExtractor.extractFromTypeNode(typeNode, sourceFile);
+    
+    if (this.options.verbose) {
+      console.log(`🎯 Found ${injectMarkers.length} inject markers in type reference ${typeName}`);
+    }
+
+    // Convert inject markers to extracted dependencies
+    const dependencies: ExtractedDependency[] = [];
+    for (const marker of injectMarkers) {
+      const dependency = this.convertInjectMarkerToDependency(marker, sourceFile, context);
+      if (dependency) {
+        dependencies.push(dependency);
+      }
+    }
+
+    return dependencies;
+  }
+
+  /**
+   * Extract from interface declaration using recursive extraction
+   */
+  private extractFromInterfaceDeclaration(
+    interfaceDecl: InterfaceDeclaration, 
+    sourceFile: SourceFile, 
+    context: string
+  ): ExtractedDependency[] {
+    if (this.options.verbose) {
+      console.log(`✅ Recursively extracting dependencies from interface ${interfaceDecl.getName()}`);
+    }
+
+    // Use recursive extractor to find all inject markers
+    const injectMarkers = this.recursiveExtractor.extractFromInterfaceDeclaration(interfaceDecl, sourceFile);
+    
+    if (this.options.verbose) {
+      console.log(`🎯 Found ${injectMarkers.length} inject markers in interface ${interfaceDecl.getName()}`);
+    }
+
+    // Convert inject markers to extracted dependencies
+    const dependencies: ExtractedDependency[] = [];
+    for (const marker of injectMarkers) {
+      const dependency = this.convertInjectMarkerToDependency(marker, sourceFile, context);
+      if (dependency) {
+        dependencies.push(dependency);
+      }
+    }
+
+    return dependencies;
+  }
+
+  /**
+   * Extract from type alias declaration using recursive extraction
+   */
+  private extractFromTypeAliasDeclaration(
+    typeAlias: TypeAliasDeclaration, 
+    sourceFile: SourceFile, 
+    context: string
+  ): ExtractedDependency[] {
+    if (this.options.verbose) {
+      console.log(`✅ Recursively extracting dependencies from type alias ${typeAlias.getName()}`);
+    }
+
+    // Use recursive extractor to find all inject markers
+    const injectMarkers = this.recursiveExtractor.extractFromTypeAliasDeclaration(typeAlias, sourceFile);
+    
+    if (this.options.verbose) {
+      console.log(`🎯 Found ${injectMarkers.length} inject markers in type alias ${typeAlias.getName()}`);
+    }
+
+    // Convert inject markers to extracted dependencies
+    const dependencies: ExtractedDependency[] = [];
+    for (const marker of injectMarkers) {
+      const dependency = this.convertInjectMarkerToDependency(marker, sourceFile, context);
+      if (dependency) {
+        dependencies.push(dependency);
+      }
+    }
+
+    return dependencies;
   }
 
   /**

@@ -1,10 +1,8 @@
 // tools/shared/SharedTypeResolver.ts
 
-import type { InterfaceImplementation } from "../interface-resolver/interface-resolver-types";
-import type { 
-  InterfaceResolver,
-  InterfaceResolverInterface 
-} from "../interface-resolver/interface-resolver";
+import type { InterfaceImplementation,InterfaceResolverInterface } from "../interface-resolver/interface-resolver-types";
+
+
 import { KeySanitizer } from "../interface-resolver/key-sanitizer";
 
 export interface TypeResolutionRequest {

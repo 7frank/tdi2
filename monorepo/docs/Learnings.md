@@ -1,4 +1,4 @@
-# Learnings Claude.AI
+# Learnings of using Claude.AI
 
 ## Vibe Coding
 
@@ -28,13 +28,6 @@
 
 - try one artifact per file
 
-## patches
-
-- generating git patch did not work so good for bigger patches
-- mostly due to fake hashes
-  - so instead of `git apply foo.patch`
-  - use `patch -p1 < foo.patch`
-
 ## timing
 
 - claude says your quota runs out you will ahve to wait until then
@@ -63,6 +56,31 @@
 - feature branch often
 - revert if necessary
 
+### patches
+
+- generating git patch did not work so good for bigger patches
+- mostly due to fake hashes
+  - so instead of `git apply foo.patch`
+  - use `patch -p1 < foo.patch`
+
+- smallest possible valid diff with only ts files included in the diff, no hashes
+  `git diff -U0 <source-hash> <dest-hash>  -- '_.ts' ':!_.test.ts' > diff.patch`
+
+```markdown
+- in my repo i made some changes ( related interface-resolver with a new integrated-interface-resolver) that broke the dev ...
+- ** i have added a patch file made with "git diff -U0"** and log output of the program before and after the changes..
+- somehow my files no longer are transformed .
+- **if there are multiple problems then create multiple patch files / artifacts**
+  - **that i can apply with "patch" cli not "git apply"** so that i can fix this step by step
+```
+
+
+- if you dont have a test but want to generate one now this could work
+  - now you are in the position to compare the outputs ad give some context to the bot 
+```
+suggest a file that i should test  integration test with bun:test that should workl before the changes made in any patch including the dest-commit
+```
+
 ## knowledge
 
 - you need to know how to fix things
@@ -88,3 +106,10 @@
 - if your implementation was generated decently and the last test is broken because of quota
   - try to remove the last test and fix the file / some tests are better than none
   - create a new chat and tell the bot with the requirements from the last chat to implement the missing tests
+
+## troubleshooting
+
+- good luck, hope you wrote enough tests
+  - if not, write tests for bugs
+- you can always devolve into the state of ["Vibe Coder"](https://www.youtube.com/watch?v=JeNS1ZNHQs8) for a bit and contemplate your life descisions
+- keep your features branches for some time when squashing, you might want to "git bisect" later on

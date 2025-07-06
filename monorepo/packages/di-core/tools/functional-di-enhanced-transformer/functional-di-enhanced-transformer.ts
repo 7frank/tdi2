@@ -11,6 +11,7 @@ import {
 } from 'ts-morph';
 import * as path from 'path';
 import { ConfigManager } from '../config-manager';
+import type { TransformedContent } from '../shared/shared-types';
 
 // Use shared components instead of local ones
 import { SharedDependencyExtractor } from '../shared/SharedDependencyExtractor';
@@ -33,6 +34,7 @@ import { ComponentTransformer } from './component-transformer';
 import { ImportManager } from './import-manager';
 import { DebugFileGenerator } from './debug-file-generator';
 import { DestructuringProcessor } from './destructuring-processor';
+import { DiInjectMarkers } from './di-inject-markers';
 
 interface TransformerOptions {
   srcDir?: string;
@@ -104,7 +106,8 @@ export class FunctionalDIEnhancedTransformer {
     });
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
-      verbose: this.options.verbose
+      verbose: this.options.verbose,
+      srcDir: this.options.srcDir
     });
 
     this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
@@ -126,7 +129,7 @@ export class FunctionalDIEnhancedTransformer {
 
   async transformForBuild(): Promise<Map<string, string>> {
     const result = await this.transform();
-    return result.transformedFiles;
+    return result.transformedFiles as any; // FIXME: Type mismatch, should be fixed, it currenty breaks build
   }
 
   async transform(): Promise<TransformationResult> {
@@ -169,7 +172,7 @@ export class FunctionalDIEnhancedTransformer {
 
     } catch (error) {
       this.errors.push({
-        type: 'configuration-error',
+        type: 'configuration-error' as any, // FIXME: Type mismatch, should be fixed, it currenty breaks build
         message: error instanceof Error ? error.message : 'Unknown transformation error',
         details: error
       });
@@ -212,16 +215,32 @@ export class FunctionalDIEnhancedTransformer {
     }
 
     // Add source files
-    this.project.addSourceFilesAtPaths(`${this.options.srcDir}/**/*.{ts,tsx}`);
+    const pattern ="/**/*.{ts,tsx}"
+    this.project.addSourceFilesAtPaths(`${this.options.srcDir}${pattern}`);
+
+    if (this.options.verbose){
+
+          console.log(`📂 Scanned source files in ${this.options.srcDir} with pattern: ${pattern}`);
+          console.log(`🔍 Total source files: ${this.project.getSourceFiles().length}`);
+    }
+
 
     const sourceFiles = this.project.getSourceFiles();
 
     for (const sourceFile of sourceFiles) {
       if (this.shouldSkipFile(sourceFile)) continue;
-
+      if (this.options.verbose) {
+        console.log(`🔍 Processing source file: ${sourceFile.getFilePath()}`);
+      }
       // Find function declarations
       for (const func of sourceFile.getFunctions()) {
+
         const candidate = this.createFunctionCandidate(func, sourceFile);
+        if (this.options.verbose) {
+        console.log("Function",func.getName(),"isCandidate",!!candidate )
+        }
+
+       
         if (candidate) {
           this.transformationCandidates.push(candidate);
         }
@@ -242,7 +261,7 @@ export class FunctionalDIEnhancedTransformer {
     }
 
     if (this.options.verbose) {
-      console.log(`📋 Found ${this.transformationCandidates.length} functional component candidates`);
+      console.log(`📋 Found ${this.transformationCandidates.length} functional component candidates`,this.transformationCandidates.map(it=> it.metadata?.componentName));
     }
   }
 
@@ -251,10 +270,15 @@ export class FunctionalDIEnhancedTransformer {
     sourceFile: SourceFile
   ): TransformationCandidate | null {
     const funcName = func.getName();
-    if (!funcName) return null;
+    if (!funcName) {
+     if (this.options.verbose) {
+        console.warn(`⚠️  Skipping unnamed function in ${sourceFile.getFilePath()}`);
+      }   
+      return null
+    };
 
     // Check if function has DI markers in parameters
-    if (!this.hasInjectMarkers(func.getParameters())) {
+    if (!this.hasInjectMarkers(func.getParameters(),sourceFile)) {
       return null;
     }
 
@@ -279,7 +303,7 @@ export class FunctionalDIEnhancedTransformer {
     const varName = declaration.getName();
 
     // Check if arrow function has DI markers in parameters
-    if (!this.hasInjectMarkers(arrowFunc.getParameters())) {
+    if (!this.hasInjectMarkers(arrowFunc.getParameters(),sourceFile)) {
       return null;
     }
 
@@ -316,6 +340,11 @@ export class FunctionalDIEnhancedTransformer {
 
   private async transformSingleComponent(candidate: TransformationCandidate): Promise<void> {
     const componentName = candidate.metadata?.componentName || 'unknown';
+
+    if (this.options.verbose) {
+      console.log(`🔄 Transforming component: ${componentName} (${candidate.type})`);
+    }
+
 
     // Extract dependencies using shared logic
     let dependencies: any[] = [];
@@ -394,23 +423,31 @@ export class FunctionalDIEnhancedTransformer {
 
   private shouldSkipFile(sourceFile: SourceFile): boolean {
     const filePath = sourceFile.getFilePath();
-    return filePath.includes('generated') || 
+    const shouldSkip=filePath.includes('generated') || 
            filePath.includes('node_modules') ||
            filePath.includes('.d.ts') ||
            filePath.includes('.tdi2');
+    if (this.options.verbose && shouldSkip) {
+      console.log(`🔍 Skipping file due to ignorepattern: ${filePath}`);
+    }
+    return shouldSkip
   }
 
-  private hasInjectMarkers(parameters: ParameterDeclaration[]): boolean {
+
+  private hasInjectMarkers(parameters: ParameterDeclaration[], sourceFile: SourceFile): boolean {
+
     if (parameters.length === 0) return false;
 
     const firstParam = parameters[0];
     const typeNode = firstParam.getTypeNode();
     if (!typeNode) return false;
 
-    const typeText = typeNode.getText();
-    return typeText.includes('Inject<') || typeText.includes('InjectOptional<');
-  }
 
+   return new DiInjectMarkers().hasInjectMarkersRecursive(typeNode, sourceFile);
+   
+ }
+ 
+ 
   private isReactComponent(node: FunctionDeclaration | ArrowFunction): boolean {
     // Check if function returns JSX
     const body = Node.isFunctionDeclaration(node) ? node.getBody() : node.getBody();
@@ -477,7 +514,7 @@ export class FunctionalDIEnhancedTransformer {
     };
 
     return {
-      transformedFiles: this.transformedFiles,
+      transformedFiles: this.transformedFiles as any, // FIXME: Type mismatch, should be fixed, it currenty breaks build
       summary,
       errors: this.errors,
       warnings: this.warnings
