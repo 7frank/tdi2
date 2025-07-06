@@ -2,6 +2,20 @@
 
 ## ordered log
 
+-- vite plugin
+
+### make real world example
+
+#### [❌] compile to npm package for di-vite-plugin and publish
+
+#### [❌] compile to npm package for di-core and publish
+
+#### [❌] create stand alone example(s) in top level of monorepo
+
+- that uses npm di-core & di-vite-plugin packages
+
+
+
 ### [❌] DI bugs & side effects (part 1)
 
 #### [❌] ⚠️ interfaces still not working with generic any
@@ -57,25 +71,9 @@ export function TodoApp2({
 
 ### [❌] FIXME could not fast refrest useDi export incompatible
 
-### [❌] compile to npm package and publish
-
 ### [❌] Profile decorator and marker
 
 ### [❌] Lazy decorator and marker
-
-### [❌] evaluate different pattern in combination or as alternative to valtio reactivity
-
-> see "Recipes" for some ideas already
-
-- Valtio vs or instead of observable or either or a combination of them
-  - reason: observer pattern within the class services would be nice to have "subscribe.."
-  - rxjs streams or ralway oriented style might be an improvement in readability and maintainability
-    - **BUT** that should problably be more convention than core comile logic
-  - https://chatgpt.com/share/6865b204-ac20-8009-87c3-9602fa61813f
-- an **extension** via additional plugin or and flag could be similar to svelte
-  - if service.observableVal => return <>{service.observableVal}</>
-  - then transform to foo=useSubscribe({service.observableVal}) return <>{foo}</>
-  - this would make classes more subscripotion/onChange friendly internally
 
 ### [❌] cli
 
@@ -234,6 +232,20 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] evaluate different pattern in combination or as alternative to valtio reactivity
+
+> see "Recipes" for some ideas already
+
+- Valtio vs or instead of observable or either or a combination of them
+  - reason: observer pattern within the class services would be nice to have "subscribe.."
+  - rxjs streams or ralway oriented style might be an improvement in readability and maintainability
+    - **BUT** that should problably be more convention than core comile logic
+  - https://chatgpt.com/share/6865b204-ac20-8009-87c3-9602fa61813f
+- an **extension** via additional plugin or and flag could be similar to svelte
+  - if service.observableVal => return <>{service.observableVal}</>
+  - then transform to foo=useSubscribe({service.observableVal}) return <>{foo}</>
+  - this would make classes more subscripotion/onChange friendly internally
 
 #### [✅] DI bugs & side effects (part 1) -di-core changes broke the dev
 

@@ -86,7 +86,7 @@ function UserDashboard({ userService, appState }: {
 **Enterprise Implementation**
 
 - [Enterprise Guide](./docs/Enterprise-Implementation.md) - Large team adoption
-- [[❌] [Migration Strategy](./docs/Migration-Strategy.md) - Phased rollout plan
+- [❌] [ [Migration Strategy](./docs/Migration-Strategy.md) - Phased rollout plan
 - [Team Onboarding](./docs/Team-Onboarding.md) - Developer training
 
 **Architecture Deep Dive**
@@ -112,7 +112,7 @@ function UserDashboard({ userService, appState }: {
 
 **Try RSI** in your next project and let us know how it works for your team.
 
-## TODO
+## Other Resources & WIP
 
 - [Motivation](./monorepo/docs/Impuls.md)
 
@@ -134,6 +134,10 @@ function UserDashboard({ userService, appState }: {
 
 - [Comparison](./monorepo/docs/React%20Service%20Injection%20vs%20Traditional%20State%20Management.md)
   - [❌] needs redaction
+
+- [❌][recipes & rectivity](./monorepo/docs/Recipes-and-Reactive-Services.md)
+
+- [❌][React Service Injection vs Traditional State Management](./monorepo/docs/React%20Service%20Injection%20vs%20Traditional%20State%20Management.md)
 
 ---
 
