@@ -1,11 +1,24 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
-  "changelog": "@changesets/cli/changelog",
+  "changelog": [
+    "@changesets/changelog-github",
+    {
+      "repo": "7frank/tdi2"
+    }
+  ],
   "commit": false,
   "fixed": [],
-  "linked": [],
-  "access": "restricted",
+  "linked": [["@tdi2/di-core", "@tdi2/vite-plugin-di"]],
+  "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": [
+    "@tdi2/legacy",
+    "@tdi2/web",
+    "@tdi2/docs",
+    "@tdi2/logging",
+    "@tdi2/eslint-config",
+    "@tdi2/typescript-config",
+    "@tdi2/ui"
+  ]
 }
