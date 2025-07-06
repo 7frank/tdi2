@@ -11,6 +11,7 @@ import {
 } from 'ts-morph';
 import * as path from 'path';
 import { ConfigManager } from '../config-manager';
+import type { TransformedContent } from '../shared/shared-types';
 
 // Use shared components instead of local ones
 import { SharedDependencyExtractor } from '../shared/SharedDependencyExtractor';
@@ -105,7 +106,8 @@ export class FunctionalDIEnhancedTransformer {
     });
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
-      verbose: this.options.verbose
+      verbose: this.options.verbose,
+      srcDir: this.options.srcDir
     });
 
     this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
@@ -434,7 +436,6 @@ export class FunctionalDIEnhancedTransformer {
 
   private hasInjectMarkers(parameters: ParameterDeclaration[], sourceFile: SourceFile): boolean {
 
-    console.log("hasInjectMarkers","Parameters",parameters.map(p=>p.getText()))
     if (parameters.length === 0) return false;
 
     const firstParam = parameters[0];
