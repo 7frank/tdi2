@@ -6,6 +6,7 @@
 
 #### [❌] di-core changes broke the dev
 
+#####
 - dev is working the same way when not isung the changes from the [integrated dependency injection feature](https://github.com/7frank/tdi2/pull/11/files)
 - but as soon as di-core gets built the vite plugin no longer
   - processes jsx files
@@ -14,9 +15,10 @@
 - maybe the tests are part solution, some related are failing
 - divide and conquery ...
 
+#####
 Try this(
 
-> **Learnings maybemake econtext small**
+> **Learnings maybe make context small**
 > - git diff working/failed ) (**only code and test** not text files)
 >   - then take that and dev berfore and dev after
 >   - then "create multiple smaller diff artifacts to fix my di
