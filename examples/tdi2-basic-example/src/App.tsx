@@ -5,13 +5,7 @@ import type { CounterServiceInterface } from "./services/CounterService";
 interface CounterProps {
   services: { counterService: Inject<CounterServiceInterface> };
 }
-/**
- *
- *
- *
- *
- *
- */
+
 export function Counter(props: CounterProps) {
   const {
     services: { counterService },
@@ -73,11 +67,8 @@ export default function App(props: AppProps) {
 // 5. What TDI2 generates after transformation:
 //
 // export function Counter() {
-//   // TDI2-TRANSFORMED: Auto-injected service
+//   // TDI2-TRANSFORMED: Auto-injected service returning reactive Valtio Proxy state
 //   const counterService = useService('CounterService');
-//
-//   // Valtio: Auto-reactive snapshots
-//   const counterSnap = useSnapshot(counterService.state);
 //
 //   return (
 //     <div>

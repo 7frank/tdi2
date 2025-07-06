@@ -144,6 +144,11 @@ di-core tests generate transformed files in the wrong directory "../../"
 
 ### [❌] use falso in tests and fixtures, we don't want the ai to hard code any solutions
 
+### [❌] service-registry / autoregistry in .tdi generated
+
+- not used? at least configured wrong, so problaby redundant
+- 7frank/tdi2/examples/tdi2-basic-example/src/.tdi2/registry.ts
+
 ### [❌] split the code base into a npm monorepo
 
 - [✅] tdi2-core
