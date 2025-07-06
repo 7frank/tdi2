@@ -2,7 +2,12 @@
   "name": "tdi2",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
+    "build": "bun run --filter='@tdi2/*' build",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "bun run build && changeset publish",
+    "ci:version": "changeset version && bun install",
+    "ci:publish": "changeset publish",
     "dev": "turbo run dev",
     "test": "turbo run test",
     "lint": "turbo run lint",
@@ -10,6 +15,8 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.5",
     "prettier": "^3.6.0",
     "turbo": "^2.5.4",
     "typescript": "5.8.2"
