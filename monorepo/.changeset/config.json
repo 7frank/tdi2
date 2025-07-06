@@ -1,0 +1,23 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "changelog": [
+    "@changesets/changelog-github",
+    {
+      "repo": "7frank/tdi2"
+    }
+  ],
+  "commit": false,
+  "fixed": [],
+  "linked": [["@tdi2/di-core", "@tdi2/vite-plugin-di"]],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": [
+    "legacy",
+    "docs",
+    "web",
+    "@repo/eslint-config",
+    "@repo/typescript-config",
+    "@repo/ui"
+  ]
+}

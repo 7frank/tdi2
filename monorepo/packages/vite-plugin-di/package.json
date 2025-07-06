@@ -1,0 +1,79 @@
+{
+  "name": "@tdi2/vite-plugin-di",
+  "version": "2.2.0",
+  "description": "Vite plugin for TDI2 (TypeScript Dependency Injection) with interface-based automatic resolution",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "vite",
+    "plugin",
+    "dependency-injection",
+    "di",
+    "typescript",
+    "react",
+    "tdi2",
+    "interface-resolution",
+    "decorators"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/7frank/tdi2.git",
+    "directory": "packages/vite-plugin-di"
+  },
+  "bugs": {
+    "url": "https://github.com/7frank/tdi2/issues"
+  },
+  "homepage": "https://github.com/7frank/tdi2#readme",
+  "license": "MIT",
+  "author": "7frank",
+  "scripts": {
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "publish:npm": "npm publish --access public",
+    "publish:jsr": "npx jsr publish"
+  },
+  "dependencies": {
+    "@tdi2/di-core": "^2.2.0"
+  },
+  "peerDependencies": {
+    "vite": "^4.0.0 || ^5.0.0 || ^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vite": "^6.0.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

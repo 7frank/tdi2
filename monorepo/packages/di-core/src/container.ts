@@ -1,6 +1,6 @@
 // src/di/container.ts - FIXED to properly load all services
 
-import type { DIContainer, ServiceFactory, DIMap } from '@tdi2/di-core/types';
+import type { DIContainer, ServiceFactory, DIMap } from './types';
 
 export class CompileTimeDIContainer implements DIContainer {
   private services = new Map<string | symbol, any>();
@@ -120,6 +120,8 @@ export class CompileTimeDIContainer implements DIContainer {
           }`
         );
 
+        // @ts-ignore factory interface wrong?
+        // FIXME
         const factory = config.factory(this);
         this.factories.set(token, factory);
         this.scopes.set(token, config.scope);

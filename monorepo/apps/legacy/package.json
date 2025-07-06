@@ -6,7 +6,7 @@
   "scripts": {
     "prebuild": "npm run di:build-prepare",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build-bak": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "// === Enhanced DI Scripts ===": "",
@@ -50,6 +50,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@tdi2/vite-plugin-di": "workspace:*",
     "@eslint/js": "^9.25.0",
     "@testing-library/react": "^16.3.0",
     "@types/bun": "latest",

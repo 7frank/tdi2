@@ -1,8 +1,8 @@
 // src/di/context.tsx - Enhanced with functional DI support
 import * as React from "react";
 import { createContext, useContext, type ReactNode } from "react";
-import { type DIContainer } from "@tdi2/di-core/types";
-import { CompileTimeDIContainer } from "@tdi2/di-core/container";
+import { type DIContainer } from "./types";
+import { CompileTimeDIContainer } from "./container";
 import { proxy, useSnapshot } from "valtio";
 
 const DIContext = createContext<DIContainer | null>(null);
@@ -46,7 +46,7 @@ export function useService(token: string | symbol) {
  * Returns undefined if the service is not registered
  */
 export function useOptionalService<T>(
-  token: string | symbol | (new (...args: any[]) => T)
+  token: string | symbol 
 ): T | undefined {
   const container = useDI();
   try {

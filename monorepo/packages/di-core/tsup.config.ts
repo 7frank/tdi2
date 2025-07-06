@@ -1,25 +1,26 @@
 import { defineConfig } from "tsup";
 
-export default defineConfig([
-  {
-    entry: ["src/index.ts"],
+const entries = [
+  "index.ts",
+  "decorators.ts",
+  "types.ts",
+  "markers.ts",
+  "container.ts",
+  "context.tsx",
+]
+  .map((name) => "src/" + name)
+  .map((it) => ({
+    entry: [it],
     format: ["esm"],
-    dts: false,
+    dts: true,
     outDir: "dist",
     clean: true,
     skipNodeModulesBundle: true,
-  },
-  {
-    entry: ["src/index.ts"],
-    format: ["esm"],
-    dts: { only: true },
-    outDir: ".",
-    clean: false,
-    //     banner: {
-    //       js: "#!/usr/bin/env node",
-    //     },
-    //     onSuccess: "chmod +x dist/index.js",
-  },
+    external: ["react", "react-dom"],
+  }));
+
+export default defineConfig([
+  ...entries,
   {
     entry: ["tools/index.ts"],
     format: ["esm"],
