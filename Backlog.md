@@ -2,8 +2,6 @@
 
 ## ordered log
 
--- vite plugin
-
 ### make real world example
 
 #### [❌] compile to npm package for di-vite-plugin and publish
@@ -13,8 +11,6 @@
 #### [❌] create stand alone example(s) in top level of monorepo
 
 - that uses npm di-core & di-vite-plugin packages
-
-
 
 ### [❌] DI bugs & side effects (part 1)
 
