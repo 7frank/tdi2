@@ -1,5 +1,16 @@
 # @tdi2/vite-plugin-di
 
+## 2.2.0
+
+### Minor Changes
+
+- di-core exports js for other packages to be able to import its content
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @tdi2/di-core@2.2.0
+
 ## 2.1.0
 
 ### Minor Changes
