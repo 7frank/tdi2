@@ -29,11 +29,13 @@ A small working example demonstrating the TDI2 dependency injection framework wi
 ## Setup
 
 1. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 2. **Start development server**
+
    ```bash
    npm run dev
    ```
@@ -58,6 +60,7 @@ A small working example demonstrating the TDI2 dependency injection framework wi
 ## Debug Information
 
 While running, visit these URLs for debug info:
+
 - `http://localhost:5173/_di_debug` - Complete debug information
 - `http://localhost:5173/_di_interfaces` - Interface mappings
 - `http://localhost:5173/_di_configs` - Configuration management
@@ -70,3 +73,8 @@ npm run build    # Build for production
 npm run preview  # Preview production build
 npm run di:clean # Clean generated DI files
 ```
+
+## Scripts
+
+- `rm -rf node_modules package-lock.json && npm install`
+- `npm list @tdi2/di-core`

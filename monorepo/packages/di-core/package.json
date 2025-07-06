@@ -11,30 +11,34 @@
       "types": "./dist/index.d.ts"
     },
     "./decorators": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/decorators.js",
+      "types": "./dist/decorators.d.ts"
     },
     "./types": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/types.js",
+      "types": "./dist/types.d.ts"
     },
     "./markers": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/markers.js",
+      "types": "./dist/markers.d.ts"
     },
     "./container": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/container.js",
+      "types": "./dist/container.d.ts"
     },
     "./context": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/context.js",
+      "types": "./dist/context.d.ts"
     },
     "./tools": {
       "import": "./dist/tools/index.js",
       "types": "./dist/tools/index.d.ts"
     }
   },
+  "files": [
+    "dist/",
+    "*.d.ts"
+  ],
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
