@@ -13,12 +13,11 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
-    "@tdi2/legacy",
-    "@tdi2/web",
-    "@tdi2/docs",
-    "@tdi2/logging",
-    "@tdi2/eslint-config",
-    "@tdi2/typescript-config",
-    "@tdi2/ui"
+    "legacy",
+    "docs",
+    "web",
+    "@repo/eslint-config",
+    "@repo/typescript-config",
+    "@repo/ui"
   ]
 }
