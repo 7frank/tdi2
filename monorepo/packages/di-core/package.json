@@ -21,7 +21,11 @@
     "dev": "tsup --watch",
     "build": "tsup",
     "test": "bun test",
-    "lint": "echo 'No linting configured yet'"
+    "lint": "echo 'No linting configured yet'",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "publish:npm": "npm publish --access public",
+    "publish:jsr": "npx jsr publish"
   },
   "keywords": [
     "dependency-injection",
