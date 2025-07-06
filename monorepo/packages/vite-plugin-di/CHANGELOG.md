@@ -1,5 +1,16 @@
 # @tdi2/vite-plugin-di
 
+## 2.1.0
+
+### Minor Changes
+
+- fix imports
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @tdi2/di-core@2.1.0
+
 ## 2.0.0
 
 ### Major Changes
