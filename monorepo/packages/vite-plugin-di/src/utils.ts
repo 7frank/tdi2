@@ -15,6 +15,20 @@ import type {
  * Get default plugin options with sensible defaults
  */
 export function getDIPluginDefaults(userOptions: DIPluginOptions): Required<DIPluginOptions> {
+  const defaultAdvanced = {
+    fileExtensions: ['.ts', '.tsx'],
+    diPatterns: {
+      serviceDecorator: /@Service\s*\(/,
+      injectDecorator: /@Inject\s*\(/,
+      interfaceMarker: /Inject<|InjectOptional</,
+    },
+    performance: {
+      parallel: true,
+      maxConcurrency: 10,
+      enableCache: true,
+    },
+  };
+
   return {
     srcDir: './src',
     outputDir: './src/generated',
@@ -23,27 +37,22 @@ export function getDIPluginDefaults(userOptions: DIPluginOptions): Required<DIPl
     enableFunctionalDI: true,
     enableInterfaceResolution: true,
     generateDebugFiles: false,
-    customSuffix: undefined,
+    customSuffix: '',
     cleanOldConfigs: true,
     keepConfigCount: 3,
     reuseExistingConfig: true,
-    advanced: {
-      fileExtensions: ['.ts', '.tsx'],
-      diPatterns: {
-        serviceDecorator: /@Service\s*\(/,
-        injectDecorator: /@Inject\s*\(/,
-        interfaceMarker: /Inject<|InjectOptional</,
-      },
-      performance: {
-        parallel: true,
-        maxConcurrency: 10,
-        enableCache: true,
-      },
-    },
     ...userOptions,
     advanced: {
-      ...getDIPluginDefaults({}).advanced,
+      ...defaultAdvanced,
       ...userOptions.advanced,
+      diPatterns: {
+        ...defaultAdvanced.diPatterns,
+        ...userOptions.advanced?.diPatterns,
+      },
+      performance: {
+        ...defaultAdvanced.performance,
+        ...userOptions.advanced?.performance,
+      },
     },
   };
 }
@@ -448,7 +457,7 @@ export function createDebugEndpoints(
 
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(interfaceData, null, 2));
-      } catch (error) {
+      } catch (error: any) {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: error.message }));
       }
@@ -505,7 +514,7 @@ export function createDebugEndpoints(
             2
           )
         );
-      } catch (error) {
+      } catch (error:any) {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: error.message }));
       }
@@ -544,7 +553,7 @@ export function createDebugEndpoints(
         server.ws.send({
           type: 'full-reload',
         });
-      } catch (error) {
+      } catch (error :any) {
         res.statusCode = 500;
         res.end(
           JSON.stringify({
@@ -575,7 +584,7 @@ export function createDebugEndpoints(
 
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(stats, null, 2));
-      } catch (error) {
+      } catch (error : any) {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: error.message }));
       }

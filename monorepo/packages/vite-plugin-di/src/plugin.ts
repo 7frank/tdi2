@@ -10,10 +10,6 @@ import * as path from "path";
 
 import type {
   DIPluginOptions,
-  DIDebugInfo,
-  TransformationSummary,
-  ConfigInfo,
-  InterfaceResolutionInfo,
   DIHotUpdateContext,
   DIBuildContext,
 } from './types';
@@ -274,7 +270,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
    * Handle hot module replacement for DI files
    */
   const handleDIHotUpdate = async (context: DIHotUpdateContext) => {
-    if (!options.watch) return;
+    if (!options.watch) return null
 
     if (context.hasDIPatterns) {
       if (options.verbose) {
