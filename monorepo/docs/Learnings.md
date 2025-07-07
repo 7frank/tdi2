@@ -113,3 +113,9 @@ suggest a file that i should test  integration test with bun:test that should wo
   - if not, write tests for bugs
 - you can always devolve into the state of ["Vibe Coder"](https://www.youtube.com/watch?v=JeNS1ZNHQs8) for a bit and contemplate your life descisions
 - keep your features branches for some time when squashing, you might want to "git bisect" later on
+
+
+## misc
+
+- Chatgpt makes Juniors & Juniors more productive
+- Claude makes Seniors more productive as it can 
