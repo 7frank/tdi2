@@ -50,7 +50,7 @@ dev-install: ## Install development dependencies
 
 setup-dev: ## Setup development environment (pre-commit, etc.)
 	@echo "🛠️  Setting up development environment..."
-	uv run pre-commit install
+	# uv run pre-commit install
 	@echo "✅ Development environment ready"
 
 # Presentation management
