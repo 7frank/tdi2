@@ -2,6 +2,8 @@
 """
 RSI Conference Presentation CLI
 Professional presentation management with mkslides
+
+Requires Python 3.12+ for mkslides compatibility
 """
 
 import subprocess
@@ -13,6 +15,13 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+# Check Python version compatibility
+if sys.version_info < (3, 12):
+    print("❌ Python 3.12+ required for mkslides compatibility")
+    print(f"Current version: {sys.version}")
+    print("Please upgrade Python or use a compatible version")
+    sys.exit(1)
 
 app = typer.Typer(
     name="rsi-slides",

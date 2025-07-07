@@ -10,13 +10,23 @@ help: ## Show this help message
 	@echo "RSI Conference Presentation - Make Commands"
 	@echo "=========================================="
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo "⚡ Quick One-Liners:"
+	@echo "  make quick-test    # Setup + serve immediately"
+	@echo "  make quick-serve   # Just serve (if already setup)"
+	@echo "  make quick-build   # Quick build test"
 	@echo ""
-	@echo "Quick Start:"
-	@echo "  make setup     # Install everything and setup development environment"
-	@echo "  make serve     # Start development server with live reload"
-	@echo "  make export    # Generate presentation files for conference"
+	@echo "📋 All Commands:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $1, $2}'
+	@echo ""
+	@echo "🚀 Getting Started:"
+	@echo "  make setup         # Full setup (recommended first time)"
+	@echo "  make quick-test    # Quick setup + test"
+	@echo "  make serve         # Start development server"
+	@echo ""
+	@echo "⚡ Direct UV Commands:"
+	@echo "  uv run mkslides serve slides/main.md"
+	@echo "  uv run mkslides build slides/main.md --output test.html"
 
 # Environment setup
 setup: clean install dev-install setup-dev ## Complete setup for development
@@ -24,6 +34,12 @@ setup: clean install dev-install setup-dev ## Complete setup for development
 
 install: ## Install package and dependencies with uv
 	@echo "📦 Installing dependencies with uv..."
+	@echo "🐍 Checking Python version (requires 3.12+)..."
+	@python3 -c "import sys; exit(0 if sys.version_info >= (3,12) else 1)" || \
+		(echo "❌ Python 3.12+ required for mkslides compatibility" && \
+		 echo "Current version: $(python3 --version)" && \
+		 echo "Please upgrade Python or use pyenv/conda to install Python 3.12+" && \
+		 exit 1)
 	uv sync
 	@echo "✅ Dependencies installed"
 
@@ -42,7 +58,11 @@ serve: ## Start development server with live reload
 	@echo "🚀 Starting presentation server..."
 	@echo "📱 Open http://localhost:8000 in your browser"
 	@echo "🔄 Live reload enabled - edit slides/main.md to see changes"
-	uv run mkslides serve slides/main.md --port 8000 --host 0.0.0.0 --watch
+	@if [ ! -d ".venv" ]; then \
+		echo "❌ Virtual environment not found. Run 'make install' first"; \
+		exit 1; \
+	fi
+	uv run mkslides serve slides/main.md
 
 watch: ## Watch for changes and rebuild automatically
 	@echo "👀 Watching for changes..."
@@ -257,7 +277,18 @@ bump-major: ## Bump major version
 	@echo "🔼 Bumping major version..."
 	uv run python scripts/bump_version.py major
 
-# Quick actions for presentation day
+# Quick one-liner commands
+quick-test: ## One-liner test: setup and serve immediately
+	@echo "⚡ Quick test: setup and serve..."
+	uv venv --python 3.12 || true && uv sync && uv run mkslides serve slides/main.md
+
+quick-serve: ## One-liner serve (assumes dependencies installed)
+	@echo "🚀 Quick serve..."
+	uv run mkslides serve slides/main.md
+
+quick-build: ## One-liner build test
+	@echo "⚡ Quick build test..."
+	uv run mkslides build slides/main.md --output quick-test.html && echo "✅ Built quick-test.html"
 presentation-ready: clean build conference-check backup ## Final check before presentation
 	@echo "🎬 Final presentation readiness check..."
 	@echo "✅ Build completed"
@@ -287,3 +318,10 @@ info: ## Show environment information
 	@echo "📁 Project structure:"
 	@tree -L 2 -I '__pycache__|.git|.venv|*.pyc' 2>/dev/null || \
 		find . -maxdepth 2 -type d | grep -E '^\.\/[^.]' | sort
+	@echo ""
+	@echo "⚡ One-liner commands:"
+	@echo "  uv run mkslides serve slides/main.md"
+	@echo "  uv run mkslides build slides/main.md --output test.html"
+	@echo "  make quick-test  # Setup + serve in one command"
+
+# Quick actions for presentation day
