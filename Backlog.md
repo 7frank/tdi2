@@ -2,15 +2,13 @@
 
 ## ordered log
 
-### make real world example
 
-#### [❌] compile to npm package for di-vite-plugin and publish
+### [❌]  React RFP
 
-#### [❌] compile to npm package for di-core and publish
+- generic rfp
+  - speaker bio
+- slide deck https://martenbe.github.io/mkslides/#/
 
-#### [❌] create stand alone example(s) in top level of monorepo
-
-- that uses npm di-core & di-vite-plugin packages
 
 ### [❌] DI bugs & side effects (part 1)
 
@@ -233,6 +231,16 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### ✅ make real world example
+
+#### [✅] compile to npm package for di-vite-plugin and publish
+
+#### [✅] compile to npm package for di-core and publish
+
+#### [✅] create stand alone example(s) in top level of monorepo
+
+- that uses npm di-core & di-vite-plugin packages
 
 ### [✅] evaluate different pattern in combination or as alternative to valtio reactivity
 
