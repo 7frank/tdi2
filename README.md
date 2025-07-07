@@ -141,6 +141,8 @@ function UserDashboard({ userService, appState }: {
 
 - [❌][React Service Injection vs Traditional State Management](./monorepo/docs/React%20Service%20Injection%20vs%20Traditional%20State%20Management.md)
 
+- [pain point analysis and comparision](./docs/pain-points/README.md)
+
 ---
 
 _Transforming React from component chaos to service-centric clarity._
