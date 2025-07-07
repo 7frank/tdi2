@@ -1,0 +1,165 @@
+# slides/config-react-summit.yaml
+# React Summit - Premium International Conference
+extends: config.yaml
+
+title: "From Props Hell to Service Heaven: React Service Injection"
+subtitle: "Enterprise-Grade Architecture for Scalable React Applications"
+
+# Premium conference settings
+theme: "league"
+backgroundImage: ""  # Clean professional look
+
+# Timing for 45-minute slot
+defaultTiming: 120  # 2 minutes per slide average
+autoSlide: 0       # Manual control for premium presentation
+
+customCSS: |
+  /* React Summit branding */
+  .reveal h1 {
+    color: #61dafb;
+    font-size: 2.8em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  }
+  
+  .reveal h2 {
+    color: #21a0c4;
+    border-bottom: 2px solid #61dafb;
+    padding-bottom: 10px;
+  }
+  
+  /* Enterprise-focused styling */
+  .enterprise-metric {
+    background: linear-gradient(135deg, rgba(97, 218, 251, 0.1), rgba(33, 160, 196, 0.1));
+    border: 1px solid #61dafb;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+  }
+  
+  .roi-highlight {
+    color: #4caf50;
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+
+---
+
+# slides/config-react-advanced.yaml  
+# React Advanced London - Technical Deep Dive
+extends: config.yaml
+
+title: "React Service Injection: Deep Architecture Patterns"
+subtitle: "Advanced Dependency Injection for React Applications"
+
+# Technical conference settings
+theme: "league"
+width: 1920
+height: 1080
+
+# Optimized for technical audience
+fragments: true
+fragmentInURL: true
+defaultTiming: 90  # Faster pace for experts
+
+customCSS: |
+  /* React Advanced styling */
+  .reveal h1 {
+    color: #ff6b35;
+    font-family: 'Monaco', 'Courier New', monospace;
+  }
+  
+  .reveal h2 {
+    color: #f7931e;
+    font-weight: 300;
+  }
+  
+  /* Code-heavy presentation optimizations */
+  .reveal pre code {
+    font-size: 0.75em;
+    line-height: 1.2;
+    max-height: 70vh;
+  }
+  
+  /* Technical depth indicators */
+  .complexity-high {
+    border-left: 4px solid #ff6b35;
+    padding-left: 15px;
+    background: rgba(255, 107, 53, 0.1);
+  }
+  
+  .architecture-pattern {
+    background: rgba(247, 147, 30, 0.1);
+    border: 1px dashed #f7931e;
+    padding: 10px;
+    margin: 10px 0;
+  }
+
+---
+
+# slides/config-local-meetup.yaml
+# Local React Meetup - Accessible and Practical  
+extends: config.yaml
+
+title: "Simplifying React: From Props Hell to Service Heaven"
+subtitle: "A Practical Introduction to Service Injection"
+
+# Meetup-friendly settings
+theme: "simple"  # Lighter theme for smaller venues
+width: 1600     # Accommodate smaller projectors
+height: 900
+
+# Shorter format optimizations
+defaultTiming: 60  # 1 minute per slide for 25-minute talk
+autoSlideStoppable: true
+
+customCSS: |
+  /* Meetup-friendly styling */
+  .reveal {
+    font-size: 38px;  # Larger font for smaller venues
+  }
+  
+  .reveal h1 {
+    color: #2196f3;
+    font-size: 2.2em;
+  }
+  
+  .reveal h2 {
+    color: #1976d2;
+    font-size: 1.6em;
+  }
+  
+  /* Simplified code blocks */
+  .reveal pre code {
+    font-size: 0.9em;
+    line-height: 1.4;
+    max-height: 60vh;
+  }
+  
+  /* Beginner-friendly highlights */
+  .beginner-tip {
+    background: #e3f2fd;
+    color: #0d47a1;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #2196f3;
+    margin: 15px 0;
+  }
+  
+  .quick-win {
+    background: #e8f5e8;
+    color: #2e7d32;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #4caf50;
+  }
+  
+  /* Simplified navigation for beginners */
+  .reveal .controls {
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .reveal .progress {
+    height: 6px;
+    color: #2196f3;
+  }

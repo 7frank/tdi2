@@ -1,0 +1,270 @@
+# RSI Conference Presentation Configuration
+# Default settings for professional tech conferences
+
+title: "From Props Hell to Service Heaven: React Service Injection"
+author: "7Frank"
+date: "2025"
+
+# Presentation theme and styling
+theme: "league"  # Dark theme perfect for tech conferences
+transition: "slide"
+backgroundTransition: "fade"
+
+# Display settings
+width: 1920
+height: 1080
+margin: 0.1
+minScale: 0.2
+maxScale: 1.5
+
+# Navigation and controls
+controls: true
+controlsTutorial: true
+controlsLayout: "bottom-right"
+controlsBackArrows: "faded"
+progress: true
+center: true
+touch: true
+loop: false
+rtl: false
+navigationMode: "default"
+
+# Fragments and animations
+fragments: true
+fragmentInURL: false
+embedded: false
+help: true
+pause: true
+showNotes: false
+autoSlide: 0
+autoSlideStoppable: true
+autoSlideMethod: "Reveal.navigateNext"
+defaultTiming: null
+
+# Input and interaction
+mouseWheel: false
+hideInactiveCursor: true
+hideCursorTime: 5000
+hideAddressBar: true
+previewLinks: false
+postMessage: true
+postMessageEvents: false
+focusBodyOnPageVisibilityChange: true
+
+# View settings
+viewDistance: 3
+mobileViewDistance: 2
+display: "block"
+hideInactiveCursor: true
+
+# Code highlighting
+highlight:
+  theme: "monokai"  # Great contrast for dark theme
+  tabReplace: "    "
+  highlightOnLoad: true
+  escapeHTML: true
+
+# Math support (if needed)
+math:
+  mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js'
+  config: 'TeX-AMS_HTML-full'
+  TeX: 
+    Macros:
+      RR: "\\mathbb{R}"
+
+# Plugins configuration
+plugins:
+  - RevealHighlight
+  - RevealNotes
+  - RevealSearch
+  - RevealZoom
+  - RevealMath
+
+# Dependencies (loaded automatically by mkslides)
+dependencies:
+  - src: 'plugin/markdown/marked.js'
+    condition: "function() { return !!document.querySelector( '[data-markdown]' ); }"
+  - src: 'plugin/markdown/markdown.js'
+    condition: "function() { return !!document.querySelector( '[data-markdown]' ); }"
+  - src: 'plugin/highlight/highlight.js'
+    async: true
+    callback: "function() { hljs.initHighlightingOnLoad(); }"
+
+# Custom CSS for better presentation
+customCSS: |
+  /* Better code block styling */
+  .reveal pre code {
+    max-height: 600px;
+    font-size: 0.85em;
+    line-height: 1.3;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Highlight current fragments */
+  .reveal .slides section .fragment.highlight-current-blue {
+    opacity: 1;
+    visibility: inherit;
+  }
+  
+  .reveal .slides section .fragment.highlight-current-blue.current-fragment {
+    color: #1b91ff;
+    font-weight: bold;
+  }
+  
+  /* Better table styling */
+  .reveal table {
+    font-size: 0.75em;
+    border-collapse: collapse;
+    margin: 20px auto;
+  }
+  
+  .reveal table th,
+  .reveal table td {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  
+  .reveal table th {
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: bold;
+  }
+  
+  /* Emoji styling */
+  .emoji {
+    font-size: 1.2em;
+    vertical-align: middle;
+  }
+  
+  /* Highlight boxes for important content */
+  .highlight-box {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    border-left: 4px solid #1b91ff;
+  }
+  
+  /* Speaker note styling */
+  .reveal .speaker-notes {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #333;
+    background: #f8f8f8;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  /* Progress bar customization */
+  .reveal .progress {
+    color: #1b91ff;
+    height: 4px;
+  }
+  
+  /* Title slide enhancements */
+  .reveal h1 {
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  
+  .reveal h2 {
+    font-size: 1.8em;
+    color: #1b91ff;
+    margin-bottom: 30px;
+  }
+  
+  /* List styling improvements */
+  .reveal ul {
+    display: block;
+    margin-left: 1em;
+  }
+  
+  .reveal ul li {
+    margin-bottom: 10px;
+  }
+  
+  /* Code span styling */
+  .reveal code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    color: #ff6b6b;
+  }
+  
+  /* Link styling */
+  .reveal a {
+    color: #1b91ff;
+    text-decoration: underline;
+  }
+  
+  .reveal a:hover {
+    color: #4fc3f7;
+    text-shadow: 0 0 8px rgba(79, 195, 247, 0.6);
+  }
+  
+  /* Slide number styling */
+  .reveal .slide-number {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  
+  /* Better blockquote styling */
+  .reveal blockquote {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 4px solid #1b91ff;
+    padding: 20px;
+    margin: 20px 0;
+    font-style: italic;
+  }
+  
+  /* Status indicators for checklists */
+  .status-good { color: #4caf50; }
+  .status-warning { color: #ff9800; }
+  .status-error { color: #f44336; }
+  
+  /* Conference-specific adaptations */
+  .conference-react-summit .reveal h1 {
+    color: #61dafb;
+  }
+  
+  .conference-react-advanced .reveal {
+    font-size: 36px;
+  }
+  
+  .conference-local-meetup .reveal pre code {
+    font-size: 0.9em;
+  }
+
+# Slide numbering
+slideNumber: true
+slideNumberFormat: "%current% / %total%"
+
+# Keyboard shortcuts
+keyboard:
+  13: "next"      # Enter key
+  27: "toggleOverview"  # Escape key
+  32: "next"      # Spacebar
+  37: "left"      # Left arrow
+  38: "up"        # Up arrow  
+  39: "right"     # Right arrow
+  40: "down"      # Down arrow
+  
+# PDF export settings
+pdfMaxPagesPerSlide: 1
+pdfSeparateFragments: false
+
+# Notes window configuration
+notes:
+  showNotes: false
+  notesLayout: "separate-page"
+
+# Search plugin configuration
+search:
+  matchShortcuts: true
+  openShortcuts: ["CTRL+F", "F3"]
