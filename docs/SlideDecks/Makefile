@@ -70,10 +70,11 @@ watch: ## Watch for changes and rebuild automatically
 
 build: ## Build presentation files
 	@echo "🏗️  Building presentation..."
-	mkdir -p dist
-	uv run mkslides build slides/main.md --output dist/index.html --config slides/config.yaml
-	cp -r assets/ dist/ 2>/dev/null || true
+	@mkdir -p dist
+	@echo "📦 Building with mkslides..."
+	uv run mkslides build slides/main.md -d dist
 	@echo "✅ Presentation built in dist/"
+	@ls -la dist/index.html 2>/dev/null && echo "📁 Main file: dist/index.html" || echo "⚠️  Check dist/ directory for output files"
 
 export: build ## Export presentation for conference delivery
 	@echo "📦 Exporting conference package..."
@@ -151,18 +152,27 @@ validate: ## Validate slide content and structure
 # Conference-specific builds
 react-summit: ## Build for React Summit (premium conference)
 	@echo "🎯 Building for React Summit..."
-	uv run python scripts/build_conference.py --conference react-summit
+	@mkdir -p dist/react-summit
+	@echo "📦 Building with mkslides..."
+	uv run mkslides build slides/main.md -d dist/react-summit
 	@echo "✅ React Summit build ready in dist/react-summit/"
+	@ls -la dist/react-summit/index.html && echo "📁 Open: dist/react-summit/index.html"
 
 react-advanced: ## Build for React Advanced London
 	@echo "🎯 Building for React Advanced..."
-	uv run python scripts/build_conference.py --conference react-advanced
+	@mkdir -p dist/react-advanced
+	@echo "📦 Building with mkslides..."
+	uv run mkslides build slides/main.md -d dist/react-advanced
 	@echo "✅ React Advanced build ready in dist/react-advanced/"
+	@ls -la dist/react-advanced/index.html && echo "📁 Open: dist/react-advanced/index.html"
 
 local-meetup: ## Build for local meetup (simplified version)
 	@echo "🎯 Building for local meetup..."
-	uv run python scripts/build_conference.py --conference local-meetup
+	@mkdir -p dist/local-meetup
+	@echo "📦 Building with mkslides..."
+	uv run mkslides build slides/main.md -d dist/local-meetup
 	@echo "✅ Local meetup build ready in dist/local-meetup/"
+	@ls -la dist/local-meetup/index.html && echo "📁 Open: dist/local-meetup/index.html"
 
 # Backup and restore
 backup: ## Backup current presentation state
@@ -227,7 +237,18 @@ timing-check: ## Check presentation timing
 	@echo "⏱️  Checking presentation timing..."
 	uv run python scripts/check_timing.py slides/main.md
 
-# Package management
+init-files: ## Create missing files and directories
+	@echo "📁 Creating missing files and directories..."
+	@mkdir -p src/rsi_presentation scripts slides assets/images assets/demos docs tests
+	@touch src/rsi_presentation/__init__.py scripts/__init__.py tests/__init__.py
+	@if [ ! -f "scripts/build_conference.py" ]; then \
+		echo "⚠️  scripts/build_conference.py missing - run full setup"; \
+	fi
+	@if [ ! -f "LICENSE" ]; then \
+		echo "⚠️  LICENSE file missing - creating basic MIT license"; \
+		echo "MIT License\n\nCopyright (c) 2025 7Frank\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software..." > LICENSE; \
+	fi
+	@echo "✅ Basic structure created"
 update: ## Update dependencies
 	@echo "🔄 Updating dependencies..."
 	uv lock --upgrade
@@ -288,7 +309,7 @@ quick-serve: ## One-liner serve (assumes dependencies installed)
 
 quick-build: ## One-liner build test
 	@echo "⚡ Quick build test..."
-	uv run mkslides build slides/main.md --output quick-test.html && echo "✅ Built quick-test.html"
+	uv run mkslides build slides/main.md -d quick-test && echo "✅ Build completed - check quick-test/index.html"
 presentation-ready: clean build conference-check backup ## Final check before presentation
 	@echo "🎬 Final presentation readiness check..."
 	@echo "✅ Build completed"
