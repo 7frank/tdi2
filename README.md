@@ -1,5 +1,7 @@
 # React Service Injection (RSI)
 
+> [React doesn't scale](https://verved.ai/blog/react-doesn-t-scale) **until now?**
+
 ## Enterprise-Grade Architecture for Scalable React Applications
 
 **The Problem**: React components drowning in props, state synchronization hell, testing nightmares.
