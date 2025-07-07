@@ -74,9 +74,9 @@
   - **that i can apply with "patch" cli not "git apply"** so that i can fix this step by step
 ```
 
-
 - if you dont have a test but want to generate one now this could work
-  - now you are in the position to compare the outputs ad give some context to the bot 
+  - now you are in the position to compare the outputs ad give some context to the bot
+
 ```
 suggest a file that i should test  integration test with bun:test that should workl before the changes made in any patch including the dest-commit
 ```
@@ -94,9 +94,10 @@ suggest a file that i should test  integration test with bun:test that should wo
 
 - when you think you are in a dead end
   - stash / clean and retry ai generating wirth a slightly different prompt
-- year 2000 you are a computer science person => you can google better than others
-- year 2012 you are a computer science person => you can google "stackoverflow"
-- year 2035 you are a computer science person => you can write short ticket descriptions that are now no longer handled by the team but your bot
+  
+- it's the year 2000, you are a computer science person => you can google better than others
+- it's the year  2012, you are a computer science person => you can google "stackoverflow"
+- it's the year,  2035 you are a computer science person => you can write short ticket descriptions that are now no longer handled by the team but your bot
 
 ## quirks
 
@@ -114,8 +115,10 @@ suggest a file that i should test  integration test with bun:test that should wo
 - you can always devolve into the state of ["Vibe Coder"](https://www.youtube.com/watch?v=JeNS1ZNHQs8) for a bit and contemplate your life descisions
 - keep your features branches for some time when squashing, you might want to "git bisect" later on
 
-
 ## misc
 
 - Chatgpt makes Juniors & Juniors more productive
-- Claude makes Seniors more productive as it can 
+- Claude makes Seniors more productive
+  - as it can drastically good generate coherent code artifacts and full smaller packages
+  - but it requires a decent level of knowledge of the implications of the added frameworks
+  - it requires a decent intuition of what is ai slop and what is additional `stuff` the ai generates that is actually `value`

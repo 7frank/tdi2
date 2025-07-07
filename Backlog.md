@@ -2,13 +2,7 @@
 
 ## ordered log
 
-
-### [❌]  React RFP
-
-- generic rfp
-  - speaker bio
-- slide deck https://martenbe.github.io/mkslides/#/
-
+### [❌] issue sync
 
 ### [❌] DI bugs & side effects (part 1)
 
@@ -232,7 +226,13 @@ https://github.com/aleclarson/valtio-kit
 
 ## Done
 
-### ✅ make real world example
+### [✅] React RFP
+
+- generic rfp
+  - speaker bio
+- slide deck https://martenbe.github.io/mkslides/#/
+
+### [✅] make real world example
 
 #### [✅] compile to npm package for di-vite-plugin and publish
 
