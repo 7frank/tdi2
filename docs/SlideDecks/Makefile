@@ -26,7 +26,7 @@ help: ## Show this help message
 	@echo ""
 	@echo "⚡ Direct UV Commands:"
 	@echo "  uv run mkslides serve slides/main.md"
-	@echo "  uv run mkslides build slides/main.md --output test.html"
+	@echo "  uv run mkslides build slides/main.md -d dist"
 
 # Environment setup
 setup: clean install dev-install setup-dev ## Complete setup for development
@@ -342,7 +342,19 @@ info: ## Show environment information
 	@echo ""
 	@echo "⚡ One-liner commands:"
 	@echo "  uv run mkslides serve slides/main.md"
-	@echo "  uv run mkslides build slides/main.md --output test.html"
+	@echo "  uv run mkslides build slides/main.md -d dist"
 	@echo "  make quick-test  # Setup + serve in one command"
 
 # Quick actions for presentation day
+
+
+dist-server: ## Start simple HTTP server for dist folder
+	@echo "🌐 Starting HTTP server for dist folder..."
+	@if [ ! -d "dist" ]; then \
+		echo "❌ dist folder not found. Run 'make build' first"; \
+		exit 1; \
+	fi
+	@echo "📁 Serving: $(shell pwd)/dist"
+	@echo "📱 Open: http://localhost:8000"
+	@echo "🛑 Press Ctrl+C to stop"
+	@cd dist && python3 -m http.server 8000

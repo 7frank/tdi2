@@ -36,6 +36,9 @@ make export
 
 # Final presentation readiness check
 make presentation-ready
+
+make dist-server
+
 ```
 
 ## 📦 What's Included
