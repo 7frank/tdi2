@@ -24,9 +24,9 @@ interface HealthcareFormContainerProps {
   };
 }
 
-export function HealthcareFormContainer(p: HealthcareFormContainerProps) {
-  const { services } = p;
-  const { formDAG, demographicsForm, insuranceForm } = services;
+export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
+  const { services:{ formDAG, demographicsForm, insuranceForm } } = props;
+  
   const { currentNode, completedNodes } = formDAG.state;
 
   const handleFormComplete = async (nodeId: string) => {

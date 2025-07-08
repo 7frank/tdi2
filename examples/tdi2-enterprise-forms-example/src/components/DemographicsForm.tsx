@@ -9,10 +9,12 @@ interface DemographicsFormProps {
   onComplete: () => void;
 }
 
-export function DemographicsForm(p: DemographicsFormProps) {
-  const { services, onComplete } = p;
+export function DemographicsForm(props: DemographicsFormProps) {
+  const {
+    services: { demographicsForm },
+    onComplete,
+  } = props;
 
-  const { demographicsForm } = services;
   const { formData, validationResults, isSubmitting } = demographicsForm.state;
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -9,9 +9,9 @@ interface InsuranceFormProps {
   onComplete: () => void;
 }
 
-export function InsuranceForm(p: InsuranceFormProps) {
-  const { services, onComplete } = p;
-  const { insuranceForm } = services;
+export function InsuranceForm(props: InsuranceFormProps) {
+  const { services:{insuranceForm}, onComplete } = props;
+  
   const { formData, validationResults, isSubmitting, eligibilityCheck } =
     insuranceForm.state;
   const [eligibilitySubscription, setEligibilitySubscription] =

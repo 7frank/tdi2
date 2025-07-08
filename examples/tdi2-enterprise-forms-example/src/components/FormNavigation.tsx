@@ -7,9 +7,11 @@ interface FormNavigationProps {
   };
 }
 
-export function FormNavigation(p: FormNavigationProps) {
-  const { services } = p;
-  const { formDAG } = services;
+export function FormNavigation(props: FormNavigationProps) {
+  const {
+    services: { formDAG },
+  } = props;
+
   const { formNodes, currentNode, completedNodes, availableNodes } =
     formDAG.state;
   const progress = formDAG.calculateProgress();

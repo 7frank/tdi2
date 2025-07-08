@@ -4,9 +4,10 @@
 
 ### [❌] issue sync
 
-- create a small cli that helps us sync issues with github projects / issues 
+- create a small cli that helps us sync issues with github projects / issues
 
 ### [❌] create showcases for more complex scenarios
+
 - e.g. complex forms https://claude.ai/chat/48ebf950-986b-476d-bb0c-09a5c87fe041
 
 ### [❌] evaluate composability of DI
@@ -55,6 +56,16 @@ evaluate scenarios
 
 - to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
 - or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
+
+#### [❌] Fixme: example which his generating invalid code
+
+```typescript
+export function DemographicsForm(props: DemographicsFormProps) {
+  const { services, onComplete } = props;
+
+  const { demographicsForm } = services;
+}
+```
 
 ### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
