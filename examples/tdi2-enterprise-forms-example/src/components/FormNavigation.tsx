@@ -7,7 +7,8 @@ interface FormNavigationProps {
   };
 }
 
-export function FormNavigation({ services }: FormNavigationProps) {
+export function FormNavigation(p: FormNavigationProps) {
+  const { services } = p;
   const { formDAG } = services;
   const { formNodes, currentNode, completedNodes, availableNodes } =
     formDAG.state;

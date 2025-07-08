@@ -9,10 +9,9 @@ interface DemographicsFormProps {
   onComplete: () => void;
 }
 
-export function DemographicsForm({
-  services,
-  onComplete,
-}: DemographicsFormProps) {
+export function DemographicsForm(p: DemographicsFormProps) {
+  const { services, onComplete } = p;
+
   const { demographicsForm } = services;
   const { formData, validationResults, isSubmitting } = demographicsForm.state;
 
