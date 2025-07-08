@@ -2,6 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { diEnhancedPlugin } from "@tdi2/vite-plugin-di";
 
+// this is actually required for class based inject to work properly with vite
+const compilerOptions = { experimentalDecorators: true };
+
 export default defineConfig({
   plugins: [
     diEnhancedPlugin({
@@ -15,4 +18,10 @@ export default defineConfig({
     }),
     react(),
   ],
+ 
+  optimizeDeps: {
+    esbuildOptions: {
+      tsconfigRaw: { compilerOptions },
+    },
+  },
 });

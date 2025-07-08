@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { diEnhancedPlugin } from '@tdi2/vite-plugin-di';
 
-// Note: Fix for decorator error in esbuild "Parameter decorators only work when experimental decorators are enabled"
+// this is actually required for class based inject to work properly with vite
 const compilerOptions = { experimentalDecorators: true };
 
 // https://vite.dev/config/
