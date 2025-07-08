@@ -4,6 +4,8 @@
 
 ### [❌] issue sync
 
+- create a small cli that helps us sync issues with github projects / issues 
+
 ### [❌] create showcases for more complex scenarios
 - e.g. complex forms https://claude.ai/chat/48ebf950-986b-476d-bb0c-09a5c87fe041
 
