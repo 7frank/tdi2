@@ -4,6 +4,19 @@
 
 ### [❌] issue sync
 
+### [❌] create showcases for more complex scenarios
+- e.g. complex forms https://claude.ai/chat/48ebf950-986b-476d-bb0c-09a5c87fe041
+
+### [❌] evaluate composability of DI
+
+- we could create @Services(scope="dev")
+- now we could have one or multiple DI_CONFIG
+- that we could **compose**
+- or **filter**
+- we could nest them
+  - maybe a global and one for a certain subtree e.g. multiple forms or pages
+- in essence we would have freedom to combine them as we want which could give us opportunites when injecting
+
 ### [❌] DI bugs & side effects (part 1)
 
 #### [❌] ⚠️ interfaces still not working with generic any
