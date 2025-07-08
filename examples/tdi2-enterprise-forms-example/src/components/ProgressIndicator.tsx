@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Inject } from '@tdi2/di-core/markers';
-import type { FormDAGServiceInterface } from '../services/FormDAGService';
+import type { FormDAGServiceInterface } from '../services/FormDAGServiceInterface';
 
 interface ProgressIndicatorProps {
   completedNodes: string[];

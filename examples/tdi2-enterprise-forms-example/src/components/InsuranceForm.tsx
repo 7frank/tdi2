@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import type { Inject } from '@tdi2/di-core/markers';
-import type { InsuranceValidationServiceInterface } from '../services/InsuranceValidationService';
+import type { InsuranceValidationServiceInterface } from '../services/InsuranceValidationServiceInterface';
 import type { ValidationResult } from '../types/ValidationTypes';
 
 interface InsuranceFormProps {

@@ -1,7 +1,7 @@
 import type { Inject } from '@tdi2/di-core/markers';
-import type { FormDAGServiceInterface } from '../services/FormDAGService';
-import type { FormStateServiceInterface } from '../services/FormStateService';
-import type { ValidationOrchestratorServiceInterface } from '../services/ValidationOrchestratorService';
+import type { FormDAGServiceInterface } from '../services/FormDAGServiceInterface';
+import type { FormStateServiceInterface } from '../services/FormStateServiceInterface';
+import type { ValidationOrchestratorServiceInterface } from '../services/ValidationOrchestratorServiceInterface';
 import { FormNodeRenderer } from './FormNodeRenderer';
 import { ProgressIndicator } from './ProgressIndicator';
 import { NavigationControls } from './NavigationControls';

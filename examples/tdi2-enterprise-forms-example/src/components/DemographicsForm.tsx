@@ -1,6 +1,6 @@
-import React from 'react';
+
 import type { Inject } from '@tdi2/di-core/markers';
-import type { PatientDemographicsServiceInterface } from '../services/PatientDemographicsService';
+import type { PatientDemographicsServiceInterface } from '../services/PatientDemographicsServiceInterface';
 import type { ValidationResult } from '../types/ValidationTypes';
 
 interface DemographicsFormProps {
@@ -20,7 +20,7 @@ export function DemographicsForm({
   // Service provides field validation and formatting
   const supportedStates = demographicsService?.getSupportedStates() ?? [];
   const ageCalculation = demographicsService?.calculateAge(data.dateOfBirth);
-  const isMinor = ageCalculation && ageCalculation < 18;
+  const isMinor = ageCalculation && ageCalculation.isMinor;
 
   const handleInputChange = (field: string, value: any) => {
     onChange(field, value);
