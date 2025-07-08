@@ -6,7 +6,9 @@ In architecture there is no "one size fits all".
 
 ## Client Side
 
-> You have multiple services that need to be reactive to one another.
+> You have multiple services that need to be reactive to one another. This is an antipattern and you should restructure your sevices
+
+> You have A service on the "edges" of your business logic. e.g. external API or complex / cumulative state for GUI:
 
 ### Options
 
@@ -51,6 +53,37 @@ In architecture there is no "one size fits all".
 - `RxJS` = Best for reactive classes under DI.
 - `Custom Observer` = Minimal viable option.
 - Avoid: `callbacks`, `polling`, `EventEmitter` for complex service graphs.
+
+**Example**
+
+```typescript
+// Service definition
+class UserService {
+  private userSubject = new BehaviorSubject<User | null>(null);
+  user$ = this.userSubject.asObservable();
+
+  async loadUser(id: string) {
+    const user = await fetchUser(id);
+    this.userSubject.next(user);
+  }
+}
+
+// Hook to consume observables
+function useObservable<T>(observable$: Observable<T>): T {
+  const [value, setValue] = useState<T>();
+  useEffect(() => {
+    const sub = observable$.subscribe(setValue);
+    return () => sub.unsubscribe();
+  }, [observable$]);
+  return value;
+}
+
+// Component using injected service
+function UserProfile({ userService }: { userService: Inject<UserService> }) {
+  const user = useObservable(userService.user$);
+  return <div>{user?.name}</div>;
+}
+```
 
 ## Server Side
 
