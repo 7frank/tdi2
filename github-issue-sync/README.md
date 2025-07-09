@@ -28,7 +28,7 @@ A TypeScript tool that syncs issues between a local JSON file and a GitHub repos
    - `GITHUB_TOKEN`: Generate a personal access token at https://github.com/settings/tokens
      - Required scopes: `repo`, `read:project`
    - `GITHUB_OWNER`: Your GitHub username (default: 7frank)
-   - `GITHUB_REPO`: Your repository name
+   - `GITHUB_REPO`: Your repository name (tdi2)
    - `ISSUES_FILE`: Path to your local JSON file (default: ./issues.json)
 
 4. **Build the project:**

@@ -1,4 +1,4 @@
-import GitHub from 'github-api';
+import { Octokit } from '@octokit/rest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { config } from 'dotenv';
@@ -8,10 +8,9 @@ import { LocalIssue, GitHubIssue, SyncResult } from './types';
 config();
 
 class GitHubIssueSync {
-  private github: GitHub;
-  private repo: any;
+  private octokit: Octokit;
   private owner: string;
-  private repoName: string;
+  private repo: string;
   private issuesFile: string;
 
   constructor() {
@@ -20,16 +19,14 @@ class GitHubIssueSync {
       throw new Error('GITHUB_TOKEN environment variable is required');
     }
 
-    this.github = new GitHub({ token });
+    this.octokit = new Octokit({ auth: token });
     this.owner = process.env.GITHUB_OWNER || '7frank';
-    this.repoName = process.env.GITHUB_REPO || '';
+    this.repo = process.env.GITHUB_REPO || '';
     this.issuesFile = process.env.ISSUES_FILE || './issues.json';
 
-    if (!this.repoName) {
+    if (!this.repo) {
       throw new Error('GITHUB_REPO environment variable is required');
     }
-
-    this.repo = this.github.getRepo(this.owner, this.repoName);
   }
 
   private async loadLocalIssues(): Promise<LocalIssue[]> {
@@ -64,13 +61,14 @@ class GitHubIssueSync {
 
   private async getGitHubIssues(): Promise<GitHubIssue[]> {
     try {
-      const response = await this.repo.listIssues({
+      const response = await this.octokit.rest.issues.listForRepo({
+        owner: this.owner,
+        repo: this.repo,
         state: 'all',
         per_page: 100
       });
 
-      // Filter out pull requests and return only issues
-      return response.data.filter((issue: any) => !issue.pull_request);
+      return response.data.filter(issue => !issue.pull_request) as GitHubIssue[];
     } catch (error) {
       console.error('Error fetching GitHub issues:', error);
       throw error;
@@ -92,28 +90,31 @@ class GitHubIssueSync {
   }
 
   private async createGitHubIssue(localIssue: LocalIssue): Promise<GitHubIssue> {
-    const issueData = {
+    const response = await this.octokit.rest.issues.create({
+      owner: this.owner,
+      repo: this.repo,
       title: localIssue.title,
       body: localIssue.body || '',
       labels: localIssue.labels || [],
-      assignee: localIssue.assignee || undefined
-    };
+      assignee: localIssue.assignee
+    });
 
-    const response = await this.repo.createIssue(issueData);
-    return response.data;
+    return response.data as GitHubIssue;
   }
 
   private async updateGitHubIssue(number: number, localIssue: LocalIssue): Promise<GitHubIssue> {
-    const issueData = {
+    const response = await this.octokit.rest.issues.update({
+      owner: this.owner,
+      repo: this.repo,
+      issue_number: number,
       title: localIssue.title,
       body: localIssue.body || '',
       labels: localIssue.labels || [],
-      assignee: localIssue.assignee || undefined,
+      assignee: localIssue.assignee,
       state: localIssue.state
-    };
+    });
 
-    const response = await this.repo.updateIssue(number, issueData);
-    return response.data;
+    return response.data as GitHubIssue;
   }
 
   private isNewer(date1: string, date2: string): boolean {
