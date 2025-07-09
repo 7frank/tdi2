@@ -12,6 +12,11 @@
 
 ### [❌] useObservable
 
+- what is RSI structurally (something else?, MVC,MVVM, MVP .. it can be all of them if implemented in a certain way)
+  - with proxy state
+  - with observables
+- see [comparision](./docs/misc/view-logic-pattern.md)
+
 - establish / evaluate rrecipe and establish dos and donts
   - **maybe** dont subscribe manually oin FC only use state of pbservasbalble and create functions that trigger changes but dont make them subscribable
   - **maybe** use robservables for interservice communication

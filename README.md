@@ -138,10 +138,16 @@ function UserDashboard({ userService, appState }: {
   - [❌] needs redaction
 
 - [❌][recipes & rectivity](./monorepo/docs/Recipes-and-Reactive-Services.md)
+  - compare to principles section
+    - there is some core simplicity in RSI that does not require observables and such
 
 - [❌][React Service Injection vs Traditional State Management](./monorepo/docs/React%20Service%20Injection%20vs%20Traditional%20State%20Management.md)
 
 - [pain point analysis and comparision](./docs/pain-points/README.md)
+
+- [❌] [Principles\*](./docs/principles/*)
+  - potential principles how to maximize value of RSI
+  - still not clear
 
 ---
 
