@@ -2,6 +2,8 @@
 
 > [React doesn't scale](https://verved.ai/blog/react-doesn-t-scale) **until now?**
 
+
+
 ## Enterprise-Grade Architecture for Scalable React Applications
 
 **The Problem**: React components drowning in props, state synchronization hell, testing nightmares.
@@ -35,6 +37,18 @@ function UserDashboard({ userService, appState }: {
 ```
 
 **Result**: Components become templates. Services handle everything. Zero prop drilling. Automatic sync across your entire app.
+
+---
+
+## ⚠️ Disclaimer
+
+**🧪 Experimental Technology**: RSI is currently experimental and only works in client-side environments. Server-side rendering (SSR) support is not yet implemented.
+
+**📊 Performance Claims**: All performance metrics and benchmarks referenced in this documentation are currently placeholders and educated guesses. Real-world performance data is still being collected.
+
+**📝 Documentation Status**: Most documentation is in draft form and requires peer review. We're actively seeking feedback from the React community.
+
+**🤝 Contributing**: Found issues or have suggestions? Please [open an issue](https://github.com/your-repo/issues) or submit a pull request. Your feedback helps shape RSI's development.
 
 ---
 
@@ -88,7 +102,6 @@ function UserDashboard({ userService, appState }: {
 **Enterprise Implementation**
 
 - [Enterprise Guide](./docs/Enterprise-Implementation.md) - Large team adoption
-- [❌] [ [Migration Strategy](./docs/Migration-Strategy.md) - Phased rollout plan
 - [Team Onboarding](./docs/Team-Onboarding.md) - Developer training
 
 **Architecture Deep Dive**
@@ -101,7 +114,8 @@ function UserDashboard({ userService, appState }: {
 
 - [Market Analysis](./monorepo/docs/Market-Analysis.md) - User research and pain points
 - [Evaluation Plan](./monorepo/docs/EvaluationPlan.md) - Proving RSI effectiveness
-
+- [React - Pain Point Analysis](./docs/pain-points/README.md) - Detailed comparison with current solutions
+- [State of React - Critical Analysis](./docs/critique/README.md) - as well as Addressing common concerns and limitations
 ---
 
 ## Community
@@ -114,45 +128,29 @@ function UserDashboard({ userService, appState }: {
 
 **Try RSI** in your next project and let us know how it works for your team.
 
-## Other Resources & WIP
+---
 
-- [Motivation](./monorepo/docs/Impuls.md)
+## Additional Resources (Work in Progress)
 
-- [KnownIssues](./monorepo/docs/KnownIssues.md)
+> **Note**: The following documents are still in active development and may contain incomplete or outdated information. We welcome feedback and contributions.
 
-- [DI](./monorepo/docs/Whitepaper.md)
-  - explains the basis and first important step for the react functionality
-  - [❌] needs redaction
-- [React-DI](./monorepo/docs/React-Whitepaper.md)
-  - the core innovation in detail
-  - [❌] needs redaction
+**Core Concepts**
+- [Motivation & Background](./monorepo/docs/Impuls.md) - Why RSI was created
+- [Dependency Injection Foundation](./monorepo/docs/Whitepaper.md) - The underlying DI system
+- [React Integration Details](./monorepo/docs/React-Whitepaper.md) - Core RSI innovation explained
 
-- [Example](./monorepo/docs/React-Example.md)
-  - [❌] ensure this is still correct
+**Examples & Patterns**
+- [Working Example](./monorepo/docs/React-Example.md) - Complete implementation example
+- [Service Recipes](./monorepo/docs/Recipes-and-Reactive-Services.md) - Common patterns and reactive services
 
-- [Impact?](./monorepo/docs/Impact.md)
-  - [❌] highly overselling / too confident
-  - [❌] needs redaction
+**Analysis & Critique**
+- [Design Principles](./docs/principles/) - Guidelines for maximizing RSI value
 
-- [Comparison](./monorepo/docs/React%20Service%20Injection%20vs%20Traditional%20State%20Management.md)
-  - [❌] needs redaction
+- [Known Issues](./monorepo/docs/KnownIssues.md) - Current limitations and planned fixes
 
-- [❌][recipes & rectivity](./monorepo/docs/Recipes-and-Reactive-Services.md)
-  - compare to principles section
-    - there is some core simplicity in RSI that does not require observables and such
-
-- [❌][React Service Injection vs Traditional State Management](./monorepo/docs/React%20Service%20Injection%20vs%20Traditional%20State%20Management.md)
-
-- [pain point analysis and comparision](./docs/pain-points/README.md)
-
-- [❌] [Principles\*](./docs/principles/*)
-  - potential principles how to maximize value of RSI
-  - still not clear
-
-- [❌] [critique\*](./docs/critique/README.md)
-  - why did nobody already? arguments and counterarguments for clarification
-  - what reason has RSI
-  - what are the weaknesses of current react and where are people reinventing classes with closures to because "OOP bad"
+**Planned Documentation**
+- Migration Strategy - Phased rollout plan for existing applications
+- Impact Assessment - Measuring RSI effectiveness in real projects
 
 ---
 
