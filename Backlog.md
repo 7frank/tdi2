@@ -10,6 +10,15 @@
 
 - e.g. complex forms https://claude.ai/chat/48ebf950-986b-476d-bb0c-09a5c87fe041
 
+### [❌] useObservable
+
+- establish / evaluate rrecipe and establish dos and donts
+  - **maybe** dont subscribe manually oin FC only use state of pbservasbalble and create functions that trigger changes but dont make them subscribable
+  - **maybe** use robservables for interservice communication
+  - **maybe** but then again maybe we dont need that
+  - **...** explore what are good and bad patterns here by looking what is out there
+  - TBA
+
 ### [❌] evaluate composability of DI
 
 - we could create @Services(scope="dev")
