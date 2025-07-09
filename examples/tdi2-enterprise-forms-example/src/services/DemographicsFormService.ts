@@ -1,5 +1,4 @@
 import { Service, Inject } from "@tdi2/di-core/decorators";
-import { BehaviorSubject, map, debounceTime, distinctUntilChanged } from "rxjs";
 import type {
   PatientDemographics,
   ValidationResult,
@@ -12,6 +11,10 @@ export interface DemographicsFormServiceInterface {
     validationResults: ValidationResult | null;
     isSubmitting: boolean;
     isDirty: boolean;
+    
+    // 🎨 VIEW STATE: Could be moved to component, but kept here for cross-form coordination
+    lastValidationTime: Date | null;
+    validationDebounceActive: boolean;
   };
 
   updateField(field: string, value: any): void;
@@ -22,31 +25,24 @@ export interface DemographicsFormServiceInterface {
 }
 
 @Service()
-export class DemographicsFormService
-  implements DemographicsFormServiceInterface
-{
+export class DemographicsFormService implements DemographicsFormServiceInterface {
   state = {
     formData: {} as Partial<PatientDemographics>,
     validationResults: null as ValidationResult | null,
     isSubmitting: false,
     isDirty: false,
+    
+    // 🎨 VIEW STATE: UI feedback for validation timing
+    lastValidationTime: null as Date | null,
+    validationDebounceActive: false,
   };
 
-  private formData$ = new BehaviorSubject<Partial<PatientDemographics>>({});
+  private validationTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     @Inject()
     private validationOrchestrator: ValidationOrchestratorServiceInterface
-  ) {
-    // Set up reactive validation
-    this.formData$
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        map((data) => this.validateForm())
-      )
-      .subscribe();
-  }
+  ) {}
 
   updateField(field: string, value: any): void {
     const keys = field.split(".");
@@ -68,7 +64,20 @@ export class DemographicsFormService
 
     this.state.formData = newData;
     this.state.isDirty = true;
-    this.formData$.next(newData);
+    
+    // 🎨 VIEW STATE: Debounced validation with UI feedback
+    this.state.validationDebounceActive = true;
+    
+    // Clear existing timeout
+    if (this.validationTimeout) {
+      clearTimeout(this.validationTimeout);
+    }
+    
+    // Set up debounced validation
+    this.validationTimeout = setTimeout(() => {
+      this.validateForm();
+      this.state.validationDebounceActive = false;
+    }, 300);
   }
 
   async validateForm(): Promise<ValidationResult> {
@@ -116,6 +125,7 @@ export class DemographicsFormService
     );
 
     this.state.validationResults = result;
+    this.state.lastValidationTime = new Date(); // 🎨 VIEW STATE
     return result;
   }
 
@@ -141,7 +151,13 @@ export class DemographicsFormService
     this.state.formData = {};
     this.state.validationResults = null;
     this.state.isDirty = false;
-    this.formData$.next({});
+    this.state.lastValidationTime = null; // 🎨 VIEW STATE
+    this.state.validationDebounceActive = false; // 🎨 VIEW STATE
+    
+    if (this.validationTimeout) {
+      clearTimeout(this.validationTimeout);
+      this.validationTimeout = null;
+    }
   }
 
   calculateAge(dateOfBirth: string): number {

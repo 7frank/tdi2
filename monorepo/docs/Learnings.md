@@ -91,13 +91,13 @@ suggest a file that i should test  integration test with bun:test that should wo
 - know SOLID
   - know how to separate concerns
   - separate functional units
+- `continue .. start at <insert-here> and create a separate artifact i'll stitch them together myself`
 
 - when you think you are in a dead end
   - stash / clean and retry ai generating wirth a slightly different prompt
-  
 - it's the year 2000, you are a computer science person => you can google better than others
-- it's the year  2012, you are a computer science person => you can google "stackoverflow"
-- it's the year,  2035 you are a computer science person => you can write short ticket descriptions that are now no longer handled by the team but your bot
+- it's the year 2012, you are a computer science person => you can google "stackoverflow"
+- it's the year, 2035 you are a computer science person => you can write short ticket descriptions that are now no longer handled by the team but your bot
 
 ## quirks
 

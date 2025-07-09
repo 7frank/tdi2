@@ -18,6 +18,12 @@ export interface FormDAGServiceInterface {
       [key: string]: any;
     };
     navigationHistory: string[];
+    
+    // 🎨 VIEW STATE: Navigation UI feedback (could be in component)
+    isNavigating: boolean;
+    lastNavigationTime: Date | null;
+    progressAnimationActive: boolean;
+    completionCelebrationActive: boolean;
   };
 
   completeNode(nodeId: string): Promise<void>;
@@ -26,6 +32,11 @@ export interface FormDAGServiceInterface {
   canAccessNode(nodeId: string): boolean;
   calculateProgress(): number;
   getNextOptimalNode(): string | null;
+  
+  // 🎨 VIEW STATE: UI-specific methods
+  triggerProgressAnimation(): void;
+  celebrateCompletion(): void;
+  getNavigationFeedback(): string;
 }
 
 @Service()
@@ -116,11 +127,20 @@ export class FormDAGService implements FormDAGServiceInterface {
     ] as FormNode[],
     formData: {} as any,
     navigationHistory: ["demographics"] as string[],
+    
+    // 🎨 VIEW STATE: Navigation UI feedback
+    isNavigating: false,
+    lastNavigationTime: null as Date | null,
+    progressAnimationActive: false,
+    completionCelebrationActive: false,
   };
 
   async completeNode(nodeId: string): Promise<void> {
     if (!this.state.completedNodes.includes(nodeId)) {
       this.state.completedNodes.push(nodeId);
+      
+      // 🎨 VIEW STATE: Trigger completion celebration
+      this.celebrateCompletion();
     }
 
     // Update node completion status
@@ -131,6 +151,9 @@ export class FormDAGService implements FormDAGServiceInterface {
 
     // Recalculate available nodes
     this.updateAvailableNodes();
+    
+    // 🎨 VIEW STATE: Trigger progress animation
+    this.triggerProgressAnimation();
   }
 
   navigateToNode(nodeId: string): boolean {
@@ -138,8 +161,18 @@ export class FormDAGService implements FormDAGServiceInterface {
       return false;
     }
 
+    // 🎨 VIEW STATE: Navigation feedback
+    this.state.isNavigating = true;
+    this.state.lastNavigationTime = new Date();
+
     this.state.currentNode = nodeId;
     this.state.navigationHistory.push(nodeId);
+    
+    // 🎨 VIEW STATE: Reset navigation state after animation
+    setTimeout(() => {
+      this.state.isNavigating = false;
+    }, 500);
+
     return true;
   }
 
@@ -179,6 +212,43 @@ export class FormDAGService implements FormDAGServiceInterface {
       (a, b) => a.estimatedTime - b.estimatedTime
     );
     return sortedByTime[0].id;
+  }
+
+  // 🎨 VIEW STATE: UI-specific methods
+  triggerProgressAnimation(): void {
+    this.state.progressAnimationActive = true;
+    setTimeout(() => {
+      this.state.progressAnimationActive = false;
+    }, 1000);
+  }
+
+  celebrateCompletion(): void {
+    this.state.completionCelebrationActive = true;
+    setTimeout(() => {
+      this.state.completionCelebrationActive = false;
+    }, 2000);
+  }
+
+  getNavigationFeedback(): string {
+    const currentNode = this.state.formNodes.find(n => n.id === this.state.currentNode);
+    const completedCount = this.state.completedNodes.length;
+    const totalNodes = this.state.formNodes.length;
+    
+    if (completedCount === totalNodes) {
+      return "🎉 All forms completed! Ready for submission.";
+    }
+    
+    if (this.state.isNavigating) {
+      return `🔄 Navigating to ${currentNode?.title}...`;
+    }
+    
+    const nextNode = this.getNextOptimalNode();
+    if (nextNode) {
+      const nextNodeObj = this.state.formNodes.find(n => n.id === nextNode);
+      return `📋 Current: ${currentNode?.title}. Next: ${nextNodeObj?.title}`;
+    }
+    
+    return `📍 Current: ${currentNode?.title}`;
   }
 
   private updateAvailableNodes(): void {
