@@ -149,6 +149,9 @@ function UserDashboard({ userService, appState }: {
   - potential principles how to maximize value of RSI
   - still not clear
 
+- [❌] [critique\*](./docs/critique/*)
+  - why did nobody already? arguments and counterarguments for clarification
+
 ---
 
 _Transforming React from component chaos to service-centric clarity._
