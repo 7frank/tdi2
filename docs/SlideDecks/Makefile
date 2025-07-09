@@ -154,6 +154,15 @@ validate: ## Validate slide content and structure
 	uv run python scripts/check_timing.py slides/main.md
 
 # Conference-specific builds
+export-leipzig-js: ## Build for React Summit (premium conference)
+	@echo "🎯 Building for React Summit..."
+	@mkdir -p dist/Meetup-Leipzig.js
+	@echo "📦 Building with mkslides..."
+	uv run mkslides build slides/Meetup-Leipzig.js/slides.md -d dist/Meetup-Leipzig.js
+	@echo "✅ React Summit build ready in dist/Meetup-Leipzig.js/"
+	@ls -la dist/Meetup-Leipzig.js/index.html && echo "📁 Open: dist/Meetup-Leipzig.js/index.html"
+
+# Conference-specific builds
 react-summit: ## Build for React Summit (premium conference)
 	@echo "🎯 Building for React Summit..."
 	@mkdir -p dist/react-summit
