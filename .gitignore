@@ -3,3 +3,4 @@ monorepo/tmp.sh
 *.di-transformed.tsx
 .tdi2/
 docs/SlideDecks/quick-test/
+.env

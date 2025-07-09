@@ -1,0 +1,33 @@
+{
+  "name": "tdi2-enterprise-forms-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Complex healthcare form with DAG architecture using TDI2 + RxJS + JSON Schema",
+  "scripts": {
+    "dev": "vite",
+    "clean": "rm -rf node_modules/.tdi2 src/.tdi2 node_modules/.vite node_modules/.vite-temp",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "di:clean": "rm -rf .tdi2"
+  },
+  "dependencies": {
+    "@tdi2/di-core": "latest",
+    "ajv": "^8.12.0",
+    "ajv-formats": "^3.0.1",
+    "date-fns": "^3.6.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@tdi2/vite-plugin-di": "latest",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "^5.0.2",
+    "vite": "^6.0.0"
+  }
+}

@@ -1,5 +1,7 @@
 # React Service Injection (RSI)
 
+> [React doesn't scale](https://verved.ai/blog/react-doesn-t-scale) **until now?**
+
 ## Enterprise-Grade Architecture for Scalable React Applications
 
 **The Problem**: React components drowning in props, state synchronization hell, testing nightmares.
@@ -136,8 +138,21 @@ function UserDashboard({ userService, appState }: {
   - [❌] needs redaction
 
 - [❌][recipes & rectivity](./monorepo/docs/Recipes-and-Reactive-Services.md)
+  - compare to principles section
+    - there is some core simplicity in RSI that does not require observables and such
 
 - [❌][React Service Injection vs Traditional State Management](./monorepo/docs/React%20Service%20Injection%20vs%20Traditional%20State%20Management.md)
+
+- [pain point analysis and comparision](./docs/pain-points/README.md)
+
+- [❌] [Principles\*](./docs/principles/*)
+  - potential principles how to maximize value of RSI
+  - still not clear
+
+- [❌] [critique\*](./docs/critique/README.md)
+  - why did nobody already? arguments and counterarguments for clarification
+  - what reason has RSI
+  - what are the weaknesses of current react and where are people reinventing classes with closures to because "OOP bad"
 
 ---
 

@@ -2,13 +2,46 @@
 
 ## ordered log
 
+### [❌] react critique
 
-### [❌]  React RFP
+- timeline complexity
+- developers
+- examples of classes and hooks
 
-- generic rfp
-  - speaker bio
-- slide deck https://martenbe.github.io/mkslides/#/
+### [❌] RSI critique
 
+- but why didnt someone invent this sooner?
+- but what about serverside and hydration?
+
+### [❌] classes vs zustand vanilla inject / maybe both
+
+### use crossnote cli to render to pdf
+
+- https://github.com/7frank/crossnote-cli
+
+### [❌] useObservable
+
+- what is RSI structurally (something else?, MVC,MVVM, MVP .. it can be all of them if implemented in a certain way)
+  - with proxy state
+  - with observables
+- see [comparision](./docs/misc/view-logic-pattern.md)
+
+- establish / evaluate rrecipe and establish dos and donts
+  - **maybe** dont subscribe manually oin FC only use state of pbservasbalble and create functions that trigger changes but dont make them subscribable
+  - **maybe** use robservables for interservice communication
+  - **maybe** but then again maybe we dont need that
+  - **...** explore what are good and bad patterns here by looking what is out there
+  - TBA
+
+### [❌] evaluate composability of DI
+
+- we could create @Services(scope="dev")
+- now we could have one or multiple DI_CONFIG
+- that we could **compose**
+- or **filter**
+- we could nest them
+  - maybe a global and one for a certain subtree e.g. multiple forms or pages
+- in essence we would have freedom to combine them as we want which could give us opportunites when injecting
 
 ### [❌] DI bugs & side effects (part 1)
 
@@ -46,6 +79,16 @@ evaluate scenarios
 
 - to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
 - or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
+
+#### [❌] Fixme: example which his generating invalid code
+
+```typescript
+export function DemographicsForm(props: DemographicsFormProps) {
+  const { services, onComplete } = props;
+
+  const { demographicsForm } = services;
+}
+```
 
 ### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
 
@@ -232,7 +275,21 @@ https://github.com/aleclarson/valtio-kit
 
 ## Done
 
-### ✅ make real world example
+### [✅] create showcases for more complex scenarios
+
+- e.g. complex forms https://claude.ai/chat/48ebf950-986b-476d-bb0c-09a5c87fe041
+
+### [✅] issue sync
+
+- create a small cli that helps us sync issues with github projects / issues
+
+### [✅] React RFP
+
+- generic rfp
+  - speaker bio
+- slide deck https://martenbe.github.io/mkslides/#/
+
+### [✅] make real world example
 
 #### [✅] compile to npm package for di-vite-plugin and publish
 
