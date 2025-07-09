@@ -64,6 +64,10 @@ serve: ## Start development server with live reload
 	fi
 	uv run mkslides serve slides/main.md
 
+serve-m-lpz: 
+	uv run mkslides serve "slides/Meetup-Leipzig.js/slides.md"
+
+
 watch: ## Watch for changes and rebuild automatically
 	@echo "👀 Watching for changes..."
 	uv run python scripts/watch_presentation.py
@@ -148,6 +152,15 @@ validate: ## Validate slide content and structure
 	uv run python scripts/validate_slides.py slides/main.md
 	@echo "📏 Checking presentation timing..."
 	uv run python scripts/check_timing.py slides/main.md
+
+# Conference-specific builds
+export-leipzig-js: ## Build for React Summit (premium conference)
+	@echo "🎯 Building for React Summit..."
+	@mkdir -p dist/Meetup-Leipzig.js
+	@echo "📦 Building with mkslides..."
+	uv run mkslides build slides/Meetup-Leipzig.js/slides.md -d dist/Meetup-Leipzig.js
+	@echo "✅ React Summit build ready in dist/Meetup-Leipzig.js/"
+	@ls -la dist/Meetup-Leipzig.js/index.html && echo "📁 Open: dist/Meetup-Leipzig.js/index.html"
 
 # Conference-specific builds
 react-summit: ## Build for React Summit (premium conference)
