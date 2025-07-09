@@ -1,3 +1,4 @@
+// 🔧 FIX: Updated HealthcareFormContainer to properly handle form completion
 import React from "react";
 import type { Inject } from "@tdi2/di-core/markers";
 import type { FormDAGServiceInterface } from "../services/FormDAGService";
@@ -25,30 +26,77 @@ interface HealthcareFormContainerProps {
 }
 
 export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
-  const { services:{ formDAG, demographicsForm, insuranceForm } } = props;
+  const { services: { formDAG, demographicsForm, insuranceForm } } = props;
   
   const { currentNode, completedNodes } = formDAG.state;
 
   const handleFormComplete = async (nodeId: string) => {
+    console.log(`🔄 Attempting to complete form: ${nodeId}`);
+    
     try {
-      // Update the DAG with completion
-      await formDAG.completeNode(nodeId);
-
-      // Store form data in DAG for cross-form access
+      // 🔧 FIX: Validate form completion before proceeding
       if (nodeId === "demographics") {
-        formDAG.state.formData.demographics = demographicsForm.state
-          .formData as any;
+        // Check if demographics form is actually valid and submitted
+        const validationResult = await demographicsForm.validateForm();
+        if (!validationResult.isValid) {
+          console.error("❌ Demographics form validation failed:", validationResult.errors);
+          throw new Error("Demographics form is not valid. Please fix all errors before continuing.");
+        }
+        
+        // Store demographics data in DAG
+        formDAG.state.formData.demographics = demographicsForm.state.formData as any;
+        console.log("✅ Demographics data stored:", formDAG.state.formData.demographics);
+        
       } else if (nodeId === "insurance") {
+        // 🔧 FIX: Check insurance form completion requirements
+        const canSubmit = insuranceForm.canSubmitForm();
+        if (!canSubmit) {
+          console.error("❌ Insurance form is not ready for submission");
+          throw new Error("Insurance form is not ready. Please complete all required fields and verify eligibility.");
+        }
+        
+        const validationResult = await insuranceForm.validateForm();
+        if (!validationResult.isValid) {
+          console.error("❌ Insurance form validation failed:", validationResult.errors);
+          throw new Error("Insurance form is not valid. Please fix all errors before continuing.");
+        }
+        
+        // Check eligibility verification
+        if (insuranceForm.state.eligibilityCheck.result !== "verified") {
+          console.error("❌ Insurance eligibility not verified");
+          throw new Error("Please verify your insurance eligibility before continuing.");
+        }
+        
+        // Store insurance data in DAG
         formDAG.state.formData.insurance = insuranceForm.state.formData as any;
+        console.log("✅ Insurance data stored:", formDAG.state.formData.insurance);
       }
 
-      // Navigate to next optimal node
+      // 🔧 FIX: Complete the node in DAG
+      await formDAG.completeNode(nodeId);
+      console.log(`✅ Form ${nodeId} completed successfully`);
+
+      // 🔧 FIX: Navigate to next optimal node
       const nextNode = formDAG.getNextOptimalNode();
-      if (nextNode) {
-        formDAG.navigateToNode(nextNode);
+      if (nextNode && nextNode !== currentNode) {
+        console.log(`🔄 Navigating to next node: ${nextNode}`);
+        const navigationSuccess = formDAG.navigateToNode(nextNode);
+        if (!navigationSuccess) {
+          console.warn(`⚠️ Failed to navigate to ${nextNode}, staying on current node`);
+        }
+      } else {
+        console.log("🎉 No more nodes available - forms completed!");
       }
+      
     } catch (error) {
-      console.error(`Failed to complete ${nodeId}:`, error);
+      console.error(`❌ Failed to complete ${nodeId}:`, error);
+      
+      // 🔧 FIX: Show user-friendly error message
+      const errorMessage = error.message || `Failed to complete ${nodeId} form`;
+      alert(`Error: ${errorMessage}`);
+      
+      // Don't navigate if completion failed
+      return;
     }
   };
 
@@ -205,7 +253,7 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
         {renderCurrentForm()}
       </div>
 
-      {/* Debug Information (Development Only) */}
+      {/* 🔧 FIX: Enhanced Debug Information */}
       {process.env.NODE_ENV === "development" && (
         <details
           style={{
@@ -236,13 +284,10 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
                   completedNodes: formDAG.state.completedNodes,
                   availableNodes: formDAG.state.availableNodes,
                   progress: formDAG.calculateProgress(),
+                  nextOptimalNode: formDAG.getNextOptimalNode(),
                   formData: {
-                    demographics: formDAG.state.formData.demographics
-                      ? "Present"
-                      : "Empty",
-                    insurance: formDAG.state.formData.insurance
-                      ? "Present"
-                      : "Empty",
+                    demographics: formDAG.state.formData.demographics ? "Present" : "Empty",
+                    insurance: formDAG.state.formData.insurance ? "Present" : "Empty",
                   },
                 },
                 null,
@@ -265,18 +310,39 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
                   demographicsForm: {
                     isDirty: demographicsForm.state.isDirty,
                     isValid: demographicsForm.state.validationResults?.isValid,
-                    errorCount:
-                      demographicsForm.state.validationResults?.errors.length ||
-                      0,
+                    errorCount: demographicsForm.state.validationResults?.errors.length || 0,
                   },
                   insuranceForm: {
                     isDirty: insuranceForm.state.isDirty,
                     isValid: insuranceForm.state.validationResults?.isValid,
-                    eligibilityStatus:
-                      insuranceForm.state.eligibilityCheck.result,
-                    errorCount:
-                      insuranceForm.state.validationResults?.errors.length || 0,
+                    eligibilityStatus: insuranceForm.state.eligibilityCheck.result,
+                    canSubmit: insuranceForm.canSubmitForm(),
+                    isSubmissionComplete: insuranceForm.state.isSubmissionComplete,
+                    submissionError: insuranceForm.state.submissionError,
+                    errorCount: insuranceForm.state.validationResults?.errors.length || 0,
                   },
+                },
+                null,
+                2
+              )}
+            </pre>
+            
+            {/* 🔧 FIX: Add form data preview */}
+            <h4>Form Data Preview:</h4>
+            <pre
+              style={{
+                background: "#e9ecef",
+                padding: "10px",
+                borderRadius: "4px",
+                overflow: "auto",
+                fontSize: "12px",
+                maxHeight: "200px",
+              }}
+            >
+              {JSON.stringify(
+                {
+                  demographics: demographicsForm.state.formData,
+                  insurance: insuranceForm.state.formData,
                 },
                 null,
                 2

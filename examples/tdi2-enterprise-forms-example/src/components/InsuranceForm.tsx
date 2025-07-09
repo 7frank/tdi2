@@ -476,7 +476,7 @@ export function InsuranceForm(props: InsuranceFormProps) {
           </div>
         </fieldset>
 
-      {/* Secondary Insurance Section */}
+        {/* Secondary Insurance Section */}
         <fieldset style={{ marginBottom: "20px", border: "1px solid #dee2e6", borderRadius: "8px" }}>
           <legend 
             onClick={() => toggleSection('secondary')}
@@ -633,7 +633,7 @@ export function InsuranceForm(props: InsuranceFormProps) {
           )}
         </fieldset>
 
-        {/* Form Actions */}
+        {/* Form Actions - FIXED VERSION */}
         <div style={{ display: "flex", gap: "12px", marginTop: "30px" }}>
           <button
             type="button"
@@ -663,19 +663,15 @@ export function InsuranceForm(props: InsuranceFormProps) {
             type="submit"
             style={{
               padding: "12px 24px",
-              background: (validationResults?.isValid && eligibilityCheck.result === "verified") ? "#28a745" : "#6c757d",
+              background: insuranceForm.canSubmitForm() ? "#28a745" : "#6c757d", // 🔧 FIX: Use canSubmitForm()
               color: "white",
               border: "none",
               borderRadius: "6px",
-              cursor: (validationResults?.isValid && eligibilityCheck.result === "verified") ? "pointer" : "not-allowed",
+              cursor: insuranceForm.canSubmitForm() ? "pointer" : "not-allowed", // 🔧 FIX: Use canSubmitForm()
               fontSize: "14px",
               position: "relative",
             }}
-            disabled={
-              isSubmitting ||
-              !validationResults?.isValid ||
-              eligibilityCheck.result !== "verified"
-            }
+            disabled={isSubmitting || !insuranceForm.canSubmitForm()} // 🔧 FIX: Use canSubmitForm()
           >
             {isSubmitting ? (
               <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -696,7 +692,7 @@ export function InsuranceForm(props: InsuranceFormProps) {
           </button>
         </div>
 
-        {/* Validation Summary */}
+        {/* 🔧 FIX: Enhanced validation and eligibility messages */}
         {validationResults && !validationResults.isValid && (
           <div
             style={{
@@ -721,8 +717,31 @@ export function InsuranceForm(props: InsuranceFormProps) {
           </div>
         )}
 
-        {/* Eligibility Warning */}
-        {eligibilityCheck.result !== "verified" && formData.primaryInsurance?.provider && (
+    {/* 🔧 FIX: Submission error display */}
+        {insuranceForm.state.submissionError && (
+          <div
+            style={{
+              marginTop: "15px",
+              padding: "15px",
+              background: "#f8d7da",
+              border: "1px solid #f5c6cb",
+              borderRadius: "8px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "18px" }}>💥</span>
+              <p style={{ margin: 0, color: "#721c24", fontSize: "14px", fontWeight: "bold" }}>
+                Submission Error:
+              </p>
+            </div>
+            <p style={{ margin: "5px 0 0 0", color: "#721c24", fontSize: "12px" }}>
+              {insuranceForm.state.submissionError}
+            </p>
+          </div>
+        )}
+
+        {/* 🔧 FIX: More specific eligibility warning */}
+        {!insuranceForm.canSubmitForm() && formData.primaryInsurance?.provider && (
           <div
             style={{
               marginTop: "15px",
@@ -732,12 +751,43 @@ export function InsuranceForm(props: InsuranceFormProps) {
               borderRadius: "8px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
               <span style={{ fontSize: "18px" }}>⚠️</span>
-              <p style={{ margin: 0, color: "#856404", fontSize: "14px" }}>
-                Please verify your insurance eligibility before continuing to the next step.
+              <p style={{ margin: 0, color: "#856404", fontSize: "14px", fontWeight: "bold" }}>
+                Form Not Ready for Submission
               </p>
             </div>
+            <div style={{ fontSize: "12px", color: "#856404" }}>
+              <p style={{ margin: "0 0 4px 0" }}>Please ensure:</p>
+              <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                <li>All required fields are completed</li>
+                <li>Form validation passes (no errors)</li>
+                <li>Insurance eligibility is verified</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* 🔧 FIX: Success message when form is ready */}
+        {insuranceForm.canSubmitForm() && (
+          <div
+            style={{
+              marginTop: "15px",
+              padding: "15px",
+              background: "#d4edda",
+              border: "1px solid #c3e6cb",
+              borderRadius: "8px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "18px" }}>✅</span>
+              <p style={{ margin: 0, color: "#155724", fontSize: "14px", fontWeight: "bold" }}>
+                Form Ready for Submission
+              </p>
+            </div>
+            <p style={{ margin: "5px 0 0 0", color: "#155724", fontSize: "12px" }}>
+              All requirements met. Click "Continue to Medical History" to proceed.
+            </p>
           </div>
         )}
 
@@ -759,7 +809,51 @@ export function InsuranceForm(props: InsuranceFormProps) {
           <div>✅ Plan Type: {formData.primaryInsurance?.planType ? "Set" : "Missing"}</div>
           <div>✅ Eligibility: {eligibilityCheck.result || "Not Checked"}</div>
           <div>✅ Validation: {validationResults?.isValid ? "Valid" : "Pending"}</div>
+          <div>✅ Can Submit: {insuranceForm.canSubmitForm() ? "Yes" : "No"}</div>
         </div>
+
+        {/* 🔧 DEBUGGING: Add this temporary debug section to help diagnose issues */}
+        {process.env.NODE_ENV === "development" && (
+          <details style={{ marginTop: "20px", padding: "10px", background: "#f8f9fa", border: "1px solid #dee2e6", borderRadius: "4px" }}>
+            <summary style={{ cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>
+              🔧 Debug: Form Submission Status
+            </summary>
+            <div style={{ marginTop: "10px", fontSize: "11px" }}>
+              <div>✅ Can Submit: {insuranceForm.canSubmitForm() ? "YES" : "NO"}</div>
+              <div>✅ Form Valid: {validationResults?.isValid ? "YES" : "NO"}</div>
+              <div>✅ Eligibility Verified: {eligibilityCheck.result === "verified" ? "YES" : "NO"}</div>
+              <div>✅ Has Provider: {formData.primaryInsurance?.provider ? "YES" : "NO"}</div>
+              <div>✅ Has Member ID: {formData.primaryInsurance?.memberId ? "YES" : "NO"}</div>
+              <div>✅ Has Plan Type: {formData.primaryInsurance?.planType ? "YES" : "NO"}</div>
+              <div>✅ Has Group Number: {formData.primaryInsurance?.groupNumber ? "YES" : "NO"}</div>
+              <div>✅ Has Effective Date: {formData.primaryInsurance?.effectiveDate ? "YES" : "NO"}</div>
+              <div>✅ Is Submitting: {isSubmitting ? "YES" : "NO"}</div>
+              <div>✅ Is Dirty: {insuranceForm.state.isDirty ? "YES" : "NO"}</div>
+              <div>✅ Submission Complete: {insuranceForm.state.isSubmissionComplete ? "YES" : "NO"}</div>
+              <div>✅ Submission Error: {insuranceForm.state.submissionError || "NONE"}</div>
+              <div>✅ Eligibility Status: {eligibilityCheck.result || "NOT_CHECKED"}</div>
+              <div>✅ Eligibility Last Checked: {eligibilityCheck.lastChecked?.toLocaleString() || "NEVER"}</div>
+              <div>✅ Validation Error Count: {validationResults?.errors.length || 0}</div>
+              {validationResults?.errors.length > 0 && (
+                <div style={{ marginTop: "5px" }}>
+                  <strong>Validation Errors:</strong>
+                  <ul style={{ margin: "2px 0 0 15px", fontSize: "10px" }}>
+                    {validationResults.errors.map((error, index) => (
+                      <li key={index}>{error.field}: {error.message}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid #dee2e6" }}>
+                <strong>Form Data Summary:</strong>
+                <pre style={{ fontSize: "9px", background: "#f0f0f0", padding: "5px", borderRadius: "2px", overflow: "auto", maxHeight: "100px" }}>
+                  {JSON.stringify(formData, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </details>
+        )}
+
       </form>
 
       <style>{`

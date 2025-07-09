@@ -1,3 +1,7 @@
+// Issue: Insurance form isn't completing properly
+// Problem: The form validation and submission logic needs to be synchronized
+
+// 1. Updated InsuranceFormService with proper submission completion
 import { Service, Inject } from "@tdi2/di-core/decorators";
 import type {
   InsuranceInformation,
@@ -12,17 +16,18 @@ export interface InsuranceFormServiceInterface {
       isChecking: boolean;
       lastChecked: Date | null;
       result: "pending" | "verified" | "denied" | null;
-      // 🎨 VIEW STATE: UI feedback states
-      checkingProgress: number; // 0-100 for progress bar
-      lastCheckDuration: number; // milliseconds for UI feedback
+      checkingProgress: number;
+      lastCheckDuration: number;
     };
     validationResults: ValidationResult | null;
     isSubmitting: boolean;
     isDirty: boolean;
-    
-    // 🎨 VIEW STATE: Form UI states that could be in component
     showEligibilityDetails: boolean;
     eligibilityStatusAnimation: boolean;
+    
+    // 🔧 FIX: Add submission completion tracking
+    isSubmissionComplete: boolean;
+    submissionError: string | null;
   };
 
   updateField(field: string, value: any): void;
@@ -30,10 +35,11 @@ export interface InsuranceFormServiceInterface {
   validateForm(): Promise<ValidationResult>;
   submitForm(): Promise<void>;
   resetForm(): void;
-  
-  // 🎨 VIEW STATE: UI-specific methods
   toggleEligibilityDetails(): void;
   resetEligibilityCheck(): void;
+  
+  // 🔧 FIX: Add validation check method
+  canSubmitForm(): boolean;
 }
 
 @Service()
@@ -44,17 +50,18 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
       isChecking: false,
       lastChecked: null as Date | null,
       result: null as "pending" | "verified" | "denied" | null,
-      // 🎨 VIEW STATE: UI feedback
       checkingProgress: 0,
       lastCheckDuration: 0,
     },
     validationResults: null as ValidationResult | null,
     isSubmitting: false,
     isDirty: false,
-    
-    // 🎨 VIEW STATE: Could be moved to component but kept here for consistency
     showEligibilityDetails: false,
     eligibilityStatusAnimation: false,
+    
+    // 🔧 FIX: Track submission state
+    isSubmissionComplete: false,
+    submissionError: null as string | null,
   };
 
   constructor(
@@ -77,11 +84,16 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
 
     this.state.formData = newData;
     this.state.isDirty = true;
+    this.state.isSubmissionComplete = false; // 🔧 FIX: Reset completion on change
+    this.state.submissionError = null;
     
     // Reset eligibility if key fields change
     if (field.includes('primaryInsurance.provider') || field.includes('primaryInsurance.memberId')) {
       this.resetEligibilityCheck();
     }
+    
+    // 🔧 FIX: Auto-validate on field change
+    this.validateForm();
   }
 
   async checkEligibility(): Promise<string> {
@@ -89,9 +101,8 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
     
     this.state.eligibilityCheck.isChecking = true;
     this.state.eligibilityCheck.result = "pending";
-    this.state.eligibilityCheck.checkingProgress = 0; // 🎨 VIEW STATE
+    this.state.eligibilityCheck.checkingProgress = 0;
     
-    // 🎨 VIEW STATE: Simulate progress for UI feedback
     const progressInterval = setInterval(() => {
       if (this.state.eligibilityCheck.checkingProgress < 90) {
         this.state.eligibilityCheck.checkingProgress += 10;
@@ -102,14 +113,13 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
       // Simulate API call with realistic delay
       await new Promise((resolve) => setTimeout(resolve, 2000));
       
-      // Simulate response (in real app, this would be actual API call)
       const result = "verified";
       
       this.state.eligibilityCheck.isChecking = false;
       this.state.eligibilityCheck.lastChecked = new Date();
       this.state.eligibilityCheck.result = result as any;
-      this.state.eligibilityCheck.checkingProgress = 100; // 🎨 VIEW STATE
-      this.state.eligibilityCheck.lastCheckDuration = Date.now() - startTime; // 🎨 VIEW STATE
+      this.state.eligibilityCheck.checkingProgress = 100;
+      this.state.eligibilityCheck.lastCheckDuration = Date.now() - startTime;
 
       // Update form data with result
       if (!this.state.formData.primaryInsurance) {
@@ -117,17 +127,19 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
       }
       this.state.formData.eligibilityStatus = result as any;
 
-      // 🎨 VIEW STATE: Trigger success animation
       this.state.eligibilityStatusAnimation = true;
       setTimeout(() => {
         this.state.eligibilityStatusAnimation = false;
       }, 1000);
 
+      // 🔧 FIX: Re-validate after eligibility check
+      await this.validateForm();
+
       return result;
     } catch (error) {
       this.state.eligibilityCheck.isChecking = false;
       this.state.eligibilityCheck.result = "denied";
-      this.state.eligibilityCheck.checkingProgress = 0; // 🎨 VIEW STATE
+      this.state.eligibilityCheck.checkingProgress = 0;
       throw error;
     } finally {
       clearInterval(progressInterval);
@@ -181,19 +193,53 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
     return result;
   }
 
+  // 🔧 FIX: Add comprehensive submission validation
+  canSubmitForm(): boolean {
+    const hasValidation = this.state.validationResults;
+    const isFormValid = hasValidation && this.state.validationResults.isValid;
+    const isEligibilityVerified = this.state.eligibilityCheck.result === "verified";
+    const hasRequiredData = this.state.formData.primaryInsurance?.provider &&
+                           this.state.formData.primaryInsurance?.memberId &&
+                           this.state.formData.primaryInsurance?.planType;
+    
+    return !!(isFormValid && isEligibilityVerified && hasRequiredData && !this.state.isSubmitting);
+  }
+
   async submitForm(): Promise<void> {
     this.state.isSubmitting = true;
+    this.state.submissionError = null;
 
     try {
+      // 🔧 FIX: Validate before submission
       const validationResult = await this.validateForm();
+      
       if (!validationResult.isValid) {
-        throw new Error("Validation failed");
+        throw new Error(`Validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
+      }
+
+      // 🔧 FIX: Check eligibility requirement
+      if (this.state.eligibilityCheck.result !== "verified") {
+        throw new Error("Insurance eligibility must be verified before submission");
+      }
+
+      // 🔧 FIX: Ensure required fields are present
+      if (!this.canSubmitForm()) {
+        throw new Error("Form is not ready for submission");
       }
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
+      // 🔧 FIX: Mark as successfully submitted
       this.state.isDirty = false;
+      this.state.isSubmissionComplete = true;
+      
+      console.log("✅ Insurance form submitted successfully:", this.state.formData);
+      
+    } catch (error) {
+      this.state.submissionError = error.message;
+      console.error("❌ Insurance form submission failed:", error);
+      throw error;
     } finally {
       this.state.isSubmitting = false;
     }
@@ -205,16 +251,17 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
       isChecking: false,
       lastChecked: null,
       result: null,
-      checkingProgress: 0, // 🎨 VIEW STATE
-      lastCheckDuration: 0, // 🎨 VIEW STATE
+      checkingProgress: 0,
+      lastCheckDuration: 0,
     };
     this.state.validationResults = null;
     this.state.isDirty = false;
-    this.state.showEligibilityDetails = false; // 🎨 VIEW STATE
-    this.state.eligibilityStatusAnimation = false; // 🎨 VIEW STATE
+    this.state.showEligibilityDetails = false;
+    this.state.eligibilityStatusAnimation = false;
+    this.state.isSubmissionComplete = false; // 🔧 FIX: Reset completion
+    this.state.submissionError = null;
   }
 
-  // 🎨 VIEW STATE: UI-specific methods
   toggleEligibilityDetails(): void {
     this.state.showEligibilityDetails = !this.state.showEligibilityDetails;
   }
