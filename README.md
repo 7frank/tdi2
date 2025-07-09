@@ -149,8 +149,10 @@ function UserDashboard({ userService, appState }: {
   - potential principles how to maximize value of RSI
   - still not clear
 
-- [❌] [critique\*](./docs/critique/*)
+- [❌] [critique\*](./docs/critique/README.md)
   - why did nobody already? arguments and counterarguments for clarification
+  - what reason has RSI
+  - what are the weaknesses of current react and where are people reinventing classes with closures to because "OOP bad"
 
 ---
 

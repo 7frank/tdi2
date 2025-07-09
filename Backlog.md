@@ -2,13 +2,22 @@
 
 ## ordered log
 
-### [❌] issue sync
+### [❌] react critique
 
-- create a small cli that helps us sync issues with github projects / issues
+- timeline complexity
+- developers
+- examples of classes and hooks
 
-### [❌] create showcases for more complex scenarios
+### [❌] RSI critique
 
-- e.g. complex forms https://claude.ai/chat/48ebf950-986b-476d-bb0c-09a5c87fe041
+- but why didnt someone invent this sooner?
+- but what about serverside and hydration?
+
+### [❌] classes vs zustand vanilla inject / maybe both
+
+### use crossnote cli to render to pdf
+
+- https://github.com/7frank/crossnote-cli
 
 ### [❌] useObservable
 
@@ -265,6 +274,14 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] create showcases for more complex scenarios
+
+- e.g. complex forms https://claude.ai/chat/48ebf950-986b-476d-bb0c-09a5c87fe041
+
+### [✅] issue sync
+
+- create a small cli that helps us sync issues with github projects / issues
 
 ### [✅] React RFP
 
