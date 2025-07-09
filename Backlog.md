@@ -2,17 +2,6 @@
 
 ## ordered log
 
-### [❌] react critique
-
-- timeline complexity
-- developers
-- examples of classes and hooks
-
-### [❌] RSI critique
-
-- but why didnt someone invent this sooner?
-- but what about serverside and hydration?
-
 ### [❌] classes vs zustand vanilla inject / maybe both
 
 ### use crossnote cli to render to pdf
@@ -274,6 +263,19 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+
+### [❌] react critique
+
+- timeline complexity
+- developers
+- examples of classes and hooks
+
+### [❌] RSI critique
+
+- but why didnt someone invent this sooner?
+- but what about serverside and hydration?
+
 
 ### [✅] create showcases for more complex scenarios
 
