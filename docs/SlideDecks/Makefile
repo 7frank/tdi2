@@ -64,6 +64,10 @@ serve: ## Start development server with live reload
 	fi
 	uv run mkslides serve slides/main.md
 
+serve-m-lpz: 
+	uv run mkslides serve "slides/Meetup-Leipzig.js/slides.md"
+
+
 watch: ## Watch for changes and rebuild automatically
 	@echo "👀 Watching for changes..."
 	uv run python scripts/watch_presentation.py

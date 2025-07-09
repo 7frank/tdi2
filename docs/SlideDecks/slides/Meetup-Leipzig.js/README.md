@@ -5,4 +5,4 @@
 
 - [Abstract](./Abstract.md)
 - [Meta](./Meta.md)
-- [Agenda](./MeetupAgenda.md)
+- [Agenda](./Agenda.md)
