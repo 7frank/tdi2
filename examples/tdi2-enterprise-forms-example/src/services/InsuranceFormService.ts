@@ -24,7 +24,7 @@ export interface InsuranceFormServiceInterface {
     isDirty: boolean;
     showEligibilityDetails: boolean;
     eligibilityStatusAnimation: boolean;
-    
+
     // 🔧 FIX: Add submission completion tracking
     isSubmissionComplete: boolean;
     submissionError: string | null;
@@ -37,7 +37,7 @@ export interface InsuranceFormServiceInterface {
   resetForm(): void;
   toggleEligibilityDetails(): void;
   resetEligibilityCheck(): void;
-  
+
   // 🔧 FIX: Add validation check method
   canSubmitForm(): boolean;
 }
@@ -58,7 +58,7 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
     isDirty: false,
     showEligibilityDetails: false,
     eligibilityStatusAnimation: false,
-    
+
     // 🔧 FIX: Track submission state
     isSubmissionComplete: false,
     submissionError: null as string | null,
@@ -86,23 +86,26 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
     this.state.isDirty = true;
     this.state.isSubmissionComplete = false; // 🔧 FIX: Reset completion on change
     this.state.submissionError = null;
-    
+
     // Reset eligibility if key fields change
-    if (field.includes('primaryInsurance.provider') || field.includes('primaryInsurance.memberId')) {
+    if (
+      field.includes("primaryInsurance.provider") ||
+      field.includes("primaryInsurance.memberId")
+    ) {
       this.resetEligibilityCheck();
     }
-    
+
     // 🔧 FIX: Auto-validate on field change
     this.validateForm();
   }
 
   async checkEligibility(): Promise<string> {
     const startTime = Date.now();
-    
+
     this.state.eligibilityCheck.isChecking = true;
     this.state.eligibilityCheck.result = "pending";
     this.state.eligibilityCheck.checkingProgress = 0;
-    
+
     const progressInterval = setInterval(() => {
       if (this.state.eligibilityCheck.checkingProgress < 90) {
         this.state.eligibilityCheck.checkingProgress += 10;
@@ -112,9 +115,9 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
     try {
       // Simulate API call with realistic delay
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      
+
       const result = "verified";
-      
+
       this.state.eligibilityCheck.isChecking = false;
       this.state.eligibilityCheck.lastChecked = new Date();
       this.state.eligibilityCheck.result = result as any;
@@ -193,39 +196,58 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
     return result;
   }
 
-  // 🔧 FIX: Add comprehensive submission validation
-  canSubmitForm(): boolean {
-    const hasValidation = this.state.validationResults;
-    const isFormValid = hasValidation && this.state.validationResults.isValid;
-    const isEligibilityVerified = this.state.eligibilityCheck.result === "verified";
-    const hasRequiredData = this.state.formData.primaryInsurance?.provider &&
-                           this.state.formData.primaryInsurance?.memberId &&
-                           this.state.formData.primaryInsurance?.planType;
-    
-    return !!(isFormValid && isEligibilityVerified && hasRequiredData && !this.state.isSubmitting);
-  }
+  // 🔧 TARGETED FIX: Replace the submitForm method in InsuranceFormService
 
   async submitForm(): Promise<void> {
     this.state.isSubmitting = true;
     this.state.submissionError = null;
 
     try {
-      // 🔧 FIX: Validate before submission
-      const validationResult = await this.validateForm();
-      
-      if (!validationResult.isValid) {
-        throw new Error(`Validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
+      // 🔧 FIX: Use the SAME validation logic as canSubmitForm()
+      const hasValidation = this.state.validationResults;
+      const isFormValid = hasValidation && this.state.validationResults.isValid;
+      const isEligibilityVerified =
+        this.state.eligibilityCheck.result === "verified";
+      const hasRequiredData =
+        this.state.formData.primaryInsurance?.provider &&
+        this.state.formData.primaryInsurance?.memberId &&
+        this.state.formData.primaryInsurance?.planType &&
+        this.state.formData.primaryInsurance?.groupNumber &&
+        this.state.formData.primaryInsurance?.effectiveDate;
+
+      // 🔧 FIX: Check each requirement individually with specific error messages
+      if (!isFormValid) {
+        const validationResult = await this.validateForm();
+        if (!validationResult.isValid) {
+          throw new Error(
+            `Validation failed: ${validationResult.errors.map((e) => e.message).join(", ")}`
+          );
+        }
       }
 
-      // 🔧 FIX: Check eligibility requirement
-      if (this.state.eligibilityCheck.result !== "verified") {
-        throw new Error("Insurance eligibility must be verified before submission");
+      if (!isEligibilityVerified) {
+        throw new Error(
+          "Insurance eligibility must be verified before submission"
+        );
       }
 
-      // 🔧 FIX: Ensure required fields are present
-      if (!this.canSubmitForm()) {
-        throw new Error("Form is not ready for submission");
+      if (!hasRequiredData) {
+        const missing = [];
+        if (!this.state.formData.primaryInsurance?.provider)
+          missing.push("Provider");
+        if (!this.state.formData.primaryInsurance?.memberId)
+          missing.push("Member ID");
+        if (!this.state.formData.primaryInsurance?.planType)
+          missing.push("Plan Type");
+        if (!this.state.formData.primaryInsurance?.groupNumber)
+          missing.push("Group Number");
+        if (!this.state.formData.primaryInsurance?.effectiveDate)
+          missing.push("Effective Date");
+        throw new Error(`Missing required fields: ${missing.join(", ")}`);
       }
+
+      // 🔧 FIX: All checks passed, proceed with submission
+      console.log("✅ All validation checks passed, submitting form...");
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -233,9 +255,11 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
       // 🔧 FIX: Mark as successfully submitted
       this.state.isDirty = false;
       this.state.isSubmissionComplete = true;
-      
-      console.log("✅ Insurance form submitted successfully:", this.state.formData);
-      
+
+      console.log(
+        "✅ Insurance form submitted successfully:",
+        this.state.formData
+      );
     } catch (error) {
       this.state.submissionError = error.message;
       console.error("❌ Insurance form submission failed:", error);
@@ -243,6 +267,50 @@ export class InsuranceFormService implements InsuranceFormServiceInterface {
     } finally {
       this.state.isSubmitting = false;
     }
+  }
+
+  // 🔧 FIX: Also update canSubmitForm to be more explicit
+  canSubmitForm(): boolean {
+    // Check validation state
+    const hasValidation = this.state.validationResults;
+    const isFormValid = hasValidation && this.state.validationResults.isValid;
+
+    // Check eligibility
+    const isEligibilityVerified =
+      this.state.eligibilityCheck.result === "verified";
+
+    // Check required data
+    const hasRequiredData =
+      this.state.formData.primaryInsurance?.provider &&
+      this.state.formData.primaryInsurance?.memberId &&
+      this.state.formData.primaryInsurance?.planType &&
+      this.state.formData.primaryInsurance?.groupNumber &&
+      this.state.formData.primaryInsurance?.effectiveDate;
+
+    // Not currently submitting
+    const notSubmitting = !this.state.isSubmitting;
+
+    // Log for debugging
+    console.log("🔧 canSubmitForm check:", {
+      hasValidation,
+      isFormValid,
+      isEligibilityVerified,
+      hasRequiredData,
+      notSubmitting,
+      result: !!(
+        isFormValid &&
+        isEligibilityVerified &&
+        hasRequiredData &&
+        notSubmitting
+      ),
+    });
+
+    return !!(
+      isFormValid &&
+      isEligibilityVerified &&
+      hasRequiredData &&
+      notSubmitting
+    );
   }
 
   resetForm(): void {
