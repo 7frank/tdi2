@@ -71,4 +71,5 @@ But never learned:
 #### Critical Questions Related to RSI
 
 - [Why did nobody invent this earlier](./RSI/Why%20did%20nobody%20invent%20this%20earlier.md)
-- What about SSR and Hydration?
+- [What about SSR and Hydration?](./RSI/What%20about%20SSR/README.md)
+  
