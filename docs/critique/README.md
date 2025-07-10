@@ -26,6 +26,11 @@ Key Observations:
 
 - The Pattern: React → Creates Problem → Community Creates Complex Solution → New Problems → More Complex Solutions → Repeat
 
+### React Analysis - Focusing on the Goals React wanted to solve
+
+- [Analysis](./Analysis/React%20-%20Analysis.md)
+
+
 ## The Developer Experience Degradation
 
 ### **Skill Development Comparison**
