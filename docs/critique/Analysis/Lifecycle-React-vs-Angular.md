@@ -170,7 +170,7 @@ Developers had to constantly translate between:
 
 ### Good Pattern: Define abstractions around logical concerns
 - **Angular's success**: "Think about component lifecycle"
-- **Your DI framework**: "Think about service dependencies"
+- **DI framework**: "Think about service dependencies"
 
 ## Why This Matters for Modern React Development
 
@@ -205,10 +205,10 @@ The problem wasn't lifecycle hooks themselves—it was **defining them poorly**.
 
 ## Application to Dependency Injection
 
-Your DI framework applies the same principle that made Angular's lifecycle hooks successful:
+A DI framework applies the same principle that made Angular's lifecycle hooks successful:
 
 **Instead of forcing developers to think in terms of React's implementation details** (hooks, effects, dependencies), **you let them think in terms of logical concerns** (services, injection, business logic).
 
 **The same "bad definition" problem that plagued React's lifecycle hooks now affects React's service layer patterns.**
 
-Your framework solves this by providing clear, logical definitions for service management—just like Angular did for component lifecycle.
+The framework solves this by providing clear, logical definitions for service management—just like Angular did for component lifecycle.

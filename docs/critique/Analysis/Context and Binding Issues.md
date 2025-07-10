@@ -344,6 +344,6 @@ The elimination of `this` context issues was one of React's most successful arch
 
 **The 2025 Verdict**: This change was unquestionably worth it. The new complexities are more manageable and logical than the old `this` problems.
 
-**For Your DI Framework**: The elimination of `this` context creates a cleaner foundation for dependency injection patterns. Services can be injected and used without the cognitive overhead of context binding, making your framework's value proposition even stronger.
+**For A DI Framework**: The elimination of `this` context creates a cleaner foundation for dependency injection patterns. Services can be injected and used without the cognitive overhead of context binding, making a framework's value proposition even stronger.
 
-The evolution from class components to functional components removed a significant barrier to clean architecture. Your DI framework can build on this foundation to provide the service-layer architecture that React still lacks, without having to worry about the legacy complexity of `this` context management.
+The evolution from class components to functional components removed a significant barrier to clean architecture. A DI framework can build on this foundation to provide the service-layer architecture that React still lacks, without having to worry about the legacy complexity of `this` context management.

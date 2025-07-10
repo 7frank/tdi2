@@ -440,7 +440,7 @@ function useOrderWorkflow() {
 
 ### **Where DI Frameworks Fit**
 
-Your DI framework addresses the service layer testing gap:
+A DI framework addresses the service layer testing gap:
 
 **Current Approach**:
 ```javascript
@@ -486,6 +486,6 @@ The move to functional components was a massive win for testing and readability 
 
 **The 2025 Verdict**: The functional component transition was absolutely worth it for component-level concerns, but it exposed the need for better application-level architecture.
 
-**For Your DI Framework**: React hooks solved the component layer beautifully, creating space for a proper service layer. Your framework can provide the missing architectural piece—clean service dependency management and testing—while preserving all the benefits hooks brought to component development.
+**For a DI Framework**: React hooks solved the component layer beautifully, creating space for a proper service layer. Such A framework can provide the missing architectural piece—clean service dependency management and testing—while preserving all the benefits hooks brought to component development.
 
 The evolution path is clear: React solved component architecture, now we need to solve service architecture.

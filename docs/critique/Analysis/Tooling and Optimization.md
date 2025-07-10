@@ -294,7 +294,7 @@ function ApplicationRoot() {
 
 ### **Where DI Frameworks Enable Better Tooling**
 
-Your DI framework could unlock new optimization opportunities:
+A DI framework could unlock new optimization opportunities:
 
 **Current Limitations**:
 ```javascript
@@ -356,6 +356,6 @@ The transition to functional components was enormously successful for tooling an
 
 **The 2025 Verdict**: The functional component transition was absolutely worth it from a tooling perspective. The optimization improvements alone justify the change.
 
-**For Your DI Framework**: The strong foundation of build tooling and static analysis for components creates an opportunity for service-layer tooling. Your framework could enable the next generation of architectural analysis tools, bringing the same level of optimization and developer experience to the service layer that functional components brought to the component layer.
+**For a DI Framework**: The strong foundation of build tooling and static analysis for components creates an opportunity for service-layer tooling. A framework could enable the next generation of architectural analysis tools, bringing the same level of optimization and developer experience to the service layer that functional components brought to the component layer.
 
 The evolution continues: React optimized the component layer, now we need to optimize the service layer with the same rigor and tooling sophistication.

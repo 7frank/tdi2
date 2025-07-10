@@ -237,7 +237,7 @@ useEffect(() => {
 
 ### **Where DI Frameworks Fit**
 
-Your DI framework addresses this architectural gap:
+A DI framework addresses this architectural gap:
 
 **Current React Approach**:
 ```javascript
@@ -280,7 +280,7 @@ However, as applications scale, the limitations become apparent:
 - **Application-level orchestration** becomes unwieldy
 - **Business logic** doesn't belong in component effects
 
-Your DI framework represents the missing architectural layer: keeping the benefits of `useEffect` for component concerns while providing proper service-level orchestration for business logic.
+A DI framework represents the missing architectural layer: keeping the benefits of `useEffect` for component concerns while providing proper service-level orchestration for business logic.
 
 The evolution should be:
 1. **Class components** → **Functional components** (for component simplicity)

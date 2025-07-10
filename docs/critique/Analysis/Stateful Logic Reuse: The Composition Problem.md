@@ -230,7 +230,7 @@ function useUserService() {
 ```
 
 ### **Where DI Frameworks Fit**
-Your DI autowiring framework addresses exactly this gap:
+A DI autowiring framework addresses exactly this gap:
 
 **Traditional React**:
 - Hooks handle component state
@@ -250,6 +250,6 @@ Custom hooks solved the immediate logic sharing problem brilliantly, but they re
 
 The hooks solution was absolutely worth it—it made React development significantly better. However, as applications scale, the need for additional architectural patterns becomes apparent. 
 
-Your DI framework represents the next logical evolution: using the proven patterns from backend development to bring order to the frontend service layer, while preserving the component-level benefits that hooks provide.
+A DI framework represents the next logical evolution: using the proven patterns from backend development to bring order to the frontend service layer, while preserving the component-level benefits that hooks provide.
 
 The question isn't whether to use hooks (they're essential), but how to complement them with proper architectural patterns for large-scale applications.
