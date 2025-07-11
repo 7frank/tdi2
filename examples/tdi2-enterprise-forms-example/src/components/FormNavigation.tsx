@@ -1,13 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import type { Inject } from "@tdi2/di-core/markers";
 import type { FormDAGServiceInterface } from "../services/FormDAGService";
-import {
-  Alert,
-  LoadingButton,
-  ProgressBar,
-  CollapsibleSection,
-  useCollapsibleSections
-} from "../components/common";
 
 interface FormNavigationProps {
   services: {
@@ -21,9 +14,10 @@ export function FormNavigation(props: FormNavigationProps) {
   } = props;
 
   // 🎨 COMPONENT VIEW STATE: UI-only interactions (ephemeral, component-specific)
-  const [hoveredNode, setHoveredNode] = React.useState<string | null>(null);
-  const [lastClickedNode, setLastClickedNode] = React.useState<string | null>(null);
-  const { isExpanded, toggleSection } = useCollapsibleSections(['legend']);
+  const [showLegend, setShowLegend] = useState(false);
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [showProgressDetails, setShowProgressDetails] = useState(false);
+  const [lastClickedNode, setLastClickedNode] = useState<string | null>(null);
 
   // Business state from service (reactive via proxy)
   const { formNodes, currentNode, completedNodes, availableNodes, navigationHistory } = formDAG.state;
@@ -36,10 +30,18 @@ export function FormNavigation(props: FormNavigationProps) {
     completionCelebrationActive 
   } = formDAG.state;
 
+  // 🔧 UPDATED: Use smart progress calculation
   const progress = formDAG.calculateProgress();
   const navigationFeedback = formDAG.getNavigationFeedback();
+  const completionStatus = formDAG.getCompletionStatus();
+  const applicableForms = formDAG.getApplicableForms();
 
   const getNodeStatus = (nodeId: string) => {
+    const applicableForm = applicableForms.find(f => f.id === nodeId);
+    
+    // If form is not applicable to current scenario, mark as not applicable
+    if (!applicableForm) return "not_applicable";
+    
     if (completedNodes.includes(nodeId)) return "completed";
     if (currentNode === nodeId) return "current";
     if (availableNodes.includes(nodeId)) return "available";
@@ -48,21 +50,52 @@ export function FormNavigation(props: FormNavigationProps) {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "completed": return "✅";
-      case "current": return "⏳";
-      case "available": return "🔓";
-      case "disabled": return "🔒";
-      default: return "⚪";
+      case "completed":
+        return "✅";
+      case "current":
+        return "⏳";
+      case "available":
+        return "🔓";
+      case "disabled":
+        return "🔒";
+      case "not_applicable":
+        return "⚪";
+      default:
+        return "⚪";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed": return "#28a745";
-      case "current": return "#007bff";
-      case "available": return "#6c757d";
-      case "disabled": return "#adb5bd";
-      default: return "#dee2e6";
+      case "completed":
+        return "#28a745";
+      case "current":
+        return "#007bff";
+      case "available":
+        return "#6c757d";
+      case "disabled":
+        return "#adb5bd";
+      case "not_applicable":
+        return "#e9ecef";
+      default:
+        return "#dee2e6";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "Completed";
+      case "current":
+        return "Current";
+      case "available":
+        return "Available";
+      case "disabled":
+        return "Locked";
+      case "not_applicable":
+        return "N/A";
+      default:
+        return "Unknown";
     }
   };
 
@@ -77,49 +110,86 @@ export function FormNavigation(props: FormNavigationProps) {
     }
   };
 
+  const handleNodeHover = (nodeId: string | null) => {
+    setHoveredNode(nodeId); // 🎨 COMPONENT VIEW STATE
+  };
+
   const nextOptimalNode = formDAG.getNextOptimalNode();
-  const totalEstimatedTime = formNodes.reduce((sum, node) => sum + node.estimatedTime, 0);
-  const completedTime = formNodes
+  const totalEstimatedTime = applicableForms.reduce((sum, node) => sum + node.estimatedTime, 0);
+  const completedTime = applicableForms
     .filter(node => completedNodes.includes(node.id))
     .reduce((sum, node) => sum + node.estimatedTime, 0);
 
-  const containerStyle: React.CSSProperties = {
-    background: "#f8f9fa",
-    border: "1px solid #dee2e6",
-    borderRadius: "8px",
-    padding: "20px",
-    marginBottom: "20px",
-    transform: progressAnimationActive ? "scale(1.01)" : "scale(1)", // 🎨 VIEW STATE from service
-    transition: "transform 0.3s ease",
+  // 🔧 NEW: Get progress message based on completion status
+  const getProgressMessage = () => {
+    switch(completionStatus) {
+      case 'completed':
+        return "🎉 Patient onboarding completed!";
+      case 'ready_for_submit':
+        return "✅ Ready for final submission";
+      case 'in_progress':
+        const completedApplicable = completedNodes.filter(nodeId => 
+          applicableForms.some(form => form.id === nodeId)
+        );
+        return `${progress}% Complete (${completedApplicable.length}/${applicableForms.length} applicable forms)`;
+    }
   };
 
   return (
-    <div style={containerStyle}>
+    <div
+      style={{
+        background: "#f8f9fa",
+        border: "1px solid #dee2e6",
+        borderRadius: "8px",
+        padding: "20px",
+        marginBottom: "20px",
+        transform: progressAnimationActive ? "scale(1.01)" : "scale(1)", // 🎨 VIEW STATE from service
+        transition: "transform 0.3s ease",
+      }}
+    >
       {/* Header with Navigation Feedback */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
         <h3 style={{ margin: 0, fontSize: "18px" }}>Form Progress</h3>
         
-        {/* Navigation Status using Alert component */}
-        <Alert
-          type={isNavigating ? "warning" : completionCelebrationActive ? "success" : "info"}
-          title={navigationFeedback}
-          variant="subtle"
-          size="small"
-        />
+        {/* Navigation Status Indicator */}
+        <div style={{
+          padding: "6px 12px",
+          background: isNavigating ? "#fff3cd" : 
+                     completionStatus === 'completed' ? "#d4edda" : 
+                     completionStatus === 'ready_for_submit' ? "#d1ecf1" : "#e3f2fd", // 🎨 VIEW STATE from service
+          border: `1px solid ${isNavigating ? "#ffeaa7" : 
+                              completionStatus === 'completed' ? "#c3e6cb" : 
+                              completionStatus === 'ready_for_submit' ? "#bee5eb" : "#b3d9ff"}`,
+          borderRadius: "20px",
+          fontSize: "12px",
+          fontWeight: "bold",
+          color: isNavigating ? "#856404" : 
+                 completionStatus === 'completed' ? "#155724" : 
+                 completionStatus === 'ready_for_submit' ? "#0c5460" : "#0d47a1",
+          transform: completionCelebrationActive ? "scale(1.05)" : "scale(1)", // 🎨 VIEW STATE from service
+          transition: "all 0.3s ease"
+        }}>
+          {navigationFeedback}
+        </div>
       </div>
 
-      {/* Progress Bar using our component */}
+      {/* Progress Bar */}
       <div style={{ marginBottom: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-          <LoadingButton
-            isLoading={false}
-            loadingText=""
-            variant="info"
-            size="small"
-            onClick={() => toggleSection('details')}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "8px",
+          }}
+        >
+          <span
+            style={{ fontSize: "14px", fontWeight: "bold", color: "#007bff", cursor: "pointer" }}
+            onClick={() => setShowProgressDetails(!showProgressDetails)} // 🎨 COMPONENT VIEW STATE
           >
-            {progress}% Complete {isExpanded('details') ? "📊" : "📈"}
-          </LoadingButton>
+            {getProgressMessage()}
+            {showProgressDetails ? " 📊" : " 📈"}
+          </span>
           
           {lastNavigationTime && (
             <span style={{ fontSize: "11px", color: "#6c757d" }}>
@@ -128,50 +198,99 @@ export function FormNavigation(props: FormNavigationProps) {
           )}
         </div>
         
-        <ProgressBar
-          progress={progress}
-          animated={progressAnimationActive}
-          showPercentage={false}
-          color={progress > 75 ? "success" : "primary"}
-          size="medium"
-          pulse={progressAnimationActive}
-        />
-
-        {/* Progress Details - Collapsible */}
-        <CollapsibleSection
-          id="details"
-          title=""
-          isExpanded={isExpanded('details')}
-          onToggle={toggleSection}
-          variant="default"
+        <div
+          style={{
+            width: "100%",
+            height: "12px",
+            background: "#e9ecef",
+            borderRadius: "6px",
+            overflow: "hidden",
+            position: "relative",
+          }}
         >
-          <div style={{ 
-            padding: "8px",
+          <div
+            style={{
+              width: `${progress}%`,
+              height: "100%",
+              background: `linear-gradient(90deg, #007bff, ${progress === 100 ? "#28a745" : progress > 75 ? "#20c997" : "#17a2b8"})`,
+              transition: "width 0.5s ease",
+              borderRadius: "6px",
+            }}
+          />
+          
+          {/* Progress pulse animation */}
+          {progressAnimationActive && (
+            <div style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: `${progress}%`,
+              height: "100%",
+              background: "rgba(255, 255, 255, 0.3)",
+              animation: "progressPulse 0.6s ease-out"
+            }} />
+          )}
+        </div>
+
+        {/* 🔧 UPDATED: Progress Details with applicable forms info */}
+        {showProgressDetails && (
+          <div style={{
+            marginTop: "8px",
+            padding: "12px",
             background: "#fff",
             border: "1px solid #dee2e6",
             borderRadius: "4px",
             fontSize: "12px"
           }}>
-            <div>✅ Completed: {completedNodes.length} / {formNodes.length} forms</div>
-            <div>⏱️ Time spent: ~{completedTime} minutes</div>
-            <div>📊 Estimated remaining: ~{totalEstimatedTime - completedTime} minutes</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+              <div>
+                <div>📋 <strong>Applicable Forms:</strong> {applicableForms.length}</div>
+                <div>✅ <strong>Completed:</strong> {completedNodes.filter(nodeId => 
+                  applicableForms.some(form => form.id === nodeId)
+                ).length}</div>
+                <div>⏱️ <strong>Time Invested:</strong> ~{completedTime} minutes</div>
+              </div>
+              <div>
+                <div>🎯 <strong>Completion Status:</strong> {completionStatus}</div>
+                <div>📊 <strong>Progress:</strong> {progress}%</div>
+                <div>⏳ <strong>Est. Remaining:</strong> ~{totalEstimatedTime - completedTime} minutes</div>
+              </div>
+            </div>
+            
+            {/* Show why some forms are not applicable */}
+            {formNodes.length > applicableForms.length && (
+              <div style={{ 
+                marginTop: "10px", 
+                paddingTop: "10px", 
+                borderTop: "1px solid #f0f0f0",
+                color: "#6c757d",
+                fontSize: "11px"
+              }}>
+                💡 <strong>Note:</strong> Some forms are not applicable to your scenario (e.g., Guardian Consent for adults, Specialist Referral for HMO plans)
+              </div>
+            )}
           </div>
-        </CollapsibleSection>
+        )}
       </div>
 
       {/* Form Steps Grid */}
       <div style={{ marginBottom: "20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
           <h4 style={{ margin: 0, fontSize: "16px" }}>Form Steps</h4>
-          <LoadingButton
-            isLoading={false}
-            loadingText=""
-            variant="secondary"
-            size="small"
-            onClick={() => toggleSection('legend')}
+          <button
+            onClick={() => setShowLegend(!showLegend)} // 🎨 COMPONENT VIEW STATE
+            style={{
+              background: "none",
+              border: "1px solid #dee2e6",
+              borderRadius: "4px",
+              padding: "4px 8px",
+              cursor: "pointer",
+              fontSize: "11px",
+              color: "#6c757d"
+            }}
           >
-            {isExpanded('legend') ? "Hide Legend" : "Show Legend"}
-          </LoadingButton>
+            {showLegend ? "Hide Legend" : "Show Legend"}
+          </button>
         </div>
         
         <div
@@ -184,29 +303,30 @@ export function FormNavigation(props: FormNavigationProps) {
           {formNodes.map((node) => {
             const status = getNodeStatus(node.id);
             const isClickable = status === "available" || status === "completed";
-            const isHovered = hoveredNode === node.id;
-            const wasRecentlyClicked = lastClickedNode === node.id;
+            const isHovered = hoveredNode === node.id; // 🎨 COMPONENT VIEW STATE
+            const wasRecentlyClicked = lastClickedNode === node.id; // 🎨 COMPONENT VIEW STATE
 
             return (
               <div
                 key={node.id}
                 onClick={() => handleNodeClick(node.id)}
-                onMouseEnter={() => setHoveredNode(node.id)}
-                onMouseLeave={() => setHoveredNode(null)}
+                onMouseEnter={() => handleNodeHover(node.id)}
+                onMouseLeave={() => handleNodeHover(null)}
                 style={{
                   padding: "12px",
                   border: `2px solid ${getStatusColor(status)}`,
                   borderRadius: "8px",
                   background: status === "current" ? "#e3f2fd" : 
+                             status === "not_applicable" ? "#f8f9fa" :
                              wasRecentlyClicked ? "#fff3cd" : 
-                             isHovered && isClickable ? "#f8f9fa" : "white",
+                             isHovered && isClickable ? "#f8f9fa" : "white", // 🎨 COMPONENT VIEW STATE
                   cursor: isClickable ? "pointer" : "not-allowed",
                   transition: "all 0.2s ease",
-                  opacity: status === "disabled" ? 0.6 : 1,
+                  opacity: status === "disabled" || status === "not_applicable" ? 0.6 : 1,
                   transform: isHovered && isClickable ? "translateY(-2px)" : 
-                           wasRecentlyClicked ? "scale(0.98)" : "translateY(0)",
+                           wasRecentlyClicked ? "scale(0.98)" : "translateY(0)", // 🎨 COMPONENT VIEW STATE
                   boxShadow: isHovered && isClickable ? "0 4px 8px rgba(0,0,0,0.1)" : "none",
-                  position: "relative" as const,
+                  position: "relative"
                 }}
               >
                 <div
@@ -231,7 +351,7 @@ export function FormNavigation(props: FormNavigationProps) {
                       borderRadius: "10px",
                     }}
                   >
-                    {status}
+                    {getStatusLabel(status)}
                   </span>
                 </div>
                 
@@ -240,7 +360,7 @@ export function FormNavigation(props: FormNavigationProps) {
                     fontSize: "14px",
                     fontWeight: "bold",
                     marginBottom: "6px",
-                    color: status === "disabled" ? "#6c757d" : "#333",
+                    color: status === "disabled" || status === "not_applicable" ? "#6c757d" : "#333",
                   }}
                 >
                   {node.title}
@@ -259,10 +379,15 @@ export function FormNavigation(props: FormNavigationProps) {
                       ✓ Done
                     </span>
                   )}
+                  {status === "not_applicable" && (
+                    <span style={{ color: "#6c757d", fontSize: "10px" }}>
+                      N/A
+                    </span>
+                  )}
                 </div>
 
-                {/* Hover tooltip for dependencies */}
-                {isHovered && node.dependencies.length > 0 && (
+                {/* Hover tooltip */}
+                {isHovered && (
                   <div style={{
                     position: "absolute",
                     top: "100%",
@@ -277,7 +402,11 @@ export function FormNavigation(props: FormNavigationProps) {
                     zIndex: 1000,
                     marginTop: "4px"
                   }}>
-                    Requires: {node.dependencies.join(", ")}
+                    {status === "not_applicable" ? "Not required for your scenario" :
+                     status === "disabled" && node.dependencies.length > 0 ? `Requires: ${node.dependencies.join(", ")}` :
+                     status === "available" ? "Click to navigate" :
+                     status === "completed" ? "Click to review" :
+                     "Current form"}
                   </div>
                 )}
               </div>
@@ -312,40 +441,93 @@ export function FormNavigation(props: FormNavigationProps) {
 
         <div style={{ display: "flex", gap: "8px" }}>
           {nextOptimalNode && nextOptimalNode !== currentNode && (
-            <LoadingButton
-              isLoading={isNavigating}
-              loadingText="Navigating..."
-              variant="success"
-              onClick={() => handleNodeClick(nextOptimalNode)}
-              disabled={isNavigating}
+            <button
+              onClick={() => {
+                handleNodeClick(nextOptimalNode);
+              }}
+              disabled={isNavigating} // 🎨 VIEW STATE from service
+              style={{
+                padding: "8px 16px",
+                background: isNavigating ? "#6c757d" : 
+                           completionStatus === 'ready_for_submit' ? "#17a2b8" : "#28a745", // 🎨 VIEW STATE from service
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: isNavigating ? "not-allowed" : "pointer",
+                fontSize: "13px",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
             >
-              Next: {formNodes.find((n) => n.id === nextOptimalNode)?.title} →
-            </LoadingButton>
+              {isNavigating ? (
+                <>
+                  <span style={{ 
+                    width: "12px", 
+                    height: "12px", 
+                    border: "2px solid transparent", 
+                    borderTop: "2px solid #fff", 
+                    borderRadius: "50%", 
+                    animation: "spin 1s linear infinite" 
+                  }} />
+                  Navigating...
+                </>
+              ) : (
+                <>
+                  {nextOptimalNode === 'final_submit' ? '🎯 Review & Submit' : 
+                   `Next: ${formNodes.find((n) => n.id === nextOptimalNode)?.title}`}
+                  →
+                </>
+              )}
+            </button>
           )}
           
-          {progress === 100 && (
-            <LoadingButton
-              isLoading={false}
-              loadingText=""
-              variant="success"
+          {completionStatus === 'completed' && (
+            <button
+              style={{
+                padding: "8px 16px",
+                background: "linear-gradient(45deg, #28a745, #20c997)",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "13px",
+                fontWeight: "bold",
+                transform: completionCelebrationActive ? "scale(1.05)" : "scale(1)", // 🎨 VIEW STATE from service
+                transition: "transform 0.3s ease"
+              }}
               onClick={() => formDAG.celebrateCompletion()}
             >
-              🎉 All Complete!
-            </LoadingButton>
+              🎉 Registration Complete!
+            </button>
+          )}
+          
+          {completionStatus === 'ready_for_submit' && !nextOptimalNode && (
+            <button
+              onClick={() => formDAG.navigateToNode('final_submit')}
+              style={{
+                padding: "8px 16px",
+                background: "linear-gradient(45deg, #007bff, #0056b3)",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "13px",
+                fontWeight: "bold",
+                boxShadow: "0 2px 8px rgba(0, 123, 255, 0.3)"
+              }}
+            >
+              🎯 Final Submission
+            </button>
           )}
         </div>
       </div>
 
-      {/* Legend */}
-      <CollapsibleSection
-        id="legend"
-        title="Status Legend"
-        isExpanded={isExpanded('legend')}
-        onToggle={toggleSection}
-        variant="default"
-      >
+      {/* 🔧 UPDATED: Legend with not applicable status */}
+      {showLegend && (
         <div
           style={{
+            marginTop: "15px",
             padding: "12px",
             background: "#fff",
             borderRadius: "6px",
@@ -353,9 +535,14 @@ export function FormNavigation(props: FormNavigationProps) {
           }}
         >
           <div
+            style={{ fontSize: "12px", color: "#6c757d", marginBottom: "10px" }}
+          >
+            <strong>Status Legend:</strong>
+          </div>
+          <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
               gap: "8px",
               fontSize: "11px",
             }}
@@ -372,6 +559,9 @@ export function FormNavigation(props: FormNavigationProps) {
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span>🔒</span> <span>Locked</span>
             </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span>⚪</span> <span>Not Applicable</span>
+            </div>
           </div>
           
           <div style={{ 
@@ -381,10 +571,25 @@ export function FormNavigation(props: FormNavigationProps) {
             fontSize: "10px",
             color: "#adb5bd"
           }}>
-            💡 Tip: Hover over locked forms to see their requirements
+            💡 <strong>Smart Progress:</strong> Only applicable forms count toward 100% completion
+            <br />
+            🎯 <strong>Examples:</strong> Guardian Consent (minors only), Specialist Referral (PPO/POS plans only)
           </div>
         </div>
-      </CollapsibleSection>
+      )}
+
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes progressPulse {
+          0% { opacity: 0; }
+          50% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }

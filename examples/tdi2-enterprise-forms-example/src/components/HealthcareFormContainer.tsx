@@ -1,13 +1,14 @@
+// 🔧 FULLY UPDATED: HealthcareFormContainer with final submit and completion handling
 import React from "react";
 import type { Inject } from "@tdi2/di-core/markers";
 import type { FormDAGServiceInterface } from "../services/FormDAGService";
 import type { DemographicsFormServiceInterface } from "../services/DemographicsFormService";
 import type { InsuranceFormServiceInterface } from "../services/InsuranceFormService";
-import { Alert } from "../components/common";
 
 import { FormNavigation } from "./FormNavigation";
 import { DemographicsForm } from "./forms/DemographicsForm";
 import { InsuranceForm } from "./forms/InsuranceForm";
+import { FinalSubmitForm } from "./FinalSubmitForm";
 import {
   MedicalHistoryForm,
   GuardianConsentForm,
@@ -31,12 +32,10 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
   } = props;
 
   const { currentNode, completedNodes } = formDAG.state;
-  const [lastError, setLastError] = React.useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = React.useState(false);
+  const completionStatus = formDAG.getCompletionStatus();
 
   const handleFormComplete = async (nodeId: string) => {
     console.log(`🔄 Attempting to complete form: ${nodeId}`);
-    setLastError(null);
 
     try {
       // 🔧 FIX: Validate form completion before proceeding
@@ -95,38 +94,55 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
           "✅ Insurance data stored:",
           formDAG.state.formData.insurance
         );
+      } else if (nodeId === "final_submit") {
+        // 🔧 NEW: Handle final submission completion
+        console.log(
+          "🎉 Final submission completed - patient onboarding finished!"
+        );
+        // No navigation needed - this is the end
+        return;
       }
 
       // 🔧 FIX: Complete the node in DAG
       await formDAG.completeNode(nodeId);
       console.log(`✅ Form ${nodeId} completed successfully`);
 
-      // Show success message briefly
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
+      // 🔧 FIX: Navigate based on completion status
+      const newCompletionStatus = formDAG.getCompletionStatus();
 
-      // 🔧 FIX: Navigate to next optimal node
-      const nextNode = formDAG.getNextOptimalNode();
-      if (nextNode && nextNode !== currentNode) {
-        console.log(`🔄 Navigating to next node: ${nextNode}`);
-        const navigationSuccess = formDAG.navigateToNode(nextNode);
+      if (newCompletionStatus === "ready_for_submit") {
+        // All required forms done, go to final submit
+        console.log(
+          "🎯 All required forms completed, navigating to final submission"
+        );
+        const navigationSuccess = formDAG.navigateToNode("final_submit");
         if (!navigationSuccess) {
-          console.warn(
-            `⚠️ Failed to navigate to ${nextNode}, staying on current node`
-          );
+          console.warn("⚠️ Failed to navigate to final_submit");
         }
+      } else if (newCompletionStatus === "completed") {
+        // Final submission done, stay here
+        console.log("🎉 Patient onboarding completely finished!");
       } else {
-        console.log("🎉 No more nodes available - forms completed!");
+        // More forms to complete, navigate to next
+        const nextNode = formDAG.getNextOptimalNode();
+        if (nextNode && nextNode !== currentNode) {
+          console.log(`🔄 Navigating to next node: ${nextNode}`);
+          const navigationSuccess = formDAG.navigateToNode(nextNode);
+          if (!navigationSuccess) {
+            console.warn(
+              `⚠️ Failed to navigate to ${nextNode}, staying on current node`
+            );
+          }
+        } else {
+          console.log("🤔 No more nodes available or already on optimal node");
+        }
       }
     } catch (error) {
       console.error(`❌ Failed to complete ${nodeId}:`, error);
 
-      // 🔧 FIX: Show user-friendly error message using Alert component
+      // 🔧 FIX: Show user-friendly error message
       const errorMessage = error.message || `Failed to complete ${nodeId} form`;
-      setLastError(errorMessage);
-
-      // Auto-hide error after 10 seconds
-      setTimeout(() => setLastError(null), 10000);
+      alert(`Error: ${errorMessage}`);
 
       // Don't navigate if completion failed
       return;
@@ -193,62 +209,26 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
           />
         );
 
-      default:
+      // 🔧 NEW: Final submission form
+      case "final_submit":
         return (
-          <div
-            style={{
-              padding: "40px 20px",
-              textAlign: "center",
-              background: "white",
-              borderRadius: "8px",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-            }}
-          >
-            <div style={{ fontSize: "48px", marginBottom: "20px" }}>🎉</div>
-            <h2 style={{ color: "#28a745", marginBottom: "16px" }}>
-              Patient Onboarding Complete!
-            </h2>
-            <p
-              style={{
-                color: "#6c757d",
-                marginBottom: "30px",
-                fontSize: "16px",
-              }}
-            >
-              All required forms have been completed successfully.
-            </p>
-
-            <Alert
-              type="success"
-              title="Onboarding Summary"
-              variant="filled"
-              size="large"
-            >
-              <div style={{ textAlign: "left", marginTop: "10px" }}>
-                <p>
-                  <strong>Forms Completed:</strong> {completedNodes.length}
-                </p>
-                <p>
-                  <strong>Patient:</strong>{" "}
-                  {formDAG.state.formData.demographics?.firstName}{" "}
-                  {formDAG.state.formData.demographics?.lastName}
-                </p>
-                <p>
-                  <strong>Age:</strong>{" "}
-                  {formDAG.state.formData.demographics?.age}
-                </p>
-                <p>
-                  <strong>Insurance:</strong>{" "}
-                  {formDAG.state.formData.insurance?.primaryInsurance?.provider}
-                </p>
-                <p>
-                  <strong>Plan Type:</strong>{" "}
-                  {formDAG.state.formData.insurance?.primaryInsurance?.planType}
-                </p>
-              </div>
-            </Alert>
-          </div>
+          <FinalSubmitForm
+            services={{ formDAG }}
+            onComplete={() => handleFormComplete("final_submit")}
+          />
         );
+
+      default:
+        // 🔧 UPDATED: Handle completion states properly
+        if (completionStatus === "completed") {
+          return <PatientOnboardingCompleted formDAG={formDAG} />;
+        } else if (completionStatus === "ready_for_submit") {
+          return <ReadyForFinalSubmit formDAG={formDAG} />;
+        } else {
+          return (
+            <UnknownFormState currentNode={currentNode} formDAG={formDAG} />
+          );
+        }
     }
   };
 
@@ -275,10 +255,6 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
             margin: 0,
             color: "#007bff",
             fontSize: "2.5rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px",
           }}
         >
           🏥 Healthcare Patient Onboarding
@@ -290,33 +266,50 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
             fontSize: "1.1rem",
           }}
         >
-          TDI2 Enterprise Forms with DAG Navigation & Reusable Components
+          TDI2 Enterprise Forms with Smart DAG Navigation
         </p>
+
+        {/* 🔧 NEW: Show completion status in header */}
+        <div
+          style={{
+            marginTop: "15px",
+            padding: "8px 16px",
+            background:
+              completionStatus === "completed"
+                ? "#d4edda"
+                : completionStatus === "ready_for_submit"
+                  ? "#fff3cd"
+                  : "#e3f2fd",
+            border: `1px solid ${
+              completionStatus === "completed"
+                ? "#c3e6cb"
+                : completionStatus === "ready_for_submit"
+                  ? "#ffeaa7"
+                  : "#b3d9ff"
+            }`,
+            borderRadius: "20px",
+            display: "inline-block",
+            fontSize: "14px",
+            fontWeight: "bold",
+            color:
+              completionStatus === "completed"
+                ? "#155724"
+                : completionStatus === "ready_for_submit"
+                  ? "#856404"
+                  : "#0d47a1",
+          }}
+        >
+          {completionStatus === "completed"
+            ? "🎉 Registration Complete"
+            : completionStatus === "ready_for_submit"
+              ? "✅ Ready for Submission"
+              : "📋 In Progress"}
+        </div>
       </header>
-      {/* Global Success Message */}
-      {showSuccess && (
-        <Alert
-          type="success"
-          title="Form Completed Successfully!"
-          message="Moving to the next step..."
-          dismissible={true}
-          onDismiss={() => setShowSuccess(false)}
-          autoClose={true}
-          autoCloseDelay={3000}
-        />
-      )}
-      {/* Global Error Message */}
-      {lastError && (
-        <Alert
-          type="error"
-          title="Form Completion Error"
-          message={lastError}
-          dismissible={true}
-          onDismiss={() => setLastError(null)}
-        />
-      )}
+
       {/* Navigation Component */}
       <FormNavigation services={{ formDAG }} />
+
       {/* Current Form */}
       <div
         style={{
@@ -329,7 +322,7 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
         {renderCurrentForm()}
       </div>
 
-      {/* 🔧 FIX: Enhanced Debug Information */}
+      {/* 🔧 ENHANCED: Debug Information with completion tracking */}
       {process.env.NODE_ENV === "development" && (
         <details
           style={{
@@ -340,136 +333,350 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
             borderRadius: "8px",
           }}
         >
-          <summary
-            style={{
-              cursor: "pointer",
-              fontWeight: "bold",
-              marginBottom: "15px",
-            }}
-          >
+          <summary style={{ cursor: "pointer", fontWeight: "bold" }}>
             🔧 Debug Information (Development Mode)
           </summary>
-
           <div style={{ marginTop: "15px" }}>
-            {/* Current State */}
-            <div style={{ marginBottom: "20px" }}>
-              <h4 style={{ margin: "0 0 10px 0", color: "#007bff" }}>
-                Current State:
-              </h4>
-              <pre
-                style={{
-                  background: "#e9ecef",
-                  padding: "10px",
-                  borderRadius: "4px",
-                  overflow: "auto",
-                  fontSize: "12px",
-                  margin: "0",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {JSON.stringify(
-                  {
-                    currentNode: formDAG.state.currentNode,
-                    completedNodes: formDAG.state.completedNodes,
-                    availableNodes: formDAG.state.availableNodes,
-                    progress: formDAG.calculateProgress(),
-                    nextOptimalNode: formDAG.getNextOptimalNode(),
-                    formData: {
-                      demographics: formDAG.state.formData.demographics
-                        ? "Present"
-                        : "Empty",
-                      insurance: formDAG.state.formData.insurance
-                        ? "Present"
-                        : "Empty",
-                    },
-                  },
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
+            <h4>🎯 Completion Status:</h4>
+            <pre
+              style={{
+                background: "#e9ecef",
+                padding: "10px",
+                borderRadius: "4px",
+                overflow: "auto",
+                fontSize: "12px",
+              }}
+            >
+              {JSON.stringify(
+                {
+                  completionStatus: formDAG.getCompletionStatus(),
+                  currentNode: formDAG.state.currentNode,
+                  completedNodes: formDAG.state.completedNodes,
+                  availableNodes: formDAG.state.availableNodes,
+                  applicableForms: formDAG
+                    .getApplicableForms()
+                    .map((f) => f.id),
+                  allRequiredCompleted: formDAG.areAllRequiredFormsCompleted(),
+                  isFlowCompleted: formDAG.isFormFlowCompleted(),
+                  progress: formDAG.calculateProgress(),
+                  nextOptimalNode: formDAG.getNextOptimalNode(),
+                },
+                null,
+                2
+              )}
+            </pre>
 
-            {/* Service States */}
-            <div style={{ marginBottom: "20px" }}>
-              <h4 style={{ margin: "0 0 10px 0", color: "#28a745" }}>
-                Service States:
-              </h4>
-              <pre
-                style={{
-                  background: "#e9ecef",
-                  padding: "10px",
-                  borderRadius: "4px",
-                  overflow: "auto",
-                  fontSize: "12px",
-                  margin: "0",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {JSON.stringify(
-                  {
-                    demographicsForm: {
-                      isDirty: demographicsForm.state.isDirty,
-                      isValid:
-                        demographicsForm.state.validationResults?.isValid,
-                      errorCount:
-                        demographicsForm.state.validationResults?.errors
-                          .length || 0,
-                      isSubmitting: demographicsForm.state.isSubmitting,
-                    },
-                    insuranceForm: {
-                      isDirty: insuranceForm.state.isDirty,
-                      isValid: insuranceForm.state.validationResults?.isValid,
-                      eligibilityStatus:
-                        insuranceForm.state.eligibilityCheck.result,
-                      canSubmit: insuranceForm.canSubmitForm(),
-                      isSubmissionComplete:
-                        insuranceForm.state.isSubmissionComplete,
-                      submissionError: insuranceForm.state.submissionError,
-                      errorCount:
-                        insuranceForm.state.validationResults?.errors.length ||
-                        0,
-                      isSubmitting: insuranceForm.state.isSubmitting,
-                    },
-                  },
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
+            <h4>📊 Form Data Status:</h4>
+            <pre
+              style={{
+                background: "#e9ecef",
+                padding: "10px",
+                borderRadius: "4px",
+                overflow: "auto",
+                fontSize: "12px",
+                maxHeight: "200px",
+              }}
+            >
+              {JSON.stringify(
+                {
+                  demographics: formDAG.state.formData.demographics
+                    ? "Present"
+                    : "Empty",
+                  insurance: formDAG.state.formData.insurance
+                    ? "Present"
+                    : "Empty",
+                  formDataKeys: Object.keys(formDAG.state.formData),
+                },
+                null,
+                2
+              )}
+            </pre>
 
-            {/* Form Data Preview */}
-            <div style={{ marginBottom: "0" }}>
-              <h4 style={{ margin: "0 0 10px 0", color: "#6f42c1" }}>
-                Form Data Preview:
-              </h4>
-              <pre
-                style={{
-                  background: "#e9ecef",
-                  padding: "10px",
-                  borderRadius: "4px",
-                  overflow: "auto",
-                  fontSize: "12px",
-                  maxHeight: "200px",
-                  margin: "0",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {JSON.stringify(
-                  {
-                    demographics: demographicsForm.state.formData,
-                    insurance: insuranceForm.state.formData,
+            <h4>⚙️ Service States:</h4>
+            <pre
+              style={{
+                background: "#e9ecef",
+                padding: "10px",
+                borderRadius: "4px",
+                overflow: "auto",
+                fontSize: "12px",
+              }}
+            >
+              {JSON.stringify(
+                {
+                  demographicsForm: {
+                    isDirty: demographicsForm.state.isDirty,
+                    isValid: demographicsForm.state.validationResults?.isValid,
+                    errorCount:
+                      demographicsForm.state.validationResults?.errors.length ||
+                      0,
                   },
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
+                  insuranceForm: {
+                    isDirty: insuranceForm.state.isDirty,
+                    isValid: insuranceForm.state.validationResults?.isValid,
+                    eligibilityStatus:
+                      insuranceForm.state.eligibilityCheck.result,
+                    canSubmit: insuranceForm.canSubmitForm(),
+                    isSubmissionComplete:
+                      insuranceForm.state.isSubmissionComplete,
+                    submissionError: insuranceForm.state.submissionError,
+                    errorCount:
+                      insuranceForm.state.validationResults?.errors.length || 0,
+                  },
+                },
+                null,
+                2
+              )}
+            </pre>
           </div>
         </details>
       )}
+    </div>
+  );
+}
+
+// 🔧 NEW: Helper components for completion states
+
+function PatientOnboardingCompleted({
+  formDAG,
+}: {
+  formDAG: FormDAGServiceInterface;
+}) {
+  const { formData, completedNodes } = formDAG.state;
+  const applicableForms = formDAG.getApplicableForms();
+
+  return (
+    <div
+      style={{
+        padding: "40px",
+        textAlign: "center",
+        maxWidth: "600px",
+        margin: "0 auto",
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(135deg, #28a745, #20c997)",
+          color: "white",
+          borderRadius: "16px",
+          padding: "40px",
+          marginBottom: "30px",
+          boxShadow: "0 8px 32px rgba(40, 167, 69, 0.3)",
+        }}
+      >
+        <div style={{ fontSize: "80px", marginBottom: "20px" }}>🎉</div>
+        <h1 style={{ margin: "0 0 15px 0", fontSize: "3rem" }}>
+          Registration Complete!
+        </h1>
+        <p style={{ margin: 0, fontSize: "1.3rem", opacity: 0.9 }}>
+          Welcome to our healthcare system!
+        </p>
+      </div>
+
+      <div
+        style={{
+          background: "#d4edda",
+          border: "1px solid #c3e6cb",
+          borderRadius: "12px",
+          padding: "30px",
+          textAlign: "left",
+        }}
+      >
+        <h2
+          style={{
+            color: "#155724",
+            margin: "0 0 20px 0",
+            textAlign: "center",
+          }}
+        >
+          📋 Final Registration Summary
+        </h2>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "15px",
+            marginBottom: "20px",
+          }}
+        >
+          <div>
+            <p style={{ margin: "5px 0", color: "#155724" }}>
+              <strong>Patient:</strong> {formData.demographics?.firstName}{" "}
+              {formData.demographics?.lastName}
+            </p>
+            <p style={{ margin: "5px 0", color: "#155724" }}>
+              <strong>Age:</strong> {formData.demographics?.age} years old
+            </p>
+            <p style={{ margin: "5px 0", color: "#155724" }}>
+              <strong>Patient ID:</strong> PAT-{Date.now().toString().slice(-6)}
+            </p>
+          </div>
+          <div>
+            <p style={{ margin: "5px 0", color: "#155724" }}>
+              <strong>Insurance:</strong>{" "}
+              {formData.insurance?.primaryInsurance?.provider}
+            </p>
+            <p style={{ margin: "5px 0", color: "#155724" }}>
+              <strong>Plan:</strong>{" "}
+              {formData.insurance?.primaryInsurance?.planType}
+            </p>
+            <p style={{ margin: "5px 0", color: "#155724" }}>
+              <strong>Registration Date:</strong>{" "}
+              {new Date().toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+
+        <div
+          style={{
+            textAlign: "center",
+            padding: "15px",
+            background: "#c3e6cb",
+            borderRadius: "8px",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 10px 0",
+              color: "#155724",
+              fontWeight: "bold",
+            }}
+          >
+            ✅ Forms Completed: {completedNodes.length} /{" "}
+            {applicableForms.length}
+          </p>
+          <p style={{ margin: 0, color: "#155724", fontSize: "14px" }}>
+            Your healthcare provider will contact you within 24 hours to
+            schedule your first appointment.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReadyForFinalSubmit({
+  formDAG,
+}: {
+  formDAG: FormDAGServiceInterface;
+}) {
+  const applicableForms = formDAG
+    .getApplicableForms()
+    .filter((f) => f.id !== "final_submit");
+
+  return (
+    <div
+      style={{
+        padding: "40px",
+        textAlign: "center",
+        maxWidth: "600px",
+        margin: "0 auto",
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(135deg, #fff3cd, #ffeaa7)",
+          border: "1px solid #ffeaa7",
+          borderRadius: "12px",
+          padding: "30px",
+          marginBottom: "20px",
+        }}
+      >
+        <div style={{ fontSize: "64px", marginBottom: "20px" }}>✅</div>
+        <h2 style={{ color: "#856404", margin: "0 0 15px 0" }}>
+          All Required Forms Completed!
+        </h2>
+        <p
+          style={{ color: "#856404", margin: "0 0 20px 0", fontSize: "1.1rem" }}
+        >
+          You've successfully completed all {applicableForms.length} applicable
+          forms.
+        </p>
+
+        <button
+          onClick={() => formDAG.navigateToNode("final_submit")}
+          style={{
+            padding: "16px 32px",
+            background: "linear-gradient(45deg, #007bff, #0056b3)",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "18px",
+            fontWeight: "bold",
+            boxShadow: "0 4px 12px rgba(0, 123, 255, 0.3)",
+          }}
+        >
+          🎯 Proceed to Final Submission
+        </button>
+      </div>
+
+      <div
+        style={{
+          background: "#e3f2fd",
+          border: "1px solid #b3d9ff",
+          borderRadius: "8px",
+          padding: "15px",
+          fontSize: "14px",
+          color: "#0d47a1",
+        }}
+      >
+        💡 <strong>Next Step:</strong> Review your information and complete the
+        final submission process.
+      </div>
+    </div>
+  );
+}
+
+function UnknownFormState({
+  currentNode,
+  formDAG,
+}: {
+  currentNode: string;
+  formDAG: FormDAGServiceInterface;
+}) {
+  return (
+    <div
+      style={{
+        padding: "40px",
+        textAlign: "center",
+        maxWidth: "600px",
+        margin: "0 auto",
+      }}
+    >
+      <div
+        style={{
+          background: "#f8d7da",
+          border: "1px solid #f5c6cb",
+          borderRadius: "8px",
+          padding: "30px",
+        }}
+      >
+        <h2 style={{ color: "#721c24", margin: "0 0 15px 0" }}>
+          ⚠️ Unknown Form State
+        </h2>
+        <p style={{ color: "#721c24", margin: "0 0 20px 0" }}>
+          Current node: <code>{currentNode}</code>
+        </p>
+        <p style={{ color: "#721c24", margin: "0 0 20px 0" }}>
+          This shouldn't happen. Please check the form configuration.
+        </p>
+
+        <button
+          onClick={() => formDAG.navigateToNode("demographics")}
+          style={{
+            padding: "12px 24px",
+            background: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+          }}
+        >
+          ← Return to Demographics
+        </button>
+      </div>
     </div>
   );
 }
