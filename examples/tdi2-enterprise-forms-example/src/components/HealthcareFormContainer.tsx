@@ -293,7 +293,6 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
           TDI2 Enterprise Forms with DAG Navigation & Reusable Components
         </p>
       </header>
-
       {/* Global Success Message */}
       {showSuccess && (
         <Alert
@@ -306,7 +305,6 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
           autoCloseDelay={3000}
         />
       )}
-
       {/* Global Error Message */}
       {lastError && (
         <Alert
@@ -317,10 +315,8 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
           onDismiss={() => setLastError(null)}
         />
       )}
-
       {/* Navigation Component */}
       <FormNavigation services={{ formDAG }} />
-
       {/* Current Form */}
       <div
         style={{
@@ -344,16 +340,22 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
             borderRadius: "8px",
           }}
         >
-          <summary style={{ cursor: "pointer", fontWeight: "bold" }}>
+          <summary
+            style={{
+              cursor: "pointer",
+              fontWeight: "bold",
+              marginBottom: "15px",
+            }}
+          >
             🔧 Debug Information (Development Mode)
           </summary>
+
           <div style={{ marginTop: "15px" }}>
-            <Alert
-              type="info"
-              title="Current State"
-              variant="subtle"
-              size="small"
-            >
+            {/* Current State */}
+            <div style={{ marginBottom: "20px" }}>
+              <h4 style={{ margin: "0 0 10px 0", color: "#007bff" }}>
+                Current State:
+              </h4>
               <pre
                 style={{
                   background: "#e9ecef",
@@ -361,7 +363,9 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
                   borderRadius: "4px",
                   overflow: "auto",
                   fontSize: "12px",
-                  margin: "10px 0 0 0",
+                  margin: "0",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
                 }}
               >
                 {JSON.stringify(
@@ -384,14 +388,13 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
                   2
                 )}
               </pre>
-            </Alert>
+            </div>
 
-            <Alert
-              type="info"
-              title="Service States"
-              variant="subtle"
-              size="small"
-            >
+            {/* Service States */}
+            <div style={{ marginBottom: "20px" }}>
+              <h4 style={{ margin: "0 0 10px 0", color: "#28a745" }}>
+                Service States:
+              </h4>
               <pre
                 style={{
                   background: "#e9ecef",
@@ -399,7 +402,9 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
                   borderRadius: "4px",
                   overflow: "auto",
                   fontSize: "12px",
-                  margin: "10px 0 0 0",
+                  margin: "0",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
                 }}
               >
                 {JSON.stringify(
@@ -411,6 +416,7 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
                       errorCount:
                         demographicsForm.state.validationResults?.errors
                           .length || 0,
+                      isSubmitting: demographicsForm.state.isSubmitting,
                     },
                     insuranceForm: {
                       isDirty: insuranceForm.state.isDirty,
@@ -424,21 +430,20 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
                       errorCount:
                         insuranceForm.state.validationResults?.errors.length ||
                         0,
+                      isSubmitting: insuranceForm.state.isSubmitting,
                     },
                   },
                   null,
                   2
                 )}
               </pre>
-            </Alert>
+            </div>
 
-            {/* 🔧 FIX: Add form data preview */}
-            <Alert
-              type="info"
-              title="Form Data Preview"
-              variant="subtle"
-              size="small"
-            >
+            {/* Form Data Preview */}
+            <div style={{ marginBottom: "0" }}>
+              <h4 style={{ margin: "0 0 10px 0", color: "#6f42c1" }}>
+                Form Data Preview:
+              </h4>
               <pre
                 style={{
                   background: "#e9ecef",
@@ -447,7 +452,9 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
                   overflow: "auto",
                   fontSize: "12px",
                   maxHeight: "200px",
-                  margin: "10px 0 0 0",
+                  margin: "0",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
                 }}
               >
                 {JSON.stringify(
@@ -459,7 +466,7 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
                   2
                 )}
               </pre>
-            </Alert>
+            </div>
           </div>
         </details>
       )}
