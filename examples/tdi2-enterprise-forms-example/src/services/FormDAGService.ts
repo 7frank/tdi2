@@ -33,6 +33,13 @@ export interface FormDAGServiceInterface {
   calculateProgress(): number;
   getNextOptimalNode(): string | null;
   
+  // 🔧 FIXED: Separated completion detection methods to avoid recursion
+  getApplicableForms(): FormNode[];
+  getRequiredFormIds(): string[];
+  areAllRequiredFormsCompleted(): boolean;
+  isFormFlowCompleted(): boolean;
+  getCompletionStatus(): 'in_progress' | 'ready_for_submit' | 'completed';
+  
   // 🎨 VIEW STATE: UI-specific methods
   triggerProgressAnimation(): void;
   celebrateCompletion(): void;
@@ -124,6 +131,16 @@ export class FormDAGService implements FormDAGServiceInterface {
         isAvailable: false,
         estimatedTime: 7,
       },
+      // 🔧 FIXED: Final submission form with simple dependency-based condition
+      {
+        id: "final_submit",
+        title: "Review & Submit",
+        dependencies: ["demographics", "insurance"], // Base requirements only
+        conditions: [], // No complex conditions that cause recursion
+        isCompleted: false,
+        isAvailable: false,
+        estimatedTime: 2,
+      },
     ] as FormNode[],
     formData: {} as any,
     navigationHistory: ["demographics"] as string[],
@@ -191,19 +208,109 @@ export class FormDAGService implements FormDAGServiceInterface {
 
     if (!dependenciesMet) return false;
 
-    // Check conditions
+    // 🔧 FIXED: Special handling for final_submit WITHOUT recursion
+    if (nodeId === "final_submit") {
+      // Only check if the base required forms are completed
+      // Don't use areAllRequiredFormsCompleted() to avoid recursion
+      const requiredFormIds = this.getRequiredFormIds();
+      return requiredFormIds.every(formId => 
+        formId === 'final_submit' || this.state.completedNodes.includes(formId)
+      );
+    }
+
+    // Check conditions for other nodes
     return this.evaluateConditions(node.conditions);
   }
 
+  // 🔧 FIXED: Smart progress calculation that only counts applicable forms
   calculateProgress(): number {
-    const totalNodes = this.state.formNodes.length;
-    const completedCount = this.state.completedNodes.length;
-    return Math.round((completedCount / totalNodes) * 100);
+    const applicableForms = this.getApplicableForms();
+    const completedApplicable = this.state.completedNodes.filter(nodeId => 
+      applicableForms.some(form => form.id === nodeId)
+    );
+    
+    if (applicableForms.length === 0) return 0;
+    return Math.round((completedApplicable.length / applicableForms.length) * 100);
+  }
+
+  // 🔧 FIXED: Get only the forms that apply to current patient scenario (NO RECURSION)
+  getApplicableForms(): FormNode[] {
+    const requiredFormIds = this.getRequiredFormIds();
+    return this.state.formNodes.filter(node => requiredFormIds.includes(node.id));
+  }
+
+  // 🔧 NEW: Get list of required form IDs without recursion
+  getRequiredFormIds(): string[] {
+    const requiredIds: string[] = [];
+    
+    // Always include core forms
+    requiredIds.push(
+      'demographics', 
+      'insurance', 
+      'medical_history', 
+      'emergency_contacts', 
+      'hipaa_consent', 
+      'financial_responsibility'
+    );
+    
+    // Check conditional forms based on current data
+    const age = this.getNestedValue(this.state.formData, 'demographics.age');
+    if (age && age < 18) {
+      requiredIds.push('guardian_consent');
+    }
+    
+    const planType = this.getNestedValue(this.state.formData, 'insurance.primaryInsurance.planType');
+    const hasMedicalHistory = this.state.completedNodes.includes('medical_history');
+    const hasInsurance = this.state.completedNodes.includes('insurance');
+    if (hasMedicalHistory && hasInsurance && ['PPO', 'POS'].includes(planType)) {
+      requiredIds.push('specialist_referral');
+    }
+    
+    // Add final_submit if all other required forms are completed
+    const otherRequiredCompleted = requiredIds.every(formId => 
+      this.state.completedNodes.includes(formId)
+    );
+    if (otherRequiredCompleted) {
+      requiredIds.push('final_submit');
+    }
+    
+    return requiredIds;
+  }
+
+  // 🔧 FIXED: Check if all required forms (excluding final_submit) are completed
+  areAllRequiredFormsCompleted(): boolean {
+    const requiredIds = this.getRequiredFormIds().filter(id => id !== 'final_submit');
+    return requiredIds.every(formId => this.state.completedNodes.includes(formId));
+  }
+
+  // 🔧 FIXED: Check if entire form flow is completed
+  isFormFlowCompleted(): boolean {
+    return this.state.completedNodes.includes('final_submit');
+  }
+
+  // 🔧 FIXED: Get overall completion status
+  getCompletionStatus(): 'in_progress' | 'ready_for_submit' | 'completed' {
+    if (this.isFormFlowCompleted()) return 'completed';
+    if (this.areAllRequiredFormsCompleted()) return 'ready_for_submit';
+    return 'in_progress';
   }
 
   getNextOptimalNode(): string | null {
+    const completionStatus = this.getCompletionStatus();
+    
+    // If ready for submit, direct to final_submit
+    if (completionStatus === 'ready_for_submit') {
+      return 'final_submit';
+    }
+    
+    // If completed, no next node
+    if (completionStatus === 'completed') {
+      return null;
+    }
+    
+    // Otherwise, find next available incomplete form (excluding final_submit)
     const availableNodes = this.getAvailableNodes().filter(
-      (n) => !n.isCompleted
+      (n) => !n.isCompleted && n.id !== 'final_submit'
     );
     if (availableNodes.length === 0) return null;
 
@@ -231,11 +338,18 @@ export class FormDAGService implements FormDAGServiceInterface {
 
   getNavigationFeedback(): string {
     const currentNode = this.state.formNodes.find(n => n.id === this.state.currentNode);
-    const completedCount = this.state.completedNodes.length;
-    const totalNodes = this.state.formNodes.length;
+    const completionStatus = this.getCompletionStatus();
+    const applicableForms = this.getApplicableForms();
+    const completedCount = this.state.completedNodes.filter(nodeId => 
+      applicableForms.some(form => form.id === nodeId)
+    ).length;
     
-    if (completedCount === totalNodes) {
-      return "🎉 All forms completed! Ready for submission.";
+    if (completionStatus === 'completed') {
+      return "🎉 Patient onboarding completed successfully!";
+    }
+    
+    if (completionStatus === 'ready_for_submit') {
+      return "✅ All required forms completed. Ready for final submission!";
     }
     
     if (this.state.isNavigating) {
@@ -245,10 +359,10 @@ export class FormDAGService implements FormDAGServiceInterface {
     const nextNode = this.getNextOptimalNode();
     if (nextNode) {
       const nextNodeObj = this.state.formNodes.find(n => n.id === nextNode);
-      return `📋 Current: ${currentNode?.title}. Next: ${nextNodeObj?.title}`;
+      return `📋 Progress: ${completedCount}/${applicableForms.length}. Next: ${nextNodeObj?.title}`;
     }
     
-    return `📍 Current: ${currentNode?.title}`;
+    return `📍 Current: ${currentNode?.title} (${completedCount}/${applicableForms.length} applicable forms)`;
   }
 
   private updateAvailableNodes(): void {
@@ -302,7 +416,17 @@ export class FormDAGService implements FormDAGServiceInterface {
     }
   }
 
+  // 🔧 FIXED: Safe nested value getter with proper null checking
   private getNestedValue(obj: any, path: string): any {
-    return path.split(".").reduce((current, key) => current?.[key], obj);
+    if (!obj || !path) return undefined;
+    
+    try {
+      return path.split(".").reduce((current, key) => {
+        return current && typeof current === 'object' ? current[key] : undefined;
+      }, obj);
+    } catch (error) {
+      console.warn(`Error getting nested value for path "${path}":`, error);
+      return undefined;
+    }
   }
 }

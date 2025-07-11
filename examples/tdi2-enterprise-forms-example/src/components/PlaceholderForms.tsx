@@ -1,4 +1,10 @@
 import React from "react";
+import {
+  FormContainer,
+  Alert,
+  LoadingButton,
+  ProgressBar
+} from "../components/common";
 
 // Placeholder forms for the remaining form steps
 // These demonstrate what would be implemented but only show "Next" buttons
@@ -9,27 +15,44 @@ interface PlaceholderFormProps {
   fields: string[];
   onComplete: () => void;
   estimatedTime?: number;
+  icon?: string;
 }
 
-function PlaceholderForm(p: PlaceholderFormProps) {
-  const { title, description, fields, onComplete, estimatedTime } = p;
-  return (
-    <div style={{ padding: "20px", maxWidth: "600px" }}>
-      <h2>{title}</h2>
-      <p style={{ color: "#6c757d", marginBottom: "20px" }}>{description}</p>
+function PlaceholderForm(props: PlaceholderFormProps) {
+  const { title, description, fields, onComplete, estimatedTime, icon } = props;
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  const handleComplete = async () => {
+    setIsSubmitting(true);
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsSubmitting(false);
+    onComplete();
+  };
+
+  return (
+    <FormContainer
+      title={title}
+      subtitle={description}
+      icon={icon}
+      variant="card"
+      size="medium"
+      showProgress={estimatedTime ? true : false}
+      progress={0} // Placeholder forms start at 0% since they're not implemented
+      progressLabel={estimatedTime ? `Estimated: ${estimatedTime} minutes` : undefined}
+      onSubmit={handleComplete}
+      submitText={`Complete ${title} →`}
+      canSubmit={true}
+      isSubmitting={isSubmitting}
+      isDirty={false}
+    >
       {estimatedTime && (
-        <div
-          style={{
-            background: "#e3f2fd",
-            padding: "10px",
-            borderRadius: "4px",
-            marginBottom: "20px",
-            fontSize: "14px",
-          }}
-        >
-          ⏱️ Estimated completion time: {estimatedTime} minutes
-        </div>
+        <Alert
+          type="info"
+          title={`Estimated completion time: ${estimatedTime} minutes`}
+          icon="⏱️"
+          variant="subtle"
+        />
       )}
 
       <div
@@ -41,49 +64,45 @@ function PlaceholderForm(p: PlaceholderFormProps) {
           marginBottom: "20px",
         }}
       >
-        <h3 style={{ margin: "0 0 15px 0", fontSize: "16px" }}>
-          Form Fields (Preview)
+        <h3 style={{ margin: "0 0 15px 0", fontSize: "16px", color: "#495057" }}>
+          📋 Form Fields (Preview)
         </h3>
         <ul style={{ margin: 0, paddingLeft: "20px" }}>
           {fields.map((field, index) => (
-            <li key={index} style={{ marginBottom: "8px", fontSize: "14px" }}>
+            <li key={index} style={{ 
+              marginBottom: "8px", 
+              fontSize: "14px",
+              color: "#6c757d",
+              lineHeight: "1.4"
+            }}>
               {field}
             </li>
           ))}
         </ul>
       </div>
 
-      <div
-        style={{
-          background: "#fff3cd",
-          border: "1px solid #ffeaa7",
-          borderRadius: "4px",
-          padding: "15px",
-          marginBottom: "20px",
-        }}
-      >
-        <p style={{ margin: 0, fontSize: "14px", color: "#856404" }}>
-          🚧 <strong>Development Note:</strong> This form is a placeholder. In
-          the full implementation, this would contain interactive form fields
-          with validation, conditional logic, and service integration.
-        </p>
-      </div>
+      <Alert
+        type="warning"
+        title="Development Note"
+        message="This form is a placeholder. In the full implementation, this would contain interactive form fields with validation, conditional logic, and service integration."
+        icon="🚧"
+        variant="outlined"
+      />
 
-      <button
-        onClick={onComplete}
-        style={{
-          padding: "12px 24px",
-          background: "#007bff",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-          fontSize: "16px",
-        }}
-      >
-        Complete {title} →
-      </button>
-    </div>
+      {/* Show a fake progress animation when submitting */}
+      {isSubmitting && (
+        <div style={{ marginTop: "20px" }}>
+          <ProgressBar
+            progress={75}
+            animated={true}
+            showPercentage={false}
+            label="Processing form completion..."
+            color="primary"
+            size="small"
+          />
+        </div>
+      )}
+    </FormContainer>
   );
 }
 
@@ -93,6 +112,7 @@ export function MedicalHistoryForm({ onComplete }: { onComplete: () => void }) {
     <PlaceholderForm
       title="Medical History"
       description="Comprehensive medical history including chronic conditions, medications, allergies, and family history."
+      icon="🏥"
       estimatedTime={10}
       fields={[
         "Current medications and dosages",
@@ -121,6 +141,7 @@ export function GuardianConsentForm({
     <PlaceholderForm
       title="Guardian Consent"
       description="Required consent forms and guardian information for patients under 18 years of age."
+      icon="👨‍👩‍👧‍👦"
       estimatedTime={3}
       fields={[
         "Guardian/parent full name",
@@ -149,6 +170,7 @@ export function SpecialistReferralForm({
     <PlaceholderForm
       title="Specialist Referral"
       description="Referral management for specialist care based on medical conditions and insurance coverage."
+      icon="🩺"
       estimatedTime={6}
       fields={[
         "Referring physician information",
@@ -177,6 +199,7 @@ export function EmergencyContactsForm({
     <PlaceholderForm
       title="Emergency Contacts"
       description="Emergency contact information for patient safety and family notification."
+      icon="🚨"
       estimatedTime={4}
       fields={[
         "Primary emergency contact name",
@@ -201,6 +224,7 @@ export function HIPAAConsentForm({ onComplete }: { onComplete: () => void }) {
     <PlaceholderForm
       title="HIPAA Consent"
       description="Required privacy notices and consent forms for protected health information."
+      icon="🔒"
       estimatedTime={5}
       fields={[
         "HIPAA Privacy Notice acknowledgment",
@@ -229,6 +253,7 @@ export function FinancialResponsibilityForm({
     <PlaceholderForm
       title="Financial Responsibility"
       description="Payment methods, billing information, and financial responsibility agreements."
+      icon="💳"
       estimatedTime={7}
       fields={[
         "Billing address (if different from patient address)",

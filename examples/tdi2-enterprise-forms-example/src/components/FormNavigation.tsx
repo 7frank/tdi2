@@ -30,10 +30,18 @@ export function FormNavigation(props: FormNavigationProps) {
     completionCelebrationActive 
   } = formDAG.state;
 
+  // 🔧 UPDATED: Use smart progress calculation
   const progress = formDAG.calculateProgress();
   const navigationFeedback = formDAG.getNavigationFeedback();
+  const completionStatus = formDAG.getCompletionStatus();
+  const applicableForms = formDAG.getApplicableForms();
 
   const getNodeStatus = (nodeId: string) => {
+    const applicableForm = applicableForms.find(f => f.id === nodeId);
+    
+    // If form is not applicable to current scenario, mark as not applicable
+    if (!applicableForm) return "not_applicable";
+    
     if (completedNodes.includes(nodeId)) return "completed";
     if (currentNode === nodeId) return "current";
     if (availableNodes.includes(nodeId)) return "available";
@@ -50,6 +58,8 @@ export function FormNavigation(props: FormNavigationProps) {
         return "🔓";
       case "disabled":
         return "🔒";
+      case "not_applicable":
+        return "⚪";
       default:
         return "⚪";
     }
@@ -65,8 +75,27 @@ export function FormNavigation(props: FormNavigationProps) {
         return "#6c757d";
       case "disabled":
         return "#adb5bd";
+      case "not_applicable":
+        return "#e9ecef";
       default:
         return "#dee2e6";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "Completed";
+      case "current":
+        return "Current";
+      case "available":
+        return "Available";
+      case "disabled":
+        return "Locked";
+      case "not_applicable":
+        return "N/A";
+      default:
+        return "Unknown";
     }
   };
 
@@ -86,10 +115,25 @@ export function FormNavigation(props: FormNavigationProps) {
   };
 
   const nextOptimalNode = formDAG.getNextOptimalNode();
-  const totalEstimatedTime = formNodes.reduce((sum, node) => sum + node.estimatedTime, 0);
-  const completedTime = formNodes
+  const totalEstimatedTime = applicableForms.reduce((sum, node) => sum + node.estimatedTime, 0);
+  const completedTime = applicableForms
     .filter(node => completedNodes.includes(node.id))
     .reduce((sum, node) => sum + node.estimatedTime, 0);
+
+  // 🔧 NEW: Get progress message based on completion status
+  const getProgressMessage = () => {
+    switch(completionStatus) {
+      case 'completed':
+        return "🎉 Patient onboarding completed!";
+      case 'ready_for_submit':
+        return "✅ Ready for final submission";
+      case 'in_progress':
+        const completedApplicable = completedNodes.filter(nodeId => 
+          applicableForms.some(form => form.id === nodeId)
+        );
+        return `${progress}% Complete (${completedApplicable.length}/${applicableForms.length} applicable forms)`;
+    }
+  };
 
   return (
     <div
@@ -110,12 +154,18 @@ export function FormNavigation(props: FormNavigationProps) {
         {/* Navigation Status Indicator */}
         <div style={{
           padding: "6px 12px",
-          background: isNavigating ? "#fff3cd" : completionCelebrationActive ? "#d4edda" : "#e3f2fd", // 🎨 VIEW STATE from service
-          border: `1px solid ${isNavigating ? "#ffeaa7" : completionCelebrationActive ? "#c3e6cb" : "#b3d9ff"}`,
+          background: isNavigating ? "#fff3cd" : 
+                     completionStatus === 'completed' ? "#d4edda" : 
+                     completionStatus === 'ready_for_submit' ? "#d1ecf1" : "#e3f2fd", // 🎨 VIEW STATE from service
+          border: `1px solid ${isNavigating ? "#ffeaa7" : 
+                              completionStatus === 'completed' ? "#c3e6cb" : 
+                              completionStatus === 'ready_for_submit' ? "#bee5eb" : "#b3d9ff"}`,
           borderRadius: "20px",
           fontSize: "12px",
           fontWeight: "bold",
-          color: isNavigating ? "#856404" : completionCelebrationActive ? "#155724" : "#0d47a1",
+          color: isNavigating ? "#856404" : 
+                 completionStatus === 'completed' ? "#155724" : 
+                 completionStatus === 'ready_for_submit' ? "#0c5460" : "#0d47a1",
           transform: completionCelebrationActive ? "scale(1.05)" : "scale(1)", // 🎨 VIEW STATE from service
           transition: "all 0.3s ease"
         }}>
@@ -137,7 +187,7 @@ export function FormNavigation(props: FormNavigationProps) {
             style={{ fontSize: "14px", fontWeight: "bold", color: "#007bff", cursor: "pointer" }}
             onClick={() => setShowProgressDetails(!showProgressDetails)} // 🎨 COMPONENT VIEW STATE
           >
-            {progress}% Complete
+            {getProgressMessage()}
             {showProgressDetails ? " 📊" : " 📈"}
           </span>
           
@@ -162,7 +212,7 @@ export function FormNavigation(props: FormNavigationProps) {
             style={{
               width: `${progress}%`,
               height: "100%",
-              background: `linear-gradient(90deg, #007bff, ${progress > 75 ? "#28a745" : "#17a2b8"})`,
+              background: `linear-gradient(90deg, #007bff, ${progress === 100 ? "#28a745" : progress > 75 ? "#20c997" : "#17a2b8"})`,
               transition: "width 0.5s ease",
               borderRadius: "6px",
             }}
@@ -182,19 +232,43 @@ export function FormNavigation(props: FormNavigationProps) {
           )}
         </div>
 
-        {/* Progress Details */}
+        {/* 🔧 UPDATED: Progress Details with applicable forms info */}
         {showProgressDetails && (
           <div style={{
             marginTop: "8px",
-            padding: "8px",
+            padding: "12px",
             background: "#fff",
             border: "1px solid #dee2e6",
             borderRadius: "4px",
             fontSize: "12px"
           }}>
-            <div>✅ Completed: {completedNodes.length} / {formNodes.length} forms</div>
-            <div>⏱️ Time spent: ~{completedTime} minutes</div>
-            <div>📊 Estimated remaining: ~{totalEstimatedTime - completedTime} minutes</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+              <div>
+                <div>📋 <strong>Applicable Forms:</strong> {applicableForms.length}</div>
+                <div>✅ <strong>Completed:</strong> {completedNodes.filter(nodeId => 
+                  applicableForms.some(form => form.id === nodeId)
+                ).length}</div>
+                <div>⏱️ <strong>Time Invested:</strong> ~{completedTime} minutes</div>
+              </div>
+              <div>
+                <div>🎯 <strong>Completion Status:</strong> {completionStatus}</div>
+                <div>📊 <strong>Progress:</strong> {progress}%</div>
+                <div>⏳ <strong>Est. Remaining:</strong> ~{totalEstimatedTime - completedTime} minutes</div>
+              </div>
+            </div>
+            
+            {/* Show why some forms are not applicable */}
+            {formNodes.length > applicableForms.length && (
+              <div style={{ 
+                marginTop: "10px", 
+                paddingTop: "10px", 
+                borderTop: "1px solid #f0f0f0",
+                color: "#6c757d",
+                fontSize: "11px"
+              }}>
+                💡 <strong>Note:</strong> Some forms are not applicable to your scenario (e.g., Guardian Consent for adults, Specialist Referral for HMO plans)
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -243,14 +317,16 @@ export function FormNavigation(props: FormNavigationProps) {
                   border: `2px solid ${getStatusColor(status)}`,
                   borderRadius: "8px",
                   background: status === "current" ? "#e3f2fd" : 
+                             status === "not_applicable" ? "#f8f9fa" :
                              wasRecentlyClicked ? "#fff3cd" : 
                              isHovered && isClickable ? "#f8f9fa" : "white", // 🎨 COMPONENT VIEW STATE
                   cursor: isClickable ? "pointer" : "not-allowed",
                   transition: "all 0.2s ease",
-                  opacity: status === "disabled" ? 0.6 : 1,
+                  opacity: status === "disabled" || status === "not_applicable" ? 0.6 : 1,
                   transform: isHovered && isClickable ? "translateY(-2px)" : 
                            wasRecentlyClicked ? "scale(0.98)" : "translateY(0)", // 🎨 COMPONENT VIEW STATE
                   boxShadow: isHovered && isClickable ? "0 4px 8px rgba(0,0,0,0.1)" : "none",
+                  position: "relative"
                 }}
               >
                 <div
@@ -275,7 +351,7 @@ export function FormNavigation(props: FormNavigationProps) {
                       borderRadius: "10px",
                     }}
                   >
-                    {status}
+                    {getStatusLabel(status)}
                   </span>
                 </div>
                 
@@ -284,7 +360,7 @@ export function FormNavigation(props: FormNavigationProps) {
                     fontSize: "14px",
                     fontWeight: "bold",
                     marginBottom: "6px",
-                    color: status === "disabled" ? "#6c757d" : "#333",
+                    color: status === "disabled" || status === "not_applicable" ? "#6c757d" : "#333",
                   }}
                 >
                   {node.title}
@@ -303,10 +379,15 @@ export function FormNavigation(props: FormNavigationProps) {
                       ✓ Done
                     </span>
                   )}
+                  {status === "not_applicable" && (
+                    <span style={{ color: "#6c757d", fontSize: "10px" }}>
+                      N/A
+                    </span>
+                  )}
                 </div>
 
                 {/* Hover tooltip */}
-                {isHovered && node.dependencies.length > 0 && (
+                {isHovered && (
                   <div style={{
                     position: "absolute",
                     top: "100%",
@@ -321,7 +402,11 @@ export function FormNavigation(props: FormNavigationProps) {
                     zIndex: 1000,
                     marginTop: "4px"
                   }}>
-                    Requires: {node.dependencies.join(", ")}
+                    {status === "not_applicable" ? "Not required for your scenario" :
+                     status === "disabled" && node.dependencies.length > 0 ? `Requires: ${node.dependencies.join(", ")}` :
+                     status === "available" ? "Click to navigate" :
+                     status === "completed" ? "Click to review" :
+                     "Current form"}
                   </div>
                 )}
               </div>
@@ -363,7 +448,8 @@ export function FormNavigation(props: FormNavigationProps) {
               disabled={isNavigating} // 🎨 VIEW STATE from service
               style={{
                 padding: "8px 16px",
-                background: isNavigating ? "#6c757d" : "#28a745", // 🎨 VIEW STATE from service
+                background: isNavigating ? "#6c757d" : 
+                           completionStatus === 'ready_for_submit' ? "#17a2b8" : "#28a745", // 🎨 VIEW STATE from service
                 color: "white",
                 border: "none",
                 borderRadius: "6px",
@@ -388,14 +474,15 @@ export function FormNavigation(props: FormNavigationProps) {
                 </>
               ) : (
                 <>
-                  Next: {formNodes.find((n) => n.id === nextOptimalNode)?.title}
+                  {nextOptimalNode === 'final_submit' ? '🎯 Review & Submit' : 
+                   `Next: ${formNodes.find((n) => n.id === nextOptimalNode)?.title}`}
                   →
                 </>
               )}
             </button>
           )}
           
-          {progress === 100 && (
+          {completionStatus === 'completed' && (
             <button
               style={{
                 padding: "8px 16px",
@@ -411,13 +498,32 @@ export function FormNavigation(props: FormNavigationProps) {
               }}
               onClick={() => formDAG.celebrateCompletion()}
             >
-              🎉 All Complete!
+              🎉 Registration Complete!
+            </button>
+          )}
+          
+          {completionStatus === 'ready_for_submit' && !nextOptimalNode && (
+            <button
+              onClick={() => formDAG.navigateToNode('final_submit')}
+              style={{
+                padding: "8px 16px",
+                background: "linear-gradient(45deg, #007bff, #0056b3)",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "13px",
+                fontWeight: "bold",
+                boxShadow: "0 2px 8px rgba(0, 123, 255, 0.3)"
+              }}
+            >
+              🎯 Final Submission
             </button>
           )}
         </div>
       </div>
 
-      {/* Legend */}
+      {/* 🔧 UPDATED: Legend with not applicable status */}
       {showLegend && (
         <div
           style={{
@@ -436,7 +542,7 @@ export function FormNavigation(props: FormNavigationProps) {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
               gap: "8px",
               fontSize: "11px",
             }}
@@ -453,6 +559,9 @@ export function FormNavigation(props: FormNavigationProps) {
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span>🔒</span> <span>Locked</span>
             </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span>⚪</span> <span>Not Applicable</span>
+            </div>
           </div>
           
           <div style={{ 
@@ -462,7 +571,9 @@ export function FormNavigation(props: FormNavigationProps) {
             fontSize: "10px",
             color: "#adb5bd"
           }}>
-            💡 Tip: Hover over locked forms to see their requirements
+            💡 <strong>Smart Progress:</strong> Only applicable forms count toward 100% completion
+            <br />
+            🎯 <strong>Examples:</strong> Guardian Consent (minors only), Specialist Referral (PPO/POS plans only)
           </div>
         </div>
       )}

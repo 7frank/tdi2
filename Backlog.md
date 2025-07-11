@@ -4,6 +4,27 @@
 
 ### [❌] classes vs zustand vanilla inject / maybe both
 
+### [❌] VCS document approach
+
+> Common in practice, though not always named "VCS." Frequently used in:
+
+    React apps using custom hooks for state/effect logic (Controller) and services/modules for data/API (Service).
+
+    Clean Architecture implementations in frontend, where hooks or presenters mediate between views and use cases.
+
+    Redux Toolkit with RTK Query, where components (View) use generated hooks (Controller) that wrap service logic (API calls).
+
+    MobX or Zustand, where reactive stores act as Controllers, with Services supplying logic or data pipelines.
+
+> so for us this means, if we have not too many business logic / UI state
+
+- we could extract it in a hook (Controller) **OR** in RSI (Controller)
+- if the logic would grow we could separate them by
+  - converting the hook into a RSI Controller
+  - then splitting Controller Logic and Business Logic into separate Classes/interfaces (This would be Clean)
+
+!!! there is a gradient of what works best
+
 ### use crossnote cli to render to pdf
 
 - https://github.com/7frank/crossnote-cli
@@ -31,6 +52,12 @@
 - we could nest them
   - maybe a global and one for a certain subtree e.g. multiple forms or pages
 - in essence we would have freedom to combine them as we want which could give us opportunites when injecting
+
+### [❌] testing
+
+- AST should not remove but conditionally inject if service was passed use that if not then inject like before
+- create test utility. that makes creating a config for a test easy
+  - maybe use thing like @Mockbean in test or scope test / integration ...
 
 ### [❌] DI bugs & side effects (part 1)
 
@@ -264,7 +291,6 @@ https://github.com/aleclarson/valtio-kit
 
 ## Done
 
-
 ### [❌] react critique
 
 - timeline complexity
@@ -275,7 +301,6 @@ https://github.com/aleclarson/valtio-kit
 
 - but why didnt someone invent this sooner?
 - but what about serverside and hydration?
-
 
 ### [✅] create showcases for more complex scenarios
 
