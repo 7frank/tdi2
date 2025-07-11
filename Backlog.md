@@ -2,6 +2,81 @@
 
 ## ordered log
 
+### [❌] DI bugs & side effects (part 1)
+
+> replace current implementation details with one of the packages like
+
+- @phenomnomnominal/tsquery
+- ts-pattern
+  > https://claude.ai/chat/589c3252-74e7-4e17-b84c-0cebca6d6c2b
+
+#### [❌] ⚠️ interfaces still not working with generic any
+
+> Inject<ExampleApiInterface>;
+
+> Validation Issues:
+> Missing: UserApiServiceImpl -> CacheInterface_any
+
+#### [❌] FIXME TodoApp TodoService2 isnt properly injected
+
+- it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them
+- Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
+
+#### [❌] FIXME having two different classes of the same name will one not be resolved properly
+
+e.g.:
+
+1 TodoService implements TodoServiceInterface
+2 TodoService implements TodoServiceType
+
+#### [❌] FIXME duplicated keys see generated list of services
+
+- potential duplicate
+
+#### [❌] is DI scope using import path
+
+- potential duplicate
+- if say we have two "implements UserRepoInterface"
+
+#### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
+
+evaluate scenarios
+
+- to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
+- or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
+
+#### [❌] Fixme: example which his generating invalid code
+
+```typescript
+export function DemographicsForm(props: DemographicsFormProps) {
+  const { services, onComplete } = props;
+
+  const { demographicsForm } = services;
+}
+```
+
+#### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
+
+```typescript
+interface AppProps {
+  services: {
+    todoService: Inject<TodoServiceInterface>;
+    appState: Inject<AppStateServiceInterface>;
+    notifications: Inject<NotificationServiceInterface>;
+  };
+}
+
+export function TodoApp2({
+  services: { todoService, appState, notifications },
+}: AppProps) {}
+```
+
+### [❌] testing
+
+- AST should not remove but conditionally inject if service was passed use that if not then inject like before
+- create test utility. that makes creating a config for a test easy
+  - maybe use thing like @Mockbean in test or scope test / integration ...
+
 ### [❌] classes vs zustand vanilla inject / maybe both
 
 ### [❌] VCS document approach
@@ -52,75 +127,6 @@
 - we could nest them
   - maybe a global and one for a certain subtree e.g. multiple forms or pages
 - in essence we would have freedom to combine them as we want which could give us opportunites when injecting
-
-### [❌] testing
-
-- AST should not remove but conditionally inject if service was passed use that if not then inject like before
-- create test utility. that makes creating a config for a test easy
-  - maybe use thing like @Mockbean in test or scope test / integration ...
-
-### [❌] DI bugs & side effects (part 1)
-
-#### [❌] ⚠️ interfaces still not working with generic any
-
-> Inject<ExampleApiInterface>;
-
-> Validation Issues:
-> Missing: UserApiServiceImpl -> CacheInterface_any
-
-#### [❌] FIXME TodoApp TodoService2 isnt properly injected
-
-- it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them
-- Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
-
-#### [❌] FIXME having two different classes of the same name will one not be resolved properly
-
-e.g.:
-
-1 TodoService implements TodoServiceInterface
-2 TodoService implements TodoServiceType
-
-#### [❌] FIXME duplicated keys see generated list of services
-
-- potential duplicate
-
-#### [❌] is DI scope using import path
-
-- potential duplicate
-- if say we have two "implements UserRepoInterface"
-
-#### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
-
-evaluate scenarios
-
-- to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
-- or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
-
-#### [❌] Fixme: example which his generating invalid code
-
-```typescript
-export function DemographicsForm(props: DemographicsFormProps) {
-  const { services, onComplete } = props;
-
-  const { demographicsForm } = services;
-}
-```
-
-### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
-
-```typescript
-interface AppProps {
-  services: {
-    todoService: Inject<TodoServiceInterface>;
-    appState: Inject<AppStateServiceInterface>;
-    notifications: Inject<NotificationServiceInterface>;
-  };
-}
-
-export function TodoApp2({
-  services: { todoService, appState, notifications },
-}: AppProps) {}
-```
 
 ### [❌] FIXME could not fast refrest useDi export incompatible
 
