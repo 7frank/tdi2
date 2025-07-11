@@ -23,6 +23,8 @@
   - converting the hook into a RSI Controller
   - then splitting Controller Logic and Business Logic into separate Classes/interfaces (This would be Clean)
 
+!!! there is a gradient of what works best
+
 ### use crossnote cli to render to pdf
 
 - https://github.com/7frank/crossnote-cli
@@ -50,6 +52,12 @@
 - we could nest them
   - maybe a global and one for a certain subtree e.g. multiple forms or pages
 - in essence we would have freedom to combine them as we want which could give us opportunites when injecting
+
+### [❌] testing
+
+- AST should not remove but conditionally inject if service was passed use that if not then inject like before
+- create test utility. that makes creating a config for a test easy
+  - maybe use thing like @Mockbean in test or scope test / integration ...
 
 ### [❌] DI bugs & side effects (part 1)
 
