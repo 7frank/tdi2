@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - COMPLETE with nested support
+// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - COMPLETE with all fixes
 
 import {
   ParameterDeclaration,
@@ -22,6 +22,7 @@ export class EnhancedDependencyExtractor {
   private keySanitizer: KeySanitizer;
   private sourceConfig: DISourceConfiguration;
   private validationCache = new Map<string, boolean>();
+  private circularProtection = new Set<string>(); // Circular reference protection
 
   constructor(
     private options: TransformationOptions,
@@ -50,6 +51,9 @@ export class EnhancedDependencyExtractor {
    * ENHANCED: Extract dependencies from function parameter with comprehensive nesting support
    */
   extractDependenciesFromParameter(param: ParameterDeclaration, sourceFile: SourceFile): FunctionalDependency[] {
+    // Clear circular protection for each new parameter
+    this.clearCircularProtection();
+
     const typeNode = param.getTypeNode();
     if (!typeNode) {
       if (this.options.verbose) {
@@ -64,12 +68,17 @@ export class EnhancedDependencyExtractor {
       console.log(`📝 Parameter type text: ${typeNode.getText()}`);
     }
 
-    // ENHANCED: Use comprehensive extraction that handles all nesting levels
-    return this.extractDependenciesFromTypeNode(typeNode, sourceFile, param.getName());
+    try {
+      // ENHANCED: Use comprehensive extraction that handles all nesting levels
+      return this.extractDependenciesFromTypeNode(typeNode, sourceFile, param.getName());
+    } finally {
+      // Always clear circular protection after extraction
+      this.clearCircularProtection();
+    }
   }
 
   /**
-   * NEW: Comprehensive type node analysis that handles all nesting scenarios
+   * ENHANCED: Comprehensive type node analysis with circular protection
    */
   private extractDependenciesFromTypeNode(
     typeNode: TypeNode, 
@@ -77,59 +86,92 @@ export class EnhancedDependencyExtractor {
     basePath: string = ''
   ): FunctionalDependency[] {
     
-    // Case 1: Direct marker injection - Inject<FooInterface>
-    if (this.isDirectMarkerInjection(typeNode)) {
+    // CIRCULAR PROTECTION: Check if we're already processing this path
+    const pathKey = `${sourceFile.getFilePath()}:${basePath}:${typeNode.getText()}`;
+    if (this.circularProtection.has(pathKey)) {
       if (this.options.verbose) {
-        console.log(`📝 Found direct marker injection at ${basePath}`);
+        console.log(`🔄 Circular reference detected at ${basePath}, skipping`);
       }
-      return this.extractFromDirectMarkerEnhanced(typeNode, sourceFile, basePath);
+      return [];
     }
 
-    // Case 2: Type literal - { services: {...}, config: any }
-    if (Node.isTypeLiteral(typeNode)) {
+    // Add to circular protection
+    this.circularProtection.add(pathKey);
+
+    try {
+      // Case 1: Direct marker injection - Inject<FooInterface>
+      if (this.isDirectMarkerInjection(typeNode)) {
+        if (this.options.verbose) {
+          console.log(`📝 Found direct marker injection at ${basePath}`);
+        }
+        return this.extractFromDirectMarkerEnhanced(typeNode, sourceFile, basePath);
+      }
+
+      // Case 2: Type literal - { services: {...}, config: any }
+      if (Node.isTypeLiteral(typeNode)) {
+        if (this.options.verbose) {
+          console.log(`📝 Found type literal at ${basePath}`);
+        }
+        return this.extractFromTypeLiteralEnhanced(typeNode, sourceFile, basePath);
+      }
+
+      // Case 3: Type reference - ComponentProps, ServiceConfig, etc.
+      if (Node.isTypeReference(typeNode)) {
+        if (this.options.verbose) {
+          console.log(`📝 Found type reference at ${basePath}`);
+        }
+        return this.extractFromTypeReferenceEnhanced(typeNode, sourceFile, basePath);
+      }
+
+      // Case 4: Union type - { services: {...} } | { fallback: true }
+      if (Node.isUnionTypeNode(typeNode)) {
+        if (this.options.verbose) {
+          console.log(`📝 Found union type at ${basePath}`);
+        }
+        return this.extractFromUnionType(typeNode, sourceFile, basePath);
+      }
+
+      // Case 5: Intersection type - ServiceProps & ConfigProps
+      if (Node.isUnionTypeNode(typeNode)) {
+        if (this.options.verbose) {
+          console.log(`📝 Found intersection type at ${basePath}`);
+        }
+        return this.extractFromIntersectionType(typeNode, sourceFile, basePath);
+      }
+
+      // Case 6: Array type - Array<{ service: Inject<T> }> or T[]
+      if (Node.isArrayTypeNode(typeNode)) {
+        if (this.options.verbose) {
+          console.log(`📝 Found array type at ${basePath}`);
+        }
+        return this.extractFromArrayType(typeNode, sourceFile, basePath);
+      }
+
+      // Case 7: Tuple type - [Type1, Type2, ...]
+      if (Node.isTupleTypeNode(typeNode)) {
+        if (this.options.verbose) {
+          console.log(`📝 Found tuple type at ${basePath}`);
+        }
+        return this.extractFromTupleType(typeNode, sourceFile, basePath);
+      }
+
+      // Case 8: Mapped type - { [K in keyof T]: ... }
+      if (Node.isMappedTypeNode(typeNode)) {
+        if (this.options.verbose) {
+          console.log(`📝 Found mapped type at ${basePath}`);
+        }
+        return this.extractFromMappedType(typeNode, sourceFile, basePath);
+      }
+
       if (this.options.verbose) {
-        console.log(`📝 Found type literal at ${basePath}`);
+        console.log(`⚠️  Type node ${typeNode.getKindName()} at ${basePath} not supported for dependency extraction`);
       }
-      return this.extractFromTypeLiteralEnhanced(typeNode, sourceFile, basePath);
-    }
 
-    // Case 3: Type reference - ComponentProps, ServiceConfig, etc.
-    if (Node.isTypeReference(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found type reference at ${basePath}`);
-      }
-      return this.extractFromTypeReferenceEnhanced(typeNode, sourceFile, basePath);
+      return [];
+    } finally {
+      // Remove from circular protection when done
+      this.circularProtection.delete(pathKey);
     }
-
-    // Case 4: Union type - { services: {...} } | { fallback: true }
-    if (Node.isUnionTypeNode(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found union type at ${basePath}`);
-      }
-      return this.extractFromUnionType(typeNode, sourceFile, basePath);
-    }
-
-    // Case 5: Intersection type - ServiceProps & ConfigProps
-    if (Node.isIntersectionTypeNode(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found intersection type at ${basePath}`);
-      }
-      return this.extractFromIntersectionType(typeNode, sourceFile, basePath);
-    }
-
-    // Case 6: Array type - Array<{ service: Inject<T> }>
-    if (Node.isArrayTypeNode(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found array type at ${basePath}`);
-      }
-      return this.extractFromArrayType(typeNode, sourceFile, basePath);
-    }
-
-    if (this.options.verbose) {
-      console.log(`⚠️  Type node ${typeNode.getKindName()} at ${basePath} not supported for dependency extraction`);
-    }
-
-    return [];
   }
 
   /**
@@ -228,7 +270,7 @@ export class EnhancedDependencyExtractor {
     sourceFile: SourceFile, 
     basePath: string
   ): FunctionalDependency[] {
-    if (!Node.isIntersectionTypeNode(typeNode)) return [];
+    if (!Node.isUnionTypeNode(typeNode)) return [];
 
     const dependencies: FunctionalDependency[] = [];
     const intersectionTypes = (typeNode as IntersectionTypeNode).getTypeNodes();
@@ -248,7 +290,7 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * NEW: Extract from array types
+   * FIXED: Extract from array types
    */
   private extractFromArrayType(
     typeNode: TypeNode, 
@@ -264,8 +306,69 @@ export class EnhancedDependencyExtractor {
     }
 
     // Extract dependencies from the array element type
-    // This handles cases like: Array<{ service: Inject<T> }>
     return this.extractDependenciesFromTypeNode(elementTypeNode, sourceFile, `${basePath}[]`);
+  }
+
+  /**
+   * NEW: Extract from tuple types
+   */
+  private extractFromTupleType(
+    typeNode: any, 
+    sourceFile: SourceFile, 
+    basePath: string
+  ): FunctionalDependency[] {
+    const dependencies: FunctionalDependency[] = [];
+    
+    try {
+      const elementTypes = typeNode.getElementTypeNodes();
+      
+      if (this.options.verbose) {
+        console.log(`🔍 Processing tuple type with ${elementTypes.length} elements at ${basePath}`);
+      }
+
+      // Extract dependencies from each tuple element
+      elementTypes.forEach((elementType: TypeNode, index: number) => {
+        const elementDeps = this.extractDependenciesFromTypeNode(
+          elementType, 
+          sourceFile, 
+          `${basePath}[${index}]`
+        );
+        dependencies.push(...elementDeps);
+      });
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Failed to process tuple type at ${basePath}:`, error);
+      }
+    }
+
+    return dependencies;
+  }
+
+  /**
+   * NEW: Extract from mapped types (simplified approach)
+   */
+  private extractFromMappedType(
+    typeNode: any, 
+    sourceFile: SourceFile, 
+    basePath: string
+  ): FunctionalDependency[] {
+    if (this.options.verbose) {
+      console.log(`🔍 Processing mapped type at ${basePath} (simplified extraction)`);
+    }
+
+    try {
+      // For mapped types, try to get the template type
+      const templateType = typeNode.getTemplateTypeNode?.();
+      if (templateType) {
+        return this.extractDependenciesFromTypeNode(templateType, sourceFile, `${basePath}<mapped>`);
+      }
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Failed to process mapped type at ${basePath}:`, error);
+      }
+    }
+
+    return [];
   }
 
   /**
@@ -699,6 +802,13 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
+   * Clear circular protection (call this between different parameter extractions)
+   */
+  clearCircularProtection(): void {
+    this.circularProtection.clear();
+  }
+
+  /**
    * Update source configuration
    */
   updateSourceConfiguration(config: Partial<DISourceConfiguration>): void {
@@ -725,17 +835,21 @@ export class EnhancedDependencyExtractor {
    */
   getExtractionStats(): {
     cacheSize: number;
+    circularProtectionSize: number;
     supportedTypeNodes: string[];
     sourceValidationEnabled: boolean;
   } {
     return {
       cacheSize: this.validationCache.size,
+      circularProtectionSize: this.circularProtection.size,
       supportedTypeNodes: [
         'TypeReference (Inject<T>)',
         'TypeLiteral ({ services: {...} })',
         'UnionType (A | B)',
         'IntersectionType (A & B)',
-        'ArrayType (Array<T>)',
+        'ArrayType (Array<T>, T[])',
+        'TupleType ([T1, T2, ...])',
+        'MappedType ({ [K in keyof T]: ... })',
         'InterfaceDeclaration',
         'TypeAliasDeclaration'
       ],
