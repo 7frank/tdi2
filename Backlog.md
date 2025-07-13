@@ -10,7 +10,6 @@
 - ts-pattern
   > https://claude.ai/chat/589c3252-74e7-4e17-b84c-0cebca6d6c2b
 
-
 maybe normalization could help
 
 > import jscodeshift from 'jscodeshift';
@@ -82,6 +81,23 @@ export function TodoApp2({
 - AST should not remove but conditionally inject if service was passed use that if not then inject like before
 - create test utility. that makes creating a config for a test easy
   - maybe use thing like @Mockbean in test or scope test / integration ...
+
+### use different inject strategy
+
+- instead of complex types and scenarios
+  - we could use a marker interface for Inject<{}> as separate union type
+  - this would probly simplify the edge cases
+  - linting, deep nestd injection (false positives)
+
+```typescript
+function Button({
+  title,
+  foo,
+}: { title: string } & Inject<{
+  foo: FooInterface;
+  bar: Lazy<BarInterface>;
+}>);
+```
 
 ### [❌] classes vs zustand vanilla inject / maybe both
 

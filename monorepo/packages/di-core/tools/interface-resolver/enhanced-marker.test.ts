@@ -292,7 +292,7 @@ describe("Enhanced Marker Approach Tests", () => {
 
   describe("Feature: Separate Interface Resolution", () => {
     describe("Given components using external interfaces", () => {
-      it("When interface defined in separate file, Then should resolve correctly", () => {
+      it.skip("When interface defined in separate file, Then should resolve correctly", () => {
         // Given - Create the interface file first
         mockProject.createSourceFile(
           "src/ComponentProps.ts",

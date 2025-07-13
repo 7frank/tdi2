@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - COMPLETE with all fixes
+// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - FIXED with ts-morph utilities
 
 import {
   ParameterDeclaration,
@@ -11,10 +11,13 @@ import {
   TypeReferenceNode,
   UnionTypeNode,
   IntersectionTypeNode,
-  ArrayTypeNode
+  ArrayTypeNode,
+  Identifier,
+  SyntaxKind
 } from 'ts-morph';
 import * as path from 'path';
-import { FunctionalDependency, TransformationOptions, TypeResolutionContext } from './types';
+import { FunctionalDependency, TransformationOptions, TypeResolutionContext } from '../functional-di-enhanced-transformer/types';
+
 import { KeySanitizer } from '../interface-resolver/key-sanitizer';
 import type { DISourceConfiguration } from '../interface-resolver/enhanced-interface-extractor';
 
@@ -132,7 +135,7 @@ export class EnhancedDependencyExtractor {
       }
 
       // Case 5: Intersection type - ServiceProps & ConfigProps
-      if (Node.isUnionTypeNode(typeNode)) {
+      if (Node.isIntersectionTypeNode(typeNode)) {
         if (this.options.verbose) {
           console.log(`📝 Found intersection type at ${basePath}`);
         }
@@ -270,7 +273,7 @@ export class EnhancedDependencyExtractor {
     sourceFile: SourceFile, 
     basePath: string
   ): FunctionalDependency[] {
-    if (!Node.isUnionTypeNode(typeNode)) return [];
+    if (!Node.isIntersectionTypeNode(typeNode)) return [];
 
     const dependencies: FunctionalDependency[] = [];
     const intersectionTypes = (typeNode as IntersectionTypeNode).getTypeNodes();
@@ -372,7 +375,7 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * ENHANCED: Extract from type reference with resolution
+   * ENHANCED: Extract from type reference with ts-morph resolution utilities
    */
   private extractFromTypeReferenceEnhanced(
     typeNode: TypeNode, 
@@ -389,33 +392,84 @@ export class EnhancedDependencyExtractor {
       return this.extractFromDirectMarkerEnhanced(typeNode, sourceFile, basePath);
     }
 
-    // Otherwise, resolve the type reference and analyze its definition
-    const typeName = (typeNode as TypeReferenceNode).getTypeName().getText();
+    // Otherwise, resolve the type reference using ts-morph utilities
+    const typeRef = typeNode as TypeReferenceNode;
+    const typeName = typeRef.getTypeName();
     
     if (this.options.verbose) {
-      console.log(`🔍 Resolving type reference: ${typeName} at ${basePath}`);
+      console.log(`🔍 Resolving type reference: ${typeName.getText()} at ${basePath}`);
     }
 
-    // Find the type declaration
-    const typeDeclaration = this.findTypeDeclaration(typeName, sourceFile);
-    if (!typeDeclaration) {
-      if (this.options.verbose) {
-        console.log(`❌ Could not resolve type declaration for: ${typeName}`);
+    // ENHANCED: Use ts-morph's built-in type resolution
+    try {
+      // Method 1: Try to get definition nodes for the type name
+      if (Node.isIdentifier(typeName)) {
+        const definitions = typeName.getDefinitionNodes();
+        
+        if (definitions.length > 0) {
+          const definition = definitions[0];
+          
+          if (this.options.verbose) {
+            console.log(`✅ Found definition: ${definition.getKindName()} in ${definition.getSourceFile().getBaseName()}`);
+          }
+
+          // Process the resolved definition
+          if (Node.isInterfaceDeclaration(definition)) {
+            return this.extractFromInterfaceDeclarationEnhanced(definition, sourceFile, basePath);
+          }
+
+          if (Node.isTypeAliasDeclaration(definition)) {
+            return this.extractFromTypeAliasDeclarationEnhanced(definition, sourceFile, basePath);
+          }
+        }
       }
-      return [];
+
+      // Method 2: Try to resolve via symbol if definition nodes didn't work
+      const symbol = typeName.getSymbol();
+      if (symbol) {
+        const declarations = symbol.getDeclarations();
+        
+        for (const declaration of declarations) {
+          if (Node.isInterfaceDeclaration(declaration)) {
+            if (this.options.verbose) {
+              console.log(`✅ Found interface via symbol: ${declaration.getName()}`);
+            }
+            return this.extractFromInterfaceDeclarationEnhanced(declaration, sourceFile, basePath);
+          }
+
+          if (Node.isTypeAliasDeclaration(declaration)) {
+            if (this.options.verbose) {
+              console.log(`✅ Found type alias via symbol: ${declaration.getName()}`);
+            }
+            return this.extractFromTypeAliasDeclarationEnhanced(declaration, sourceFile, basePath);
+          }
+        }
+      }
+
+      // Method 3: Fallback to manual import resolution (keep existing logic as backup)
+      const typeDeclaration = this.findTypeDeclarationFallback(typeName.getText(), sourceFile);
+      if (typeDeclaration) {
+        if (this.options.verbose) {
+          console.log(`✅ Found via fallback: ${typeDeclaration.getKindName()}`);
+        }
+
+        if (Node.isInterfaceDeclaration(typeDeclaration)) {
+          return this.extractFromInterfaceDeclarationEnhanced(typeDeclaration, sourceFile, basePath);
+        }
+
+        if (Node.isTypeAliasDeclaration(typeDeclaration)) {
+          return this.extractFromTypeAliasDeclarationEnhanced(typeDeclaration, sourceFile, basePath);
+        }
+      }
+
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Error resolving type reference ${typeName.getText()}:`, error);
+      }
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Found type declaration: ${typeDeclaration.getKindName()}`);
-    }
-
-    // Extract dependencies from the resolved type
-    if (Node.isInterfaceDeclaration(typeDeclaration)) {
-      return this.extractFromInterfaceDeclarationEnhanced(typeDeclaration, sourceFile, basePath);
-    }
-
-    if (Node.isTypeAliasDeclaration(typeDeclaration)) {
-      return this.extractFromTypeAliasDeclarationEnhanced(typeDeclaration, sourceFile, basePath);
+      console.log(`❌ Could not resolve type reference: ${typeName.getText()}`);
     }
 
     return [];
@@ -585,11 +639,11 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * Find interface or type alias declaration in the source file or imported files
+   * FALLBACK: Find interface or type alias declaration (backup method)
    */
-  private findTypeDeclaration(typeName: string, sourceFile: SourceFile): InterfaceDeclaration | TypeAliasDeclaration | undefined {
+  private findTypeDeclarationFallback(typeName: string, sourceFile: SourceFile): InterfaceDeclaration | TypeAliasDeclaration | undefined {
     if (this.options.verbose) {
-      console.log(`🔍 Searching for type declaration: ${typeName}`);
+      console.log(`🔍 Fallback search for type declaration: ${typeName}`);
     }
 
     // First, look in the current source file
@@ -609,7 +663,7 @@ export class EnhancedDependencyExtractor {
       return localTypeAlias;
     }
 
-    // Then, look in imported files
+    // Then, look in imported files using ts-morph utilities
     const imports = sourceFile.getImportDeclarations();
     if (this.options.verbose) {
       console.log(`🔍 Checking ${imports.length} import declarations`);
@@ -627,7 +681,8 @@ export class EnhancedDependencyExtractor {
           console.log(`🔍 Looking for ${typeName} in imported module: ${moduleSpecifier}`);
         }
         
-        const importedFile = this.resolveImportedFile(moduleSpecifier, sourceFile);
+        // ENHANCED: Use ts-morph's built-in module resolution
+        const importedFile = importDeclaration.getModuleSpecifierSourceFile();
         
         if (importedFile) {
           if (this.options.verbose) {
@@ -666,62 +721,6 @@ export class EnhancedDependencyExtractor {
     }
 
     return undefined;
-  }
-
-  /**
-   * Resolve imported file path
-   */
-  private resolveImportedFile(moduleSpecifier: string, sourceFile: SourceFile): SourceFile | undefined {
-    try {
-      const currentDir = path.dirname(sourceFile.getFilePath());
-      const project = sourceFile.getProject();
-      
-      let resolvedPath: string;
-      if (moduleSpecifier.startsWith('.')) {
-        // Relative import
-        resolvedPath = path.resolve(currentDir, moduleSpecifier);
-      } else {
-        // Absolute import (from src root)
-        resolvedPath = path.resolve(this.options.srcDir!, moduleSpecifier);
-      }
-
-      // Try different extensions
-      const extensions = ['.ts', '.tsx', '/index.ts', '/index.tsx'];
-      for (const ext of extensions) {
-        const fullPath = resolvedPath + ext;
-        const importedFile = project.getSourceFile(fullPath);
-        if (importedFile) {
-          if (this.options.verbose) {
-            console.log(`✅ Resolved import: ${moduleSpecifier} -> ${fullPath}`);
-          }
-          return importedFile;
-        }
-      }
-
-      // ENHANCED: Try to find by filename matching (for test scenarios)
-      const baseName = path.basename(moduleSpecifier);
-      for (const sourceFile of project.getSourceFiles()) {
-        const fileName = path.basename(sourceFile.getFilePath(), path.extname(sourceFile.getFilePath()));
-        if (fileName === baseName) {
-          if (this.options.verbose) {
-            console.log(`✅ Found import by filename match: ${moduleSpecifier} -> ${sourceFile.getFilePath()}`);
-          }
-          return sourceFile;
-        }
-      }
-
-      if (this.options.verbose) {
-        console.log(`❌ Could not resolve import: ${moduleSpecifier}`);
-        console.log(`🔍 Tried paths: ${extensions.map(ext => resolvedPath + ext).join(', ')}`);
-        console.log(`🔍 Available files: ${project.getSourceFiles().map(f => f.getFilePath()).join(', ')}`);
-      }
-      return undefined;
-    } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Failed to resolve import: ${moduleSpecifier}`, error);
-      }
-      return undefined;
-    }
   }
 
   /**
@@ -815,6 +814,7 @@ export class EnhancedDependencyExtractor {
     this.sourceConfig = { ...this.sourceConfig, ...config };
     this.validationCache.clear();
   }
+
 
   /**
    * Get current source configuration
