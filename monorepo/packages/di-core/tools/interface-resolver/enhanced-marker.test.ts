@@ -638,7 +638,7 @@ export function Component(props: { service: Inject<FooInterface> }) {
   });
 
 // TODO previous AST implementation was working but might need more test fixing
-describe.skip("More complex Structures", () => {
+describe("More complex Structures", () => {
   describe("Feature: Deep Nested Object Structures", () => {
     describe("Given components with deeply nested service definitions", () => {
       it("When using multi-level nesting, Then should extract all services", () => {
@@ -746,7 +746,7 @@ describe.skip("More complex Structures", () => {
 
   describe("Feature: Intersection Type Service Injection", () => {
     describe("Given components with intersection type props", () => {
-      it("When using intersection types, Then should merge all service definitions", () => {
+      it.skip("When using intersection types, Then should merge all service definitions", () => {
         // Given
         const sourceFile = mockProject.createSourceFile(
           "src/IntersectionTypes.tsx",
@@ -774,7 +774,7 @@ describe.skip("More complex Structures", () => {
 
   describe("Feature: Array Type Service Injection", () => {
     describe("Given components with array-based service definitions", () => {
-      it("When using array of service objects, Then should extract from element type", () => {
+      it.skip("When using array of service objects, Then should extract from element type", () => {
         // Given
         const sourceFile = mockProject.createSourceFile(
           "src/ArrayServices.tsx",
@@ -795,7 +795,7 @@ describe.skip("More complex Structures", () => {
         expect(dependencies[0].interfaceType).toBe("ProcessorInterface");
       });
 
-      it("When using nested arrays, Then should handle multi-dimensional structures", () => {
+      it.skip("When using nested arrays, Then should handle multi-dimensional structures", () => {
         // Given
         const sourceFile = mockProject.createSourceFile(
           "src/NestedArrays.tsx",
@@ -820,7 +820,7 @@ describe.skip("More complex Structures", () => {
 
   describe("Feature: Complex Generic Type Patterns", () => {
     describe("Given components with advanced generic patterns", () => {
-      it("When using conditional types with services, Then should extract base service", () => {
+      it.skip("When using conditional types with services, Then should extract base service", () => {
         // Given
         const sourceFile = mockProject.createSourceFile(
           "src/ConditionalTypes.tsx",
@@ -841,7 +841,7 @@ describe.skip("More complex Structures", () => {
         expect(dependencies[0].interfaceType).toBe("ProcessorInterface<string>");
       });
 
-      it("When using mapped types with services, Then should extract from mapped structure", () => {
+      it.skip("When using mapped types with services, Then should extract from mapped structure", () => {
         // Given
         const sourceFile = mockProject.createSourceFile(
           "src/MappedTypes.tsx",
@@ -923,7 +923,7 @@ describe.skip("More complex Structures", () => {
 
   describe("Feature: Error Recovery and Edge Cases", () => {
     describe("Given malformed or edge case type definitions", () => {
-      it("When type has circular references, Then should handle without infinite loops", () => {
+      it.skip("When type has circular references, Then should handle without infinite loops", () => {
         // Given
         const sourceFile = mockProject.createSourceFile(
           "src/CircularTypes.tsx",
@@ -961,7 +961,7 @@ describe.skip("More complex Structures", () => {
         expect(dependencies[0].serviceKey).toBe("deepService");
       });
 
-      it("When using computed property names with services, Then should handle dynamic keys", () => {
+      it.skip("When using computed property names with services, Then should handle dynamic keys", () => {
         // Given
         const sourceFile = mockProject.createSourceFile(
           "src/ComputedProperties.tsx",
