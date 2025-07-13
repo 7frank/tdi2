@@ -47,10 +47,17 @@ export class EnhancedDependencyExtractor {
    */
   extractDependenciesFromParameter(param: ParameterDeclaration, sourceFile: SourceFile): FunctionalDependency[] {
     const typeNode = param.getTypeNode();
-    if (!typeNode) return [];
+    if (!typeNode) {
+      if (this.options.verbose) {
+        console.log('⚠️  Parameter has no type node');
+      }
+      return [];
+    }
 
     if (this.options.verbose) {
-      console.log(`🔍 Analyzing parameter type: ${typeNode.getKindName()}`);
+      console.log(`🔍 Analyzing parameter: ${param.getName()}`);
+      console.log(`🔍 Parameter type: ${typeNode.getKindName()}`);
+      console.log(`📝 Parameter type text: ${typeNode.getText()}`);
     }
 
     // Case 1: Inline type literal - props: { services: {...} }
@@ -75,6 +82,10 @@ export class EnhancedDependencyExtractor {
         console.log('📝 Found direct marker injection');
       }
       return this.extractFromDirectMarker(param, typeNode, sourceFile);
+    }
+
+    if (this.options.verbose) {
+      console.log(`⚠️  Parameter type ${typeNode.getKindName()} not supported for dependency extraction`);
     }
 
     return [];
@@ -133,18 +144,39 @@ export class EnhancedDependencyExtractor {
    */
   private extractFromServicesProperty(servicesProperty: any, sourceFile: SourceFile): FunctionalDependency[] {
     const serviceTypeNode = servicesProperty.getTypeNode();
-    if (!serviceTypeNode || !Node.isTypeLiteral(serviceTypeNode)) {
+    if (!serviceTypeNode) {
       if (this.options.verbose) {
-        console.log('⚠️  Services property is not a type literal');
+        console.log('⚠️  Services property has no type node');
       }
       return [];
     }
 
     if (this.options.verbose) {
-      console.log('✅ Found services property in type literal, extracting nested dependencies');
+      console.log(`🔍 Services property type node kind: ${serviceTypeNode.getKindName()}`);
+      console.log(`📝 Services property type text: ${serviceTypeNode.getText()}`);
     }
 
-    return this.extractFromServicesTypeLiteral(serviceTypeNode, sourceFile);
+    // Handle type literal for services property
+    if (Node.isTypeLiteral(serviceTypeNode)) {
+      if (this.options.verbose) {
+        console.log('✅ Found type literal for services property');
+      }
+      return this.extractFromServicesTypeLiteral(serviceTypeNode, sourceFile);
+    }
+
+    // Handle type reference for services property
+    if (Node.isTypeReference(serviceTypeNode)) {
+      if (this.options.verbose) {
+        console.log('✅ Found type reference for services property');
+      }
+      return this.extractFromTypeReference(serviceTypeNode, sourceFile);
+    }
+
+    if (this.options.verbose) {
+      console.log(`⚠️  Services property is not a supported type (${serviceTypeNode.getKindName()})`);
+    }
+
+    return [];
   }
 
   /**
@@ -156,6 +188,10 @@ export class EnhancedDependencyExtractor {
     const dependencies: FunctionalDependency[] = [];
     const members = typeNode.getMembers();
 
+    if (this.options.verbose) {
+      console.log(`🔍 Processing services type literal with ${members.length} members`);
+    }
+
     for (const member of members) {
       if (Node.isPropertySignature(member)) {
         const dependency = this.extractFromPropertySignature(member, sourceFile);
@@ -164,8 +200,22 @@ export class EnhancedDependencyExtractor {
           if (this.options.verbose) {
             console.log(`✅ Added dependency: ${dependency.serviceKey} -> ${dependency.interfaceType}`);
           }
+        } else {
+          if (this.options.verbose) {
+            const memberName = member.getName();
+            const memberType = member.getTypeNode()?.getText();
+            console.log(`⚠️  Could not extract dependency from property: ${memberName}: ${memberType}`);
+          }
+        }
+      } else {
+        if (this.options.verbose) {
+          console.log(`⚠️  Skipping non-property member: ${member.getKindName()}`);
         }
       }
+    }
+
+    if (this.options.verbose) {
+      console.log(`🔍 Extracted ${dependencies.length} dependencies from services type literal`);
     }
 
     return dependencies;
@@ -177,13 +227,27 @@ export class EnhancedDependencyExtractor {
   private extractFromPropertySignature(propertySignature: any, sourceFile: SourceFile): FunctionalDependency | null {
     const propName = propertySignature.getName();
     const propTypeNode = propertySignature.getTypeNode();
-    if (!propTypeNode) return null;
+    if (!propTypeNode) {
+      if (this.options.verbose) {
+        console.log(`⚠️  Property ${propName} has no type node`);
+      }
+      return null;
+    }
 
     const typeText = propTypeNode.getText();
     
+    if (this.options.verbose) {
+      console.log(`🔍 Processing property: ${propName}: ${typeText}`);
+    }
+    
     // Parse DI marker types with source validation
     const markerInfo = this.parseMarkerType(typeText, sourceFile);
-    if (!markerInfo) return null;
+    if (!markerInfo) {
+      if (this.options.verbose) {
+        console.log(`⚠️  Property ${propName} does not use DI marker type`);
+      }
+      return null;
+    }
 
     // FIXED: For source validation failure, skip this dependency
     if (this.sourceConfig.validateSources && !markerInfo.validSource) {
@@ -214,16 +278,29 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * Parse marker type with source validation - FIXED
+   * Parse marker type with source validation - ENHANCED for complex generics
    */
   private parseMarkerType(typeText: string, sourceFile: SourceFile): {
     interfaceType: string;
     isOptional: boolean;
     validSource: boolean;
   } | null {
-    // Match Inject<T> patterns
-    const injectMatch = typeText.match(/^Inject<(.+)>$/);
-    const optionalMatch = typeText.match(/^InjectOptional<(.+)>$/);
+    // Match Inject<T> patterns - enhanced to handle complex nested generics
+    let injectMatch: RegExpMatchArray | null = null;
+    let optionalMatch: RegExpMatchArray | null = null;
+    
+    // Use a more robust approach to extract the generic content
+    if (typeText.startsWith('Inject<')) {
+      const content = this.extractGenericContentRobust(typeText, 'Inject');
+      if (content) {
+        injectMatch = ['', content]; // Simulate regex match result
+      }
+    } else if (typeText.startsWith('InjectOptional<')) {
+      const content = this.extractGenericContentRobust(typeText, 'InjectOptional');
+      if (content) {
+        optionalMatch = ['', content]; // Simulate regex match result
+      }
+    }
     
     let interfaceType: string;
     let isOptional: boolean;
@@ -255,6 +332,90 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
+   * Robust extraction of generic content handling complex nested structures
+   * 
+   * TODO this doesn't  seem too robust if we compare it to potential built in aprpoaches of ts-morph getting the whole type
+   */
+  private extractGenericContentRobust(typeText: string, markerName: string): string | null {
+    const startPattern = `${markerName}<`;
+    if (!typeText.startsWith(startPattern)) {
+      return null;
+    }
+
+    const contentStart = startPattern.length;
+    let depth = 1;
+    let braceDepth = 0;
+    let bracketDepth = 0;
+    let parenDepth = 0;
+    let inString = false;
+    let stringChar = '';
+    let result = '';
+    
+    for (let i = contentStart; i < typeText.length; i++) {
+      const char = typeText[i];
+      const prevChar = i > 0 ? typeText[i - 1] : '';
+      
+      // Handle string literals
+      if ((char === '"' || char === "'") && prevChar !== '\\') {
+        if (!inString) {
+          inString = true;
+          stringChar = char;
+        } else if (char === stringChar) {
+          inString = false;
+          stringChar = '';
+        }
+      }
+      
+      if (!inString) {
+        // Track different bracket types
+        switch (char) {
+          case '<':
+            depth++;
+            break;
+          case '>':
+            depth--;
+            if (depth === 0) {
+              // Found the closing bracket for our marker
+              if (this.options.verbose) {
+                console.log(`✅ Extracted generic content: ${result.trim()}`);
+              }
+              return result.trim();
+            }
+            break;
+          case '{':
+            braceDepth++;
+            break;
+          case '}':
+            braceDepth--;
+            break;
+          case '[':
+            bracketDepth++;
+            break;
+          case ']':
+            bracketDepth--;
+            break;
+          case '(':
+            parenDepth++;
+            break;
+          case ')':
+            parenDepth--;
+            break;
+        }
+      }
+      
+      result += char;
+    }
+    
+    // If we get here, the brackets weren't properly balanced
+    if (this.options.verbose) {
+      console.warn(`⚠️  Unbalanced brackets in type: ${typeText}`);
+      console.warn(`    depth=${depth}, braceDepth=${braceDepth}, bracketDepth=${bracketDepth}`);
+    }
+    
+    return result.trim() || null;
+  }
+
+  /**
    * Extract dependencies from type reference (external interface) - ENHANCED
    */
   private extractFromTypeReference(typeNode: TypeNode, sourceFile: SourceFile): FunctionalDependency[] {
@@ -279,7 +440,7 @@ export class EnhancedDependencyExtractor {
       console.log(`✅ Found type declaration: ${typeDeclaration.getKindName()}`);
     }
 
-    // Extract services property from the type declaration
+    // Extract dependencies from the type declaration
     if (Node.isInterfaceDeclaration(typeDeclaration)) {
       return this.extractFromInterfaceDeclaration(typeDeclaration, sourceFile);
     }
@@ -428,6 +589,10 @@ export class EnhancedDependencyExtractor {
    * Find interface or type alias declaration in the source file or imported files
    */
   private findTypeDeclaration(typeName: string, sourceFile: SourceFile): InterfaceDeclaration | TypeAliasDeclaration | undefined {
+    if (this.options.verbose) {
+      console.log(`🔍 Searching for type declaration: ${typeName}`);
+    }
+
     // First, look in the current source file
     const localInterface = sourceFile.getInterface(typeName);
     if (localInterface) {
@@ -446,7 +611,12 @@ export class EnhancedDependencyExtractor {
     }
 
     // Then, look in imported files
-    for (const importDeclaration of sourceFile.getImportDeclarations()) {
+    const imports = sourceFile.getImportDeclarations();
+    if (this.options.verbose) {
+      console.log(`🔍 Checking ${imports.length} import declarations`);
+    }
+
+    for (const importDeclaration of imports) {
       const namedImports = importDeclaration.getNamedImports();
       const isTypeImported = namedImports.some((namedImport: any) => 
         namedImport.getName() === typeName
@@ -461,6 +631,10 @@ export class EnhancedDependencyExtractor {
         const importedFile = this.resolveImportedFile(moduleSpecifier, sourceFile);
         
         if (importedFile) {
+          if (this.options.verbose) {
+            console.log(`✅ Resolved import file: ${importedFile.getFilePath()}`);
+          }
+
           const importedInterface = importedFile.getInterface(typeName);
           if (importedInterface) {
             if (this.options.verbose) {
@@ -476,8 +650,20 @@ export class EnhancedDependencyExtractor {
             }
             return importedTypeAlias;
           }
+
+          if (this.options.verbose) {
+            console.log(`❌ Type ${typeName} not found in imported file ${importedFile.getFilePath()}`);
+          }
+        } else {
+          if (this.options.verbose) {
+            console.log(`❌ Could not resolve import file for module: ${moduleSpecifier}`);
+          }
         }
       }
+    }
+
+    if (this.options.verbose) {
+      console.log(`❌ Type declaration ${typeName} not found anywhere`);
     }
 
     return undefined;
@@ -489,6 +675,7 @@ export class EnhancedDependencyExtractor {
   private resolveImportedFile(moduleSpecifier: string, sourceFile: SourceFile): SourceFile | undefined {
     try {
       const currentDir = path.dirname(sourceFile.getFilePath());
+      const project = sourceFile.getProject();
       
       let resolvedPath: string;
       if (moduleSpecifier.startsWith('.')) {
@@ -503,7 +690,6 @@ export class EnhancedDependencyExtractor {
       const extensions = ['.ts', '.tsx', '/index.ts', '/index.tsx'];
       for (const ext of extensions) {
         const fullPath = resolvedPath + ext;
-        const project = sourceFile.getProject();
         const importedFile = project.getSourceFile(fullPath);
         if (importedFile) {
           if (this.options.verbose) {
@@ -513,8 +699,22 @@ export class EnhancedDependencyExtractor {
         }
       }
 
+      // ENHANCED: Try to find by filename matching (for test scenarios)
+      const baseName = path.basename(moduleSpecifier);
+      for (const sourceFile of project.getSourceFiles()) {
+        const fileName = path.basename(sourceFile.getFilePath(), path.extname(sourceFile.getFilePath()));
+        if (fileName === baseName) {
+          if (this.options.verbose) {
+            console.log(`✅ Found import by filename match: ${moduleSpecifier} -> ${sourceFile.getFilePath()}`);
+          }
+          return sourceFile;
+        }
+      }
+
       if (this.options.verbose) {
         console.log(`❌ Could not resolve import: ${moduleSpecifier}`);
+        console.log(`🔍 Tried paths: ${extensions.map(ext => resolvedPath + ext).join(', ')}`);
+        console.log(`🔍 Available files: ${project.getSourceFiles().map(f => f.getFilePath()).join(', ')}`);
       }
       return undefined;
     } catch (error) {

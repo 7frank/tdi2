@@ -388,6 +388,16 @@ export interface ConfigData {
   language: string;
 }
 
+export interface CacheInterface<T> {
+  get(key: string): T | null;
+  set(key: string, value: T): void;
+}
+
+export interface StateManager<T> {
+  getState(): T;
+  setState(newState: T): void;
+}
+
 export function Component(props: {
   services: {
     userRepo: Inject<Repository<UserEntity>>;
