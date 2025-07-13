@@ -10,6 +10,12 @@
 - ts-pattern
   > https://claude.ai/chat/589c3252-74e7-4e17-b84c-0cebca6d6c2b
 
+
+maybe normalization could help
+
+> import jscodeshift from 'jscodeshift';
+> import transform from 'react-codemod/transforms/no-destructuring-assignment';
+
 #### [❌] ⚠️ interfaces still not working with generic any
 
 > Inject<ExampleApiInterface>;

@@ -6,6 +6,10 @@
   - then its time to SOC your code base into pacakges
   - in my case turborepo worked great
 
+## if AI code grows
+
+> Ask: is there a library for that? if so suggest or use it
+
 ## refactoring
 
 - if it fits in the context of about 66% refactoring with relevant code sections and readme or explaination works decent
@@ -123,8 +127,12 @@ suggest a file that i should test  integration test with bun:test that should wo
   - but it requires a decent level of knowledge of the implications of the added frameworks
   - it requires a decent intuition of what is ai slop and what is additional `stuff` the ai generates that is actually `value`
 
-
 ### tools
 
 npm install -g ts-prune
-ts-prune -p ./tsconfig.app.json 
+ts-prune -p ./tsconfig.app.json
+
+
+#### Cursor 
+
+#### Codex

@@ -1,5 +1,7 @@
 # React Service Injection (RSI)
 
+###### powered by <u>T</u>ypescript <u>D</u>ependency <u>I</u>njection Attempt #<u>2</u>
+
 > [React doesn't scale](https://verved.ai/blog/react-doesn-t-scale) **until now?**
 
 
