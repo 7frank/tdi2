@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - FIXED VERSION
+// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - COMPLETE with nested support
 
 import {
   ParameterDeclaration,
@@ -7,7 +7,11 @@ import {
   InterfaceDeclaration,
   TypeAliasDeclaration,
   SourceFile,
-  ImportDeclaration
+  ImportDeclaration,
+  TypeReferenceNode,
+  UnionTypeNode,
+  IntersectionTypeNode,
+  ArrayTypeNode
 } from 'ts-morph';
 import * as path from 'path';
 import { FunctionalDependency, TransformationOptions, TypeResolutionContext } from './types';
@@ -43,7 +47,7 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * Extract dependencies from function parameter with comprehensive AST analysis - FIXED
+   * ENHANCED: Extract dependencies from function parameter with comprehensive nesting support
    */
   extractDependenciesFromParameter(param: ParameterDeclaration, sourceFile: SourceFile): FunctionalDependency[] {
     const typeNode = param.getTypeNode();
@@ -60,378 +64,240 @@ export class EnhancedDependencyExtractor {
       console.log(`📝 Parameter type text: ${typeNode.getText()}`);
     }
 
-    // Case 1: Inline type literal - props: { services: {...} }
-    if (Node.isTypeLiteral(typeNode)) {
-      if (this.options.verbose) {
-        console.log('📝 Found inline type literal');
-      }
-      return this.extractFromTypeLiteral(typeNode, sourceFile);
-    }
+    // ENHANCED: Use comprehensive extraction that handles all nesting levels
+    return this.extractDependenciesFromTypeNode(typeNode, sourceFile, param.getName());
+  }
 
-    // Case 2: Type reference - props: ComponentProps
-    if (Node.isTypeReference(typeNode)) {
-      if (this.options.verbose) {
-        console.log('📝 Found type reference');
-      }
-      return this.extractFromTypeReference(typeNode, sourceFile);
-    }
-
-    // Case 3: Direct marker injection - service: Inject<FooInterface>
+  /**
+   * NEW: Comprehensive type node analysis that handles all nesting scenarios
+   */
+  private extractDependenciesFromTypeNode(
+    typeNode: TypeNode, 
+    sourceFile: SourceFile, 
+    basePath: string = ''
+  ): FunctionalDependency[] {
+    
+    // Case 1: Direct marker injection - Inject<FooInterface>
     if (this.isDirectMarkerInjection(typeNode)) {
       if (this.options.verbose) {
-        console.log('📝 Found direct marker injection');
+        console.log(`📝 Found direct marker injection at ${basePath}`);
       }
-      return this.extractFromDirectMarker(param, typeNode, sourceFile);
+      return this.extractFromDirectMarkerEnhanced(typeNode, sourceFile, basePath);
+    }
+
+    // Case 2: Type literal - { services: {...}, config: any }
+    if (Node.isTypeLiteral(typeNode)) {
+      if (this.options.verbose) {
+        console.log(`📝 Found type literal at ${basePath}`);
+      }
+      return this.extractFromTypeLiteralEnhanced(typeNode, sourceFile, basePath);
+    }
+
+    // Case 3: Type reference - ComponentProps, ServiceConfig, etc.
+    if (Node.isTypeReference(typeNode)) {
+      if (this.options.verbose) {
+        console.log(`📝 Found type reference at ${basePath}`);
+      }
+      return this.extractFromTypeReferenceEnhanced(typeNode, sourceFile, basePath);
+    }
+
+    // Case 4: Union type - { services: {...} } | { fallback: true }
+    if (Node.isUnionTypeNode(typeNode)) {
+      if (this.options.verbose) {
+        console.log(`📝 Found union type at ${basePath}`);
+      }
+      return this.extractFromUnionType(typeNode, sourceFile, basePath);
+    }
+
+    // Case 5: Intersection type - ServiceProps & ConfigProps
+    if (Node.isIntersectionTypeNode(typeNode)) {
+      if (this.options.verbose) {
+        console.log(`📝 Found intersection type at ${basePath}`);
+      }
+      return this.extractFromIntersectionType(typeNode, sourceFile, basePath);
+    }
+
+    // Case 6: Array type - Array<{ service: Inject<T> }>
+    if (Node.isArrayTypeNode(typeNode)) {
+      if (this.options.verbose) {
+        console.log(`📝 Found array type at ${basePath}`);
+      }
+      return this.extractFromArrayType(typeNode, sourceFile, basePath);
     }
 
     if (this.options.verbose) {
-      console.log(`⚠️  Parameter type ${typeNode.getKindName()} not supported for dependency extraction`);
+      console.log(`⚠️  Type node ${typeNode.getKindName()} at ${basePath} not supported for dependency extraction`);
     }
 
     return [];
   }
 
   /**
-   * Extract dependencies from inline type literal with enhanced validation
+   * ENHANCED: Extract from type literal with deep nesting support
    */
-  private extractFromTypeLiteral(typeNode: TypeNode, sourceFile: SourceFile): FunctionalDependency[] {
+  private extractFromTypeLiteralEnhanced(
+    typeNode: TypeNode, 
+    sourceFile: SourceFile, 
+    basePath: string
+  ): FunctionalDependency[] {
     if (!Node.isTypeLiteral(typeNode)) return [];
 
-    if (this.options.verbose) {
-      console.log('📝 Extracting from type literal');
-      console.log(`📝 Type literal text: ${typeNode.getText()}`);
-    }
-
-    const members = typeNode.getMembers();
-    
-    if (this.options.verbose) {
-      console.log(`🔍 Type literal has ${members.length} members:`);
-      members.forEach((member: any, index: number) => {
-        if (Node.isPropertySignature(member)) {
-          console.log(`  ${index}: ${member.getName()} (${member.getKindName()})`);
-        } else {
-          console.log(`  ${index}: ${member.getKindName()}`);
-        }
-      });
-    }
-
-    // Look for services property or direct marker properties
     const dependencies: FunctionalDependency[] = [];
+    const members = typeNode.getMembers();
+
+    if (this.options.verbose) {
+      console.log(`🔍 Processing type literal with ${members.length} members at ${basePath}`);
+    }
 
     for (const member of members) {
       if (Node.isPropertySignature(member)) {
         const memberName = member.getName();
-        
+        const memberPath = basePath ? `${basePath}.${memberName}` : memberName;
+        const memberTypeNode = member.getTypeNode();
+
+        if (!memberTypeNode) {
+          if (this.options.verbose) {
+            console.log(`⚠️  Property ${memberPath} has no type node`);
+          }
+          continue;
+        }
+
+        if (this.options.verbose) {
+          console.log(`🔍 Processing property: ${memberPath} (${memberTypeNode.getKindName()})`);
+        }
+
+        // Special handling for 'services' property
         if (memberName === 'services') {
-          // Found services property - extract nested dependencies
-          const serviceDeps = this.extractFromServicesProperty(member, sourceFile);
+          const serviceDeps = this.extractDependenciesFromTypeNode(memberTypeNode, sourceFile, memberPath);
           dependencies.push(...serviceDeps);
         } else {
-          // Check if this is a direct marker injection
-          const directDep = this.extractFromPropertySignature(member, sourceFile);
-          if (directDep) {
-            dependencies.push(directDep);
+          // Check if this property itself is a marker injection or contains nested markers
+          const memberDeps = this.extractDependenciesFromTypeNode(memberTypeNode, sourceFile, memberPath);
+          
+          // If this is a direct marker injection, use the property name as the service key
+          if (memberDeps.length > 0 && this.isDirectMarkerInjection(memberTypeNode)) {
+            memberDeps.forEach(dep => {
+              dep.serviceKey = memberName; // Use property name as service key
+            });
           }
-        }
-      }
-    }
-
-    return dependencies;
-  }
-
-  /**
-   * Extract from services property in type literal
-   */
-  private extractFromServicesProperty(servicesProperty: any, sourceFile: SourceFile): FunctionalDependency[] {
-    const serviceTypeNode = servicesProperty.getTypeNode();
-    if (!serviceTypeNode) {
-      if (this.options.verbose) {
-        console.log('⚠️  Services property has no type node');
-      }
-      return [];
-    }
-
-    if (this.options.verbose) {
-      console.log(`🔍 Services property type node kind: ${serviceTypeNode.getKindName()}`);
-      console.log(`📝 Services property type text: ${serviceTypeNode.getText()}`);
-    }
-
-    // Handle type literal for services property
-    if (Node.isTypeLiteral(serviceTypeNode)) {
-      if (this.options.verbose) {
-        console.log('✅ Found type literal for services property');
-      }
-      return this.extractFromServicesTypeLiteral(serviceTypeNode, sourceFile);
-    }
-
-    // Handle type reference for services property
-    if (Node.isTypeReference(serviceTypeNode)) {
-      if (this.options.verbose) {
-        console.log('✅ Found type reference for services property');
-      }
-      return this.extractFromTypeReference(serviceTypeNode, sourceFile);
-    }
-
-    if (this.options.verbose) {
-      console.log(`⚠️  Services property is not a supported type (${serviceTypeNode.getKindName()})`);
-    }
-
-    return [];
-  }
-
-  /**
-   * Extract from services type literal specifically
-   */
-  private extractFromServicesTypeLiteral(typeNode: TypeNode, sourceFile: SourceFile): FunctionalDependency[] {
-    if (!Node.isTypeLiteral(typeNode)) return [];
-
-    const dependencies: FunctionalDependency[] = [];
-    const members = typeNode.getMembers();
-
-    if (this.options.verbose) {
-      console.log(`🔍 Processing services type literal with ${members.length} members`);
-    }
-
-    for (const member of members) {
-      if (Node.isPropertySignature(member)) {
-        const dependency = this.extractFromPropertySignature(member, sourceFile);
-        if (dependency) {
-          dependencies.push(dependency);
-          if (this.options.verbose) {
-            console.log(`✅ Added dependency: ${dependency.serviceKey} -> ${dependency.interfaceType}`);
-          }
-        } else {
-          if (this.options.verbose) {
-            const memberName = member.getName();
-            const memberType = member.getTypeNode()?.getText();
-            console.log(`⚠️  Could not extract dependency from property: ${memberName}: ${memberType}`);
-          }
+          
+          dependencies.push(...memberDeps);
         }
       } else {
         if (this.options.verbose) {
-          console.log(`⚠️  Skipping non-property member: ${member.getKindName()}`);
+          console.log(`⚠️  Skipping non-property member: ${member.getKindName()} at ${basePath}`);
         }
       }
-    }
-
-    if (this.options.verbose) {
-      console.log(`🔍 Extracted ${dependencies.length} dependencies from services type literal`);
     }
 
     return dependencies;
   }
 
   /**
-   * Extract dependency from property signature with source validation - FIXED
+   * NEW: Extract from union types (A | B)
    */
-  private extractFromPropertySignature(propertySignature: any, sourceFile: SourceFile): FunctionalDependency | null {
-    const propName = propertySignature.getName();
-    const propTypeNode = propertySignature.getTypeNode();
-    if (!propTypeNode) {
-      if (this.options.verbose) {
-        console.log(`⚠️  Property ${propName} has no type node`);
-      }
-      return null;
-    }
+  private extractFromUnionType(
+    typeNode: TypeNode, 
+    sourceFile: SourceFile, 
+    basePath: string
+  ): FunctionalDependency[] {
+    if (!Node.isUnionTypeNode(typeNode)) return [];
 
-    const typeText = propTypeNode.getText();
-    
-    if (this.options.verbose) {
-      console.log(`🔍 Processing property: ${propName}: ${typeText}`);
-    }
-    
-    // Parse DI marker types with source validation
-    const markerInfo = this.parseMarkerType(typeText, sourceFile);
-    if (!markerInfo) {
-      if (this.options.verbose) {
-        console.log(`⚠️  Property ${propName} does not use DI marker type`);
-      }
-      return null;
-    }
-
-    // FIXED: For source validation failure, skip this dependency
-    if (this.sourceConfig.validateSources && !markerInfo.validSource) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Marker source not validated for ${propName}, skipping`);
-      }
-      return null;
-    }
-
-    // Use the same key sanitization as the interface resolver
-    const sanitizedKey = this.keySanitizer.sanitizeKey(markerInfo.interfaceType);
+    const dependencies: FunctionalDependency[] = [];
+    const unionTypes = (typeNode as UnionTypeNode).getTypeNodes();
 
     if (this.options.verbose) {
-      console.log(`🔗 Found dependency: ${propName} -> ${markerInfo.interfaceType} (${markerInfo.isOptional ? 'optional' : 'required'})`);
-      if (markerInfo.validSource) {
-        console.log(`✅ Marker source validated`);
-      } else {
-        console.warn(`⚠️  Marker source not validated`);
-      }
+      console.log(`🔍 Processing union type with ${unionTypes.length} variants at ${basePath}`);
     }
 
-    return {
-      serviceKey: propName,
-      interfaceType: markerInfo.interfaceType,
-      sanitizedKey,
-      isOptional: markerInfo.isOptional
-    };
+    // Extract dependencies from each variant of the union
+    // This handles cases like: { services: {...} } | { fallbackMode: true }
+    for (const unionVariant of unionTypes) {
+      const variantDeps = this.extractDependenciesFromTypeNode(unionVariant, sourceFile, basePath);
+      dependencies.push(...variantDeps);
+    }
+
+    return dependencies;
   }
 
   /**
-   * Parse marker type with source validation - ENHANCED for complex generics
+   * NEW: Extract from intersection types (A & B)
    */
-  private parseMarkerType(typeText: string, sourceFile: SourceFile): {
-    interfaceType: string;
-    isOptional: boolean;
-    validSource: boolean;
-  } | null {
-    // Match Inject<T> patterns - enhanced to handle complex nested generics
-    let injectMatch: RegExpMatchArray | null = null;
-    let optionalMatch: RegExpMatchArray | null = null;
-    
-    // Use a more robust approach to extract the generic content
-    if (typeText.startsWith('Inject<')) {
-      const content = this.extractGenericContentRobust(typeText, 'Inject');
-      if (content) {
-        injectMatch = ['', content]; // Simulate regex match result
-      }
-    } else if (typeText.startsWith('InjectOptional<')) {
-      const content = this.extractGenericContentRobust(typeText, 'InjectOptional');
-      if (content) {
-        optionalMatch = ['', content]; // Simulate regex match result
-      }
-    }
-    
-    let interfaceType: string;
-    let isOptional: boolean;
-    let markerName: string;
+  private extractFromIntersectionType(
+    typeNode: TypeNode, 
+    sourceFile: SourceFile, 
+    basePath: string
+  ): FunctionalDependency[] {
+    if (!Node.isIntersectionTypeNode(typeNode)) return [];
 
-    if (injectMatch) {
-      interfaceType = injectMatch[1];
-      isOptional = false;
-      markerName = 'Inject';
-    } else if (optionalMatch) {
-      interfaceType = optionalMatch[1];
-      isOptional = true;
-      markerName = 'InjectOptional';
-    } else {
-      // Not a DI marker type
-      return null;
-    }
+    const dependencies: FunctionalDependency[] = [];
+    const intersectionTypes = (typeNode as IntersectionTypeNode).getTypeNodes();
 
-    // Validate marker source if enabled
-    const validSource = this.sourceConfig.validateSources 
-      ? this.validateMarkerSource(markerName, sourceFile)
-      : true;
-
-    return {
-      interfaceType,
-      isOptional,
-      validSource
-    };
-  }
-
-  /**
-   * Robust extraction of generic content handling complex nested structures
-   * 
-   * TODO this doesn't  seem too robust if we compare it to potential built in aprpoaches of ts-morph getting the whole type
-   */
-  private extractGenericContentRobust(typeText: string, markerName: string): string | null {
-    const startPattern = `${markerName}<`;
-    if (!typeText.startsWith(startPattern)) {
-      return null;
-    }
-
-    const contentStart = startPattern.length;
-    let depth = 1;
-    let braceDepth = 0;
-    let bracketDepth = 0;
-    let parenDepth = 0;
-    let inString = false;
-    let stringChar = '';
-    let result = '';
-    
-    for (let i = contentStart; i < typeText.length; i++) {
-      const char = typeText[i];
-      const prevChar = i > 0 ? typeText[i - 1] : '';
-      
-      // Handle string literals
-      if ((char === '"' || char === "'") && prevChar !== '\\') {
-        if (!inString) {
-          inString = true;
-          stringChar = char;
-        } else if (char === stringChar) {
-          inString = false;
-          stringChar = '';
-        }
-      }
-      
-      if (!inString) {
-        // Track different bracket types
-        switch (char) {
-          case '<':
-            depth++;
-            break;
-          case '>':
-            depth--;
-            if (depth === 0) {
-              // Found the closing bracket for our marker
-              if (this.options.verbose) {
-                console.log(`✅ Extracted generic content: ${result.trim()}`);
-              }
-              return result.trim();
-            }
-            break;
-          case '{':
-            braceDepth++;
-            break;
-          case '}':
-            braceDepth--;
-            break;
-          case '[':
-            bracketDepth++;
-            break;
-          case ']':
-            bracketDepth--;
-            break;
-          case '(':
-            parenDepth++;
-            break;
-          case ')':
-            parenDepth--;
-            break;
-        }
-      }
-      
-      result += char;
-    }
-    
-    // If we get here, the brackets weren't properly balanced
     if (this.options.verbose) {
-      console.warn(`⚠️  Unbalanced brackets in type: ${typeText}`);
-      console.warn(`    depth=${depth}, braceDepth=${braceDepth}, bracketDepth=${bracketDepth}`);
+      console.log(`🔍 Processing intersection type with ${intersectionTypes.length} types at ${basePath}`);
     }
-    
-    return result.trim() || null;
+
+    // Extract dependencies from each part of the intersection
+    // This handles cases like: ServiceProps & ConfigProps
+    for (const intersectionPart of intersectionTypes) {
+      const partDeps = this.extractDependenciesFromTypeNode(intersectionPart, sourceFile, basePath);
+      dependencies.push(...partDeps);
+    }
+
+    return dependencies;
   }
 
   /**
-   * Extract dependencies from type reference (external interface) - ENHANCED
+   * NEW: Extract from array types
    */
-  private extractFromTypeReference(typeNode: TypeNode, sourceFile: SourceFile): FunctionalDependency[] {
+  private extractFromArrayType(
+    typeNode: TypeNode, 
+    sourceFile: SourceFile, 
+    basePath: string
+  ): FunctionalDependency[] {
+    if (!Node.isArrayTypeNode(typeNode)) return [];
+
+    const elementTypeNode = (typeNode as ArrayTypeNode).getElementTypeNode();
+    
+    if (this.options.verbose) {
+      console.log(`🔍 Processing array type at ${basePath}, element type: ${elementTypeNode.getKindName()}`);
+    }
+
+    // Extract dependencies from the array element type
+    // This handles cases like: Array<{ service: Inject<T> }>
+    return this.extractDependenciesFromTypeNode(elementTypeNode, sourceFile, `${basePath}[]`);
+  }
+
+  /**
+   * ENHANCED: Extract from type reference with resolution
+   */
+  private extractFromTypeReferenceEnhanced(
+    typeNode: TypeNode, 
+    sourceFile: SourceFile, 
+    basePath: string
+  ): FunctionalDependency[] {
     if (!Node.isTypeReference(typeNode)) return [];
 
-    const typeName = typeNode.getTypeName().getText();
-    
-    if (this.options.verbose) {
-      console.log(`🔍 Resolving type reference: ${typeName}`);
+    // First check if this type reference itself is a marker injection
+    if (this.isDirectMarkerInjection(typeNode)) {
+      if (this.options.verbose) {
+        console.log(`📝 Type reference is direct marker injection at ${basePath}`);
+      }
+      return this.extractFromDirectMarkerEnhanced(typeNode, sourceFile, basePath);
     }
 
-    // Find the interface or type alias declaration
+    // Otherwise, resolve the type reference and analyze its definition
+    const typeName = (typeNode as TypeReferenceNode).getTypeName().getText();
+    
+    if (this.options.verbose) {
+      console.log(`🔍 Resolving type reference: ${typeName} at ${basePath}`);
+    }
+
+    // Find the type declaration
     const typeDeclaration = this.findTypeDeclaration(typeName, sourceFile);
     if (!typeDeclaration) {
       if (this.options.verbose) {
-        console.log(`❌ Could not find declaration for type: ${typeName}`);
+        console.log(`❌ Could not resolve type declaration for: ${typeName}`);
       }
       return [];
     }
@@ -440,149 +306,179 @@ export class EnhancedDependencyExtractor {
       console.log(`✅ Found type declaration: ${typeDeclaration.getKindName()}`);
     }
 
-    // Extract dependencies from the type declaration
+    // Extract dependencies from the resolved type
     if (Node.isInterfaceDeclaration(typeDeclaration)) {
-      return this.extractFromInterfaceDeclaration(typeDeclaration, sourceFile);
+      return this.extractFromInterfaceDeclarationEnhanced(typeDeclaration, sourceFile, basePath);
     }
 
     if (Node.isTypeAliasDeclaration(typeDeclaration)) {
-      return this.extractFromTypeAliasDeclaration(typeDeclaration, sourceFile);
+      return this.extractFromTypeAliasDeclarationEnhanced(typeDeclaration, sourceFile, basePath);
     }
 
     return [];
   }
 
   /**
-   * Extract from interface declaration
+   * ENHANCED: Extract from interface declaration with nesting support
    */
-  private extractFromInterfaceDeclaration(interfaceDecl: InterfaceDeclaration, sourceFile: SourceFile): FunctionalDependency[] {
+  private extractFromInterfaceDeclarationEnhanced(
+    interfaceDecl: InterfaceDeclaration, 
+    sourceFile: SourceFile, 
+    basePath: string
+  ): FunctionalDependency[] {
     if (this.options.verbose) {
-      console.log(`✅ Extracting dependencies from interface ${interfaceDecl.getName()}`);
+      console.log(`✅ Extracting dependencies from interface ${interfaceDecl.getName()} at ${basePath}`);
     }
 
-    const properties = interfaceDecl.getProperties();
-    
-    if (this.options.verbose) {
-      console.log(`🔍 Interface ${interfaceDecl.getName()} has ${properties.length} properties:`);
-      properties.forEach(prop => {
-        console.log(`  - ${prop.getName()}: ${prop.getTypeNode()?.getKindName() || 'unknown'}`);
-      });
-    }
-
-    // Look for services property or direct marker properties
     const dependencies: FunctionalDependency[] = [];
+    const properties = interfaceDecl.getProperties();
 
     for (const property of properties) {
       const propName = property.getName();
-      
-      if (propName === 'services') {
-        // Extract from services property
-        const serviceDeps = this.extractFromServicesPropertyDeclaration(property, sourceFile);
-        dependencies.push(...serviceDeps);
-      } else {
-        // Check for direct marker injection
-        const directDep = this.extractFromPropertySignature(property, sourceFile);
-        if (directDep) {
-          dependencies.push(directDep);
+      const propPath = basePath ? `${basePath}.${propName}` : propName;
+      const propTypeNode = property.getTypeNode();
+
+      if (!propTypeNode) {
+        if (this.options.verbose) {
+          console.log(`⚠️  Property ${propPath} has no type annotation`);
         }
+        continue;
       }
+
+      // Recursively extract from property type
+      const propDeps = this.extractDependenciesFromTypeNode(propTypeNode, sourceFile, propPath);
+      
+      // If this is a direct marker injection, use the property name as the service key
+      if (propDeps.length > 0 && this.isDirectMarkerInjection(propTypeNode)) {
+        propDeps.forEach(dep => {
+          dep.serviceKey = propName;
+        });
+      }
+      
+      dependencies.push(...propDeps);
     }
 
     return dependencies;
   }
 
   /**
-   * Extract from services property declaration
+   * ENHANCED: Extract from type alias with nesting support
    */
-  private extractFromServicesPropertyDeclaration(property: any, sourceFile: SourceFile): FunctionalDependency[] {
-    const serviceTypeNode = property.getTypeNode();
-    if (!serviceTypeNode) {
-      if (this.options.verbose) {
-        console.log(`⚠️  Services property has no type annotation`);
-      }
-      return [];
-    }
-
-    if (this.options.verbose) {
-      console.log(`🔍 Services property type: ${serviceTypeNode.getKindName()}`);
-      console.log(`📝 Services property type text: ${serviceTypeNode.getText()}`);
-    }
-
-    // Handle type literal for services property
-    if (Node.isTypeLiteral(serviceTypeNode)) {
-      if (this.options.verbose) {
-        console.log(`✅ Found type literal for services property`);
-      }
-      return this.extractFromServicesTypeLiteral(serviceTypeNode, sourceFile);
-    }
-
-    if (Node.isTypeReference(serviceTypeNode)) {
-      if (this.options.verbose) {
-        console.log(`✅ Found type reference for services property`);
-      }
-      return this.extractFromTypeReference(serviceTypeNode, sourceFile);
-    }
-
-    if (this.options.verbose) {
-      console.log(`⚠️  Services property is not a supported type (${serviceTypeNode.getKindName()})`);
-    }
-
-    return [];
-  }
-
-  /**
-   * Extract from type alias declaration
-   */
-  private extractFromTypeAliasDeclaration(typeAlias: TypeAliasDeclaration, sourceFile: SourceFile): FunctionalDependency[] {
+  private extractFromTypeAliasDeclarationEnhanced(
+    typeAlias: TypeAliasDeclaration, 
+    sourceFile: SourceFile, 
+    basePath: string
+  ): FunctionalDependency[] {
     const typeNode = typeAlias.getTypeNode();
-    if (!typeNode || !Node.isTypeLiteral(typeNode)) {
+    if (!typeNode) {
       if (this.options.verbose) {
-        console.log(`⚠️  Type alias ${typeAlias.getName()} is not a type literal`);
+        console.log(`⚠️  Type alias ${typeAlias.getName()} has no type node`);
       }
       return [];
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Extracting dependencies from type alias ${typeAlias.getName()}`);
+      console.log(`✅ Extracting dependencies from type alias ${typeAlias.getName()} at ${basePath}`);
     }
 
-    return this.extractFromTypeLiteral(typeNode, sourceFile);
+    // Recursively extract from the aliased type
+    return this.extractDependenciesFromTypeNode(typeNode, sourceFile, basePath);
   }
 
   /**
-   * Extract from direct marker injection (e.g., service: Inject<FooInterface>)
+   * ENHANCED: Extract from direct marker with path support using ts-morph AST
    */
-  private extractFromDirectMarker(param: ParameterDeclaration, typeNode: TypeNode, sourceFile: SourceFile): FunctionalDependency[] {
-    const paramName = param.getName();
-    const typeText = typeNode.getText();
-    
-    const markerInfo = this.parseMarkerType(typeText, sourceFile);
-    if (!markerInfo) return [];
+  private extractFromDirectMarkerEnhanced(
+    typeNode: TypeNode, 
+    sourceFile: SourceFile, 
+    servicePath: string
+  ): FunctionalDependency[] {
+    if (!Node.isTypeReference(typeNode)) return [];
 
-    // FIXED: For source validation failure, return empty array
-    if (this.sourceConfig.validateSources && !markerInfo.validSource) {
+    const typeReference = typeNode as TypeReferenceNode;
+    const typeName = typeReference.getTypeName();
+    const markerName = Node.isIdentifier(typeName) ? typeName.getText() : null;
+    
+    if (!markerName || !this.isMarkerType(markerName)) {
+      return [];
+    }
+
+    // Get type arguments using AST - much cleaner than manual parsing!
+    const typeArgs = typeReference.getTypeArguments();
+    if (typeArgs.length !== 1) {
       if (this.options.verbose) {
-        console.warn(`⚠️  Marker source not validated for ${paramName}, skipping`);
+        console.warn(`⚠️  Expected exactly 1 type argument for ${markerName}, got ${typeArgs.length}`);
       }
       return [];
     }
 
-    const sanitizedKey = this.keySanitizer.sanitizeKey(markerInfo.interfaceType);
+    const interfaceTypeNode = typeArgs[0];
+    const interfaceType = interfaceTypeNode.getText();
+    
+    // Validate marker source if enabled
+    if (this.sourceConfig.validateSources && !this.validateMarkerSource(markerName, sourceFile)) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Marker source not validated for ${servicePath}, skipping`);
+      }
+      return [];
+    }
+
+    const isOptional = markerName === 'InjectOptional';
+    const sanitizedKey = this.keySanitizer.sanitizeKey(interfaceType);
+
+    // Extract service key from path (e.g., "services.api" -> "api")
+    const serviceKey = this.extractServiceKeyFromPath(servicePath);
+
+    if (this.options.verbose) {
+      console.log(`✅ Direct marker injection: ${servicePath} -> ${serviceKey} : ${interfaceType} (${isOptional ? 'optional' : 'required'})`);
+    }
 
     return [{
-      serviceKey: paramName,
-      interfaceType: markerInfo.interfaceType,
+      serviceKey,
+      interfaceType,
       sanitizedKey,
-      isOptional: markerInfo.isOptional
+      isOptional
     }];
   }
 
   /**
-   * Check if type node represents direct marker injection
+   * NEW: Extract service key from nested path
+   */
+  private extractServiceKeyFromPath(path: string): string {
+    // Handle nested paths like "services.api" -> "api"
+    // or "props.services.cache" -> "cache"
+    const parts = path.split('.');
+    
+    // If path contains 'services', take the part after it
+    const servicesIndex = parts.indexOf('services');
+    if (servicesIndex !== -1 && servicesIndex < parts.length - 1) {
+      return parts[servicesIndex + 1];
+    }
+    
+    // Otherwise, take the last part
+    return parts[parts.length - 1];
+  }
+
+  /**
+   * Enhanced marker type checking
+   */
+  private isMarkerType(typeName: string): boolean {
+    return typeName === 'Inject' || typeName === 'InjectOptional';
+  }
+
+  /**
+   * Enhanced direct marker injection detection using ts-morph AST
    */
   private isDirectMarkerInjection(typeNode: TypeNode): boolean {
-    const typeText = typeNode.getText();
-    return /^(InjectOptional?)<.+>$/.test(typeText);
+    if (!Node.isTypeReference(typeNode)) {
+      return false;
+    }
+
+    const typeReference = typeNode as TypeReferenceNode;
+    const typeName = typeReference.getTypeName();
+    const markerName = Node.isIdentifier(typeName) ? typeName.getText() : null;
+    
+    return markerName !== null && this.isMarkerType(markerName);
   }
 
   /**
@@ -618,7 +514,7 @@ export class EnhancedDependencyExtractor {
 
     for (const importDeclaration of imports) {
       const namedImports = importDeclaration.getNamedImports();
-      const isTypeImported = namedImports.some((namedImport: any) => 
+      const isTypeImported = namedImports.some((namedImport) => 
         namedImport.getName() === typeName
       );
 
@@ -822,5 +718,28 @@ export class EnhancedDependencyExtractor {
    */
   clearValidationCache(): void {
     this.validationCache.clear();
+  }
+
+  /**
+   * Get enhanced extraction statistics
+   */
+  getExtractionStats(): {
+    cacheSize: number;
+    supportedTypeNodes: string[];
+    sourceValidationEnabled: boolean;
+  } {
+    return {
+      cacheSize: this.validationCache.size,
+      supportedTypeNodes: [
+        'TypeReference (Inject<T>)',
+        'TypeLiteral ({ services: {...} })',
+        'UnionType (A | B)',
+        'IntersectionType (A & B)',
+        'ArrayType (Array<T>)',
+        'InterfaceDeclaration',
+        'TypeAliasDeclaration'
+      ],
+      sourceValidationEnabled: this.sourceConfig.validateSources
+    };
   }
 }
