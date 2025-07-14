@@ -232,7 +232,7 @@ describe("Enhanced Marker Approach Tests", () => {
 
     describe("Feature: Complex Generic Type Patterns", () => {
       describe("Given components with advanced generic patterns", () => {
-        it.skip("When using conditional types with services, Then should extract base service", () => {
+        it("When using conditional types with services, Then should extract base service", () => {
           // Given
           const sourceFile = mockProject.createSourceFile(
             "src/ConditionalTypes.tsx",

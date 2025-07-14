@@ -1,4 +1,4 @@
-// tools/interface-resolver/enhanced-dependency-extractor.ts - FIXED with built-in type handling
+// tools/interface-resolver/enhanced-dependency-extractor.ts - ENHANCED with conditional type support
 
 import {
   ParameterDeclaration,
@@ -11,7 +11,8 @@ import {
   TypeReferenceNode,
   UnionTypeNode,
   IntersectionTypeNode,
-  ArrayTypeNode
+  ArrayTypeNode,
+  ConditionalTypeNode
 } from 'ts-morph';
 import * as path from 'path';
 import { FunctionalDependency, TransformationOptions, TypeResolutionContext } from '../functional-di-enhanced-transformer/types';
@@ -164,6 +165,14 @@ export class EnhancedDependencyExtractor {
         return this.extractFromMappedType(typeNode, sourceFile, basePath);
       }
 
+      // Case 9: NEW - Conditional type - T extends U ? X : Y
+      if (Node.isConditionalTypeNode(typeNode)) {
+        if (this.options.verbose) {
+          console.log(`📝 Found conditional type at ${basePath}`);
+        }
+        return this.extractFromConditionalType(typeNode, sourceFile, basePath);
+      }
+
       if (this.options.verbose) {
         console.log(`⚠️  Type node ${typeNode.getKindName()} at ${basePath} not supported for dependency extraction`);
       }
@@ -173,6 +182,179 @@ export class EnhancedDependencyExtractor {
       // Remove from circular protection when done
       this.circularProtection.delete(pathKey);
     }
+  }
+
+  /**
+   * NEW: Extract from conditional types (T extends U ? X : Y)
+   */
+  private extractFromConditionalType(
+    typeNode: TypeNode, 
+    sourceFile: SourceFile, 
+    basePath: string
+  ): FunctionalDependency[] {
+    if (!Node.isConditionalTypeNode(typeNode)) return [];
+
+    const dependencies: FunctionalDependency[] = [];
+    const conditionalType = typeNode as ConditionalTypeNode;
+
+    if (this.options.verbose) {
+      console.log(`🔍 Processing conditional type at ${basePath}`);
+    }
+
+    try {
+      // Try to resolve the conditional type based on context
+      const resolvedTypeParameters = this.extractTypeParametersFromContext(basePath, sourceFile);
+      
+      // Extract dependencies from both branches of the conditional type
+      // For TypeScript conditional types: T extends U ? TrueType : FalseType
+      
+      // Get the true type (when condition is met)
+      const trueType = conditionalType.getTrueType();
+      if (trueType) {
+        if (this.options.verbose) {
+          console.log(`🔍 Processing conditional true branch: ${trueType.getKindName()}`);
+        }
+        const trueDeps = this.extractDependenciesFromTypeNodeWithTypeParams(
+          trueType, 
+          sourceFile, 
+          `${basePath}<true>`,
+          resolvedTypeParameters
+        );
+        dependencies.push(...trueDeps);
+      }
+
+      // Get the false type (when condition is not met)
+      const falseType = conditionalType.getFalseType();
+      if (falseType) {
+        if (this.options.verbose) {
+          console.log(`🔍 Processing conditional false branch: ${falseType.getKindName()}`);
+        }
+        const falseDeps = this.extractDependenciesFromTypeNodeWithTypeParams(
+          falseType, 
+          sourceFile, 
+          `${basePath}<false>`,
+          resolvedTypeParameters
+        );
+        dependencies.push(...falseDeps);
+      }
+
+      // For practical purposes, we extract from both branches since at compile time
+      // we don't know which branch will be taken. The DI container will resolve
+      // the appropriate services at runtime.
+
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Failed to process conditional type at ${basePath}:`, error);
+      }
+    }
+
+    return dependencies;
+  }
+
+  /**
+   * NEW: Extract type parameters from the usage context
+   */
+  private extractTypeParametersFromContext(basePath: string, sourceFile: SourceFile): Map<string, string> {
+    const typeParams = new Map<string, string>();
+    
+    // Look for type parameter usage in the original parameter
+    // For example: ConditionalServiceProps<string> -> T = string
+    try {
+      // Find the function/component that contains this parameter
+      const functions = sourceFile.getFunctions();
+      for (const func of functions) {
+        const params = func.getParameters();
+        for (const param of params) {
+          if (param.getName() === basePath.split('.')[0]) {
+            const typeNode = param.getTypeNode();
+            if (typeNode && Node.isTypeReference(typeNode)) {
+              const typeArgs = typeNode.getTypeArguments();
+              if (typeArgs.length > 0) {
+                // For ConditionalServiceProps<string>, map T -> string
+                typeParams.set('T', typeArgs[0].getText());
+                
+                if (this.options.verbose) {
+                  console.log(`🔍 Resolved type parameter: T -> ${typeArgs[0].getText()}`);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Also check variable statements for arrow functions
+      const variableStatements = sourceFile.getVariableStatements();
+      for (const varStmt of variableStatements) {
+        const declarations = varStmt.getDeclarations();
+        for (const decl of declarations) {
+          const initializer = decl.getInitializer();
+          if (initializer && initializer.getKind() === 218) { // ArrowFunction
+            const params = initializer.getParameters();
+            for (const param of params) {
+              if (param.getName() === basePath.split('.')[0]) {
+                const typeNode = param.getTypeNode();
+                if (typeNode && Node.isTypeReference(typeNode)) {
+                  const typeArgs = typeNode.getTypeArguments();
+                  if (typeArgs.length > 0) {
+                    typeParams.set('T', typeArgs[0].getText());
+                    
+                    if (this.options.verbose) {
+                      console.log(`🔍 Resolved type parameter from arrow function: T -> ${typeArgs[0].getText()}`);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Failed to extract type parameters from context:`, error);
+      }
+    }
+    
+    return typeParams;
+  }
+
+  /**
+   * NEW: Extract dependencies with type parameter resolution
+   */
+  private extractDependenciesFromTypeNodeWithTypeParams(
+    typeNode: TypeNode, 
+    sourceFile: SourceFile, 
+    basePath: string,
+    typeParams: Map<string, string>
+  ): FunctionalDependency[] {
+    // Use the existing extraction method
+    const dependencies = this.extractDependenciesFromTypeNode(typeNode, sourceFile, basePath);
+    
+    // Post-process to resolve type parameters
+    return dependencies.map(dep => ({
+      ...dep,
+      interfaceType: this.resolveTypeParameters(dep.interfaceType, typeParams),
+      sanitizedKey: this.keySanitizer.sanitizeKey(this.resolveTypeParameters(dep.interfaceType, typeParams))
+    }));
+  }
+
+  /**
+   * NEW: Resolve type parameters in interface types
+   */
+  private resolveTypeParameters(interfaceType: string, typeParams: Map<string, string>): string {
+    let resolved = interfaceType;
+    
+    for (const [param, value] of typeParams) {
+      // Replace type parameter with concrete type
+      // Handle both simple cases (T) and generic cases (ProcessorInterface<T>)
+      const paramRegex = new RegExp(`\\b${param}\\b`, 'g');
+      resolved = resolved.replace(paramRegex, value);
+    }
+    
+    if (this.options.verbose && resolved !== interfaceType) {
+      console.log(`🔧 Resolved type parameters: ${interfaceType} -> ${resolved}`);
+    }
+    
+    return resolved;
   }
 
   /**
@@ -748,7 +930,7 @@ export class EnhancedDependencyExtractor {
     return undefined;
   }
 
-  /**
+ /**
    * Resolve imported file path
    */
   private resolveImportedFile(moduleSpecifier: string, sourceFile: SourceFile): SourceFile | undefined {
@@ -803,7 +985,8 @@ export class EnhancedDependencyExtractor {
       return undefined;
     }
   }
-/**
+
+  /**
    * FIXED: Validate that a marker comes from a valid source - now checks the target file where it's used
    */
   private validateMarkerSource(markerName: string, sourceFile: SourceFile): boolean {
@@ -914,7 +1097,7 @@ export class EnhancedDependencyExtractor {
     this.validationCache.clear();
   }
 
-/**
+  /**
    * Get current source configuration
    */
   getSourceConfiguration(): DISourceConfiguration {
@@ -948,6 +1131,7 @@ export class EnhancedDependencyExtractor {
         'ArrayType (Array<T>, T[])',
         'TupleType ([T1, T2, ...])',
         'MappedType ({ [K in keyof T]: ... })',
+        'ConditionalType (T extends U ? X : Y)', // NEW
         'InterfaceDeclaration',
         'TypeAliasDeclaration',
         'Built-in types (Array, Promise, etc.)'
