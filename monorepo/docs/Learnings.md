@@ -143,6 +143,8 @@ suggest a file that i should test  integration test with bun:test that should wo
   - as it can drastically good generate coherent code artifacts and full smaller packages
   - but it requires a decent level of knowledge of the implications of the added frameworks
   - it requires a decent intuition of what is ai slop and what is additional `stuff` the ai generates that is actually `value`
+- sometimes lots of forward and back when working on a real problem with probably the full technical debt accumulated so far 
+  - so dont accumulate debt in the first place and work structured
 
 ### tools
 
@@ -152,3 +154,5 @@ ts-prune -p ./tsconfig.app.json
 #### Cursor
 
 #### Codex
+
+
