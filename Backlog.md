@@ -4,9 +4,9 @@
 
 ### [❌] release di-core 2.3.0 or 2.2.1
 
-### [❌] DI bugs & side effects (part 1)
 
-> replace current implementation details with one of the packages like
+
+### [❌] replace current implementation details with one of the packages like
 
 - @phenomnomnominal/tsquery
 - ts-pattern
@@ -16,6 +16,10 @@ maybe normalization could help
 
 > import jscodeshift from 'jscodeshift';
 > import transform from 'react-codemod/transforms/no-destructuring-assignment';
+
+
+### [❌] DI bugs & side effects (part 1)
+
 
 #### [❌] ⚠️ interfaces still not working with generic any
 

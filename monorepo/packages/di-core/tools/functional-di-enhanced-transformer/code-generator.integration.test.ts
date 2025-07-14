@@ -13,7 +13,7 @@ import {
   ErrorSimulationHelper,
   RealWorldScenarios,
   TestDataValidator
-} from "./test-functional-di.config";
+} from "./code-generator.test-fixtures";
 
 // FIXED: Enhanced assertTransformed function that handles actual transformer output
 function assertTransformed(content: string, pattern: any) {
