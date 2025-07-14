@@ -18,6 +18,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src", "stories"],
+  "include": ["src", "src/stories"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
