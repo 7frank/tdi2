@@ -5,11 +5,18 @@ import { Project } from "ts-morph";
 import { EnhancedDependencyExtractor } from "./enhanced-dependency-extractor";
 import { ADDITIONAL_MARKER_FIXTURES } from "./fixtures/marker-approach";
 
+
+const verbose=true
 describe("Enhanced Marker Approach Tests", () => {
   let mockProject: Project;
   let dependencyExtractor: EnhancedDependencyExtractor;
 
   beforeEach(() => {
+
+    if (verbose) {
+      console.log("\n ---- Next Test ----\n")
+    }
+
     mockProject = new Project({
       useInMemoryFileSystem: true,
       compilerOptions: {
@@ -21,7 +28,7 @@ describe("Enhanced Marker Approach Tests", () => {
 
     dependencyExtractor = new EnhancedDependencyExtractor({
       srcDir: "./src",
-      verbose: true,
+      verbose,
     });
   });
 
@@ -177,7 +184,7 @@ describe("Enhanced Marker Approach Tests", () => {
 
     describe("Feature: Array Type Service Injection", () => {
       describe("Given components with array-based service definitions", () => {
-        it.skip("When using array of service objects, Then should extract from element type", () => {
+        it("When using array of service objects, Then should extract from element type", () => {
           // Given
           const sourceFile = mockProject.createSourceFile(
             "src/ArrayServices.tsx",
