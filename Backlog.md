@@ -2,6 +2,8 @@
 
 ## ordered log
 
+### [❌] release di-core 2.3.0 or 2.2.1
+
 ### [❌] DI bugs & side effects (part 1)
 
 > replace current implementation details with one of the packages like

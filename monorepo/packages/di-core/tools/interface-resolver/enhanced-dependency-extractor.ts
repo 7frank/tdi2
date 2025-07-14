@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - FIXED with ts-morph utilities
+// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - FIXED with proper source validation
 
 import {
   ParameterDeclaration,
@@ -11,9 +11,7 @@ import {
   TypeReferenceNode,
   UnionTypeNode,
   IntersectionTypeNode,
-  ArrayTypeNode,
-  Identifier,
-  SyntaxKind
+  ArrayTypeNode
 } from 'ts-morph';
 import * as path from 'path';
 import { FunctionalDependency, TransformationOptions, TypeResolutionContext } from '../functional-di-enhanced-transformer/types';
@@ -375,7 +373,7 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * ENHANCED: Extract from type reference with ts-morph resolution utilities
+   * ENHANCED: Extract from type reference with resolution
    */
   private extractFromTypeReferenceEnhanced(
     typeNode: TypeNode, 
@@ -392,84 +390,33 @@ export class EnhancedDependencyExtractor {
       return this.extractFromDirectMarkerEnhanced(typeNode, sourceFile, basePath);
     }
 
-    // Otherwise, resolve the type reference using ts-morph utilities
-    const typeRef = typeNode as TypeReferenceNode;
-    const typeName = typeRef.getTypeName();
+    // Otherwise, resolve the type reference and analyze its definition
+    const typeName = (typeNode as TypeReferenceNode).getTypeName().getText();
     
     if (this.options.verbose) {
-      console.log(`🔍 Resolving type reference: ${typeName.getText()} at ${basePath}`);
+      console.log(`🔍 Resolving type reference: ${typeName} at ${basePath}`);
     }
 
-    // ENHANCED: Use ts-morph's built-in type resolution
-    try {
-      // Method 1: Try to get definition nodes for the type name
-      if (Node.isIdentifier(typeName)) {
-        const definitions = typeName.getDefinitionNodes();
-        
-        if (definitions.length > 0) {
-          const definition = definitions[0];
-          
-          if (this.options.verbose) {
-            console.log(`✅ Found definition: ${definition.getKindName()} in ${definition.getSourceFile().getBaseName()}`);
-          }
-
-          // Process the resolved definition
-          if (Node.isInterfaceDeclaration(definition)) {
-            return this.extractFromInterfaceDeclarationEnhanced(definition, sourceFile, basePath);
-          }
-
-          if (Node.isTypeAliasDeclaration(definition)) {
-            return this.extractFromTypeAliasDeclarationEnhanced(definition, sourceFile, basePath);
-          }
-        }
-      }
-
-      // Method 2: Try to resolve via symbol if definition nodes didn't work
-      const symbol = typeName.getSymbol();
-      if (symbol) {
-        const declarations = symbol.getDeclarations();
-        
-        for (const declaration of declarations) {
-          if (Node.isInterfaceDeclaration(declaration)) {
-            if (this.options.verbose) {
-              console.log(`✅ Found interface via symbol: ${declaration.getName()}`);
-            }
-            return this.extractFromInterfaceDeclarationEnhanced(declaration, sourceFile, basePath);
-          }
-
-          if (Node.isTypeAliasDeclaration(declaration)) {
-            if (this.options.verbose) {
-              console.log(`✅ Found type alias via symbol: ${declaration.getName()}`);
-            }
-            return this.extractFromTypeAliasDeclarationEnhanced(declaration, sourceFile, basePath);
-          }
-        }
-      }
-
-      // Method 3: Fallback to manual import resolution (keep existing logic as backup)
-      const typeDeclaration = this.findTypeDeclarationFallback(typeName.getText(), sourceFile);
-      if (typeDeclaration) {
-        if (this.options.verbose) {
-          console.log(`✅ Found via fallback: ${typeDeclaration.getKindName()}`);
-        }
-
-        if (Node.isInterfaceDeclaration(typeDeclaration)) {
-          return this.extractFromInterfaceDeclarationEnhanced(typeDeclaration, sourceFile, basePath);
-        }
-
-        if (Node.isTypeAliasDeclaration(typeDeclaration)) {
-          return this.extractFromTypeAliasDeclarationEnhanced(typeDeclaration, sourceFile, basePath);
-        }
-      }
-
-    } catch (error) {
+    // Find the type declaration
+    const typeDeclaration = this.findTypeDeclaration(typeName, sourceFile);
+    if (!typeDeclaration) {
       if (this.options.verbose) {
-        console.warn(`⚠️  Error resolving type reference ${typeName.getText()}:`, error);
+        console.log(`❌ Could not resolve type declaration for: ${typeName}`);
       }
+      return [];
     }
 
     if (this.options.verbose) {
-      console.log(`❌ Could not resolve type reference: ${typeName.getText()}`);
+      console.log(`✅ Found type declaration: ${typeDeclaration.getKindName()}`);
+    }
+
+    // Extract dependencies from the resolved type
+    if (Node.isInterfaceDeclaration(typeDeclaration)) {
+      return this.extractFromInterfaceDeclarationEnhanced(typeDeclaration, sourceFile, basePath);
+    }
+
+    if (Node.isTypeAliasDeclaration(typeDeclaration)) {
+      return this.extractFromTypeAliasDeclarationEnhanced(typeDeclaration, sourceFile, basePath);
     }
 
     return [];
@@ -572,7 +519,7 @@ export class EnhancedDependencyExtractor {
     const interfaceTypeNode = typeArgs[0];
     const interfaceType = interfaceTypeNode.getText();
     
-    // Validate marker source if enabled
+    // FIXED: Validate marker source if enabled - use the actual source file where the marker is imported
     if (this.sourceConfig.validateSources && !this.validateMarkerSource(markerName, sourceFile)) {
       if (this.options.verbose) {
         console.warn(`⚠️  Marker source not validated for ${servicePath}, skipping`);
@@ -639,11 +586,11 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * FALLBACK: Find interface or type alias declaration (backup method)
+   * Find interface or type alias declaration in the source file or imported files
    */
-  private findTypeDeclarationFallback(typeName: string, sourceFile: SourceFile): InterfaceDeclaration | TypeAliasDeclaration | undefined {
+  private findTypeDeclaration(typeName: string, sourceFile: SourceFile): InterfaceDeclaration | TypeAliasDeclaration | undefined {
     if (this.options.verbose) {
-      console.log(`🔍 Fallback search for type declaration: ${typeName}`);
+      console.log(`🔍 Searching for type declaration: ${typeName}`);
     }
 
     // First, look in the current source file
@@ -663,7 +610,7 @@ export class EnhancedDependencyExtractor {
       return localTypeAlias;
     }
 
-    // Then, look in imported files using ts-morph utilities
+    // Then, look in imported files
     const imports = sourceFile.getImportDeclarations();
     if (this.options.verbose) {
       console.log(`🔍 Checking ${imports.length} import declarations`);
@@ -681,8 +628,7 @@ export class EnhancedDependencyExtractor {
           console.log(`🔍 Looking for ${typeName} in imported module: ${moduleSpecifier}`);
         }
         
-        // ENHANCED: Use ts-morph's built-in module resolution
-        const importedFile = importDeclaration.getModuleSpecifierSourceFile();
+        const importedFile = this.resolveImportedFile(moduleSpecifier, sourceFile);
         
         if (importedFile) {
           if (this.options.verbose) {
@@ -724,7 +670,63 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * Validate that a marker comes from a valid source
+   * Resolve imported file path
+   */
+  private resolveImportedFile(moduleSpecifier: string, sourceFile: SourceFile): SourceFile | undefined {
+    try {
+      const currentDir = path.dirname(sourceFile.getFilePath());
+      const project = sourceFile.getProject();
+      
+      let resolvedPath: string;
+      if (moduleSpecifier.startsWith('.')) {
+        // Relative import
+        resolvedPath = path.resolve(currentDir, moduleSpecifier);
+      } else {
+        // Absolute import (from src root)
+        resolvedPath = path.resolve(this.options.srcDir!, moduleSpecifier);
+      }
+
+      // Try different extensions
+      const extensions = ['.ts', '.tsx', '/index.ts', '/index.tsx'];
+      for (const ext of extensions) {
+        const fullPath = resolvedPath + ext;
+        const importedFile = project.getSourceFile(fullPath);
+        if (importedFile) {
+          if (this.options.verbose) {
+            console.log(`✅ Resolved import: ${moduleSpecifier} -> ${fullPath}`);
+          }
+          return importedFile;
+        }
+      }
+
+      // ENHANCED: Try to find by filename matching (for test scenarios)
+      const baseName = path.basename(moduleSpecifier);
+      for (const sourceFile of project.getSourceFiles()) {
+        const fileName = path.basename(sourceFile.getFilePath(), path.extname(sourceFile.getFilePath()));
+        if (fileName === baseName) {
+          if (this.options.verbose) {
+            console.log(`✅ Found import by filename match: ${moduleSpecifier} -> ${sourceFile.getFilePath()}`);
+          }
+          return sourceFile;
+        }
+      }
+
+      if (this.options.verbose) {
+        console.log(`❌ Could not resolve import: ${moduleSpecifier}`);
+        console.log(`🔍 Tried paths: ${extensions.map(ext => resolvedPath + ext).join(', ')}`);
+        console.log(`🔍 Available files: ${project.getSourceFiles().map(f => f.getFilePath()).join(', ')}`);
+      }
+      return undefined;
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Failed to resolve import: ${moduleSpecifier}`, error);
+      }
+      return undefined;
+    }
+  }
+
+  /**
+   * FIXED: Validate that a marker comes from a valid source - now checks the target file where it's used
    */
   private validateMarkerSource(markerName: string, sourceFile: SourceFile): boolean {
     const cacheKey = `${sourceFile.getFilePath()}:${markerName}`;
@@ -733,8 +735,27 @@ export class EnhancedDependencyExtractor {
       return this.validationCache.get(cacheKey)!;
     }
 
+    // Check imports in the source file to see if the marker is imported from a valid source
     const imports = sourceFile.getImportDeclarations();
     const isValid = this.isMarkerFromValidSource(markerName, imports);
+    
+    // FIXED: If not found in current file, also check imported files for type imports
+    if (!isValid) {
+      // Sometimes markers are imported in interface files, not component files
+      // So we need to check imported type definition files too
+      for (const importDecl of imports) {
+        const moduleSpecifier = importDecl.getModuleSpecifierValue();
+        const importedFile = this.resolveImportedFile(moduleSpecifier, sourceFile);
+        
+        if (importedFile) {
+          const importedFileImports = importedFile.getImportDeclarations();
+          if (this.isMarkerFromValidSource(markerName, importedFileImports)) {
+            this.validationCache.set(cacheKey, true);
+            return true;
+          }
+        }
+      }
+    }
     
     this.validationCache.set(cacheKey, isValid);
     return isValid;
@@ -815,8 +836,7 @@ export class EnhancedDependencyExtractor {
     this.validationCache.clear();
   }
 
-
-  /**
+/**
    * Get current source configuration
    */
   getSourceConfiguration(): DISourceConfiguration {
