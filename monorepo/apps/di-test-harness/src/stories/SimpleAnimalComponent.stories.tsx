@@ -4,6 +4,8 @@ import { SimpleAnimalComponent } from "../components/SimpleAnimalComponent";
 import { CompileTimeDIContainer } from "@tdi2/di-core/container";
 import { DIProvider } from "@tdi2/di-core/context";
 
+import { EnhancedDITransformer } from "@tdi2/di-core/tools";
+
 import { DI_CONFIG } from "../.tdi2/di-config";
 import { ErrorBoundary } from "../utils/ErrorBoundary";
 // Create and configure the DI container

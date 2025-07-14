@@ -4,13 +4,10 @@
   "description": "Test harness for DI code generator using Ladle",
   "type": "module",
   "scripts": {
-    "prepare:di": "node prepare-ladle.mjs",
-    "dev": "npm run prepare:di && ladle serve",
-    "dev:skip-di": "ladle serve",
+    "dev": "ladle serve",
     "build": "ladle build",
     "preview": "ladle preview",
-    "clean": "rm -rf src/.tdi2 node_modules/.vite",
-    "test:plugin": "node test-plugin.mjs"
+    "clean": "rm -rf src/.tdi2 node_modules/.vite"
   },
   "dependencies": {
     "ts-morph": "^21.0.1",
