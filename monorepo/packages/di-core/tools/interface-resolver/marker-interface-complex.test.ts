@@ -206,7 +206,7 @@ describe("Enhanced Marker Approach Tests", () => {
           expect(dependencies[0].interfaceType).toBe("ProcessorInterface");
         });
 
-        it.skip("When using nested arrays, Then should handle multi-dimensional structures", () => {
+        it("When using nested arrays, Then should handle multi-dimensional structures", () => {
           // Given
           const sourceFile = mockProject.createSourceFile(
             "src/NestedArrays.tsx",
