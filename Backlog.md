@@ -2,24 +2,13 @@
 
 ## ordered log
 
-### [❌] release di-core 2.3.0 or 2.2.1
-
-### [❌] replace current implementation details with one of the packages like
-
-- @phenomnomnominal/tsquery
-- ts-pattern
-  > https://claude.ai/chat/589c3252-74e7-4e17-b84c-0cebca6d6c2b
-
-maybe normalization could help
-
-> import jscodeshift from 'jscodeshift';
-> import transform from 'react-codemod/transforms/no-destructuring-assignment';
-
-### create and fix some tests
+### [❌] improve testing
 
 - code-generator.snapshot.test.ts focus: correct code
 - ladle / vite test suite, runnning a set of compeonnts with a test harnish
   - having git diff utiltiites and other debug informations readily available as well as a living documentation
+
+### [❌] release di-core 2.3.0 or 2.2.1
 
 ### [❌] DI bugs & side effects (part 1)
 
@@ -108,6 +97,17 @@ function Button({
   bar: Lazy<BarInterface>;
 }>);
 ```
+
+### [❌] replace current implementation details with one of the packages like
+
+- @phenomnomnominal/tsquery
+- ts-pattern
+  > https://claude.ai/chat/589c3252-74e7-4e17-b84c-0cebca6d6c2b
+
+maybe normalization could help
+
+> import jscodeshift from 'jscodeshift';
+> import transform from 'react-codemod/transforms/no-destructuring-assignment';
 
 ### [❌] classes vs zustand vanilla inject / maybe both
 
