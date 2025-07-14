@@ -21,7 +21,7 @@ describe("Enhanced Marker Approach Tests", () => {
 
     dependencyExtractor = new EnhancedDependencyExtractor({
       srcDir: "./src",
-      verbose: true,
+      verbose: true, // change after skipped tests work again
     });
   });
 
