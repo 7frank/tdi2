@@ -14,10 +14,10 @@ export function SimpleAnimalComponent(props: {
   };
 
   return (
-    <ErrorBoundary>
+    <div>
       <p>Animal Name: "{services.animal.name}"</p>
       <input onChange={(e) => services.animal.assignName(e.target.value)} />
       <button onClick={handleClick}>Make Sound</button>
-    </ErrorBoundary>
+    </div>
   );
 }

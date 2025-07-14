@@ -5,6 +5,7 @@ import { CompileTimeDIContainer } from "@tdi2/di-core/container";
 import { DIProvider } from "@tdi2/di-core/context";
 
 import { DI_CONFIG } from "../.tdi2/di-config";
+import { ErrorBoundary } from "../utils/ErrorBoundary";
 // Create and configure the DI container
 const container = new CompileTimeDIContainer();
 container.loadConfiguration(DI_CONFIG);
@@ -19,10 +20,10 @@ console.log("🔍 Detailed container state:");
 
 export const ASimpleAnimal: Story = () => {
   return (
-    <div style={{ padding: "20px", maxWidth: "1200px" }}>
+     <ErrorBoundary>
       <DIProvider container={container}>
         <SimpleAnimalComponent />
       </DIProvider>
-    </div>
+    </ErrorBoundary>
   );
 };
