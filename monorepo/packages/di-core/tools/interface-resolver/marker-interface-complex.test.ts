@@ -256,7 +256,7 @@ describe("Enhanced Marker Approach Tests", () => {
           );
         });
 
-        it.skip("When using mapped types with services, Then should extract from mapped structure", () => {
+        it("When using mapped types with services, Then should extract from mapped structure", () => {
           // Given
           const sourceFile = mockProject.createSourceFile(
             "src/MappedTypes.tsx",

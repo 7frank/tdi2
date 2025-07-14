@@ -1,4 +1,19 @@
-# Learnings of using Claude.AI
+# Learnings of using Claude.AI and other AI Tool
+
+- Working with AI does somewhat resemble working with teams
+  - "forming storming norming performing"
+- it shares similarities to how and why we structure code in the first palce
+  - "it fits in your head"
+- as of now AI still doesnt allow for fully "no-code"
+  - context size limits it from gobbling up full repos "naively"
+- im sure we will be getting there in the near future but for the forseable time there will still be someone that has to understand the system to a certain degree
+  - we are now experiencing an abstraction evolution, a new type of IDE (level 4? 5?)
+  - if we compare that to C and assembler
+    - we started with text files and assembler
+    - some even further in the past with punch cards
+    - c allowed to abstract assembly code
+- now we encounter abstracting "implementation details" in favour of "functional requirements"
+  - but for that we need to adapt the way we work with programs
 
 ## Vibe Coding
 
@@ -22,7 +37,6 @@
   - let ai fix the tests by pasting test results
   - do this unit the tests are green
   - decide if the test or the impl might be at fault
-
 
 ## size matters - Divide an conquer
 
@@ -120,9 +134,7 @@ suggest a file that i should test  integration test with bun:test that should wo
 - you can always devolve into the state of ["Vibe Coder"](https://www.youtube.com/watch?v=JeNS1ZNHQs8) for a bit and contemplate your life descisions
 - keep your features branches for some time when squashing, you might want to "git bisect" later on
 
-
 -fix tests one by one, its tempting to batch fix but sooner or later you still need to understand what the bot created
-
 
 ## misc
 
@@ -137,7 +149,6 @@ suggest a file that i should test  integration test with bun:test that should wo
 npm install -g ts-prune
 ts-prune -p ./tsconfig.app.json
 
-
-#### Cursor 
+#### Cursor
 
 #### Codex
