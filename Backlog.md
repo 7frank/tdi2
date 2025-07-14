@@ -20,6 +20,8 @@ maybe normalization could help
 
 ### [❌] DI bugs & side effects (part 1)
 
+> create integration / snapshot tests for code generator
+
 
 #### [❌] ⚠️ interfaces still not working with generic any
 
