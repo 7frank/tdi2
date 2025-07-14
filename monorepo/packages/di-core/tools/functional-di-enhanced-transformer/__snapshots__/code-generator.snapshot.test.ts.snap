@@ -1,8 +1,7 @@
 // Bun Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Code Generator Snapshot Tests Simple Components should transform simple animal component: simple-animal-component 1`] = `
-"
-import React from 'react';
+"import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
@@ -27,13 +26,11 @@ export function AnimalComponent(props: {
       <button onClick={handleClick}>Make Sound</button>
     </div>
   );
-}
-"
+}"
 `;
 
 exports[`Code Generator Snapshot Tests Simple Components should transform component with multiple animals: multi-animal-component 1`] = `
-"
-import React from 'react';
+"import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
@@ -63,13 +60,11 @@ export function PetShopComponent(props: {
       <button onClick={showPets}>Show All Pets</button>
     </div>
   );
-}
-"
+}"
 `;
 
 exports[`Code Generator Snapshot Tests Simple Components should transform arrow function component: arrow-animal-component 1`] = `
-"
-import React from 'react';
+"import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
@@ -83,13 +78,11 @@ export const QuickAnimalComponent = (props: {
                 const services = { animal };
   const { title } = props;
   return <div>{title}: {services.animal.getName()}</div>;
-};
-"
+};"
 `;
 
 exports[`Code Generator Snapshot Tests Edge Cases should handle mixed DI and non-DI services: mixed-services-component 1`] = `
-"
-import React from 'react';
+"import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
@@ -105,13 +98,11 @@ export function MixedPetComponent(props: {
                 const services = { animal };
   const { title } = props;
   return <div>{title}: {services.animal.getName()}</div>;
-}
-"
+}"
 `;
 
 exports[`Code Generator Snapshot Tests Edge Cases should handle optional missing services: optional-missing-component 1`] = `
-"
-import React from 'react';
+"import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
@@ -135,13 +126,11 @@ export function OptionalMissingComponent(props: {
   }, []);
   
   return <div>Hello {name}: {services.animal.getName()}</div>;
-}
-"
+}"
 `;
 
 exports[`Code Generator Snapshot Tests Edge Cases should handle deep destructuring patterns: deep-destructuring-component 1`] = `
-"
-import React from 'react';
+"import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
@@ -175,13 +164,11 @@ export function DeepDestructuringComponent(props: {
       <p>Animal: {services.animal.getName()}</p>
     </div>
   );
-}
-"
+}"
 `;
 
 exports[`Code Generator Snapshot Tests Separate Interfaces should handle components with separate interface definitions: separate-interface-component 1`] = `
-"
-import React from 'react';
+"import React from 'react';
 import type { PetComponentProps } from './PetComponentProps';
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
@@ -196,8 +183,7 @@ export function SeparateInterfaceComponent(props: PetComponentProps) {
       <p>{services.animal.speak()}</p>
     </div>
   );
-}
-"
+}"
 `;
 
 exports[`Code Generator Snapshot Tests Multiple Components should transform multiple components at once: multiple-components-transformation 1`] = `
@@ -299,8 +285,7 @@ export const QuickAnimalComponent = (props: {
 `;
 
 exports[`Code Generator Snapshot Tests Error Scenarios should handle all missing implementations gracefully: all-missing-implementations 1`] = `
-"
-import React from 'react';
+"import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
@@ -325,13 +310,11 @@ export function AnimalComponent(props: {
       <button onClick={handleClick}>Make Sound</button>
     </div>
   );
-}
-"
+}"
 `;
 
 exports[`Code Generator Snapshot Tests Error Scenarios should handle partial missing implementations: partial-missing-implementations 1`] = `
-"
-import React from 'react';
+"import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
@@ -361,8 +344,7 @@ export function PetShopComponent(props: {
       <button onClick={showPets}>Show All Pets</button>
     </div>
   );
-}
-"
+}"
 `;
 
 exports[`Code Generator Snapshot Tests Transformation Summary should provide accurate transformation summary: transformation-summary 1`] = `
