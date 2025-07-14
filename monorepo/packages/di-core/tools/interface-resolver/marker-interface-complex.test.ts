@@ -14,7 +14,7 @@ describe("Enhanced Marker Approach Tests", () => {
   beforeEach(() => {
 
     if (verbose) {
-      console.log("\n ---- Next Test ----\n")
+      console.log("\n ---- Next Test\n")
     }
 
     mockProject = new Project({

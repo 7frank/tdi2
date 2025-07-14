@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer/enhanced-dependency-extractor.ts - FIXED with proper source validation
+// tools/interface-resolver/enhanced-dependency-extractor.ts - FIXED with built-in type handling
 
 import {
   ParameterDeclaration,
@@ -291,7 +291,7 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * FIXED: Extract from array types
+   * FIXED: Extract from array types with built-in type handling
    */
   private extractFromArrayType(
     typeNode: TypeNode, 
@@ -373,7 +373,7 @@ export class EnhancedDependencyExtractor {
   }
 
   /**
-   * ENHANCED: Extract from type reference with resolution
+   * ENHANCED: Extract from type reference with built-in type handling
    */
   private extractFromTypeReferenceEnhanced(
     typeNode: TypeNode, 
@@ -390,11 +390,27 @@ export class EnhancedDependencyExtractor {
       return this.extractFromDirectMarkerEnhanced(typeNode, sourceFile, basePath);
     }
 
-    // Otherwise, resolve the type reference and analyze its definition
-    const typeName = (typeNode as TypeReferenceNode).getTypeName().getText();
+    // Handle built-in Array type specifically
+    const typeReference = typeNode as TypeReferenceNode;
+    const typeName = typeReference.getTypeName().getText();
     
+    if (typeName === 'Array') {
+      if (this.options.verbose) {
+        console.log(`🔍 Handling built-in Array type at ${basePath}`);
+      }
+      return this.handleBuiltInArrayType(typeReference, sourceFile, basePath);
+    }
+
     if (this.options.verbose) {
       console.log(`🔍 Resolving type reference: ${typeName} at ${basePath}`);
+    }
+
+    // Check if this is a built-in type that we should handle specially
+    if (this.isBuiltInType(typeName)) {
+      if (this.options.verbose) {
+        console.log(`📝 Handling built-in type: ${typeName} at ${basePath}`);
+      }
+      return this.handleBuiltInType(typeReference, sourceFile, basePath);
     }
 
     // Find the type declaration
@@ -420,6 +436,69 @@ export class EnhancedDependencyExtractor {
     }
 
     return [];
+  }
+
+  /**
+   * NEW: Handle built-in Array type
+   */
+  private handleBuiltInArrayType(
+    typeReference: TypeReferenceNode,
+    sourceFile: SourceFile,
+    basePath: string
+  ): FunctionalDependency[] {
+    const typeArgs = typeReference.getTypeArguments();
+    if (typeArgs.length !== 1) {
+      if (this.options.verbose) {
+        console.log(`⚠️  Array type has ${typeArgs.length} type arguments, expected 1`);
+      }
+      return [];
+    }
+
+    const elementType = typeArgs[0];
+    if (this.options.verbose) {
+      console.log(`🔍 Processing Array element type: ${elementType.getKindName()}`);
+    }
+
+    // Extract dependencies from the array element type
+    return this.extractDependenciesFromTypeNode(elementType, sourceFile, `${basePath}[]`);
+  }
+
+  /**
+   * NEW: Check if a type name is a built-in TypeScript type
+   */
+  private isBuiltInType(typeName: string): boolean {
+    const builtInTypes = [
+      'Array', 'Promise', 'Map', 'Set', 'WeakMap', 'WeakSet',
+      'Date', 'RegExp', 'Error', 'Function', 'Object',
+      'Partial', 'Required', 'Readonly', 'Record', 'Pick', 'Omit'
+    ];
+    return builtInTypes.includes(typeName);
+  }
+
+  /**
+   * NEW: Handle built-in types
+   */
+  private handleBuiltInType(
+    typeReference: TypeReferenceNode,
+    sourceFile: SourceFile,
+    basePath: string
+  ): FunctionalDependency[] {
+    const typeName = typeReference.getTypeName().getText();
+    const typeArgs = typeReference.getTypeArguments();
+
+    if (this.options.verbose) {
+      console.log(`🔍 Handling built-in type: ${typeName} with ${typeArgs.length} type arguments`);
+    }
+
+    // For most built-in types, extract from their type arguments
+    const dependencies: FunctionalDependency[] = [];
+    
+    for (const typeArg of typeArgs) {
+      const argDeps = this.extractDependenciesFromTypeNode(typeArg, sourceFile, `${basePath}<${typeName}>`);
+      dependencies.push(...argDeps);
+    }
+
+    return dependencies;
   }
 
   /**
@@ -724,8 +803,7 @@ export class EnhancedDependencyExtractor {
       return undefined;
     }
   }
-
-  /**
+/**
    * FIXED: Validate that a marker comes from a valid source - now checks the target file where it's used
    */
   private validateMarkerSource(markerName: string, sourceFile: SourceFile): boolean {
@@ -871,7 +949,8 @@ export class EnhancedDependencyExtractor {
         'TupleType ([T1, T2, ...])',
         'MappedType ({ [K in keyof T]: ... })',
         'InterfaceDeclaration',
-        'TypeAliasDeclaration'
+        'TypeAliasDeclaration',
+        'Built-in types (Array, Promise, etc.)'
       ],
       sourceValidationEnabled: this.sourceConfig.validateSources
     };

@@ -23,6 +23,7 @@
   - do this unit the tests are green
   - decide if the test or the impl might be at fault
 
+
 ## size matters - Divide an conquer
 
 - the bigger the change you want to make is the harder it will get
@@ -118,6 +119,10 @@ suggest a file that i should test  integration test with bun:test that should wo
   - if not, write tests for bugs
 - you can always devolve into the state of ["Vibe Coder"](https://www.youtube.com/watch?v=JeNS1ZNHQs8) for a bit and contemplate your life descisions
 - keep your features branches for some time when squashing, you might want to "git bisect" later on
+
+
+-fix tests one by one, its tempting to batch fix but sooner or later you still need to understand what the bot created
+
 
 ## misc
 
