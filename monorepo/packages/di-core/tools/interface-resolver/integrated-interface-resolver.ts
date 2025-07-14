@@ -1,4 +1,4 @@
-// tools/interface-resolver/integrated-interface-resolver.ts - Complete integration of enhanced components
+// tools/interface-resolver/integrated-interface-resolver.ts - FIXED VERSION with enhanced generic resolution
 
 import {
   Project,
@@ -406,7 +406,7 @@ export class IntegratedInterfaceResolver {
     console.log(`  📋 Total: ${this.interfaces.size}\n`);
   }
 
-  // Enhanced resolution with comprehensive fallback strategy
+  // FIXED: Enhanced resolution with comprehensive generic matching
   resolveImplementation(interfaceType: string): InterfaceImplementation | undefined {
     const sanitizedKey = this.keySanitizer.sanitizeKey(interfaceType);
     
@@ -424,7 +424,23 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 2. AsyncState pattern matching
+    // 2. FIXED: Generic interface matching - handle type parameter substitution
+    const requestedInterfaceName = this.keySanitizer.extractBaseTypeName(interfaceType);
+    const isRequestedGeneric = this.keySanitizer.isGenericType(interfaceType);
+    
+    if (isRequestedGeneric) {
+      for (const [key, implementation] of this.interfaces) {
+        // Match by interface name and generic capability
+        if (implementation.interfaceName === requestedInterfaceName && implementation.isGeneric) {
+          if (this.options.verbose) {
+            console.log(`✅ Generic interface match: ${implementation.implementationClass} for ${interfaceType}`);
+          }
+          return implementation;
+        }
+      }
+    }
+
+    // 3. AsyncState pattern matching
     const asyncStateMatch = interfaceType.match(/^AsyncState<(.+)>$/);
     if (asyncStateMatch) {
       const stateType = asyncStateMatch[1];
@@ -453,7 +469,7 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 3. Inheritance-based lookups
+    // 4. Inheritance-based lookups
     const inheritanceSanitizedKey = this.keySanitizer.sanitizeInheritanceKey(interfaceType);
     for (const [key, implementation] of this.interfaces) {
       if (implementation.isInheritanceBased && 
@@ -465,7 +481,7 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 4. State-based lookups
+    // 5. State-based lookups
     for (const [key, implementation] of this.interfaces) {
       if (implementation.isStateBased && implementation.sanitizedKey === sanitizedKey) {
         if (this.options.verbose) {
@@ -475,7 +491,7 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 5. Class-based lookups
+    // 6. Class-based lookups
     for (const [key, implementation] of this.interfaces) {
       if (implementation.isClassBased && implementation.sanitizedKey === sanitizedKey) {
         if (this.options.verbose) {
@@ -485,9 +501,9 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 6. Fallback to interface name matching
+    // 7. Fallback to interface name matching
     for (const [key, implementation] of this.interfaces) {
-      if (implementation.interfaceName === interfaceType) {
+      if (implementation.interfaceName === interfaceType || implementation.interfaceName === requestedInterfaceName) {
         if (this.options.verbose) {
           console.log(`⚠️  Interface name fallback: ${implementation.implementationClass}`);
         }
@@ -498,8 +514,9 @@ export class IntegratedInterfaceResolver {
     if (this.options.verbose) {
       console.log(`❌ No implementation found for: ${interfaceType}`);
       console.log(`🔍 Searched for key: ${sanitizedKey}`);
+      console.log(`🔍 Interface name: ${requestedInterfaceName}`);
       if (this.interfaces.size <= 10) {
-        console.log(`📋 Available implementations:`, Array.from(this.interfaces.values()).map(i => `${i.interfaceName} -> ${i.implementationClass}`));
+        console.log(`📋 Available implementations:`, Array.from(this.interfaces.values()).map(i => `${i.interfaceName} -> ${i.implementationClass} (key: ${i.sanitizedKey})`));
       }
     }
 
@@ -610,7 +627,7 @@ export class IntegratedInterfaceResolver {
 
     for (const [, impl] of this.interfaces) {
       const type = this.getRegistrationType(impl);
-      (registrationTypes as any)[type]++; // FIXME: Type mismatch, should be fixed, it currenty breaks build
+      (registrationTypes as any)[type]++;
     }
 
     // Test resolution for common patterns

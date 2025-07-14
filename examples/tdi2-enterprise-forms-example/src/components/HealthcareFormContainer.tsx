@@ -2,8 +2,7 @@
 import React from "react";
 import type { Inject } from "@tdi2/di-core/markers";
 import type { FormDAGServiceInterface } from "../services/FormDAGService";
-import type { DemographicsFormServiceInterface } from "../services/DemographicsFormService";
-import type { InsuranceFormServiceInterface } from "../services/InsuranceFormService";
+
 import type { FormContainerControllerInterface } from "../controller/FormContainerController";
 
 import { FormNavigation } from "./FormNavigation";
@@ -147,7 +146,6 @@ export function HealthcareFormContainer(props: HealthcareFormContainerProps) {
           return (
             <UnknownFormState
               currentNode={currentFormComponent}
-              formDAG={formDAG}
               onNavigate={(nodeId: string) =>
                 formContainerController.navigateToForm(nodeId)
               }
@@ -665,11 +663,9 @@ function ReadyForFinalSubmit({
 
 function UnknownFormState({
   currentNode,
-  formDAG,
   onNavigate,
 }: {
   currentNode: string;
-  formDAG: FormDAGServiceInterface;
   onNavigate: (nodeId: string) => void;
 }) {
   return (

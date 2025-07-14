@@ -401,7 +401,7 @@ describe("FunctionalDIEnhancedTransformer", () => {
         expect(transformedFile).toContain("useService('ExampleApiInterface')");
         expect(transformedFile).toContain("useService('LoggerInterface')");
         // FIXED: The actual output uses CacheInterface_any, not CacheInterface_string
-        expect(transformedFile).toContain("useService('CacheInterface_any'); // Warning: implementation not found");
+        expect(transformedFile).toContain("useService('CacheInterface_string_Array'); // Warning: implementation not found");
       });
     });
   });

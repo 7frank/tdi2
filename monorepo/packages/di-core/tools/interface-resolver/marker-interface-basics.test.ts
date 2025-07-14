@@ -3,7 +3,10 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Project } from "ts-morph";
 import { EnhancedDependencyExtractor } from "./enhanced-dependency-extractor";
-import { MARKER_FIXTURES } from "./fixtures/marker-approach";
+import {
+  MARKER_FIXTURES,
+  ADDITIONAL_MARKER_FIXTURES,
+} from "./fixtures/marker-approach";
 
 describe("Enhanced Marker Approach Tests", () => {
   let mockProject: Project;

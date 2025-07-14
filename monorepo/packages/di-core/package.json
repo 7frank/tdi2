@@ -41,6 +41,7 @@
   ],
   "scripts": {
     "dev": "tsup --watch",
+    "test:io": "bash -c 'select f in $(find . -type f -name \"*.test.ts\" ); do [ -n \"$f\" ] && exec bun test \"$f\"; done'",
     "build": "tsup",
     "test": "bun test",
     "lint": "echo 'No linting configured yet'",
