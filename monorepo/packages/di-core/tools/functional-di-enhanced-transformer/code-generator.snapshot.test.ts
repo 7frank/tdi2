@@ -3,6 +3,7 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Project } from "ts-morph";
 import { FunctionalDIEnhancedTransformer } from "./functional-di-enhanced-transformer";
+import { expectToMatchCodeSnapshot } from "./test-utils/expectToMatchCodeSnapshot";
 
 // Simple test fixtures following Animal/Dog pattern
 const TEST_COMPONENTS = {
@@ -345,7 +346,7 @@ describe("Code Generator Snapshot Tests", () => {
       // Then
       expect(transformedFiles.size).toBe(1);
       const transformedContent = Array.from(transformedFiles.values())[0];
-      expect(transformedContent).toMatchSnapshot("simple-animal-component");
+      expectToMatchCodeSnapshot(transformedContent,"simple-animal-component");
     });
 
     it("should transform component with multiple animals", async () => {
@@ -358,7 +359,7 @@ describe("Code Generator Snapshot Tests", () => {
       // Then
       expect(transformedFiles.size).toBe(1);
       const transformedContent = Array.from(transformedFiles.values())[0];
-      expect(transformedContent).toMatchSnapshot("multi-animal-component");
+      expectToMatchCodeSnapshot(transformedContent,  "multi-animal-component");
     });
 
     it("should transform arrow function component", async () => {
@@ -371,7 +372,7 @@ describe("Code Generator Snapshot Tests", () => {
       // Then
       expect(transformedFiles.size).toBe(1);
       const transformedContent = Array.from(transformedFiles.values())[0];
-      expect(transformedContent).toMatchSnapshot("arrow-animal-component");
+      expectToMatchCodeSnapshot(transformedContent,  "arrow-animal-component");
     });
   });
 
@@ -386,7 +387,7 @@ describe("Code Generator Snapshot Tests", () => {
       // Then
       expect(transformedFiles.size).toBe(1);
       const transformedContent = Array.from(transformedFiles.values())[0];
-      expect(transformedContent).toMatchSnapshot("mixed-services-component");
+      expectToMatchCodeSnapshot(transformedContent,  "mixed-services-component");
     });
 
     it("should handle optional missing services", async () => {
@@ -399,7 +400,7 @@ describe("Code Generator Snapshot Tests", () => {
       // Then
       expect(transformedFiles.size).toBe(1);
       const transformedContent = Array.from(transformedFiles.values())[0];
-      expect(transformedContent).toMatchSnapshot("optional-missing-component");
+      expectToMatchCodeSnapshot(transformedContent,  "optional-missing-component");
     });
 
     it("should handle deep destructuring patterns", async () => {
@@ -412,7 +413,7 @@ describe("Code Generator Snapshot Tests", () => {
       // Then
       expect(transformedFiles.size).toBe(1);
       const transformedContent = Array.from(transformedFiles.values())[0];
-      expect(transformedContent).toMatchSnapshot("deep-destructuring-component");
+      expectToMatchCodeSnapshot(transformedContent,  "deep-destructuring-component");
     });
 
     it("should not transform components without DI services", async () => {
@@ -439,7 +440,7 @@ describe("Code Generator Snapshot Tests", () => {
       // Then
       expect(transformedFiles.size).toBe(1);
       const transformedContent = Array.from(transformedFiles.values())[0];
-      expect(transformedContent).toMatchSnapshot("separate-interface-component");
+      expectToMatchCodeSnapshot(transformedContent,  "separate-interface-component");
     });
   });
 
@@ -480,7 +481,7 @@ describe("Code Generator Snapshot Tests", () => {
       // Then
       expect(transformedFiles.size).toBe(1);
       const transformedContent = Array.from(transformedFiles.values())[0];
-      expect(transformedContent).toMatchSnapshot("all-missing-implementations");
+      expectToMatchCodeSnapshot(transformedContent,  "all-missing-implementations");
     });
 
     it("should handle partial missing implementations", async () => {
@@ -505,7 +506,7 @@ describe("Code Generator Snapshot Tests", () => {
       // Then
       expect(transformedFiles.size).toBe(1);
       const transformedContent = Array.from(transformedFiles.values())[0];
-      expect(transformedContent).toMatchSnapshot("partial-missing-implementations");
+      expectToMatchCodeSnapshot(transformedContent,  "partial-missing-implementations");
     });
   });
 
