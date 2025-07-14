@@ -1,22 +1,22 @@
 {
   "name": "di-test-harness",
   "version": "1.0.0",
-  "description": "Test harness and living documentation for DI code generator",
+  "description": "Test harness for DI code generator using Ladle",
   "type": "module",
   "scripts": {
     "dev": "ladle serve",
     "build": "ladle build",
-    "preview": "ladle preview",
-    "test": "vitest",
-    "test:ui": "vitest --ui"
+    "preview": "ladle preview"
   },
   "dependencies": {
-    "ts-morph": "^21.0.1"
+    "ts-morph": "^21.0.1",
+    "@tdi2/di-core": "workspace:*"
   },
   "devDependencies": {
     "@ladle/react": "^5.0.3",
     "@vitejs/plugin-react": "^4.6.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "@tdi2/vite-plugin-di": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
