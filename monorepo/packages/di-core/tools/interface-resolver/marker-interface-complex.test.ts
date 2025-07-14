@@ -148,7 +148,7 @@ describe("Enhanced Marker Approach Tests", () => {
 
     describe("Feature: Intersection Type Service Injection", () => {
       describe("Given components with intersection type props", () => {
-        it.skip("When using intersection types, Then should merge all service definitions", () => {
+        it("When using intersection types, Then should merge all service definitions", () => {
           // Given
           const sourceFile = mockProject.createSourceFile(
             "src/IntersectionTypes.tsx",
