@@ -3,21 +3,20 @@ import { AnimalInterface } from "../interfaces/AnimalInterface";
 import { ErrorBoundary } from "../utils/ErrorBoundary";
 
 export function SimpleAnimalComponent(props: {
-  name: string;
   services: {
     animal: Inject<AnimalInterface>;
   };
 }) {
-  const { name, services } = props;
-
+  const {  services } = props;
+  console.log(services);
   const handleClick = () => {
     console.log(services.animal.speak());
   };
 
   return (
     <ErrorBoundary>
-      <h1>{name}</h1>
-      <p>Animal: {services.animal.getName()}</p>
+      <p>Animal Name: "{services.animal.name}"</p>
+      <input onChange={(e) => services.animal.assignName(e.target.value)} />
       <button onClick={handleClick}>Make Sound</button>
     </ErrorBoundary>
   );

@@ -3,8 +3,13 @@ import { AnimalInterface } from "../interfaces/AnimalInterface";
 
 @Service()
 export class DogService implements AnimalInterface {
-  getName() {
-    return "Doggo";
+  name: string = "unnamed-doggo";
+
+  // FIXME must have a constructor to work but we dont want this
+  constructor() {}
+
+  assignName(n: string) {
+    this.name = n;
   }
 
   speak() {

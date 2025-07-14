@@ -1,4 +1,5 @@
 export interface AnimalInterface {
-  getName: () => string;
+  assignName: (n: string) => void;
+  name: string;
   speak: () => void;
 }
