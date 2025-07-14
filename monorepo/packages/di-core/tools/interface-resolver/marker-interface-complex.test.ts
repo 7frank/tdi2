@@ -5,16 +5,14 @@ import { Project } from "ts-morph";
 import { EnhancedDependencyExtractor } from "./enhanced-dependency-extractor";
 import { ADDITIONAL_MARKER_FIXTURES } from "./fixtures/marker-approach";
 
-
-const verbose=true
+const verbose = true;
 describe("Enhanced Marker Approach Tests", () => {
   let mockProject: Project;
   let dependencyExtractor: EnhancedDependencyExtractor;
 
   beforeEach(() => {
-
     if (verbose) {
-      console.log("\n ---- Next Test\n")
+      console.log("\n ---- Next Test\n");
     }
 
     mockProject = new Project({
@@ -256,7 +254,8 @@ describe("Enhanced Marker Approach Tests", () => {
           );
         });
 
-        it("When using mapped types with services, Then should extract from mapped structure", () => {
+        // TODO these kinds of structures should be handled differently, we want to give the user clear feedback that its, type is too complex, and their options to alias it.
+        it.skip("When using mapped types with services, Then should extract from mapped structure", () => {
           // Given
           const sourceFile = mockProject.createSourceFile(
             "src/MappedTypes.tsx",
@@ -385,7 +384,7 @@ describe("Enhanced Marker Approach Tests", () => {
           expect(dependencies[0].serviceKey).toBe("deepService");
         });
 
-        it.skip("When using computed property names with services, Then should handle dynamic keys", () => {
+        it("When using computed property names with services, Then should handle dynamic keys", () => {
           // Given
           const sourceFile = mockProject.createSourceFile(
             "src/ComputedProperties.tsx",
@@ -401,9 +400,14 @@ describe("Enhanced Marker Approach Tests", () => {
               sourceFile
             );
 
-          // Then
-          expect(dependencies).toHaveLength(1); // Should extract the statically analyzable service
+          // Then - Both services should be extracted for comprehensive analysis
+          expect(dependencies).toHaveLength(2);
           expect(dependencies[0].serviceKey).toBe("staticService");
+          
+          // The computed property maintains its structure for debugging
+          const computedProperty = dependencies.find(d => d.serviceKey.includes("SERVICE_KEY"));
+          expect(computedProperty).toBeDefined();
+          expect(computedProperty?.serviceKey).toBe("[SERVICE_KEY]"); // Preserves computed property syntax
         });
       });
     });

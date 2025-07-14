@@ -756,7 +756,7 @@ const SERVICE_KEY = 'dynamicService';
 export function Component(props: {
   services: {
     staticService: Inject<StaticServiceInterface>;
-    [SERVICE_KEY]: Inject<DynamicServiceInterface>; // This might not be extractable
+    [SERVICE_KEY]: Inject<DynamicServiceInterface>;
   };
 }) {
   return <div>Computed properties</div>;
