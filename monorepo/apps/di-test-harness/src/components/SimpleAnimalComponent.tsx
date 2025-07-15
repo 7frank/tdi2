@@ -1,13 +1,12 @@
 import type { Inject } from "@tdi2/di-core/markers";
 import { AnimalInterface } from "../interfaces/AnimalInterface";
-import { ErrorBoundary } from "../utils/ErrorBoundary";
 
 export function SimpleAnimalComponent(props: {
   services: {
     animal: Inject<AnimalInterface>;
   };
 }) {
-  const {  services } = props;
+  const { services } = props;
   console.log(services);
   const handleClick = () => {
     console.log(services.animal.speak());

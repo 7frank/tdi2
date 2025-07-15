@@ -1,6 +1,5 @@
 import type { Inject } from "@tdi2/di-core/markers";
 import { AnimalInterface } from "../interfaces/AnimalInterface";
-import { ErrorBoundary } from "../utils/ErrorBoundary";
 
 type Props = {
   services: {
@@ -10,7 +9,6 @@ type Props = {
 
 // TODO implement example properly as soon as we can isolate it
 export function DestructuredKeysExample({ services }: Props) {
-
   console.log(services);
   const handleClick = () => {
     console.log(services.animal.speak());
