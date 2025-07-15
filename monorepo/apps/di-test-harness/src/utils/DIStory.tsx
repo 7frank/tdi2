@@ -1,7 +1,7 @@
 import React from "react";
 import { StoryErrorBoundary } from "./StoryErrorBoundary";
 
-type Props = { name?: string; children?: React.ReactElement; };
+type Props = { name?: string; children?: React.ReactNode; };
 export function DIStory({ name, children }: Props) {
   return (
     <StoryErrorBoundary storyName={name}>

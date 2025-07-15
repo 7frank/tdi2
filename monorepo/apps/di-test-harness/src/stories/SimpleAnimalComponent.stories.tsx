@@ -6,6 +6,8 @@ import { DI_CONFIG } from "../.tdi2/di-config";
 import { lazy } from "../utils/simpleLazy";
 import { DIStory } from "../utils/DIStory";
 
+import source from "../components/SimpleAnimalComponent.tsx?raw";
+
 const SimpleAnimalComponent = lazy(
   () => import("../components/SimpleAnimalComponent"),
   "SimpleAnimalComponent"
@@ -20,7 +22,10 @@ export const ASimpleAnimal: Story = () => {
     <DIStory>
       <DIProvider container={container}>
         <SimpleAnimalComponent />
-      </DIProvider>
+      </DIProvider>{" "}
+      <pre>
+        <code>{source}</code>
+      </pre>
     </DIStory>
   );
 };

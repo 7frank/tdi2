@@ -5,6 +5,8 @@ import { DI_CONFIG } from "../.tdi2/di-config";
 import { lazy } from "../utils/simpleLazy";
 import { DIStory } from "../utils/DIStory";
 
+import source from "../components/DestructuredKeysExample.tsx?raw";
+
 const DestructuredKeysExample = lazy(
   () => import("../components/DestructuredKeysExample"),
   "DestructuredKeysExample"
@@ -20,6 +22,9 @@ export const ADestructuredKeysExample: Story = () => {
       <DIProvider container={container}>
         <DestructuredKeysExample />
       </DIProvider>
+      <pre>
+        <code>{source}</code>
+      </pre>
     </DIStory>
   );
 };
