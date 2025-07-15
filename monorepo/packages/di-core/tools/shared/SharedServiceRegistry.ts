@@ -304,7 +304,7 @@ export class SharedServiceRegistry {
       // Generate DI map entry
       diMapEntries.push(`  '${token}': {
     factory: ${registration.factory},
-    scope: '${registration.scope}',
+    scope: '${registration.scope}' as const,
     dependencies: [${registration.dependencies.map(dep => `'${dep}'`).join(', ')}],
     interfaceName: '${registration.interfaceName}',
     implementationClass: '${implementationClass}',
