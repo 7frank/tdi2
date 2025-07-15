@@ -1,31 +1,31 @@
-import React, { useState, useEffect } from "react";
+// src/stories/DestructuredKeysExample.stories.tsx
+import React from "react";
 import type { Story } from "@ladle/react";
-import { SimpleAnimalComponent } from "../components/SimpleAnimalComponent";
 import { CompileTimeDIContainer } from "@tdi2/di-core/container";
 import { DIProvider } from "@tdi2/di-core/context";
-
-import { EnhancedDITransformer } from "@tdi2/di-core/tools";
-
 import { DI_CONFIG } from "../.tdi2/di-config";
-import { ErrorBoundary } from "../utils/ErrorBoundary";
+import { StoryErrorBoundary } from "../utils/StoryErrorBoundary";
+import { lazy } from "../utils/simpleLazy";
+
+// Simple lazy import with error handling - now Vite-friendly
+const Lazy = lazy(
+  () => import("../components/SimpleAnimalComponent"), 
+  "SimpleAnimalComponent"
+);
+
 // Create and configure the DI container
 const container = new CompileTimeDIContainer();
 container.loadConfiguration(DI_CONFIG);
 
-// Debug: Show registered services
-const registeredTokens = container.getRegisteredTokens();
-console.log("✅ Registered services:", registeredTokens);
-
-// Enhanced debug info
-console.log("🔍 Detailed container state:");
-(container as any).debugContainer();
 
 export const ASimpleAnimal: Story = () => {
   return (
-     <ErrorBoundary>
+    <StoryErrorBoundary storyName="DestructuredKeysExample">
       <DIProvider container={container}>
-        <SimpleAnimalComponent />
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Lazy />
+        </React.Suspense>
       </DIProvider>
-    </ErrorBoundary>
+    </StoryErrorBoundary>
   );
 };

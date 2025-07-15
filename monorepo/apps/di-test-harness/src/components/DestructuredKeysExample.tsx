@@ -9,8 +9,8 @@ type Props = {
 };
 
 // TODO implement example properly as soon as we can isolate it
-export function DestructuredKeysExample(props: Props) {
-  const { services } = props;
+export function DestructuredKeysExample({ services }: Props) {
+
   console.log(services);
   const handleClick = () => {
     console.log(services.animal.speak());
