@@ -2,17 +2,28 @@
 
 ## ordered log
 
-### [❌] T_T separate ... each needs to be under 60% ~ 120k token test included, otherwise we loose in the long term
-
-- di-core
-- di-shared
-- di-react
-
 ### [❌] improve testing v2
 
 - integrate snapshot tests into ladle
 
 ### [❌] release di-core 2.3.0 or 2.2.1
+
+- test with basic and enterprise to prevent regressions or at least not bump versions when regressions occur
+- test with local instead of npm ?
+
+```
+"compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@tdi2/di-core/*": ["./src/*"]
+    },
+```
+
+### [❌] T_T separate ... each needs to be under 60% ~ 120k token test included, otherwise we loose in the long term
+
+- di-core
+- di-shared
+- di-react
 
 ### [❌] DI bugs & side effects (part 1)
 
