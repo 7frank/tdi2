@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for DeepDestructuring
-// Generated: 2025-07-16T09:59:52.481Z
+// Generated: 2025-07-16T10:05:57.686Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -22,7 +22,7 @@ export function DeepDestructuring(props: {
     logger?: InjectOptional<LoggerInterface>;
   };
 }) {
-                const api = useService('ApiInterface'); // Warning: implementation not found
+                const api = useService('ApiInterface') as unknown as ApiInterface;
                 const logger = undefined; // Optional dependency not found
                 const services = { api, logger };
   const { user: {

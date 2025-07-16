@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for ComplexGenerics
-// Generated: 2025-07-16T09:59:52.429Z
+// Generated: 2025-07-16T10:05:57.656Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -21,8 +21,8 @@ export function ComplexGenerics(props: {
     logger?: InjectOptional<LoggerInterface>;
   };
 }) {
-                const cache = useService('CacheInterface_Map_string_UserData'); // Warning: implementation not found
-                const repository = useService('RepositoryInterface_UserEntity'); // Warning: implementation not found
+                const cache = useService('CacheInterface_Map_string_UserData') as unknown as CacheInterface<Map<string, UserData>>;
+                const repository = useService('RepositoryInterface_UserEntity') as unknown as RepositoryInterface<UserEntity>;
                 const logger = undefined; // Optional dependency not found
                 const services = { cache, repository, logger };
   React.useEffect(() => {

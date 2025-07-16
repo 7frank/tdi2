@@ -1,6 +1,10 @@
 // tools/functional-di-enhanced-transformer/code-generator.ts - Generates DI code
 
-import { FunctionalDependency, TransformationOptions, DICodeGenerationResult } from './types';
+import {
+  FunctionalDependency,
+  TransformationOptions,
+  DICodeGenerationResult,
+} from "./types";
 
 export class CodeGenerator {
   constructor(private options: TransformationOptions) {}
@@ -11,32 +15,40 @@ export class CodeGenerator {
   generateDICode(dependencies: FunctionalDependency[]): DICodeGenerationResult {
     const statements: string[] = [];
     const serviceKeys: string[] = [];
-    
+
     // Generate individual DI hook calls for each service
     for (const dep of dependencies) {
       if (dep.resolvedImplementation) {
         // Use the resolved implementation's sanitized key as the token
         const token = dep.resolvedImplementation.sanitizedKey;
-        const hookName = dep.isOptional ? 'useOptionalService' : 'useService';
-        statements.push(`            const ${dep.serviceKey} = ${hookName}('${token}');`);
+        const hookName = dep.isOptional ? "useOptionalService" : "useService";
+        statements.push(
+          `            const ${dep.serviceKey} = ${hookName}('${token}');`
+        );
         serviceKeys.push(dep.serviceKey);
       } else if (dep.isOptional) {
         // Optional dependency that couldn't be resolved
-        statements.push(`            const ${dep.serviceKey} = undefined; // Optional dependency not found`);
+        statements.push(
+          `            const ${dep.serviceKey} = undefined; // Optional dependency not found`
+        );
         serviceKeys.push(dep.serviceKey);
       } else {
         // Required dependency that couldn't be resolved - will throw at runtime
-        statements.push(`            const ${dep.serviceKey} = useService('${dep.sanitizedKey}'); // Warning: implementation not found`);
+        statements.push(
+          `            const ${dep.serviceKey} = useService('${dep.sanitizedKey}') as unknown as ${dep.interfaceType};`
+        );
         serviceKeys.push(dep.serviceKey);
       }
     }
 
     // Generate services object with individual service keys
-    statements.push(`            const services = { ${serviceKeys.join(', ')} };`);
+    statements.push(
+      `            const services = { ${serviceKeys.join(", ")} };`
+    );
 
     return {
       statements,
-      serviceKeys
+      serviceKeys,
     };
   }
 
@@ -46,7 +58,9 @@ export class CodeGenerator {
   generateServiceHook(dependency: FunctionalDependency): string {
     if (dependency.resolvedImplementation) {
       const token = dependency.resolvedImplementation.sanitizedKey;
-      const hookName = dependency.isOptional ? 'useOptionalService' : 'useService';
+      const hookName = dependency.isOptional
+        ? "useOptionalService"
+        : "useService";
       return `const ${dependency.serviceKey} = ${hookName}('${token}');`;
     } else if (dependency.isOptional) {
       return `const ${dependency.serviceKey} = undefined; // Optional dependency not found`;
@@ -59,7 +73,7 @@ export class CodeGenerator {
    * Generate services object creation code
    */
   generateServicesObject(serviceKeys: string[]): string {
-    return `const services = { ${serviceKeys.join(', ')} };`;
+    return `const services = { ${serviceKeys.join(", ")} };`;
   }
 
   /**
@@ -72,7 +86,10 @@ export class CodeGenerator {
   /**
    * Generate transformation marker comment
    */
-  generateTransformationMarker(componentName: string, configHash: string): string {
+  generateTransformationMarker(
+    componentName: string,
+    configHash: string
+  ): string {
     return `// TDI2-TRANSFORMED: ${componentName} - Config: ${configHash} - Generated: ${new Date().toISOString()}`;
   }
 
@@ -81,17 +98,21 @@ export class CodeGenerator {
    */
   generateErrorHandling(dependencies: FunctionalDependency[]): string[] {
     const errorStatements: string[] = [];
-    
-    const missingRequired = dependencies.filter(dep => 
-      !dep.resolvedImplementation && !dep.isOptional
+
+    const missingRequired = dependencies.filter(
+      (dep) => !dep.resolvedImplementation && !dep.isOptional
     );
 
     if (missingRequired.length > 0) {
-      errorStatements.push(`// Warning: The following required dependencies could not be resolved:`);
-      missingRequired.forEach(dep => {
+      errorStatements.push(
+        `// Warning: The following required dependencies could not be resolved:`
+      );
+      missingRequired.forEach((dep) => {
         errorStatements.push(`// - ${dep.serviceKey}: ${dep.interfaceType}`);
       });
-      errorStatements.push(`// These will cause runtime errors if the services are not available`);
+      errorStatements.push(
+        `// These will cause runtime errors if the services are not available`
+      );
     }
 
     return errorStatements;
@@ -106,23 +127,29 @@ export class CodeGenerator {
     const debugStatements: string[] = [];
     debugStatements.push(`// DI Debug Information:`);
     debugStatements.push(`// Total dependencies: ${dependencies.length}`);
-    
-    const resolved = dependencies.filter(dep => dep.resolvedImplementation);
-    const optional = dependencies.filter(dep => dep.isOptional);
-    const missing = dependencies.filter(dep => !dep.resolvedImplementation && !dep.isOptional);
 
-    debugStatements.push(`// Resolved: ${resolved.length}, Optional: ${optional.length}, Missing: ${missing.length}`);
-    
+    const resolved = dependencies.filter((dep) => dep.resolvedImplementation);
+    const optional = dependencies.filter((dep) => dep.isOptional);
+    const missing = dependencies.filter(
+      (dep) => !dep.resolvedImplementation && !dep.isOptional
+    );
+
+    debugStatements.push(
+      `// Resolved: ${resolved.length}, Optional: ${optional.length}, Missing: ${missing.length}`
+    );
+
     if (resolved.length > 0) {
       debugStatements.push(`// Resolved dependencies:`);
-      resolved.forEach(dep => {
-        debugStatements.push(`//   ${dep.serviceKey}: ${dep.interfaceType} -> ${dep.resolvedImplementation?.implementationClass}`);
+      resolved.forEach((dep) => {
+        debugStatements.push(
+          `//   ${dep.serviceKey}: ${dep.interfaceType} -> ${dep.resolvedImplementation?.implementationClass}`
+        );
       });
     }
 
     if (missing.length > 0) {
       debugStatements.push(`// Missing dependencies:`);
-      missing.forEach(dep => {
+      missing.forEach((dep) => {
         debugStatements.push(`//   ${dep.serviceKey}: ${dep.interfaceType}`);
       });
     }
@@ -135,12 +162,14 @@ export class CodeGenerator {
    */
   generateValidationChecks(dependencies: FunctionalDependency[]): string[] {
     const validationStatements: string[] = [];
-    
-    const requiredDependencies = dependencies.filter(dep => !dep.isOptional);
-    
+
+    const requiredDependencies = dependencies.filter((dep) => !dep.isOptional);
+
     if (requiredDependencies.length > 0) {
-      validationStatements.push(`// Runtime validation for required dependencies`);
-      requiredDependencies.forEach(dep => {
+      validationStatements.push(
+        `// Runtime validation for required dependencies`
+      );
+      requiredDependencies.forEach((dep) => {
         validationStatements.push(
           `if (!${dep.serviceKey}) throw new Error('Required service ${dep.serviceKey} (${dep.interfaceType}) is not available');`
         );
@@ -162,7 +191,7 @@ export class CodeGenerator {
       `React.useEffect(() => {`,
       `  const diEndTime = performance.now();`,
       `  console.log(\`DI resolution for ${componentName}: \${diEndTime - diStartTime}ms\`);`,
-      `}, []);`
+      `}, []);`,
     ];
   }
 
@@ -178,7 +207,9 @@ export class CodeGenerator {
 
     // Add transformation marker
     if (configHash) {
-      allStatements.push(this.generateTransformationMarker(componentName, configHash));
+      allStatements.push(
+        this.generateTransformationMarker(componentName, configHash)
+      );
     }
 
     // Add debug info
@@ -198,7 +229,8 @@ export class CodeGenerator {
     allStatements.push(...validationChecks);
 
     // Add performance monitoring
-    const performanceMonitoring = this.generatePerformanceMonitoring(componentName);
+    const performanceMonitoring =
+      this.generatePerformanceMonitoring(componentName);
     allStatements.push(...performanceMonitoring);
 
     return allStatements;
@@ -207,7 +239,9 @@ export class CodeGenerator {
   /**
    * Generate minimal DI transformation (production mode)
    */
-  generateMinimalTransformation(dependencies: FunctionalDependency[]): string[] {
+  generateMinimalTransformation(
+    dependencies: FunctionalDependency[]
+  ): string[] {
     const diCode = this.generateDICode(dependencies);
     return diCode.statements;
   }
@@ -215,21 +249,24 @@ export class CodeGenerator {
   /**
    * Validate generated code syntax
    */
-  validateGeneratedCode(code: string[]): { isValid: boolean; errors: string[] } {
+  validateGeneratedCode(code: string[]): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     for (const line of code) {
       // Basic syntax validation
-      if (line.includes('const ') && !line.includes(' = ')) {
+      if (line.includes("const ") && !line.includes(" = ")) {
         errors.push(`Invalid const declaration: ${line}`);
       }
 
-      if (line.includes('useService(') && !line.includes("'")) {
+      if (line.includes("useService(") && !line.includes("'")) {
         errors.push(`useService call missing quotes: ${line}`);
       }
 
       // Check for balanced braces in services object
-      if (line.includes('const services = {')) {
+      if (line.includes("const services = {")) {
         const openBraces = (line.match(/{/g) || []).length;
         const closeBraces = (line.match(/}/g) || []).length;
         if (openBraces !== closeBraces) {
@@ -240,7 +277,7 @@ export class CodeGenerator {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 }

@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineAllRequired
-// Generated: 2025-07-16T09:59:52.358Z
+// Generated: 2025-07-16T10:05:57.594Z
 import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -12,9 +12,9 @@ export function InlineAllRequired(props: {
     user: Inject<UserServiceInterface>;
   };
 }) {
-                const api = useService('ApiInterface'); // Warning: implementation not found
-                const logger = useService('LoggerInterface'); // Warning: implementation not found
-                const user = useService('UserServiceInterface'); // Warning: implementation not found
+                const api = useService('ApiInterface') as unknown as ApiInterface;
+                const logger = useService('LoggerInterface') as unknown as LoggerInterface;
+                const user = useService('UserServiceInterface') as unknown as UserServiceInterface;
                 const services = { api, logger, user };
   const { id } = props;
   

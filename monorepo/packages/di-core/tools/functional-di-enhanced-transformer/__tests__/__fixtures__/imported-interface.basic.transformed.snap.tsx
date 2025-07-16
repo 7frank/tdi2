@@ -1,11 +1,11 @@
 // Auto-generated transformation snapshot for ImportedInterfaceComponent
-// Generated: 2025-07-16T09:59:52.404Z
+// Generated: 2025-07-16T10:05:57.640Z
 import React from 'react';
 import type { ImportedComponentProps } from './ComponentInterfaces';
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
 export function ImportedInterfaceComponent(props: ImportedComponentProps) {
-                const api = useService('ApiInterface'); // Warning: implementation not found
+                const api = useService('ApiInterface') as unknown as ApiInterface;
                 const logger = undefined; // Optional dependency not found
                 const services = { api, logger };
   const { data } = props;

@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineMixedDeps
-// Generated: 2025-07-16T09:59:52.375Z
+// Generated: 2025-07-16T10:05:57.611Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -13,9 +13,9 @@ export function InlineMixedDeps(props: {
     user: Inject<UserServiceInterface>;
   };
 }) {
-                const api = useService('ApiInterface'); // Warning: implementation not found
+                const api = useService('ApiInterface') as unknown as ApiInterface;
                 const cache = undefined; // Optional dependency not found
-                const user = useService('UserServiceInterface'); // Warning: implementation not found
+                const user = useService('UserServiceInterface') as unknown as UserServiceInterface;
                 const services = { api, cache, user };
   const { config } = props;
   

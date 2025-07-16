@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for MissingDependencies
-// Generated: 2025-07-16T09:59:52.452Z
+// Generated: 2025-07-16T10:05:57.671Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -11,8 +11,8 @@ export function MissingDependencies(props: {
     missingOptional?: InjectOptional<AnotherNonExistentInterface>;
   };
 }) {
-                const existing = useService('ApiInterface'); // Warning: implementation not found
-                const missingRequired = useService('NonExistentInterface'); // Warning: implementation not found
+                const existing = useService('ApiInterface') as unknown as ApiInterface;
+                const missingRequired = useService('NonExistentInterface') as unknown as NonExistentInterface;
                 const missingOptional = undefined; // Optional dependency not found
                 const services = { existing, missingRequired, missingOptional };
   React.useEffect(() => {
