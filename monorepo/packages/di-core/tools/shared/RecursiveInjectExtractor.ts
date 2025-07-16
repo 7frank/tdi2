@@ -1,4 +1,4 @@
-// tools/shared/RecursiveInjectExtractor.ts - FIXED V2: Extract ALL dependencies
+// tools/shared/RecursiveInjectExtractor.ts - FIXED property path handling
 
 import {
   SourceFile,
@@ -19,18 +19,18 @@ export interface ExtractedInjectMarker {
   serviceKey: string;           // Property name where the marker was found
   interfaceType: string;        // The type inside Inject<T> or InjectOptional<T>
   isOptional: boolean;         // Whether it's InjectOptional
-  propertyPath: string[];      // Path to the property (e.g., ['services', 'api'] for services.api)
+  propertyPath: string[];      // FIXED: Path to the property (e.g., ['services', 'api'] for services.api)
   sourceLocation: string;      // For debugging
 }
 
 /**
- * FIXED V2: Recursively extracts ALL Inject<T> and InjectOptional<T> markers
+ * FIXED: Recursively extracts Inject<T> and InjectOptional<T> markers from type structures
  */
 export class RecursiveInjectExtractor {
   constructor(private options: RecursiveExtractOptions = {}) {}
 
   /**
-   * FIXED: Extract ALL inject markers from a type node recursively
+   * Extract all Inject markers from a type node recursively
    */
   extractInjectMarkersRecursive(
     typeNode: TypeNode,
@@ -88,7 +88,7 @@ export class RecursiveInjectExtractor {
   }
 
   /**
-   * FIXED: Extract ALL markers from type literal with complete property traversal
+   * FIXED: Extract markers from type literal with proper property path handling
    */
   private extractFromTypeLiteral(
     typeNode: TypeNode,
@@ -113,42 +113,28 @@ export class RecursiveInjectExtractor {
         
         const memberTypeNode = member.getTypeNode();
         if (memberTypeNode) {
-          if (this.options.verbose) {
-            console.log(`  🔍 Checking property: ${propName} (${memberTypeNode.getKindName()})`);
-          }
-
           // FIXED: Check if this property itself is an Inject marker
           const directMarker = this.extractDirectInjectMarker(member, currentPath, sourceFile);
           if (directMarker) {
             markers.push(directMarker);
             
             if (this.options.verbose) {
-              console.log(`  ✅ Found direct inject marker: ${directMarker.propertyPath.join('.')} -> ${directMarker.interfaceType}`);
+              console.log(`✅ Found direct inject marker: ${directMarker.propertyPath.join('.')} -> ${directMarker.interfaceType}`);
             }
-          }
-          
-          // FIXED: ALWAYS recurse into nested structures to find ALL markers
-          const nestedMarkers = this.extractInjectMarkersRecursive(memberTypeNode, sourceFile, currentPath);
-          if (nestedMarkers.length > 0) {
+          } else {
+            // Recursively check nested structures
+            const nestedMarkers = this.extractInjectMarkersRecursive(memberTypeNode, sourceFile, currentPath);
             markers.push(...nestedMarkers);
-            
-            if (this.options.verbose) {
-              console.log(`  ✅ Found ${nestedMarkers.length} nested markers in ${propName}`);
-            }
           }
         }
       }
-    }
-
-    if (this.options.verbose) {
-      console.log(`📊 Total markers found in type literal: ${markers.length}`);
     }
 
     return markers;
   }
 
   /**
-   * FIXED: Extract direct Inject<T> or InjectOptional<T> marker AND handle non-Inject types
+   * FIXED: Extract direct Inject<T> or InjectOptional<T> marker from a property with correct service key extraction
    */
   private extractDirectInjectMarker(
     property: PropertySignature,
@@ -168,14 +154,25 @@ export class RecursiveInjectExtractor {
       const interfaceType = injectMatch ? injectMatch[1] : optionalMatch![1];
       const isOptional = !!optionalMatch;
       
-      // Extract service key correctly
-      const serviceKey = propertyPath[propertyPath.length - 1];
+      // FIXED: Extract service key correctly based on property path
+      let serviceKey: string;
+      
+      if (propertyPath.length === 1) {
+        // Direct property: api: Inject<ApiInterface> -> serviceKey = 'api'
+        serviceKey = propertyPath[0];
+      } else if (propertyPath.length > 1) {
+        // Nested property: services.api: Inject<ApiInterface> -> serviceKey = 'api'
+        serviceKey = propertyPath[propertyPath.length - 1];
+      } else {
+        // Fallback
+        serviceKey = property.getName();
+      }
       
       if (this.options.verbose) {
-        console.log(`    🔗 Found ${isOptional ? 'optional' : 'required'} inject marker:`);
-        console.log(`      propertyPath: [${propertyPath.join(', ')}]`);
-        console.log(`      serviceKey: "${serviceKey}"`);
-        console.log(`      interfaceType: "${interfaceType}"`);
+        console.log(`🔗 Found ${isOptional ? 'optional' : 'required'} inject marker:`);
+        console.log(`  propertyPath: [${propertyPath.join(', ')}]`);
+        console.log(`  serviceKey: "${serviceKey}"`);
+        console.log(`  interfaceType: "${interfaceType}"`);
       }
 
       return {
@@ -187,72 +184,11 @@ export class RecursiveInjectExtractor {
       };
     }
 
-    // FIXED: Handle non-Inject types that might be interfaces (e.g., TestStateInterface)
-    // Check if this is a direct interface type that should be treated as a service
-    if (this.isServiceInterfaceType(typeText)) {
-      const serviceKey = propertyPath[propertyPath.length - 1];
-      
-      if (this.options.verbose) {
-        console.log(`    🔗 Found direct interface type:`);
-        console.log(`      propertyPath: [${propertyPath.join(', ')}]`);
-        console.log(`      serviceKey: "${serviceKey}"`);
-        console.log(`      interfaceType: "${typeText}"`);
-      }
-
-      return {
-        serviceKey,
-        interfaceType: typeText,
-        isOptional: property.hasQuestionToken(),
-        propertyPath,
-        sourceLocation: `${sourceFile.getBaseName()}:${property.getStartLineNumber()}`
-      };
-    }
-
     return null;
   }
 
   /**
-   * FIXED: Check if a type is a service interface (not a primitive)
-   */
-  private isServiceInterfaceType(typeText: string): boolean {
-    // Skip primitive types
-    const primitiveTypes = ['string', 'number', 'boolean', 'any', 'unknown', 'void', 'null', 'undefined'];
-    if (primitiveTypes.includes(typeText.toLowerCase())) {
-      return false;
-    }
-
-    // Skip built-in object types
-    const builtInTypes = ['Date', 'RegExp', 'Error', 'Array', 'Object', 'Function', 'Promise'];
-    if (builtInTypes.includes(typeText)) {
-      return false;
-    }
-
-    // Skip array types
-    if (typeText.endsWith('[]') || typeText.includes('Array<')) {
-      return false;
-    }
-
-    // Consider types ending with common service patterns as service interfaces
-    const servicePatterns = ['Interface', 'Service', 'Repository', 'Manager', 'Controller', 'Handler'];
-    if (servicePatterns.some(pattern => typeText.includes(pattern))) {
-      return true;
-    }
-
-    // Consider generic types as potential service interfaces
-    if (typeText.includes('<') && typeText.includes('>')) {
-      return true;
-    }
-
-    // Consider capitalized types as potential interfaces
-    if (/^[A-Z][a-zA-Z0-9]*$/.test(typeText)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * FIXED: Extract ALL markers from interface or type alias declaration
+   * Extract markers from interface or type alias declaration
    */
   private extractFromTypeDeclaration(
     typeDeclaration: InterfaceDeclaration | TypeAliasDeclaration,
@@ -271,30 +207,21 @@ export class RecursiveInjectExtractor {
     // Handle interface declaration
     if (Node.isInterfaceDeclaration(typeDeclaration)) {
       const properties = typeDeclaration.getProperties();
-      
-      if (this.options.verbose) {
-        console.log(`  📝 Interface has ${properties.length} properties`);
-      }
-      
       for (const property of properties) {
         const propName = property.getName();
         const currentPath = [...propertyPath, propName];
         
         const propertyTypeNode = property.getTypeNode();
         if (propertyTypeNode) {
-          if (this.options.verbose) {
-            console.log(`    🔍 Processing property: ${propName}`);
-          }
-
-          // Check for direct inject marker
+          // Check if this property itself is an Inject marker
           const directMarker = this.extractDirectInjectMarker(property, currentPath, sourceFile);
           if (directMarker) {
             markers.push(directMarker);
+          } else {
+            // Recursively check nested structures
+            const nestedMarkers = this.extractInjectMarkersRecursive(propertyTypeNode, sourceFile, currentPath);
+            markers.push(...nestedMarkers);
           }
-
-          // Always recurse to find nested markers
-          const nestedMarkers = this.extractInjectMarkersRecursive(propertyTypeNode, sourceFile, currentPath);
-          markers.push(...nestedMarkers);
         }
       }
     }
@@ -308,14 +235,10 @@ export class RecursiveInjectExtractor {
       }
     }
 
-    if (this.options.verbose) {
-      console.log(`📊 Total markers found in declaration: ${markers.length}`);
-    }
-
     return markers;
   }
 
-/**
+  /**
    * Find type declaration (interface or type alias) in current file or imports
    */
   private findTypeDeclaration(typeName: string, sourceFile: SourceFile): InterfaceDeclaration | TypeAliasDeclaration | null {
@@ -427,27 +350,9 @@ export class RecursiveInjectExtractor {
       return true;
     }
 
-    // Check for direct service interface types
+    // Check inline type literal
     if (Node.isTypeLiteral(typeNode)) {
-      const members = typeNode.getMembers();
-      for (const member of members) {
-        if (Node.isPropertySignature(member)) {
-          const memberTypeNode = member.getTypeNode();
-          if (memberTypeNode) {
-            const memberTypeText = memberTypeNode.getText();
-            // Check for both inject markers and direct service interfaces
-            if (memberTypeText.includes("Inject<") || 
-                memberTypeText.includes("InjectOptional<") ||
-                this.isServiceInterfaceType(memberTypeText)) {
-              return true;
-            }
-            // Recurse into nested structures
-            if (this.hasInjectMarkersRecursive(memberTypeNode, sourceFile)) {
-              return true;
-            }
-          }
-        }
-      }
+      return this.hasInjectMarkersInTypeLiteral(typeNode, sourceFile);
     }
 
     // Check type reference
@@ -572,13 +477,13 @@ export class RecursiveInjectExtractor {
   }
 
   /**
-   * FIXED: Debug method to analyze property path extraction with ALL dependencies
+   * ADDED: Debug method to analyze property path extraction
    */
   debugPropertyPathExtraction(typeNode: TypeNode, sourceFile: SourceFile): void {
     if (!this.options.verbose) return;
 
-    console.log('\n🐛 DEBUG: Complete Property Path Extraction Analysis');
-    console.log('====================================================');
+    console.log('\n🐛 DEBUG: Property Path Extraction Analysis');
+    console.log('==========================================');
     console.log(`Type: ${typeNode.getKindName()}`);
     console.log(`Text: ${typeNode.getText()}`);
     
@@ -594,67 +499,6 @@ export class RecursiveInjectExtractor {
       console.log(`  sourceLocation: "${marker.sourceLocation}"`);
     });
     
-    console.log('\n====================================================\n');
-  }
-
-  /**
-   * ADDED: Method to extract dependencies from complex nested structures
-   */
-  extractAllDependenciesFromComplexType(
-    typeNode: TypeNode,
-    sourceFile: SourceFile
-  ): ExtractedInjectMarker[] {
-    const allMarkers: ExtractedInjectMarker[] = [];
-    
-    if (this.options.verbose) {
-      console.log('\n🔍 EXTRACTING ALL DEPENDENCIES FROM COMPLEX TYPE');
-      console.log('================================================');
-    }
-
-    // Extract with comprehensive traversal
-    const markers = this.extractInjectMarkersRecursive(typeNode, sourceFile, []);
-    allMarkers.push(...markers);
-
-    // Double-check by traversing the AST differently for edge cases
-    if (Node.isTypeLiteral(typeNode)) {
-      const members = typeNode.getMembers();
-      for (const member of members) {
-        if (Node.isPropertySignature(member)) {
-          const memberTypeNode = member.getTypeNode();
-          if (memberTypeNode) {
-            const memberTypeText = memberTypeNode.getText();
-            
-            // Check for missed service interface types
-            if (this.isServiceInterfaceType(memberTypeText) && 
-                !allMarkers.some(m => m.serviceKey === member.getName())) {
-              
-              const additionalMarker: ExtractedInjectMarker = {
-                serviceKey: member.getName(),
-                interfaceType: memberTypeText,
-                isOptional: member.hasQuestionToken(),
-                propertyPath: [member.getName()],
-                sourceLocation: `${sourceFile.getBaseName()}:${member.getStartLineNumber()}`
-              };
-              
-              allMarkers.push(additionalMarker);
-              
-              if (this.options.verbose) {
-                console.log(`🔍 Found additional service interface: ${member.getName()} -> ${memberTypeText}`);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (this.options.verbose) {
-      console.log(`\n📊 TOTAL DEPENDENCIES EXTRACTED: ${allMarkers.length}`);
-      allMarkers.forEach((marker, index) => {
-        console.log(`  [${index + 1}] ${marker.propertyPath.join('.')} -> ${marker.interfaceType}`);
-      });
-      console.log('================================================\n');
-    }
-
-    return allMarkers;
+    console.log('\n==========================================\n');
   }
 }
