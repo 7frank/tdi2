@@ -1,7 +1,17 @@
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface } from "./shared-types";
 
-export function InlineDestructuredA({
+
+export function InlineDestructuredWorking(props: {
+  services: {
+    api: Inject<ApiInterface>;
+  };
+}) {
+  const { services } = props;
+  return <div>Mixed dependencies component</div>;
+}
+
+export function InlineDestructuredFailingA({
   services,
 }: {
   services: {
@@ -11,6 +21,6 @@ export function InlineDestructuredA({
   return <div>Mixed dependencies component</div>;
 }
 
-export function InlineDestructuredB({ api }: { api: Inject<ApiInterface> }) {
+export function InlineDestructuredFailingB({ api }: { api: Inject<ApiInterface> }) {
   return <div>Mixed dependencies component</div>;
 }

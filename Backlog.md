@@ -13,7 +13,10 @@
   - as well as the compile results so that we can show the code before and aftertransformation in ladle
 
 - diff ignore pattern array e.g. timestamp
+
+- format
 - tsc
+  - now as a separate measure after diff it should test if a file actually compiles or is at least syntactically coherent. what options do i have 
 
 ### [❌] release di-core 2.3.0 or 2.2.1
 

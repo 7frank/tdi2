@@ -143,6 +143,35 @@ export class TransformationTestFramework {
   }
 
   /**
+   * Format TypeScript content using ts-morph
+   */
+  private formatTypeScriptContent(content: string): string {
+    try {
+      // Create a temporary file for formatting
+      const tempFileName = `temp-format-${Date.now()}.tsx`;
+      const tempFile = this.project.createSourceFile(tempFileName, content, {
+        overwrite: true,
+      });
+
+      // Use ts-morph's built-in formatting
+      tempFile.formatText();
+
+      // Get the formatted content
+      const formattedContent = tempFile.getFullText();
+
+      // Clean up the temporary file
+      tempFile.delete();
+
+      return formattedContent.trim();
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️ TypeScript formatting failed:`, error);
+      }
+      return content.trim();
+    }
+  }
+
+  /**
    * Apply ignore patterns to normalize content before comparison
    */
   private normalizeContentForComparison(content: string): string {
@@ -165,6 +194,24 @@ export class TransformationTestFramework {
           `🔍 Applied ignore pattern: ${pattern.description || pattern.pattern.source}`
         );
       }
+    }
+
+    return normalizedContent;
+  }
+
+  /**
+   * Normalize content for comparison: format TypeScript and apply ignore patterns
+   */
+  private normalizeAndFormatForComparison(content: string): string {
+    // First format the TypeScript content
+    const formattedContent = this.formatTypeScriptContent(content);
+
+    // Then apply ignore patterns
+    const normalizedContent =
+      this.normalizeContentForComparison(formattedContent);
+
+    if (this.options.verbose) {
+      console.log(`📝 Formatted and normalized content for comparison`);
     }
 
     return normalizedContent;
@@ -387,10 +434,11 @@ export class TransformationTestFramework {
       // Verify existing snapshot
       const existingSnapshot = fs.readFileSync(snapshotPath, "utf8");
 
-      // Normalize both contents before comparison
+      // Format and normalize both contents before comparison
       const normalizedExisting =
-        this.normalizeContentForComparison(existingSnapshot);
-      const normalizedNew = this.normalizeContentForComparison(snapshotContent);
+        this.normalizeAndFormatForComparison(existingSnapshot);
+      const normalizedNew =
+        this.normalizeAndFormatForComparison(snapshotContent);
 
       if (normalizedExisting !== normalizedNew) {
         const diff = this.generateDiff(
@@ -465,10 +513,10 @@ ${result.output}`;
             .join("\n")
             .trim();
 
-          // Normalize both contents before comparison
+          // Normalize and format both contents before comparison
           const normalizedExpected =
-            this.normalizeContentForComparison(expectedOutput);
-          const normalizedActual = this.normalizeContentForComparison(
+            this.normalizeAndFormatForComparison(expectedOutput);
+          const normalizedActual = this.normalizeAndFormatForComparison(
             result.output.trim()
           );
 
@@ -493,6 +541,7 @@ ${result.output}`;
     matches: boolean;
     result: string;
     matchCount: number;
+    formattedResult?: string;
   } {
     const matches = pattern.pattern.test(content);
     const result = content.replace(
@@ -501,7 +550,31 @@ ${result.output}`;
     );
     const matchCount = (content.match(pattern.pattern) || []).length;
 
-    return { matches, result, matchCount };
+    // Also provide formatted result
+    const formattedResult = this.formatTypeScriptContent(result);
+
+    return { matches, result, matchCount, formattedResult };
+  }
+
+  /**
+   * Utility method to preview the normalization and formatting process
+   */
+  public previewNormalization(content: string): {
+    original: string;
+    formatted: string;
+    normalized: string;
+    finalResult: string;
+  } {
+    const formatted = this.formatTypeScriptContent(content);
+    const normalized = this.normalizeContentForComparison(content);
+    const finalResult = this.normalizeAndFormatForComparison(content);
+
+    return {
+      original: content,
+      formatted,
+      normalized,
+      finalResult,
+    };
   }
 }
 
