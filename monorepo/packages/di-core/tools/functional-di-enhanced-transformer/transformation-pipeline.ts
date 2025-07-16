@@ -54,8 +54,8 @@ export class TransformationPipeline {
     // Step 1: Normalize parameters (remove destructuring from function signature)
     this.normalizeParameters(func);
 
-    // Step 2: Generate direct property access with DI fallbacks
-    this.generateDirectPropertyAccess(func, dependencies);
+    // Step 2: FIXED - Generate DI hook calls with proper optional chaining
+    this.generateDIHookCallsWithOptionalChaining(func, dependencies);
 
     // Step 3: Update property access expressions to use new variables
     this.propertyUpdater.updatePropertyAccessAdvanced(func, dependencies);
@@ -116,18 +116,18 @@ export class TransformationPipeline {
   /**
    * Step 2: Generate direct property access with DI fallbacks
    */
-  private generateDirectPropertyAccess(
+  private generateDIHookCallsWithOptionalChaining(
     func: FunctionDeclaration | ArrowFunction,
     dependencies: ExtractedDependency[]
   ): void {
     const body = this.getFunctionBody(func);
     if (!body || !Node.isBlock(body)) return;
 
-    // Generate direct access statements for each dependency
+    // Generate DI hook statements for each dependency
     const statements: string[] = [];
 
     for (const dep of dependencies) {
-      const statement = this.generateDirectAccessStatement(dep);
+      const statement = this.generateDIHookStatementWithOptionalChaining(dep);
       if (statement) {
         statements.push(statement);
       }
@@ -139,21 +139,23 @@ export class TransformationPipeline {
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Generated ${statements.length} direct access statements`);
+      console.log(`✅ Generated ${statements.length} DI hook statements with optional chaining`);
     }
   }
 
   /**
-   * Generate direct property access statement with DI fallback
+   * FIXED: Generate DI hook statement with proper optional chaining fallback
    */
-  private generateDirectAccessStatement(dependency: ExtractedDependency): string | null {
-    // Determine the property path based on dependency metadata
-    const propertyPath = this.determinePropertyPath(dependency);
+  private generateDIHookStatementWithOptionalChaining(dependency: ExtractedDependency): string | null {
+    // Determine the property path with optional chaining
+    const propertyPath = this.determineOptionalPropertyPath(dependency);
     
     if (!dependency.resolvedImplementation) {
       if (dependency.isOptional) {
+        // Optional dependency that couldn't be resolved - use optional chaining
         return `const ${dependency.serviceKey} = ${propertyPath} ?? undefined;`;
       } else {
+        // Required dependency that couldn't be resolved - use optional chaining with useService fallback
         return `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`;
       }
     }
@@ -166,14 +168,15 @@ export class TransformationPipeline {
   }
 
   /**
-   * Determine property path for dependency access
+   * Determine property path with proper optional chaining
    */
-  private determinePropertyPath(dependency: ExtractedDependency): string {
+  private determineOptionalPropertyPath(dependency: ExtractedDependency): string {
     if (dependency.propertyPath && dependency.propertyPath.length > 0) {
-      // Use full property path: props.services.api
-      return `props.${dependency.propertyPath.join('.')}`;
+      // Use optional chaining for nested properties: props.services?.api
+      const path = dependency.propertyPath.join('?.');
+      return `props.${path}`;
     } else {
-      // Direct property access: props.serviceKey
+      //  Use optional chaining for direct property access: props.serviceKey
       return `props.${dependency.serviceKey}`;
     }
   }
@@ -245,7 +248,7 @@ export class TransformationPipeline {
     
     for (const propAccess of propertyAccessExpressions) {
       const fullText = propAccess.getText();
-      
+
       // Handle patterns like "services.api.getData()" -> "api.getData()"
       if (fullText.includes('.')) {
         const updated = this.simplifyPropertyAccess(fullText);
@@ -282,6 +285,7 @@ export class TransformationPipeline {
     return propertyAccess;
   }
 
+ 
   /**
    * Check if a variable is used in the function body (excluding the declaration statement)
    */
@@ -346,8 +350,6 @@ export class TransformationPipeline {
     }
     return null;
   }
-
- 
 }
 
 // Integration with the main transformer

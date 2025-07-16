@@ -54,8 +54,32 @@ export function InlineDestructured2ndApi({
   services: {
     api: Inject<ApiInterface>;
 
-    state: TestStateInterface;
+    state: Inject<TestStateInterface>;
   };
 }) {
   return <div>{services.state.value}Mixed dependencies component</div>;
+}
+
+export interface Todo {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface TodoCardProps {
+  todo: Todo;
+  services: {
+    api: Inject<ApiInterface>;
+  };
+}
+
+export function TodoCard(props: TodoCardProps) {
+  const {
+    todo,
+    services: { api },
+  } = props;
+
+  return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
