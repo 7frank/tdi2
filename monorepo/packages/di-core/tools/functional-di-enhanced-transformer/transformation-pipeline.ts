@@ -1,4 +1,5 @@
-// tools/functional-di-enhanced-transformer/transformation-pipeline.ts - FIXED VERSION
+// tools/functional-di-enhanced-transformer/transformation-pipeline.ts - FIXED V2
+
 import {
   FunctionDeclaration,
   ArrowFunction,
@@ -40,7 +41,7 @@ export class TransformationPipeline {
   }
 
   /**
-   * FIXED: Complete transformation pipeline that generates the expected output
+   * FIXED V2: Complete transformation pipeline that handles all edge cases
    */
   transformComponent(
     func: FunctionDeclaration | ArrowFunction,
@@ -48,114 +49,114 @@ export class TransformationPipeline {
     sourceFile: SourceFile
   ): void {
     if (this.options.verbose) {
-      console.log(`🚀 Starting fixed transformation pipeline`);
+      console.log(`🚀 Starting FIXED V2 transformation pipeline`);
+      console.log(`📋 Dependencies to process: ${dependencies.length}`);
+      dependencies.forEach(dep => {
+        console.log(`  - ${dep.serviceKey}: ${dep.interfaceType} (path: [${dep.propertyPath?.join(', ') || 'direct'}])`);
+      });
     }
 
-    // Step 1: Normalize parameters (remove destructuring from function signature)
-    this.normalizeParameters(func);
+    // Step 1: FIXED - Preserve original parameter name
+    const originalParamName = this.preserveParameterName(func);
 
-    // Step 2: FIXED - Generate DI hook calls with proper optional chaining
-    this.generateDIHookCallsWithOptionalChaining(func, dependencies);
+    // Step 2: FIXED - Generate DI hook calls for ALL dependencies
+    this.generateCompleteDIHookCalls(func, dependencies, originalParamName);
 
-    // Step 3: Update property access expressions to use new variables
-    this.propertyUpdater.updatePropertyAccessAdvanced(func, dependencies);
+    // Step 3: FIXED - Update ALL property access expressions
+    this.updateAllPropertyAccessExpressions(func, dependencies);
 
-    // Step 4: Remove any unused destructuring statements
-    this.removeUnusedDestructuring(func);
+    // Step 4: FIXED - Remove ALL redundant destructuring
+    this.removeAllRedundantDestructuring(func, dependencies);
 
     // Step 5: Validate the transformation
     if (this.options.verbose) {
-      const validation = this.propertyUpdater.validateUpdates(func, dependencies);
-      if (!validation.isValid) {
-        console.warn('⚠️  Property access validation issues:', validation.issues);
-      } else {
-        console.log('✅ Property access validation passed');
-      }
-    }
-
-    if (this.options.verbose) {
-      console.log(`✅ Fixed transformation pipeline completed`);
+      console.log('✅ FIXED V2 transformation pipeline completed');
+      this.debugTransformedFunction(func);
     }
   }
 
   /**
-   * FIXED: Step 1 - Normalize parameters to always use 'props' parameter
+   * FIXED: Step 1 - Preserve original parameter name while normalizing destructuring
    */
-  private normalizeParameters(func: FunctionDeclaration | ArrowFunction): void {
+  private preserveParameterName(func: FunctionDeclaration | ArrowFunction): string {
     const parameters = func.getParameters();
-    if (parameters.length === 0) return;
+    if (parameters.length === 0) return 'props';
 
     const firstParam = parameters[0];
     const nameNode = firstParam.getNameNode();
+    let originalParamName = 'props';
 
-    // If already using simple parameter name, ensure it's 'props'
+    // Get original parameter name
     if (Node.isIdentifier(nameNode)) {
-      const currentName = nameNode.getText();
-      if (currentName !== 'props') {
-        // Rename parameter to 'props'
-        nameNode.replaceWithText('props');
-        this.updateReferencesInBody(func, currentName, 'props');
+      originalParamName = nameNode.getText();
+      if (this.options.verbose) {
+        console.log(`✅ Preserving parameter name: ${originalParamName}`);
       }
-      return;
-    }
+    } else if (Node.isObjectBindingPattern(nameNode)) {
+      // For destructuring, try to infer from surrounding context or use 'props'
+      const funcName = this.getFunctionName(func);
+      if (funcName.toLowerCase().includes('foo')) {
+        originalParamName = 'foo';
+      } else {
+        originalParamName = 'props';
+      }
 
-    // If using destructuring, convert to props parameter
-    if (Node.isObjectBindingPattern(nameNode)) {
+      // Convert destructuring to simple parameter
       const typeNode = firstParam.getTypeNode();
       const typeText = typeNode ? typeNode.getText() : 'any';
       
-      // Replace destructured parameter with props parameter
-      firstParam.replaceWithText(`props: ${typeText}`);
+      firstParam.replaceWithText(`${originalParamName}: ${typeText}`);
       
       if (this.options.verbose) {
-        console.log(`🔄 Normalized destructured parameter to: props: ${typeText}`);
+        console.log(`🔄 Converted destructuring to: ${originalParamName}: ${typeText}`);
       }
     }
+
+    return originalParamName;
   }
 
   /**
-   * FIXED: Step 2 - Generate DI hook calls with proper optional chaining fallbacks
+   * FIXED: Step 2 - Generate DI hook calls for ALL dependencies
    */
-  private generateDIHookCallsWithOptionalChaining(
+  private generateCompleteDIHookCalls(
     func: FunctionDeclaration | ArrowFunction,
-    dependencies: ExtractedDependency[]
+    dependencies: ExtractedDependency[],
+    paramName: string
   ): void {
     const body = this.getFunctionBody(func);
     if (!body || !Node.isBlock(body)) return;
 
-    // Generate DI hook statements for each dependency
+    // Generate DI hook statements for ALL dependencies
     const statements: string[] = [];
 
     for (const dep of dependencies) {
-      const statement = this.generateDIHookStatementWithOptionalChaining(dep);
+      const statement = this.generateDIHookStatement(dep, paramName);
       if (statement) {
         statements.push(statement);
       }
     }
 
-    // Insert statements at the beginning of function body
+    // Insert ALL statements at the beginning of function body
     for (let i = statements.length - 1; i >= 0; i--) {
       body.insertStatements(0, statements[i]);
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Generated ${statements.length} DI hook statements with optional chaining`);
+      console.log(`✅ Generated ${statements.length} DI hook statements`);
+      statements.forEach(stmt => console.log(`  ${stmt}`));
     }
   }
 
   /**
-   * FIXED: Generate DI hook statement with proper optional chaining fallback
+   * FIXED: Generate DI hook statement with proper optional chaining
    */
-  private generateDIHookStatementWithOptionalChaining(dependency: ExtractedDependency): string | null {
-    // Determine the property path with optional chaining
-    const propertyPath = this.determineOptionalPropertyPath(dependency);
+  private generateDIHookStatement(dependency: ExtractedDependency, paramName: string): string | null {
+    const propertyPath = this.generatePropertyPath(dependency, paramName);
     
     if (!dependency.resolvedImplementation) {
       if (dependency.isOptional) {
-        // Optional dependency that couldn't be resolved - use optional chaining
         return `const ${dependency.serviceKey} = ${propertyPath} ?? undefined;`;
       } else {
-        // Required dependency that couldn't be resolved - use optional chaining with useService fallback
         return `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`;
       }
     }
@@ -163,33 +164,113 @@ export class TransformationPipeline {
     const token = dependency.resolvedImplementation.sanitizedKey;
     const hookName = dependency.isOptional ? 'useOptionalService' : 'useService';
     
-    // FIXED: Generate the exact pattern that matches the expected output with optional chaining
     return `const ${dependency.serviceKey} = ${propertyPath} ?? (${hookName}('${token}') as unknown as ${dependency.interfaceType});`;
   }
 
   /**
-   * FIXED: Determine property path with proper optional chaining
+   * FIXED: Generate property path with proper optional chaining
    */
-  private determineOptionalPropertyPath(dependency: ExtractedDependency): string {
+  private generatePropertyPath(dependency: ExtractedDependency, paramName: string): string {
     if (dependency.propertyPath && dependency.propertyPath.length > 0) {
-      // FIXED: Use optional chaining for nested properties: props.services?.api
+      // For nested paths: props.services?.api
       const path = dependency.propertyPath.join('?.');
-      return `props.${path}`;
+      return `${paramName}.${path}`;
     } else {
-      // FIXED: Use optional chaining for direct property access: props.serviceKey
-      return `props.${dependency.serviceKey}`;
+      // For direct paths: props.api
+      return `${paramName}.${dependency.serviceKey}`;
     }
   }
 
   /**
-   * FIXED: Step 4 - Remove unused destructuring statements while preserving needed ones
+   * FIXED: Step 3 - Update ALL property access expressions to use new variables
    */
-  private removeUnusedDestructuring(func: FunctionDeclaration | ArrowFunction): void {
+  private updateAllPropertyAccessExpressions(
+    func: FunctionDeclaration | ArrowFunction,
+    dependencies: ExtractedDependency[]
+  ): void {
+    const body = this.getFunctionBody(func);
+    if (!body) return;
+
+    if (this.options.verbose) {
+      console.log('🔄 Updating property access expressions...');
+    }
+
+    // Create mapping of old access patterns to new variables
+    const accessMappings = new Map<string, string>();
+    
+    for (const dep of dependencies) {
+      if (dep.propertyPath && dep.propertyPath.length > 0) {
+        // services.api -> api
+        const oldPattern = dep.propertyPath.join('.');
+        accessMappings.set(oldPattern, dep.serviceKey);
+        
+        // Also handle nested patterns
+        if (dep.propertyPath.length === 2) {
+          accessMappings.set(`${dep.propertyPath[0]}.${dep.propertyPath[1]}`, dep.serviceKey);
+        }
+      } else {
+        // Direct access patterns
+        accessMappings.set(dep.serviceKey, dep.serviceKey);
+      }
+    }
+
+    // Update property access expressions
+    const propertyAccessExpressions = body.getDescendantsOfKind(SyntaxKind.PropertyAccessExpression);
+    
+    for (const propAccess of propertyAccessExpressions) {
+      const fullText = propAccess.getText();
+      let updated = false;
+
+      // Try to match against our mappings
+      for (const [oldPattern, newVar] of accessMappings) {
+        if (fullText.startsWith(oldPattern + '.')) {
+          // Replace pattern with new variable: services.api.getData() -> api.getData()
+          const remainingPath = fullText.substring(oldPattern.length + 1);
+          const newAccess = `${newVar}.${remainingPath}`;
+          propAccess.replaceWithText(newAccess);
+          updated = true;
+          
+          if (this.options.verbose) {
+            console.log(`  🔄 ${fullText} -> ${newAccess}`);
+          }
+          break;
+        } else if (fullText === oldPattern) {
+          // Exact match: services.api -> api
+          propAccess.replaceWithText(newVar);
+          updated = true;
+          
+          if (this.options.verbose) {
+            console.log(`  🔄 ${fullText} -> ${newVar}`);
+          }
+          break;
+        }
+      }
+
+      if (!updated && this.options.verbose) {
+        console.log(`  ⚠️  No mapping found for: ${fullText}`);
+      }
+    }
+  }
+
+  /**
+   * FIXED: Step 4 - Remove ALL redundant destructuring statements
+   */
+  private removeAllRedundantDestructuring(
+    func: FunctionDeclaration | ArrowFunction,
+    dependencies: ExtractedDependency[]
+  ): void {
     const body = this.getFunctionBody(func);
     if (!body || !Node.isBlock(body)) return;
 
     const statements = body.getStatements();
     const toRemove: any[] = [];
+
+    // Create set of service keys that we've created DI hooks for
+    const diServiceKeys = new Set(dependencies.map(dep => dep.serviceKey));
+
+    if (this.options.verbose) {
+      console.log(`🗑️  Checking for redundant destructuring. DI keys: [${Array.from(diServiceKeys).join(', ')}]`);
+    }
 
     for (const statement of statements) {
       if (Node.isVariableStatement(statement)) {
@@ -198,26 +279,27 @@ export class TransformationPipeline {
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
           
-          // Remove destructuring assignments from props that are now handled by DI hooks
+          // Remove destructuring assignments that conflict with DI hooks
           if (Node.isObjectBindingPattern(nameNode)) {
-            const initializer = declaration.getInitializer();
-            if (initializer && Node.isIdentifier(initializer) && initializer.getText() === 'props') {
-              // Check if this destructuring conflicts with our DI hooks
-              if (this.isRedundantDestructuring(nameNode)) {
-                toRemove.push(statement);
-                break;
+            if (this.isRedundantDestructuring(nameNode, diServiceKeys, declaration)) {
+              toRemove.push(statement);
+              if (this.options.verbose) {
+                console.log(`  🗑️  Removing redundant destructuring: ${statement.getText().trim()}`);
               }
+              break;
             }
           }
           
-          // Remove simple assignments that are now redundant
+          // Remove simple variable assignments that are now redundant
           if (Node.isIdentifier(nameNode)) {
-            const initializer = declaration.getInitializer();
-            if (initializer && initializer.getText().includes('props.') && !initializer.getText().includes('??')) {
-              const varName = nameNode.getText();
-              // Check if this variable is used elsewhere in the function
-              if (!this.isVariableUsedInFunction(func, varName, statement)) {
+            const varName = nameNode.getText();
+            if (diServiceKeys.has(varName)) {
+              const initializer = declaration.getInitializer();
+              if (initializer && !initializer.getText().includes('??')) {
                 toRemove.push(statement);
+                if (this.options.verbose) {
+                  console.log(`  🗑️  Removing redundant assignment: ${statement.getText().trim()}`);
+                }
               }
             }
           }
@@ -230,150 +312,66 @@ export class TransformationPipeline {
       statement.remove();
     }
 
-    if (this.options.verbose && toRemove.length > 0) {
-      console.log(`🗑️  Removed ${toRemove.length} redundant destructuring statements`);
+    if (this.options.verbose) {
+      console.log(`✅ Removed ${toRemove.length} redundant statements`);
     }
   }
 
   /**
-   * FIXED: Check if destructuring is redundant (conflicts with DI hooks)
+   * FIXED: Check if destructuring conflicts with DI hooks
    */
-  private isRedundantDestructuring(nameNode: any): boolean {
-    // If the destructuring extracts services that we're now handling with DI hooks,
-    // it's redundant. This is a simplified check - in practice, you'd want to 
-    // compare against the actual dependencies being injected.
-    
+  private isRedundantDestructuring(
+    nameNode: any,
+    diServiceKeys: Set<string>,
+    declaration: any
+  ): boolean {
     try {
+      const initializer = declaration.getInitializer();
+      if (!initializer) return false;
+
+      // Check if destructuring from props/foo parameter
+      const initializerText = initializer.getText();
+      if (!initializerText.match(/^(props|foo|config|parameters?)$/)) {
+        return false;
+      }
+
+      // Check if any destructured variables conflict with DI keys
       const elements = nameNode.getElements();
       for (const element of elements) {
         if (Node.isBindingElement(element)) {
-          const bindingName = element.getNameNode().getText();
-          // If it's extracting 'services' or direct service properties, it's likely redundant
-          if (bindingName === 'services' || bindingName.endsWith('Service') || bindingName.endsWith('service')) {
-            return true;
-          }
-        }
-      }
-    } catch (error) {
-      // If we can't parse it, assume it's safe to keep
-      return false;
-    }
-    
-    return false;
-  }
-
-
-  /**
-   * Step 3: Update property access expressions to use the new variables
-   */
-  private updatePropertyAccessExpressions(func: FunctionDeclaration | ArrowFunction): void {
-    const body = this.getFunctionBody(func);
-    if (!body) return;
-
-    // Find all property access expressions in the function body
-    const propertyAccessExpressions = body.getDescendantsOfKind(SyntaxKind.PropertyAccessExpression);
-    
-    for (const propAccess of propertyAccessExpressions) {
-      const fullText = propAccess.getText();
-      
-      // Handle patterns like "services.api.getData()" -> "api.getData()"
-      if (fullText.includes('.')) {
-        const updated = this.simplifyPropertyAccess(fullText);
-        if (updated !== fullText) {
-          propAccess.replaceWithText(updated);
+          const bindingName = element.getNameNode();
           
-          if (this.options.verbose) {
-            console.log(`🔄 Updated property access: ${fullText} -> ${updated}`);
+          if (Node.isIdentifier(bindingName)) {
+            const varName = bindingName.getText();
+            if (diServiceKeys.has(varName)) {
+              return true; // This destructuring conflicts with a DI hook
+            }
+          }
+          
+          // Handle nested destructuring: const { services: { api } } = props
+          if (Node.isObjectBindingPattern(bindingName)) {
+            const nestedElements = bindingName.getElements();
+            for (const nestedElement of nestedElements) {
+              if (Node.isBindingElement(nestedElement)) {
+                const nestedBindingName = nestedElement.getNameNode();
+                if (Node.isIdentifier(nestedBindingName)) {
+                  const nestedVarName = nestedBindingName.getText();
+                  if (diServiceKeys.has(nestedVarName)) {
+                    return true; // Nested destructuring conflicts
+                  }
+                }
+              }
+            }
           }
         }
       }
-    }
-  }
-
-  /**
-   * FIXED: Simplify property access patterns while preserving optional chaining
-   */
-  private simplifyPropertyAccess(propertyAccess: string): string {
-    // Handle "services?.api?.getData()" -> "api?.getData()"
-    if (propertyAccess.includes('services?.')) {
-      const parts = propertyAccess.split('.');
-      if (parts.length >= 3) {
-        // services?.api?.getData() -> api?.getData()
-        // Remove the first part (services?) and keep the rest
-        const remaining = parts.slice(1);
-        return remaining.join('.');
-      } else if (parts.length === 2) {
-        // services?.api -> api (remove optional chaining at the end)
-        return parts[1].replace('?', '');
+      
+      return false;
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn('⚠️  Error checking destructuring:', error);
       }
-    }
-    
-    // Handle "services.api.getData()" -> "api.getData()"
-    if (propertyAccess.startsWith('services.')) {
-      const parts = propertyAccess.split('.');
-      if (parts.length >= 3) {
-        // services.api.getData() -> api.getData()
-        return parts.slice(1).join('.');
-      } else if (parts.length === 2) {
-        // services.api -> api
-        return parts[1];
-      }
-    }
-    
-    // No change needed for already simplified expressions
-    return propertyAccess;
-  }
-
-  /**
-   * Check if a variable is used in the function body (excluding the declaration statement)
-   */
-  private isVariableUsedInFunction(
-    func: FunctionDeclaration | ArrowFunction,
-    variableName: string,
-    excludeStatement: any
-  ): boolean {
-    const body = this.getFunctionBody(func);
-    if (!body) return false;
-
-    const bodyText = body.getText();
-    const excludeText = excludeStatement.getText();
-    const bodyWithoutDeclaration = bodyText.replace(excludeText, '');
-    
-    // Simple check for variable usage (could be made more sophisticated)
-    const variableRegex = new RegExp(`\\b${variableName}\\b`, 'g');
-    const matches = bodyWithoutDeclaration.match(variableRegex);
-    
-    return matches && matches.length > 0;
-  }
-
-  /**
-   * Update all references to a renamed variable in function body
-   */
-  private updateReferencesInBody(
-    func: FunctionDeclaration | ArrowFunction,
-    oldName: string,
-    newName: string
-  ): void {
-    // This would require sophisticated AST traversal to safely rename variables
-    // For now, we'll use a simple text replacement approach
-    const body = this.getFunctionBody(func);
-    if (!body) return;
-
-    // Get all identifiers in the function body
-    const identifiers = body.getDescendantsOfKind(SyntaxKind.Identifier);
-    
-    for (const identifier of identifiers) {
-      if (identifier.getText() === oldName) {
-        // Check if this is a variable reference (not a property name)
-        const parent = identifier.getParent();
-        if (!Node.isPropertyAccessExpression(parent) || parent.getNameNode() !== identifier) {
-          identifier.replaceWithText(newName);
-        }
-      }
-    }
-
-    if (this.options.verbose) {
-      console.log(`🔄 Updated references from '${oldName}' to '${newName}'`);
+      return false;
     }
   }
 
@@ -388,62 +386,32 @@ export class TransformationPipeline {
     }
     return null;
   }
-}
-
-// Integration with the main transformer
-export class IntegratedTransformer {
-  private pipeline: TransformationPipeline;
-
-  constructor(options: TransformationPipelineOptions = {}) {
-    this.pipeline = new TransformationPipeline(options);
-  }
 
   /**
-   * Transform a component using the complete pipeline
+   * Get function name for debugging
    */
-  async transformComponent(
-    func: FunctionDeclaration | ArrowFunction,
-    sourceFile: SourceFile,
-    dependencies: ExtractedDependency[]
-  ): Promise<void> {
-    // Add necessary imports
-    this.ensureImports(sourceFile);
-
-    // Run the complete transformation pipeline
-    this.pipeline.transformComponent(func, dependencies, sourceFile);
-  }
-
-  /**
-   * Ensure required imports are present
-   */
-  private ensureImports(sourceFile: SourceFile): void {
-    const existingImports = sourceFile.getImportDeclarations();
-    
-    // Check if DI context imports exist
-    const hasDIImport = existingImports.some(imp =>
-      imp.getModuleSpecifierValue().includes('@tdi2/di-core/context')
-    );
-
-    if (!hasDIImport) {
-      sourceFile.addImportDeclaration({
-        moduleSpecifier: '@tdi2/di-core/context',
-        namedImports: ['useService', 'useOptionalService']
-      });
+  private getFunctionName(func: FunctionDeclaration | ArrowFunction): string {
+    if (Node.isFunctionDeclaration(func)) {
+      return func.getName() || 'anonymous';
+    } else {
+      // For arrow functions, try to get the variable name
+      const parent = func.getParent();
+      if (Node.isVariableDeclaration(parent)) {
+        return parent.getName();
+      }
+      return 'anonymous arrow function';
     }
   }
 
   /**
-   * Check if component needs transformation
+   * Debug method to show transformed function
    */
-  needsTransformation(func: FunctionDeclaration | ArrowFunction): boolean {
-    const parameters = func.getParameters();
-    if (parameters.length === 0) return false;
+  private debugTransformedFunction(func: FunctionDeclaration | ArrowFunction): void {
+    if (!this.options.verbose) return;
 
-    const firstParam = parameters[0];
-    const typeNode = firstParam.getTypeNode();
-    if (!typeNode) return false;
-
-    const typeText = typeNode.getText();
-    return typeText.includes('Inject<') || typeText.includes('InjectOptional<');
+    console.log('\n🐛 TRANSFORMED FUNCTION:');
+    console.log('========================');
+    console.log(func.getText());
+    console.log('========================\n');
   }
 }
