@@ -3,10 +3,12 @@ import {
   FunctionDeclaration,
   ArrowFunction,
   SourceFile,
-  Node,SyntaxKind
+  Node,
+  SyntaxKind
 } from 'ts-morph';
 import { ParameterNormalizer } from './parameter-normalizer';
 import { EnhancedComponentTransformer } from './enhanced-component-transformer';
+import { PropertyAccessUpdater } from './property-access-updater';
 import { ExtractedDependency } from '../shared/SharedDependencyExtractor';
 
 export interface TransformationPipelineOptions {
@@ -18,6 +20,7 @@ export interface TransformationPipelineOptions {
 export class TransformationPipeline {
   private normalizer: ParameterNormalizer;
   private transformer: EnhancedComponentTransformer;
+  private propertyUpdater: PropertyAccessUpdater;
 
   constructor(private options: TransformationPipelineOptions = {}) {
     this.normalizer = new ParameterNormalizer({
@@ -30,6 +33,10 @@ export class TransformationPipeline {
       verbose: this.options.verbose,
       srcDir: './src'
     } as any);
+
+    this.propertyUpdater = new PropertyAccessUpdater({
+      verbose: this.options.verbose
+    });
   }
 
   /**
@@ -50,8 +57,21 @@ export class TransformationPipeline {
     // Step 2: Generate direct property access with DI fallbacks
     this.generateDirectPropertyAccess(func, dependencies);
 
-    // Step 3: Remove any unused destructuring statements
+    // Step 3: Update property access expressions to use new variables
+    this.propertyUpdater.updatePropertyAccessAdvanced(func, dependencies);
+
+    // Step 4: Remove any unused destructuring statements
     this.removeUnusedDestructuring(func);
+
+    // Step 5: Validate the transformation
+    if (this.options.verbose) {
+      const validation = this.propertyUpdater.validateUpdates(func, dependencies);
+      if (!validation.isValid) {
+        console.warn('⚠️  Property access validation issues:', validation.issues);
+      } else {
+        console.log('✅ Property access validation passed');
+      }
+    }
 
     if (this.options.verbose) {
       console.log(`✅ Transformation pipeline completed`);
@@ -159,12 +179,16 @@ export class TransformationPipeline {
   }
 
   /**
-   * Step 3: Remove unused destructuring statements from function body
+   * Step 3: Update variable references and remove unused destructuring
    */
   private removeUnusedDestructuring(func: FunctionDeclaration | ArrowFunction): void {
     const body = this.getFunctionBody(func);
     if (!body || !Node.isBlock(body)) return;
 
+    // First, update all property access expressions to use the new variables
+    this.updatePropertyAccessExpressions(func);
+
+    // Then remove any unused destructuring statements
     const statements = body.getStatements();
     const toRemove: any[] = [];
 
@@ -187,7 +211,7 @@ export class TransformationPipeline {
           // Remove simple assignments that are now redundant
           if (Node.isIdentifier(nameNode)) {
             const initializer = declaration.getInitializer();
-            if (initializer && initializer.getText().includes('props.')) {
+            if (initializer && initializer.getText().includes('props.') && !initializer.getText().includes('??')) {
               const varName = nameNode.getText();
               // Check if this variable is used elsewhere in the function
               if (!this.isVariableUsedInFunction(func, varName, statement)) {
@@ -207,6 +231,55 @@ export class TransformationPipeline {
     if (this.options.verbose && toRemove.length > 0) {
       console.log(`🗑️  Removed ${toRemove.length} unused destructuring statements`);
     }
+  }
+
+  /**
+   * Update property access expressions to use the new direct variables
+   */
+  private updatePropertyAccessExpressions(func: FunctionDeclaration | ArrowFunction): void {
+    const body = this.getFunctionBody(func);
+    if (!body) return;
+
+    // Find all property access expressions in the function body
+    const propertyAccessExpressions = body.getDescendantsOfKind(SyntaxKind.PropertyAccessExpression);
+    
+    for (const propAccess of propertyAccessExpressions) {
+      const fullText = propAccess.getText();
+      
+      // Handle patterns like "services.api.getData()" -> "api.getData()"
+      if (fullText.includes('.')) {
+        const updated = this.simplifyPropertyAccess(fullText);
+        if (updated !== fullText) {
+          propAccess.replaceWithText(updated);
+          
+          if (this.options.verbose) {
+            console.log(`🔄 Updated property access: ${fullText} -> ${updated}`);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Simplify property access patterns
+   */
+  private simplifyPropertyAccess(propertyAccess: string): string {
+    // Handle "services.api.getData()" -> "api.getData()"
+    if (propertyAccess.startsWith('services.')) {
+      const parts = propertyAccess.split('.');
+      if (parts.length >= 3) {
+        // services.api.getData() -> api.getData()
+        return parts.slice(1).join('.');
+      } else if (parts.length === 2) {
+        // services.api -> api
+        return parts[1];
+      }
+    }
+    
+    // Handle direct property access like "cache.get()" -> "cache.get()"
+    // (no change needed if it's already simplified)
+    
+    return propertyAccess;
   }
 
   /**

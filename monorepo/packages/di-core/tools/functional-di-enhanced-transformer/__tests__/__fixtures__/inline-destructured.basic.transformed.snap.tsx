@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineDestructuredWorking
-// Generated: 2025-07-16T12:00:41.388Z
+// Generated: 2025-07-16T12:56:27.205Z
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface } from "./shared-types";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -10,7 +10,7 @@ export function InlineDestructuredWorking(props: {
   };
 }) {
     const api = props.services.api ?? (useService('ApiInterface') as unknown as ApiInterface);
-  return <div>{services.api.getData()}Mixed dependencies component</div>;
+  return <div>{api.getData()}Mixed dependencies component</div>;
 }
 
 export function InlineDestructuredFailingA(props: {
@@ -19,7 +19,7 @@ export function InlineDestructuredFailingA(props: {
       };
     }) {
     const api = props.services.api ?? (useService('ApiInterface') as unknown as ApiInterface);
-  return <div>{services.api.getData()}Mixed dependencies component</div>;
+  return <div>{api.getData()}Mixed dependencies component</div>;
 }
 
 export function InlineDestructuredFailingB(props: {
