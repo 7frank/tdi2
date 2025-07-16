@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineMixedDeps
-// Generated: 2025-07-16T10:05:57.611Z
+// Generated: 2025-07-16T10:29:08.961Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";

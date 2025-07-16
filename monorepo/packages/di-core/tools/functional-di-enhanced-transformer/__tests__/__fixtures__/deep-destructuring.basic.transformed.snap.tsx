@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for DeepDestructuring
-// Generated: 2025-07-16T10:05:57.686Z
+// Generated: 2025-07-16T10:29:10.116Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";

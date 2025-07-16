@@ -58,6 +58,7 @@ export class TransformationTestFramework {
   private transformer: FunctionalDIEnhancedTransformer;
   private mockInterfaceResolver: IntegratedInterfaceResolver;
   private defaultIgnorePatterns: IgnorePattern[];
+  private snapshotSubDirectory = "."; // Previously "__snapshots__" but we prefer to keep snapshots next to input files, which reduces complexity with imports
 
   constructor(private options: TransformationTestOptions) {
     this.project = new Project({
@@ -613,7 +614,7 @@ export class TransformationTestFramework {
   ): Promise<void> {
     const snapshotDir =
       this.options.outputDir ||
-      path.join(this.options.fixtureDir, "__snapshots__");
+      path.join(this.options.fixtureDir, this.snapshotSubDirectory);
 
     // Use the full base name (including variant) for snapshot naming
     // e.g., "inline-with-destructuring.basic" -> "inline-with-destructuring.basic.transformed.snap.tsx"
@@ -705,7 +706,7 @@ ${result.output}`;
         // Load snapshot with the correct name
         const snapshotPath = path.join(
           this.options.outputDir ||
-            path.join(this.options.fixtureDir, "__snapshots__"),
+            path.join(this.options.fixtureDir, this.snapshotSubDirectory),
           `${fullBaseName}.transformed.snap.tsx`
         );
 
