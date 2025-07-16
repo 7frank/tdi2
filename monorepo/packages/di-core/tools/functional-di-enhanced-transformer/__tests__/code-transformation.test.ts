@@ -1,6 +1,6 @@
 // tools/functional-di-enhanced-transformer/__tests__/transformation.test.ts
 import { describe, it, expect } from 'bun:test';
-import { TransformationTestFramework, defineTransformationTest } from './test-utils/transformation-test-framework';
+import { TransformationTestFramework, defineTransformationTest } from '../test-utils/transformation-test-framework';
 import * as path from 'path';
 
 const FIXTURES_DIR = path.join(__dirname, '__fixtures__');
