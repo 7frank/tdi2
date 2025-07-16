@@ -17,6 +17,7 @@ const entries = [
     clean: true,
     skipNodeModulesBundle: true,
     external: ["react", "react-dom"],
+     sourcemap: true,
   }));
 
 export default defineConfig([
@@ -27,5 +28,6 @@ export default defineConfig([
     dts: true,
     outDir: "dist/tools",
     clean: false,
+    sourcemap: true,
   },
 ]);
