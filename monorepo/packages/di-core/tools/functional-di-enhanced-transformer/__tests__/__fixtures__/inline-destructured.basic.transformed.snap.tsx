@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineDestructuredWorking
-// Generated: 2025-07-16T10:29:08.077Z
+// Generated: 2025-07-16T10:38:48.508Z
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface } from "./shared-types";
 import { useService, useOptionalService } from "@tdi2/di-core/context";

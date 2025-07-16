@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineWithDestructuring
-// Generated: 2025-07-16T10:29:08.342Z
+// Generated: 2025-07-16T10:38:48.780Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";

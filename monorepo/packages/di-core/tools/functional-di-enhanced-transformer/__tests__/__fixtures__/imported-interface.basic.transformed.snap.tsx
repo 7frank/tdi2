@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for ImportedInterfaceComponent
-// Generated: 2025-07-16T10:29:09.474Z
+// Generated: 2025-07-16T10:38:49.843Z
 import React from 'react';
 import type { ImportedComponentProps } from './ComponentInterfaces';
 import { useService, useOptionalService } from "@tdi2/di-core/context";
