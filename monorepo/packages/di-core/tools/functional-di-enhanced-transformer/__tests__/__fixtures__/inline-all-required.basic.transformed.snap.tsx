@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineAllRequired
-// Generated: 2025-07-16T08:25:37.314Z
+// Generated: 2025-07-16T09:59:52.358Z
 import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";

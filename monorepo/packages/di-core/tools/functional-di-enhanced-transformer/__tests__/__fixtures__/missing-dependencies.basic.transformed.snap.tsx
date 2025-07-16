@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for MissingDependencies
-// Generated: 2025-07-16T08:25:37.368Z
+// Generated: 2025-07-16T09:59:52.452Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";

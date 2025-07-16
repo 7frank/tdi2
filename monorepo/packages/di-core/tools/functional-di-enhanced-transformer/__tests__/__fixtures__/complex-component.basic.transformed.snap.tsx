@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for ComplexComponent
-// Generated: 2025-07-16T08:25:38.085Z
+// Generated: 2025-07-16T09:59:53.277Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
