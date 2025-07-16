@@ -40,10 +40,10 @@ This directory contains test fixtures for testing the Functional DI Enhanced Tra
 
 Run the transformation tests:
 ```bash
-npm test
+bun test
 ```
 
-Update snapshots:
+Update snapshots: Note thats different from bun internal --update-snapshots
 ```bash
-npm test -- --updateSnapshots
+UPDATE_SNAPSHOTS=1 bun test
 ```

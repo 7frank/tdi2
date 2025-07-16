@@ -1,11 +1,11 @@
 // tools/test-utils/transformation-test-framework.ts
-import { Project, SourceFile } from 'ts-morph';
-import { FunctionalDIEnhancedTransformer } from '../functional-di-enhanced-transformer';
-import { IntegratedInterfaceResolver } from '../../interface-resolver/integrated-interface-resolver';
-import * as fs from 'fs';
-import * as path from 'path';
-import { glob } from 'glob';
-import { diffLines, createTwoFilesPatch } from 'diff';
+import { Project, SourceFile } from "ts-morph";
+import { FunctionalDIEnhancedTransformer } from "../functional-di-enhanced-transformer";
+import { IntegratedInterfaceResolver } from "../../interface-resolver/integrated-interface-resolver";
+import * as fs from "fs";
+import * as path from "path";
+import { glob } from "glob";
+import { diffLines, createTwoFilesPatch } from "diff";
 
 export interface TransformationTestOptions {
   fixtureDir: string;
@@ -42,11 +42,11 @@ export class TransformationTestFramework {
 
     // Create mock interface resolver with common implementations
     this.setupMockInterfaceResolver();
-    
+
     // Initialize transformer
     this.transformer = new FunctionalDIEnhancedTransformer({
-      srcDir: './src',
-      outputDir: './src/generated',
+      srcDir: "./src",
+      outputDir: "./src/generated",
       verbose: this.options.verbose || false,
     });
 
@@ -58,34 +58,46 @@ export class TransformationTestFramework {
   private setupMockInterfaceResolver(): void {
     // Create common interface implementations for testing
     const commonImplementations = new Map([
-      ['ApiInterface', {
-        interfaceName: 'ApiInterface',
-        implementationClass: 'ApiService',
-        sanitizedKey: 'ApiInterface',
-        filePath: '/src/services/ApiService.ts',
-        isGeneric: false,
-      }],
-      ['LoggerInterface', {
-        interfaceName: 'LoggerInterface',
-        implementationClass: 'ConsoleLogger',
-        sanitizedKey: 'LoggerInterface',
-        filePath: '/src/services/ConsoleLogger.ts',
-        isGeneric: false,
-      }],
-      ['CacheInterface_any', {
-        interfaceName: 'CacheInterface',
-        implementationClass: 'InMemoryCache',
-        sanitizedKey: 'CacheInterface_any',
-        filePath: '/src/services/InMemoryCache.ts',
-        isGeneric: true,
-      }],
-      ['UserServiceInterface', {
-        interfaceName: 'UserServiceInterface',
-        implementationClass: 'UserService',
-        sanitizedKey: 'UserServiceInterface',
-        filePath: '/src/services/UserService.ts',
-        isGeneric: false,
-      }],
+      [
+        "ApiInterface",
+        {
+          interfaceName: "ApiInterface",
+          implementationClass: "ApiService",
+          sanitizedKey: "ApiInterface",
+          filePath: "/src/services/ApiService.ts",
+          isGeneric: false,
+        },
+      ],
+      [
+        "LoggerInterface",
+        {
+          interfaceName: "LoggerInterface",
+          implementationClass: "ConsoleLogger",
+          sanitizedKey: "LoggerInterface",
+          filePath: "/src/services/ConsoleLogger.ts",
+          isGeneric: false,
+        },
+      ],
+      [
+        "CacheInterface_any",
+        {
+          interfaceName: "CacheInterface",
+          implementationClass: "InMemoryCache",
+          sanitizedKey: "CacheInterface_any",
+          filePath: "/src/services/InMemoryCache.ts",
+          isGeneric: true,
+        },
+      ],
+      [
+        "UserServiceInterface",
+        {
+          interfaceName: "UserServiceInterface",
+          implementationClass: "UserService",
+          sanitizedKey: "UserServiceInterface",
+          filePath: "/src/services/UserService.ts",
+          isGeneric: false,
+        },
+      ],
     ]);
 
     this.mockInterfaceResolver = {
@@ -96,7 +108,7 @@ export class TransformationTestFramework {
       validateDependencies: jest.fn(() => ({
         isValid: true,
         missingImplementations: [],
-        circularDependencies: []
+        circularDependencies: [],
       })),
       getInterfaceImplementations: jest.fn(() => commonImplementations),
       getServiceDependencies: jest.fn(() => new Map()),
@@ -108,12 +120,18 @@ export class TransformationTestFramework {
    */
   async runFixtureTests(testName: string): Promise<TransformationTestResult[]> {
     // Try exact match first
-    const exactPattern = path.join(this.options.fixtureDir, `${testName}.input.tsx`);
+    const exactPattern = path.join(
+      this.options.fixtureDir,
+      `${testName}.input.tsx`
+    );
     let inputFiles = glob.sync(exactPattern);
 
     // If no exact match, try wildcard pattern for variants
     if (inputFiles.length === 0) {
-      const wildcardPattern = path.join(this.options.fixtureDir, `${testName}.*.input.tsx`);
+      const wildcardPattern = path.join(
+        this.options.fixtureDir,
+        `${testName}.*.input.tsx`
+      );
       inputFiles = glob.sync(wildcardPattern);
     }
 
@@ -136,29 +154,36 @@ export class TransformationTestFramework {
   /**
    * Run transformation test for a single fixture
    */
-  async runSingleFixtureTest(inputFilePath: string): Promise<TransformationTestResult> {
-    const inputContent = fs.readFileSync(inputFilePath, 'utf8');
-    
+  async runSingleFixtureTest(
+    inputFilePath: string
+  ): Promise<TransformationTestResult> {
+    const inputContent = fs.readFileSync(inputFilePath, "utf8");
+
     // Extract the full filename without extension for proper snapshot naming
     // e.g., "inline-with-destructuring.basic.input.tsx" -> "inline-with-destructuring.basic"
-    const fullBaseName = path.basename(inputFilePath, '.input.tsx');
-    
+    const fullBaseName = path.basename(inputFilePath, ".input.tsx");
+
     const componentName = this.extractComponentName(inputContent);
 
     // Add input file to project
-    const sourceFile = this.project.createSourceFile(`${fullBaseName}.tsx`, inputContent);
+    const sourceFile = this.project.createSourceFile(
+      `${fullBaseName}.tsx`,
+      inputContent
+    );
 
     // Add any separate interface files if they exist
     await this.addSeparateInterfaceFiles(inputFilePath);
 
     // Run transformation
     const transformedFiles = await this.transformer.transformForBuild();
-    
+
     // Get transformed content
-    const transformedContent = transformedFiles.get(sourceFile.getFilePath()) || inputContent;
+    const transformedContent =
+      transformedFiles.get(sourceFile.getFilePath()) || inputContent;
 
     // Extract dependencies for analysis
-    const dependencies = this.extractDependenciesFromTransformed(transformedContent);
+    const dependencies =
+      this.extractDependenciesFromTransformed(transformedContent);
 
     const result: TransformationTestResult = {
       input: inputContent,
@@ -166,7 +191,7 @@ export class TransformationTestFramework {
       transformedFilePath: sourceFile.getFilePath(),
       componentName,
       dependencies,
-      inputFilePath // Track the original input file path
+      inputFilePath, // Track the original input file path
     };
 
     // Generate or verify snapshot using the full base name (including variant)
@@ -175,24 +200,26 @@ export class TransformationTestFramework {
     return result;
   }
 
-  private async addSeparateInterfaceFiles(inputFilePath: string): Promise<void> {
+  private async addSeparateInterfaceFiles(
+    inputFilePath: string
+  ): Promise<void> {
     const baseDir = path.dirname(inputFilePath);
-    const baseName = path.basename(inputFilePath, '.input.tsx');
-    
+    const baseName = path.basename(inputFilePath, ".input.tsx");
+
     // Look for corresponding interface files
     const interfaceFiles = [
       `${baseName}.interfaces.ts`,
       `${baseName}.types.ts`,
-      'shared-interfaces.ts',
-      'ComponentInterfaces.ts'
+      "shared-interfaces.ts",
+      "ComponentInterfaces.ts",
     ];
 
     for (const interfaceFile of interfaceFiles) {
       const interfacePath = path.join(baseDir, interfaceFile);
       if (fs.existsSync(interfacePath)) {
-        const interfaceContent = fs.readFileSync(interfacePath, 'utf8');
+        const interfaceContent = fs.readFileSync(interfacePath, "utf8");
         this.project.createSourceFile(interfaceFile, interfaceContent);
-        
+
         if (this.options.verbose) {
           console.log(`📁 Added interface file: ${interfaceFile}`);
         }
@@ -208,51 +235,65 @@ export class TransformationTestFramework {
     const constMatch = content.match(/export\s+const\s+(\w+)\s*=/);
     if (constMatch) return constMatch[1];
 
-    return 'UnknownComponent';
+    return "UnknownComponent";
   }
 
   private extractDependenciesFromTransformed(content: string): any[] {
     const dependencies = [];
-    
+
     // Extract useService calls
-    const useServiceMatches = content.matchAll(/const\s+(\w+)\s+=\s+useService\('([^']+)'\)/g);
+    const useServiceMatches = content.matchAll(
+      /const\s+(\w+)\s+=\s+useService\('([^']+)'\)/g
+    );
     for (const match of useServiceMatches) {
       dependencies.push({
         serviceKey: match[1],
         token: match[2],
-        type: 'required'
+        type: "required",
       });
     }
 
     // Extract useOptionalService calls
-    const useOptionalMatches = content.matchAll(/const\s+(\w+)\s+=\s+useOptionalService\('([^']+)'\)/g);
+    const useOptionalMatches = content.matchAll(
+      /const\s+(\w+)\s+=\s+useOptionalService\('([^']+)'\)/g
+    );
     for (const match of useOptionalMatches) {
       dependencies.push({
         serviceKey: match[1],
         token: match[2],
-        type: 'optional'
+        type: "optional",
       });
     }
 
     // Extract undefined assignments (missing optional dependencies)
-    const undefinedMatches = content.matchAll(/const\s+(\w+)\s+=\s+undefined;\s*\/\/\s*Optional dependency not found/g);
+    const undefinedMatches = content.matchAll(
+      /const\s+(\w+)\s+=\s+undefined;\s*\/\/\s*Optional dependency not found/g
+    );
     for (const match of undefinedMatches) {
       dependencies.push({
         serviceKey: match[1],
         token: null,
-        type: 'missing-optional'
+        type: "missing-optional",
       });
     }
 
     return dependencies;
   }
 
-  private async handleSnapshot(fullBaseName: string, result: TransformationTestResult): Promise<void> {
-    const snapshotDir = this.options.outputDir || path.join(this.options.fixtureDir, '__snapshots__');
-    
+  private async handleSnapshot(
+    fullBaseName: string,
+    result: TransformationTestResult
+  ): Promise<void> {
+    const snapshotDir =
+      this.options.outputDir ||
+      path.join(this.options.fixtureDir, "__snapshots__");
+
     // Use the full base name (including variant) for snapshot naming
     // e.g., "inline-with-destructuring.basic" -> "inline-with-destructuring.basic.transformed.snap.tsx"
-    const snapshotPath = path.join(snapshotDir, `${fullBaseName}.transformed.snap.tsx`);
+    const snapshotPath = path.join(
+      snapshotDir,
+      `${fullBaseName}.transformed.snap.tsx`
+    );
 
     // Ensure snapshot directory exists
     if (!fs.existsSync(snapshotDir)) {
@@ -262,17 +303,23 @@ export class TransformationTestFramework {
     const snapshotContent = this.generateSnapshotContent(result);
 
     if (this.options.updateSnapshots || !fs.existsSync(snapshotPath)) {
-      fs.writeFileSync(snapshotPath, snapshotContent, 'utf8');
-      
+      fs.writeFileSync(snapshotPath, snapshotContent, "utf8");
+
       if (this.options.verbose) {
         console.log(`📸 Created/updated snapshot: ${snapshotPath}`);
       }
     } else {
       // Verify existing snapshot
-      const existingSnapshot = fs.readFileSync(snapshotPath, 'utf8');
+      const existingSnapshot = fs.readFileSync(snapshotPath, "utf8");
       if (existingSnapshot !== snapshotContent) {
-        const diff = this.generateDiff(existingSnapshot, snapshotContent, snapshotPath);
-        throw new Error(`Snapshot mismatch for ${fullBaseName}. Run with updateSnapshots: true to update.\n\n${diff}`);
+        const diff = this.generateDiff(
+          existingSnapshot,
+          snapshotContent,
+          snapshotPath
+        );
+        throw new Error(
+          `Snapshot mismatch for ${fullBaseName}. Run with UPDATE_SNAPSHOTS=1 to update.\n\n${diff}`
+        );
       }
     }
   }
@@ -280,22 +327,26 @@ export class TransformationTestFramework {
   /**
    * Generate a unified diff using the 'diff' package
    */
-  private generateDiff(expected: string, actual: string, filePath: string): string {
+  private generateDiff(
+    expected: string,
+    actual: string,
+    filePath: string
+  ): string {
     const fileName = path.basename(filePath);
-    
+
     // Use createTwoFilesPatch for git-style diff output
     const patch = createTwoFilesPatch(
       `a/${fileName}`, // old file name
       `b/${fileName}`, // new file name
-      expected,        // old content
-      actual,          // new content
-      'Expected',      // old header
-      'Actual',        // new header
+      expected, // old content
+      actual, // new content
+      "Expected", // old header
+      "Actual", // new header
       {
-        context: 3     // lines of context
+        context: 3, // lines of context
       }
     );
-    
+
     return patch;
   }
 
@@ -311,31 +362,34 @@ ${result.output}`;
   createJestTest(testName: string, description?: string): () => Promise<void> {
     return async () => {
       const results = await this.runFixtureTests(testName);
-      
+
       for (const result of results) {
         // Extract full base name from the input file path including variant
         // e.g., "/path/to/inline-with-destructuring.basic.input.tsx" -> "inline-with-destructuring.basic"
-        const fullBaseName = path.basename(result.inputFilePath, '.input.tsx');
-        
+        const fullBaseName = path.basename(result.inputFilePath, ".input.tsx");
+
         // Load snapshot with the correct name
         const snapshotPath = path.join(
-          this.options.outputDir || path.join(this.options.fixtureDir, '__snapshots__'),
+          this.options.outputDir ||
+            path.join(this.options.fixtureDir, "__snapshots__"),
           `${fullBaseName}.transformed.snap.tsx`
         );
-        
+
         if (fs.existsSync(snapshotPath)) {
-          const snapshotContent = fs.readFileSync(snapshotPath, 'utf8');
+          const snapshotContent = fs.readFileSync(snapshotPath, "utf8");
           // Extract just the code part (remove comment headers)
           const expectedOutput = snapshotContent
-            .split('\n')
-            .filter(line => !line.startsWith('//'))
-            .join('\n')
+            .split("\n")
+            .filter((line) => !line.startsWith("//"))
+            .join("\n")
             .trim();
-          
+
           // Compare transformation output
           expect(result.output.trim()).toBe(expectedOutput);
         } else {
-          throw new Error(`Snapshot not found: ${snapshotPath}. Run the test with updateSnapshots: true first.`);
+          throw new Error(
+            `Snapshot not found: ${snapshotPath}. Run the test with UPDATE_SNAPSHOTS=1 first.`
+          );
         }
       }
     };
@@ -350,7 +404,7 @@ export interface TransformationSnapshot {
   dependencies: Array<{
     serviceKey: string;
     token: string | null;
-    type: 'required' | 'optional' | 'missing-optional';
+    type: "required" | "optional" | "missing-optional";
   }>;
   metadata: {
     transformedAt: string;
@@ -372,9 +426,17 @@ export function defineTransformationTest(
   const framework = new TransformationTestFramework({
     fixtureDir,
     verbose: false,
-    updateSnapshots: false,
-    ...options
+    updateSnapshots: [
+      "1",
+      "true",
+      "True",
+      "TRUE",
+      "yes",
+      "Yes",
+      "YES",
+    ].includes(process.env.UPDATE_SNAPSHOTS || ""),
+    ...options,
   });
-  
+
   return framework.createJestTest(testName);
 }
