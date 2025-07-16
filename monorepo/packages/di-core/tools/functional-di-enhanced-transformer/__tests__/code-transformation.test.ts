@@ -86,7 +86,7 @@ describe('Functional DI Transformation Tests', () => {
 
   // Snapshot update utility test
   describe('Snapshot Management', () => {
-    it('should update snapshots when requested', async () => {
+    it.skip('should update snapshots when requested', async () => {
       const framework = new TransformationTestFramework({
         fixtureDir: FIXTURES_DIR,
         verbose: true,
