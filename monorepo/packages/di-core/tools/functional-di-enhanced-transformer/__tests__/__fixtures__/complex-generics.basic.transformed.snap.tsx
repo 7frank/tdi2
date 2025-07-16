@@ -1,7 +1,8 @@
 // Auto-generated transformation snapshot for ComplexGenerics
-// Generated: 2025-07-16T10:38:50.050Z
+// Generated: 2025-07-16T19:55:48.817Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
+import { CacheInterface, RepositoryInterface, LoggerInterface } from './shared-types';
 import { useService, useOptionalService } from "@tdi2/di-core/context";
 
 interface UserData {
@@ -21,15 +22,14 @@ export function ComplexGenerics(props: {
     logger?: InjectOptional<LoggerInterface>;
   };
 }) {
-                const cache = useService('CacheInterface_Map_string_UserData') as unknown as CacheInterface<Map<string, UserData>>;
-                const repository = useService('RepositoryInterface_UserEntity') as unknown as RepositoryInterface<UserEntity>;
-                const logger = undefined; // Optional dependency not found
-                const services = { cache, repository, logger };
+    const cache = props.services?.cache ?? (useService('CacheInterface_Map_string_UserData') as unknown as CacheInterface<Map<string, UserData>>);
+    const repository = props.services?.repository ?? (useService('RepositoryInterface_UserEntity') as unknown as RepositoryInterface<UserEntity>);
+    const logger = props.services?.logger ?? undefined;
   React.useEffect(() => {
-    services.repository.findAll().then(users => {
+    repository.findAll().then(users => {
       const userMap = new Map(users.map(u => [u.userId, u.profile]));
-      services.cache.set('users', userMap);
-      services.logger?.log(`Cached ${users.length} users`);
+      cache.set('users', userMap);
+      logger.log(`Cached ${users.length} users`);
     });
   }, []);
   

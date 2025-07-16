@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
+import { ApiInterface, LoggerInterface } from './shared-types';
 
 export function ConditionalRendering(props: {
   isEnabled: boolean;
@@ -17,7 +18,7 @@ export function ConditionalRendering(props: {
   return (
     <div>
       {services.logger && (
-        <button onClick={() => services.logger.log('Button clicked')}>
+        <button onClick={() => services.logger?.log('Button clicked')}>
           Log Click
         </button>
       )}

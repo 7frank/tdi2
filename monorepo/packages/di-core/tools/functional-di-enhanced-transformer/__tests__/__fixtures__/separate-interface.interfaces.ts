@@ -1,4 +1,5 @@
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
+import { ApiInterface, LoggerInterface, CacheInterface } from "./shared-types";
 
 export interface SeparateComponentProps {
   userId: string;

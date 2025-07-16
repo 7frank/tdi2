@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
+import { CacheInterface, RepositoryInterface, LoggerInterface } from './shared-types';
 
 interface UserData {
   id: string;

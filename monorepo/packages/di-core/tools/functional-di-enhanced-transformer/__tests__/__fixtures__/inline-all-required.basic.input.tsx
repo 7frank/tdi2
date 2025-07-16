@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
+import { ApiInterface, LoggerInterface, UserServiceInterface } from './shared-types';
 
 export function InlineAllRequired(props: {
   id: string;

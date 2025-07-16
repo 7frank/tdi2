@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineValueProps
-// Generated: 2025-07-16T19:40:58.340Z
+// Generated: 2025-07-16T19:55:47.278Z
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface, TestStateInterface } from "./shared-types";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
