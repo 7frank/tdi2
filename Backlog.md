@@ -2,28 +2,15 @@
 
 ## ordered log
 
-### [❌] improve testing
+### [❌] T_T separate ... each needs to be under 60% ~ 120k token test included, otherwise we loose in the long term
 
-- code-generator.snapshot.test.ts focus: correct code
-- ladle / vite test suite, runnning a set of compeonnts with a test harnish
-  - having git diff utiltiites and other debug informations readily available as well as a living documentation
+- di-core
+- di-shared
+- di-react
 
-- create a fixture based test runner as part of di-core https://claude.ai/chat/848a009f-9959-40ba-b234-04291db352b2
-  - export these as (ts not compiled) fixtures so that our ladle stories can use them directly
-  - as well as the compile results so that we can show the code before and aftertransformation in ladle
+### [❌] improve testing v2
 
-- diff ignore pattern array e.g. timestamp
-
-- format
-- tsc
-  - now as a separate measure after diff it should test if a file actually compiles or is at least syntactically coherent. what options do i have
-
-#### [❌] broken impl?
-
-- todo fix tests and remove tests that now are handled by our snapshot tests
-- todo check of code generator now is deprecated
-- TODO git bisect breaking changes and se whats recyclbe
-  - until tests it should be ok , then refactoring broke things
+- integrate snapshot tests into ladle
 
 ### [❌] release di-core 2.3.0 or 2.2.1
 
@@ -346,13 +333,41 @@ https://github.com/aleclarson/valtio-kit
 
 ## Done
 
-### [❌] react critique
+### [✅] improve testing
+
+- code-generator.snapshot.test.ts focus: correct code
+- ladle / vite test suite, runnning a set of compeonnts with a test harnish
+  - having git diff utiltiites and other debug informations readily available as well as a living documentation
+
+- create a fixture based test runner as part of di-core https://claude.ai/chat/848a009f-9959-40ba-b234-04291db352b2
+  - export these as (ts not compiled) fixtures so that our ladle stories can use them directly
+  - as well as the compile results so that we can show the code before and aftertransformation in ladle
+
+- diff ignore pattern array e.g. timestamp
+
+- format
+- tsc
+  - now as a separate measure after diff it should test if a file actually compiles or is at least syntactically coherent. what options do i have
+
+#### [✅] broken impl?
+
+- todo fix tests and remove tests that now are handled by our snapshot tests
+- todo check of code generator now is deprecated
+- TODO git bisect breaking changes and se whats recyclbe
+  - until tests it should be ok , then refactoring broke things
+
+#### [✅] T_T
+
+- fix optional in generated
+- fix one example in "inline destructured"
+
+### [✅] react critique
 
 - timeline complexity
 - developers
 - examples of classes and hooks
 
-### [❌] RSI critique
+### [✅] RSI critique
 
 - but why didnt someone invent this sooner?
 - but what about serverside and hydration?
