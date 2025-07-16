@@ -8,6 +8,10 @@
 - ladle / vite test suite, runnning a set of compeonnts with a test harnish
   - having git diff utiltiites and other debug informations readily available as well as a living documentation
 
+- create a fixture based test runner as part of di-core https://claude.ai/chat/848a009f-9959-40ba-b234-04291db352b2
+  - export these as (ts not compiled) fixtures so that our ladle stories can use them directly
+  - as well as the compile results so that we can show the code before and aftertransformation in ladle
+
 ### [❌] release di-core 2.3.0 or 2.2.1
 
 ### [❌] DI bugs & side effects (part 1)
