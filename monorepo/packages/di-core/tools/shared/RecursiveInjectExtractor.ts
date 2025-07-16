@@ -1,4 +1,4 @@
-// tools/shared/RecursiveInjectExtractor.ts
+// tools/shared/RecursiveInjectExtractor.ts - FIXED property path handling
 
 import {
   SourceFile,
@@ -19,13 +19,12 @@ export interface ExtractedInjectMarker {
   serviceKey: string;           // Property name where the marker was found
   interfaceType: string;        // The type inside Inject<T> or InjectOptional<T>
   isOptional: boolean;         // Whether it's InjectOptional
-  propertyPath: string[];      // Path to the property (e.g., ['services', 'api'] for services.api)
+  propertyPath: string[];      // FIXED: Path to the property (e.g., ['services', 'api'] for services.api)
   sourceLocation: string;      // For debugging
 }
 
 /**
- * Recursively extracts Inject<T> and InjectOptional<T> markers from type structures
- * Similar to DiInjectMarkers but focused on extraction rather than just detection
+ * FIXED: Recursively extracts Inject<T> and InjectOptional<T> markers from type structures
  */
 export class RecursiveInjectExtractor {
   constructor(private options: RecursiveExtractOptions = {}) {}
@@ -39,6 +38,10 @@ export class RecursiveInjectExtractor {
     propertyPath: string[] = []
   ): ExtractedInjectMarker[] {
     const markers: ExtractedInjectMarker[] = [];
+
+    if (this.options.verbose) {
+      console.log(`🔍 Extracting from ${typeNode.getKindName()} at path: [${propertyPath.join(', ')}]`);
+    }
 
     // Check inline type literal: { prop: Inject<Type>, nested: { deep: InjectOptional<Type> } }
     if (Node.isTypeLiteral(typeNode)) {
@@ -85,7 +88,7 @@ export class RecursiveInjectExtractor {
   }
 
   /**
-   * Extract markers from type literal
+   * FIXED: Extract markers from type literal with proper property path handling
    */
   private extractFromTypeLiteral(
     typeNode: TypeNode,
@@ -99,6 +102,10 @@ export class RecursiveInjectExtractor {
     const markers: ExtractedInjectMarker[] = [];
     const members = typeNode.getMembers();
 
+    if (this.options.verbose) {
+      console.log(`📝 Processing type literal with ${members.length} members at path: [${propertyPath.join(', ')}]`);
+    }
+
     for (const member of members) {
       if (Node.isPropertySignature(member)) {
         const propName = member.getName();
@@ -106,10 +113,14 @@ export class RecursiveInjectExtractor {
         
         const memberTypeNode = member.getTypeNode();
         if (memberTypeNode) {
-          // Check if this property itself is an Inject marker
+          // FIXED: Check if this property itself is an Inject marker
           const directMarker = this.extractDirectInjectMarker(member, currentPath, sourceFile);
           if (directMarker) {
             markers.push(directMarker);
+            
+            if (this.options.verbose) {
+              console.log(`✅ Found direct inject marker: ${directMarker.propertyPath.join('.')} -> ${directMarker.interfaceType}`);
+            }
           } else {
             // Recursively check nested structures
             const nestedMarkers = this.extractInjectMarkersRecursive(memberTypeNode, sourceFile, currentPath);
@@ -123,7 +134,7 @@ export class RecursiveInjectExtractor {
   }
 
   /**
-   * Extract direct Inject<T> or InjectOptional<T> marker from a property
+   * FIXED: Extract direct Inject<T> or InjectOptional<T> marker from a property with correct service key extraction
    */
   private extractDirectInjectMarker(
     property: PropertySignature,
@@ -142,10 +153,26 @@ export class RecursiveInjectExtractor {
     if (injectMatch || optionalMatch) {
       const interfaceType = injectMatch ? injectMatch[1] : optionalMatch![1];
       const isOptional = !!optionalMatch;
-      const serviceKey = propertyPath[propertyPath.length - 1]; // Last part of path
+      
+      // FIXED: Extract service key correctly based on property path
+      let serviceKey: string;
+      
+      if (propertyPath.length === 1) {
+        // Direct property: api: Inject<ApiInterface> -> serviceKey = 'api'
+        serviceKey = propertyPath[0];
+      } else if (propertyPath.length > 1) {
+        // Nested property: services.api: Inject<ApiInterface> -> serviceKey = 'api'
+        serviceKey = propertyPath[propertyPath.length - 1];
+      } else {
+        // Fallback
+        serviceKey = property.getName();
+      }
       
       if (this.options.verbose) {
-        console.log(`🔗 Found ${isOptional ? 'optional' : 'required'} inject marker: ${propertyPath.join('.')} -> ${interfaceType}`);
+        console.log(`🔗 Found ${isOptional ? 'optional' : 'required'} inject marker:`);
+        console.log(`  propertyPath: [${propertyPath.join(', ')}]`);
+        console.log(`  serviceKey: "${serviceKey}"`);
+        console.log(`  interfaceType: "${interfaceType}"`);
       }
 
       return {
@@ -169,6 +196,13 @@ export class RecursiveInjectExtractor {
     propertyPath: string[]
   ): ExtractedInjectMarker[] {
     const markers: ExtractedInjectMarker[] = [];
+
+    if (this.options.verbose) {
+      const declName = Node.isInterfaceDeclaration(typeDeclaration) 
+        ? typeDeclaration.getName() 
+        : typeDeclaration.getName();
+      console.log(`📋 Processing ${typeDeclaration.getKindName()}: ${declName} at path: [${propertyPath.join(', ')}]`);
+    }
 
     // Handle interface declaration
     if (Node.isInterfaceDeclaration(typeDeclaration)) {
@@ -440,5 +474,31 @@ export class RecursiveInjectExtractor {
     }
 
     return this.extractInjectMarkersRecursive(typeNode, sourceFile, initialPath);
+  }
+
+  /**
+   * ADDED: Debug method to analyze property path extraction
+   */
+  debugPropertyPathExtraction(typeNode: TypeNode, sourceFile: SourceFile): void {
+    if (!this.options.verbose) return;
+
+    console.log('\n🐛 DEBUG: Property Path Extraction Analysis');
+    console.log('==========================================');
+    console.log(`Type: ${typeNode.getKindName()}`);
+    console.log(`Text: ${typeNode.getText()}`);
+    
+    const markers = this.extractFromTypeNode(typeNode, sourceFile);
+    
+    console.log(`\nFound ${markers.length} markers:`);
+    markers.forEach((marker, index) => {
+      console.log(`\n[${index + 1}] Marker:`);
+      console.log(`  serviceKey: "${marker.serviceKey}"`);
+      console.log(`  interfaceType: "${marker.interfaceType}"`);
+      console.log(`  propertyPath: [${marker.propertyPath.map(p => `"${p}"`).join(', ')}]`);
+      console.log(`  isOptional: ${marker.isOptional}`);
+      console.log(`  sourceLocation: "${marker.sourceLocation}"`);
+    });
+    
+    console.log('\n==========================================\n');
   }
 }

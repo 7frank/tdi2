@@ -35,7 +35,23 @@ export function InlineDestructured({ api }: { api: Inject<ApiInterface> }) {
 
 /**
  * 
- *  FIXME no inejcted useService hook
+ *  FIXME no proper service state handling
+
+ */
+export function InlineDestProps(props: {
+  services: {
+    api: Inject<ApiInterface>;
+  };
+}) {
+  const {
+    services: { api },
+  } = props;
+  return <div>{api.getData()}Mixed dependencies component</div>;
+}
+
+/**
+ * 
+ *  FIXME no proper service state handling
 
  */
 export function InlineDestructured2ndApi({
@@ -44,7 +60,7 @@ export function InlineDestructured2ndApi({
   services: {
     api: Inject<ApiInterface>;
 
-    state: TestStateInterface<string>;
+    state: TestStateInterface;
   };
 }) {
   return <div>{services.state.value}Mixed dependencies component</div>;

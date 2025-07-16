@@ -1,4 +1,4 @@
-// tools/shared/SharedDependencyExtractor.ts
+// tools/shared/SharedDependencyExtractor.ts - FIXED property path handling
 
 import {
   ClassDeclaration,
@@ -27,7 +27,7 @@ export interface ExtractedDependency {
   resolvedImplementation?: InterfaceImplementation;
   extractionSource: 'decorator' | 'marker-type' | 'parameter-type';
   sourceLocation: string;       // For debugging
-  propertyPath?: string[];      // Path to nested property (e.g., ['services', 'api'])
+  propertyPath?: string[];      // FIXED: Path to nested property (e.g., ['services', 'api'])
   metadata?: {
     parameterIndex?: number;
     propertyName?: string;
@@ -175,7 +175,7 @@ export class SharedDependencyExtractor {
   }
 
   /**
-   * Extract dependencies from Inject<T> marker types in function parameters using recursive extraction
+   * FIXED: Extract dependencies from Inject<T> marker types in function parameters using recursive extraction
    */
   private extractFromTypeMarkers(
     param: ParameterDeclaration,
@@ -198,6 +198,9 @@ export class SharedDependencyExtractor {
     
     if (this.options.verbose && injectMarkers.length > 0) {
       console.log(`🎯 Found ${injectMarkers.length} inject markers in parameter type`);
+      injectMarkers.forEach(marker => {
+        console.log(`  - ${marker.propertyPath.join('.')} -> ${marker.interfaceType} (${marker.isOptional ? 'optional' : 'required'})`);
+      });
     }
 
     // Convert inject markers to extracted dependencies
@@ -212,7 +215,7 @@ export class SharedDependencyExtractor {
   }
 
   /**
-   * Convert an inject marker to an extracted dependency
+   * FIXED: Convert an inject marker to an extracted dependency with proper property path handling
    */
   private convertInjectMarkerToDependency(
     marker: ExtractedInjectMarker,
@@ -234,15 +237,33 @@ export class SharedDependencyExtractor {
       console.log(`🔗 Converting marker: ${marker.propertyPath.join('.')} -> ${marker.interfaceType} (${marker.isOptional ? 'optional' : 'required'})`);
     }
 
+    // FIXED: Properly set the property path for nested access patterns
+    let propertyPath: string[] | undefined;
+    let serviceKey: string;
+
+    if (marker.propertyPath.length > 1) {
+      // For nested paths like ['services', 'api'], keep the full path
+      propertyPath = marker.propertyPath;
+      serviceKey = marker.serviceKey; // This should be 'api' from the marker
+    } else if (marker.propertyPath.length === 1) {
+      // For direct paths like ['api'], no nested path needed
+      propertyPath = undefined;
+      serviceKey = marker.serviceKey;
+    } else {
+      // Fallback
+      serviceKey = marker.serviceKey;
+      propertyPath = undefined;
+    }
+
     return {
-      serviceKey: marker.serviceKey,
+      serviceKey,
       interfaceType: marker.interfaceType,
       sanitizedKey: resolution.sanitizedKey,
       isOptional: marker.isOptional,
       resolvedImplementation: resolution.implementation,
       extractionSource: 'marker-type',
       sourceLocation: marker.sourceLocation,
-      propertyPath: marker.propertyPath,
+      propertyPath, // FIXED: Properly set property path
       metadata: {
         propertyName: marker.serviceKey
       }
@@ -346,7 +367,7 @@ export class SharedDependencyExtractor {
     return dependencies;
   }
 
-  /**
+/**
    * Check if parameter has @Inject decorator
    */
   private hasInjectDecorator(param: ParameterDeclaration): boolean {
@@ -512,5 +533,92 @@ export class SharedDependencyExtractor {
     }
 
     return stats;
+  }
+
+  /**
+   * ADDED: Debug method to inspect extracted dependencies
+   */
+  debugExtractedDependencies(dependencies: ExtractedDependency[]): void {
+    if (!this.options.verbose) return;
+
+    console.log('\n🐛 DEBUG: Extracted Dependencies:');
+    console.log('=====================================');
+    
+    dependencies.forEach((dep, index) => {
+      console.log(`\n[${index + 1}] Dependency:`);
+      console.log(`  serviceKey: "${dep.serviceKey}"`);
+      console.log(`  interfaceType: "${dep.interfaceType}"`);
+      console.log(`  sanitizedKey: "${dep.sanitizedKey}"`);
+      console.log(`  isOptional: ${dep.isOptional}`);
+      console.log(`  propertyPath: [${dep.propertyPath?.map(p => `"${p}"`).join(', ') || 'none'}]`);
+      console.log(`  extractionSource: "${dep.extractionSource}"`);
+      console.log(`  sourceLocation: "${dep.sourceLocation}"`);
+      console.log(`  resolvedImplementation: ${dep.resolvedImplementation ? 
+        `${dep.resolvedImplementation.implementationClass} (${dep.resolvedImplementation.sanitizedKey})` : 
+        'NONE'}`);
+      
+      if (dep.metadata) {
+        console.log(`  metadata:`);
+        Object.entries(dep.metadata).forEach(([key, value]) => {
+          console.log(`    ${key}: ${JSON.stringify(value)}`);
+        });
+      }
+    });
+    
+    console.log('\n=====================================\n');
+  }
+
+  /**
+   * ADDED: Method to extract dependencies and provide detailed logging
+   */
+  extractWithDetailedLogging(
+    param: ParameterDeclaration,
+    sourceFile: SourceFile,
+    context: 'function-parameter' | 'arrow-function-parameter'
+  ): ExtractedDependency[] {
+    console.log('\n🔍 DETAILED EXTRACTION PROCESS:');
+    console.log('===============================');
+    
+    const paramName = param.getName();
+    const typeNode = param.getTypeNode();
+    
+    console.log(`Parameter: ${paramName}`);
+    console.log(`Type node: ${typeNode?.getKindName() || 'none'}`);
+    console.log(`Type text: ${typeNode?.getText() || 'none'}`);
+    
+    if (!typeNode) {
+      console.log('❌ No type node found - skipping extraction');
+      return [];
+    }
+
+    // Extract inject markers with detailed logging
+    console.log('\n🎯 Extracting inject markers...');
+    const injectMarkers = this.recursiveExtractor.extractFromTypeNode(typeNode, sourceFile);
+    
+    console.log(`Found ${injectMarkers.length} inject markers:`);
+    injectMarkers.forEach((marker, index) => {
+      console.log(`  [${index + 1}] ${marker.propertyPath.join('.')} -> ${marker.interfaceType} (${marker.isOptional ? 'optional' : 'required'})`);
+    });
+
+    // Convert to dependencies with detailed logging
+    console.log('\n🔗 Converting markers to dependencies...');
+    const dependencies: ExtractedDependency[] = [];
+    
+    for (const marker of injectMarkers) {
+      console.log(`\nProcessing marker: ${marker.propertyPath.join('.')}`);
+      
+      const dependency = this.convertInjectMarkerToDependency(marker, sourceFile, context);
+      if (dependency) {
+        dependencies.push(dependency);
+        console.log(`✅ Created dependency: ${dependency.serviceKey} (path: [${dependency.propertyPath?.join(', ') || 'none'}])`);
+      } else {
+        console.log(`❌ Failed to create dependency for marker`);
+      }
+    }
+
+    console.log('\n📊 Final extraction results:');
+    this.debugExtractedDependencies(dependencies);
+
+    return dependencies;
   }
 }
