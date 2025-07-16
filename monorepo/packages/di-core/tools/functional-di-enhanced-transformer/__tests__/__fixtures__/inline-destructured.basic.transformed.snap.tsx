@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineValueProps
-// Generated: 2025-07-16T19:32:21.200Z
+// Generated: 2025-07-16T19:40:58.340Z
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface, TestStateInterface } from "./shared-types";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -93,6 +93,10 @@ export function TodoCard3(props: TodoCardProps) {
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
 
+/**
+ *    FIXME todo from function args too aggressivly removed with DI extract step
+ *    Note we already had a similar issue with function body destructuring
+ */
 export function TodoCard4(props: TodoCardProps) {
     const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
