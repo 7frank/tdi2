@@ -7,16 +7,10 @@ export interface ApiInterface {
   configure(config: { url: string; timeout: number }): void;
 }
 
-export interface TestStateInterface {
-  value: string;
-  setValue(v: string): Promise<void>;
-}
-
-export interface GenericTestStateInterface<T> {
+export interface TestStateInterface<T> {
   value: T;
   setValue(v: T): Promise<void>;
 }
-
 
 export interface LoggerInterface {
   log(message: string): void;

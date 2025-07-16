@@ -25,17 +25,6 @@
 - TODO git bisect breaking changes and se whats recyclbe
   - until tests it should be ok , then refactoring broke things
 
-#### [❌] T_T
-
-- fix optional in generated
-- fix one example in "inline destructured"
-
-### [❌] T_T separate ... each needs to be under 60% ~ 120k token test included, otherwise we loose oin the long term
-
-- di-core
-- di-shared
-- di-react
-
 ### [❌] release di-core 2.3.0 or 2.2.1
 
 ### [❌] DI bugs & side effects (part 1)

@@ -1,4 +1,4 @@
-// tools/functional-di-enhanced-transformer/transformation-pipeline.ts - FIXED VERSION
+// tools/functional-di-enhanced-transformer/transformation-pipeline.ts
 import {
   FunctionDeclaration,
   ArrowFunction,
@@ -40,7 +40,7 @@ export class TransformationPipeline {
   }
 
   /**
-   * FIXED: Complete transformation pipeline that generates the expected output
+   * Complete transformation pipeline that matches your expected output
    */
   transformComponent(
     func: FunctionDeclaration | ArrowFunction,
@@ -48,14 +48,14 @@ export class TransformationPipeline {
     sourceFile: SourceFile
   ): void {
     if (this.options.verbose) {
-      console.log(`🚀 Starting fixed transformation pipeline`);
+      console.log(`🚀 Starting complete transformation pipeline`);
     }
 
     // Step 1: Normalize parameters (remove destructuring from function signature)
     this.normalizeParameters(func);
 
-    // Step 2: FIXED - Generate DI hook calls with proper optional chaining
-    this.generateDIHookCallsWithOptionalChaining(func, dependencies);
+    // Step 2: Generate direct property access with DI fallbacks
+    this.generateDirectPropertyAccess(func, dependencies);
 
     // Step 3: Update property access expressions to use new variables
     this.propertyUpdater.updatePropertyAccessAdvanced(func, dependencies);
@@ -74,12 +74,12 @@ export class TransformationPipeline {
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Fixed transformation pipeline completed`);
+      console.log(`✅ Transformation pipeline completed`);
     }
   }
 
   /**
-   * FIXED: Step 1 - Normalize parameters to always use 'props' parameter
+   * Step 1: Normalize parameters to always use 'props' parameter
    */
   private normalizeParameters(func: FunctionDeclaration | ArrowFunction): void {
     const parameters = func.getParameters();
@@ -114,20 +114,20 @@ export class TransformationPipeline {
   }
 
   /**
-   * FIXED: Step 2 - Generate DI hook calls with proper optional chaining fallbacks
+   * Step 2: Generate direct property access with DI fallbacks
    */
-  private generateDIHookCallsWithOptionalChaining(
+  private generateDirectPropertyAccess(
     func: FunctionDeclaration | ArrowFunction,
     dependencies: ExtractedDependency[]
   ): void {
     const body = this.getFunctionBody(func);
     if (!body || !Node.isBlock(body)) return;
 
-    // Generate DI hook statements for each dependency
+    // Generate direct access statements for each dependency
     const statements: string[] = [];
 
     for (const dep of dependencies) {
-      const statement = this.generateDIHookStatementWithOptionalChaining(dep);
+      const statement = this.generateDirectAccessStatement(dep);
       if (statement) {
         statements.push(statement);
       }
@@ -139,23 +139,21 @@ export class TransformationPipeline {
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Generated ${statements.length} DI hook statements with optional chaining`);
+      console.log(`✅ Generated ${statements.length} direct access statements`);
     }
   }
 
   /**
-   * FIXED: Generate DI hook statement with proper optional chaining fallback
+   * Generate direct property access statement with DI fallback
    */
-  private generateDIHookStatementWithOptionalChaining(dependency: ExtractedDependency): string | null {
-    // Determine the property path with optional chaining
-    const propertyPath = this.determineOptionalPropertyPath(dependency);
+  private generateDirectAccessStatement(dependency: ExtractedDependency): string | null {
+    // Determine the property path based on dependency metadata
+    const propertyPath = this.determinePropertyPath(dependency);
     
     if (!dependency.resolvedImplementation) {
       if (dependency.isOptional) {
-        // Optional dependency that couldn't be resolved - use optional chaining
         return `const ${dependency.serviceKey} = ${propertyPath} ?? undefined;`;
       } else {
-        // Required dependency that couldn't be resolved - use optional chaining with useService fallback
         return `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`;
       }
     }
@@ -163,31 +161,34 @@ export class TransformationPipeline {
     const token = dependency.resolvedImplementation.sanitizedKey;
     const hookName = dependency.isOptional ? 'useOptionalService' : 'useService';
     
-    // FIXED: Generate the exact pattern that matches the expected output with optional chaining
+    // Generate the exact pattern from your expected output
     return `const ${dependency.serviceKey} = ${propertyPath} ?? (${hookName}('${token}') as unknown as ${dependency.interfaceType});`;
   }
 
   /**
-   * FIXED: Determine property path with proper optional chaining
+   * Determine property path for dependency access
    */
-  private determineOptionalPropertyPath(dependency: ExtractedDependency): string {
+  private determinePropertyPath(dependency: ExtractedDependency): string {
     if (dependency.propertyPath && dependency.propertyPath.length > 0) {
-      // FIXED: Use optional chaining for nested properties: props.services?.api
-      const path = dependency.propertyPath.join('?.');
-      return `props.${path}`;
+      // Use full property path: props.services.api
+      return `props.${dependency.propertyPath.join('.')}`;
     } else {
-      // FIXED: Use optional chaining for direct property access: props.serviceKey
+      // Direct property access: props.serviceKey
       return `props.${dependency.serviceKey}`;
     }
   }
 
   /**
-   * FIXED: Step 4 - Remove unused destructuring statements while preserving needed ones
+   * Step 3: Update variable references and remove unused destructuring
    */
   private removeUnusedDestructuring(func: FunctionDeclaration | ArrowFunction): void {
     const body = this.getFunctionBody(func);
     if (!body || !Node.isBlock(body)) return;
 
+    // First, update all property access expressions to use the new variables
+    this.updatePropertyAccessExpressions(func);
+
+    // Then remove any unused destructuring statements
     const statements = body.getStatements();
     const toRemove: any[] = [];
 
@@ -198,15 +199,12 @@ export class TransformationPipeline {
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
           
-          // Remove destructuring assignments from props that are now handled by DI hooks
+          // Remove destructuring assignments from props
           if (Node.isObjectBindingPattern(nameNode)) {
             const initializer = declaration.getInitializer();
             if (initializer && Node.isIdentifier(initializer) && initializer.getText() === 'props') {
-              // Check if this destructuring conflicts with our DI hooks
-              if (this.isRedundantDestructuring(nameNode)) {
-                toRemove.push(statement);
-                break;
-              }
+              toRemove.push(statement);
+              break;
             }
           }
           
@@ -231,40 +229,12 @@ export class TransformationPipeline {
     }
 
     if (this.options.verbose && toRemove.length > 0) {
-      console.log(`🗑️  Removed ${toRemove.length} redundant destructuring statements`);
+      console.log(`🗑️  Removed ${toRemove.length} unused destructuring statements`);
     }
   }
 
   /**
-   * FIXED: Check if destructuring is redundant (conflicts with DI hooks)
-   */
-  private isRedundantDestructuring(nameNode: any): boolean {
-    // If the destructuring extracts services that we're now handling with DI hooks,
-    // it's redundant. This is a simplified check - in practice, you'd want to 
-    // compare against the actual dependencies being injected.
-    
-    try {
-      const elements = nameNode.getElements();
-      for (const element of elements) {
-        if (Node.isBindingElement(element)) {
-          const bindingName = element.getNameNode().getText();
-          // If it's extracting 'services' or direct service properties, it's likely redundant
-          if (bindingName === 'services' || bindingName.endsWith('Service') || bindingName.endsWith('service')) {
-            return true;
-          }
-        }
-      }
-    } catch (error) {
-      // If we can't parse it, assume it's safe to keep
-      return false;
-    }
-    
-    return false;
-  }
-
-
-  /**
-   * Step 3: Update property access expressions to use the new variables
+   * Update property access expressions to use the new direct variables
    */
   private updatePropertyAccessExpressions(func: FunctionDeclaration | ArrowFunction): void {
     const body = this.getFunctionBody(func);
@@ -291,23 +261,9 @@ export class TransformationPipeline {
   }
 
   /**
-   * FIXED: Simplify property access patterns while preserving optional chaining
+   * Simplify property access patterns
    */
   private simplifyPropertyAccess(propertyAccess: string): string {
-    // Handle "services?.api?.getData()" -> "api?.getData()"
-    if (propertyAccess.includes('services?.')) {
-      const parts = propertyAccess.split('.');
-      if (parts.length >= 3) {
-        // services?.api?.getData() -> api?.getData()
-        // Remove the first part (services?) and keep the rest
-        const remaining = parts.slice(1);
-        return remaining.join('.');
-      } else if (parts.length === 2) {
-        // services?.api -> api (remove optional chaining at the end)
-        return parts[1].replace('?', '');
-      }
-    }
-    
     // Handle "services.api.getData()" -> "api.getData()"
     if (propertyAccess.startsWith('services.')) {
       const parts = propertyAccess.split('.');
@@ -320,7 +276,9 @@ export class TransformationPipeline {
       }
     }
     
-    // No change needed for already simplified expressions
+    // Handle direct property access like "cache.get()" -> "cache.get()"
+    // (no change needed if it's already simplified)
+    
     return propertyAccess;
   }
 
@@ -388,6 +346,8 @@ export class TransformationPipeline {
     }
     return null;
   }
+
+ 
 }
 
 // Integration with the main transformer
