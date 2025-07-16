@@ -19,6 +19,7 @@ export interface TransformationTestResult {
   transformedFilePath: string;
   componentName: string;
   dependencies: any[];
+  inputFilePath: string; // Track the original input file path
 }
 
 export class TransformationTestFramework {
@@ -105,11 +106,20 @@ export class TransformationTestFramework {
    * Run transformation tests for all fixtures in a directory
    */
   async runFixtureTests(testName: string): Promise<TransformationTestResult[]> {
-    const fixturePattern = path.join(this.options.fixtureDir, `${testName}.*.input.tsx`);
-    const inputFiles = glob.sync(fixturePattern);
+    // Try exact match first
+    const exactPattern = path.join(this.options.fixtureDir, `${testName}.input.tsx`);
+    let inputFiles = glob.sync(exactPattern);
+
+    // If no exact match, try wildcard pattern for variants
+    if (inputFiles.length === 0) {
+      const wildcardPattern = path.join(this.options.fixtureDir, `${testName}.*.input.tsx`);
+      inputFiles = glob.sync(wildcardPattern);
+    }
 
     if (inputFiles.length === 0) {
-      throw new Error(`No input fixtures found for pattern: ${fixturePattern}`);
+      throw new Error(`No input fixtures found for testName: ${testName}. Tried patterns:
+        - ${exactPattern}
+        - ${path.join(this.options.fixtureDir, `${testName}.*.input.tsx`)}`);
     }
 
     const results: TransformationTestResult[] = [];
@@ -127,11 +137,15 @@ export class TransformationTestFramework {
    */
   async runSingleFixtureTest(inputFilePath: string): Promise<TransformationTestResult> {
     const inputContent = fs.readFileSync(inputFilePath, 'utf8');
-    const fileName = path.basename(inputFilePath, '.input.tsx');
+    
+    // Extract the full filename without extension for proper snapshot naming
+    // e.g., "inline-with-destructuring.basic.input.tsx" -> "inline-with-destructuring.basic"
+    const fullBaseName = path.basename(inputFilePath, '.input.tsx');
+    
     const componentName = this.extractComponentName(inputContent);
 
     // Add input file to project
-    const sourceFile = this.project.createSourceFile(`${fileName}.tsx`, inputContent);
+    const sourceFile = this.project.createSourceFile(`${fullBaseName}.tsx`, inputContent);
 
     // Add any separate interface files if they exist
     await this.addSeparateInterfaceFiles(inputFilePath);
@@ -150,11 +164,12 @@ export class TransformationTestFramework {
       output: transformedContent,
       transformedFilePath: sourceFile.getFilePath(),
       componentName,
-      dependencies
+      dependencies,
+      inputFilePath // Track the original input file path
     };
 
-    // Generate or verify snapshot
-    await this.handleSnapshot(fileName, result);
+    // Generate or verify snapshot using the full base name (including variant)
+    await this.handleSnapshot(fullBaseName, result);
 
     return result;
   }
@@ -231,9 +246,12 @@ export class TransformationTestFramework {
     return dependencies;
   }
 
-  private async handleSnapshot(testName: string, result: TransformationTestResult): Promise<void> {
+  private async handleSnapshot(fullBaseName: string, result: TransformationTestResult): Promise<void> {
     const snapshotDir = this.options.outputDir || path.join(this.options.fixtureDir, '__snapshots__');
-    const snapshotPath = path.join(snapshotDir, `${testName}.transformed.tsx`);
+    
+    // Use the full base name (including variant) for snapshot naming
+    // e.g., "inline-with-destructuring.basic" -> "inline-with-destructuring.basic.transformed.snap.ts"
+    const snapshotPath = path.join(snapshotDir, `${fullBaseName}.transformed.snap.tsx`);
 
     // Ensure snapshot directory exists
     if (!fs.existsSync(snapshotDir)) {
@@ -252,7 +270,7 @@ export class TransformationTestFramework {
       // Verify existing snapshot
       const existingSnapshot = fs.readFileSync(snapshotPath, 'utf8');
       if (existingSnapshot !== snapshotContent) {
-        throw new Error(`Snapshot mismatch for ${testName}. Run with updateSnapshots: true to update.`);
+        throw new Error(`Snapshot mismatch for ${fullBaseName}. Run with updateSnapshots: true to update.`);
       }
     }
   }
@@ -271,10 +289,14 @@ ${result.output}`;
       const results = await this.runFixtureTests(testName);
       
       for (const result of results) {
-        // Load snapshot
+        // Extract full base name from the input file path including variant
+        // e.g., "/path/to/inline-with-destructuring.basic.input.tsx" -> "inline-with-destructuring.basic"
+        const fullBaseName = path.basename(result.inputFilePath, '.input.tsx');
+        
+        // Load snapshot with the correct name
         const snapshotPath = path.join(
           this.options.outputDir || path.join(this.options.fixtureDir, '__snapshots__'),
-          `${testName}.transformed.snap.tsx`
+          `${fullBaseName}.transformed.snap.tsx`
         );
         
         if (fs.existsSync(snapshotPath)) {

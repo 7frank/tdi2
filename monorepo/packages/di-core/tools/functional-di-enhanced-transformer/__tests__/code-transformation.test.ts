@@ -110,7 +110,7 @@ describe('Transformation with Custom Options', () => {
     });
 
     const result = await framework.runSingleFixtureTest(
-      path.join(FIXTURES_DIR, 'verbose-example.input.tsx')
+      path.join(FIXTURES_DIR, 'verbose-example.basic.input.tsx')
     );
 
     expect(result.componentName).toBe('VerboseExampleComponent');

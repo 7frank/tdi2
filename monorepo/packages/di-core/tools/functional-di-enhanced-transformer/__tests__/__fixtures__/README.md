@@ -7,7 +7,7 @@ This directory contains test fixtures for testing the Functional DI Enhanced Tra
 - `*.input.tsx` - Input React components to be transformed
 - `*.interfaces.ts` - Separate interface definitions
 - `*.types.ts` - Additional type definitions
-- `__snapshots__/*.transformed.snap.ts` - Generated transformation snapshots
+- `__snapshots__/*.transformed.snap.tsx` - Generated transformation snapshots
 
 ## Fixture Categories
 
@@ -46,9 +46,4 @@ npm test
 Update snapshots:
 ```bash
 npm test -- --updateSnapshots
-```
-
-Generate new fixtures:
-```bash
-./generate-fixtures.sh
 ```
