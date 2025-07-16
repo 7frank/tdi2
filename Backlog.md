@@ -16,7 +16,14 @@
 
 - format
 - tsc
-  - now as a separate measure after diff it should test if a file actually compiles or is at least syntactically coherent. what options do i have 
+  - now as a separate measure after diff it should test if a file actually compiles or is at least syntactically coherent. what options do i have
+
+#### [❌] broken impl?
+
+- todo fix tests and remove tests that now are handled by our snapshot tests
+- todo check of code generator now is deprecated
+- TODO git bisect breaking changes and se whats recyclbe
+  - until tests it should be ok , then refactoring broke things
 
 ### [❌] release di-core 2.3.0 or 2.2.1
 
