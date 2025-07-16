@@ -44,10 +44,6 @@ export function InlineDestProps(props: {
   return <div>{api.getData()}Mixed dependencies component</div>;
 }
 
-/**
- *
- *    FIXME no injected useService hook
- */
 export function InlineDestructured2ndApi({
   services,
 }: {
@@ -81,5 +77,30 @@ export function TodoCard(props: TodoCardProps) {
     services: { api },
   } = props;
 
+  return <div>{todo.completed ? "completed" : "not completed"}</div>;
+}
+
+export function TodoCard2(props: TodoCardProps) {
+  const {
+    todo,
+    services: {},
+  } = props;
+
+  return <div>{todo.completed ? "completed" : "not completed"}</div>;
+}
+
+/**
+ *    FIXME todo from function args too aggressivly removed with DI extract step
+ *    Note we already had a similar issue with function body destructuring
+ */
+export function TodoCard3({ todo, services: { api } }: TodoCardProps) {
+  return <div>{todo.completed ? "completed" : "not completed"}</div>;
+}
+
+/**
+ *    FIXME todo from function args too aggressivly removed with DI extract step
+ *    Note we already had a similar issue with function body destructuring
+ */
+export function TodoCard4({ todo, ...props }: TodoCardProps) {
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
