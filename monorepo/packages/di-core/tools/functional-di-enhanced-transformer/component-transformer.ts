@@ -8,6 +8,7 @@ import {
 import { FunctionalDependency, TransformationOptions, DICodeGenerationResult } from './types';
 import { CodeGenerator } from './code-generator';
 import { DestructuringProcessor } from './destructuring-processor';
+import { ExtractedDependency } from '../shared/SharedDependencyExtractor';
 
 export class ComponentTransformer {
   private codeGenerator: CodeGenerator;
@@ -21,7 +22,7 @@ export class ComponentTransformer {
   /**
    * Transform a function declaration component
    */
-  transformFunction(func: FunctionDeclaration, dependencies: FunctionalDependency[]): void {
+  transformFunction(func: FunctionDeclaration, dependencies: ExtractedDependency[]): void {
     const body = func.getBody();
     if (!body || !Node.isBlock(body)) return;
 
@@ -40,7 +41,7 @@ export class ComponentTransformer {
   /**
    * Transform an arrow function component
    */
-  transformArrowFunction(arrowFunc: ArrowFunction, dependencies: FunctionalDependency[]): void {
+  transformArrowFunction(arrowFunc: ArrowFunction, dependencies: ExtractedDependency[]): void {
     const body = arrowFunc.getBody();
     if (!Node.isBlock(body)) return;
 

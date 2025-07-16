@@ -27,7 +27,7 @@ export interface DIContainer {
     interfaceName: string,
     implementation: () => T,
     scope?: "singleton" | "transient" | "scoped"
-  ): void 
+  ): void;
   resolveByInterface<T>(interfaceName: string): T;
   hasInterface(interfaceName: string): boolean;
 }
@@ -52,13 +52,13 @@ export interface InjectMetadata {
   qualifier?: string; // Qualifier for disambiguation
 }
 
-// Generated service factory type
-export type ServiceFactory<T> = () => T;
+export type ServiceFactory<T> = (container?: any) => T;
+type ServiceFactoryFactory<T> = (container?: any) => () => T;
 
 // Enhanced dependency injection map with interface support
 export interface DIMap {
   [token: string]: {
-    factory: ServiceFactory<any>;
+    factory: ServiceFactory<any> | ServiceFactoryFactory<any>;
     scope: "singleton" | "transient" | "scoped";
     dependencies: string[];
     interfaceName?: string; // The interface this service implements

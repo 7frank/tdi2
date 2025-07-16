@@ -143,12 +143,29 @@ suggest a file that i should test  integration test with bun:test that should wo
   - as it can drastically good generate coherent code artifacts and full smaller packages
   - but it requires a decent level of knowledge of the implications of the added frameworks
   - it requires a decent intuition of what is ai slop and what is additional `stuff` the ai generates that is actually `value`
+- sometimes lots of forward and back when working on a real problem with probably the full technical debt accumulated so far
+  - so dont accumulate debt in the first place and work structured
 
-### tools
+### tools used, different languages you will need different tools
 
-npm install -g ts-prune
-ts-prune -p ./tsconfig.app.json
+> dead code elimination
+
+- ! use with caution
+- `npm install -g ts-prune`
+- ts-prune -p ./tsconfig.app.json
+
+- WIP npm install -g source-map-explorer
+- source-map-explorer ./dist/index.js --json
 
 #### Cursor
 
 #### Codex
+
+## Cons
+
+- cumbersome
+- often frustrating
+- bot creates lot of unneccesary stuff or digresses from prompt
+- recreates the wheel often flooding code base with things that a opackage would have solved
+  - own git diff instead of diff package or child_process
+  - build own file traversal instead of built in tsx file resolution

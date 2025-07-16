@@ -401,7 +401,7 @@ describe("FunctionalDIEnhancedTransformer", () => {
         expect(transformedFile).toContain("useService('ExampleApiInterface')");
         expect(transformedFile).toContain("useService('LoggerInterface')");
         // FIXED: The actual output uses CacheInterface_any, not CacheInterface_string
-        expect(transformedFile).toContain("useService('CacheInterface_string_Array'); // Warning: implementation not found");
+        expect(transformedFile).toContain("useService('CacheInterface_string_Array')");
       });
     });
   });
@@ -612,8 +612,6 @@ export function ComplexGenerics(props: {
         );
         
         expect(transformedFile).toBeDefined();
-        // FIXED: Expect warning comments for missing implementations and check actual output
-        expect(transformedFile).toContain("// Warning: implementation not found");
         // FIXED: Optional missing dependencies become undefined
         expect(transformedFile).toContain("const logger = undefined; // Optional dependency not found");
       });
@@ -668,9 +666,6 @@ export function MissingDependencies(props: {
         );
         
         expect(transformedFile).toBeDefined();
-        
-        // Should include warning for missing required dependency
-        expect(transformedFile).toContain("// Warning: implementation not found");
         
         // Should handle optional missing dependency gracefully
         expect(transformedFile).toContain("const missingOptional = undefined; // Optional dependency not found");

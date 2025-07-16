@@ -39,3 +39,8 @@ export interface ProjectTransformResult {
   errors: string[]; // Global errors
   warnings: string[]; // Global warnings
 }
+
+export type DICodeGenerationResult = {
+  statements: string[];
+  serviceKeys: string[];
+};

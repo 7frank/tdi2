@@ -2,24 +2,23 @@
 
 ## ordered log
 
-### [❌] release di-core 2.3.0 or 2.2.1
-
-### [❌] replace current implementation details with one of the packages like
-
-- @phenomnomnominal/tsquery
-- ts-pattern
-  > https://claude.ai/chat/589c3252-74e7-4e17-b84c-0cebca6d6c2b
-
-maybe normalization could help
-
-> import jscodeshift from 'jscodeshift';
-> import transform from 'react-codemod/transforms/no-destructuring-assignment';
-
-### create and fix some tests
+### [❌] improve testing
 
 - code-generator.snapshot.test.ts focus: correct code
 - ladle / vite test suite, runnning a set of compeonnts with a test harnish
   - having git diff utiltiites and other debug informations readily available as well as a living documentation
+
+- create a fixture based test runner as part of di-core https://claude.ai/chat/848a009f-9959-40ba-b234-04291db352b2
+  - export these as (ts not compiled) fixtures so that our ladle stories can use them directly
+  - as well as the compile results so that we can show the code before and aftertransformation in ladle
+
+- diff ignore pattern array e.g. timestamp
+
+- format
+- tsc
+  - now as a separate measure after diff it should test if a file actually compiles or is at least syntactically coherent. what options do i have 
+
+### [❌] release di-core 2.3.0 or 2.2.1
 
 ### [❌] DI bugs & side effects (part 1)
 
@@ -108,6 +107,17 @@ function Button({
   bar: Lazy<BarInterface>;
 }>);
 ```
+
+### [❌] replace current implementation details with one of the packages like
+
+- @phenomnomnominal/tsquery
+- ts-pattern
+  > https://claude.ai/chat/589c3252-74e7-4e17-b84c-0cebca6d6c2b
+
+maybe normalization could help
+
+> import jscodeshift from 'jscodeshift';
+> import transform from 'react-codemod/transforms/no-destructuring-assignment';
 
 ### [❌] classes vs zustand vanilla inject / maybe both
 
