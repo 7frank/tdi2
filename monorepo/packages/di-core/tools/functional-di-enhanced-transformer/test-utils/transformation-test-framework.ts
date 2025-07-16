@@ -233,7 +233,7 @@ export class TransformationTestFramework {
 
   private async handleSnapshot(testName: string, result: TransformationTestResult): Promise<void> {
     const snapshotDir = this.options.outputDir || path.join(this.options.fixtureDir, '__snapshots__');
-    const snapshotPath = path.join(snapshotDir, `${testName}.transformed.snap.ts`);
+    const snapshotPath = path.join(snapshotDir, `${testName}.transformed.tsx`);
 
     // Ensure snapshot directory exists
     if (!fs.existsSync(snapshotDir)) {
@@ -274,7 +274,7 @@ ${result.output}`;
         // Load snapshot
         const snapshotPath = path.join(
           this.options.outputDir || path.join(this.options.fixtureDir, '__snapshots__'),
-          `${testName}.transformed.snap.ts`
+          `${testName}.transformed.snap.tsx`
         );
         
         if (fs.existsSync(snapshotPath)) {
