@@ -8,7 +8,7 @@ export { DependencyExtractor } from './dependency-extractor';
 export { ComponentTransformer } from './component-transformer';
 export { ImportManager } from './import-manager';
 export { CodeGenerator } from './code-generator';
-export { DestructuringProcessor } from './destructuring-processor';
+
 export { DebugFileGenerator } from './debug-file-generator';
 
 // Types and interfaces
