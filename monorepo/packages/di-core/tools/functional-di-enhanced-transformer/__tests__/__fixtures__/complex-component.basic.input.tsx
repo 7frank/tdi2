@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
+import { ApiInterface, LoggerInterface, CacheInterface, UserServiceInterface } from './shared-types';
 
 export function ComplexComponent(props: {
   userId: string;

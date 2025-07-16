@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noEmitOnError": false,
+    "outDir": "./dist/examples",
+    "rootDir": "tools/functional-di-enhanced-transformer/__tests__/__fixtures__",
+    "skipLibCheck": true
+  },
+  "include": [
+    "tools/functional-di-enhanced-transformer/__tests__/__fixtures__"
+  ],
+  "exclude": [
+    "src"
+  ]
+}

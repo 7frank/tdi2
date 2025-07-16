@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
+import { ApiInterface, UserServiceInterface } from './shared-types';
 
 export function InlineWithoutDestructuring(props: {
   title: string;

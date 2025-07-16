@@ -1,4 +1,5 @@
 import React from 'react';
+import { ApiService, LoggerService } from './shared-types';
 
 export function NonDIServices(props: {
   data: any;

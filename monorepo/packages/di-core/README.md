@@ -24,6 +24,7 @@ run `bun .cli.ts`
 ## Testing
 
 - run all tests `bun test`
+- `UPDATE_SNAPSHOTS=1 bun test --update-snapshots`
 - run primary integration and code generation tests `b test ./tools/functional-di-enhanced-transformer/__tests__/code-transformation.test.ts`
 - update snapshots of primary integration and code generation tests `UPDATE_SNAPSHOTS=1 b test ./tools/functional-di-enhanced-transformer/__tests__/code-transformation.test.ts`
 

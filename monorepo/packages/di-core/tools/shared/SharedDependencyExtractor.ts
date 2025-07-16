@@ -198,6 +198,9 @@ export class SharedDependencyExtractor {
     
     if (this.options.verbose && injectMarkers.length > 0) {
       console.log(`🎯 Found ${injectMarkers.length} inject markers in parameter type`);
+      injectMarkers.forEach(marker => {
+        console.log(`  - ${marker.propertyPath.join('.')} -> ${marker.interfaceType} (${marker.isOptional ? 'optional' : 'required'})`);
+      });
     }
 
     // Convert inject markers to extracted dependencies
@@ -212,7 +215,7 @@ export class SharedDependencyExtractor {
   }
 
   /**
-   * Convert an inject marker to an extracted dependency
+   * Convert an inject marker to an extracted dependency with proper property path handling
    */
   private convertInjectMarkerToDependency(
     marker: ExtractedInjectMarker,
@@ -346,7 +349,7 @@ export class SharedDependencyExtractor {
     return dependencies;
   }
 
-  /**
+/**
    * Check if parameter has @Inject decorator
    */
   private hasInjectDecorator(param: ParameterDeclaration): boolean {

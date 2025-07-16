@@ -7,6 +7,16 @@ export interface ApiInterface {
   configure(config: { url: string; timeout: number }): void;
 }
 
+export interface TestStateInterface {
+  value: string;
+  setValue(v: string): Promise<void>;
+}
+
+export interface GenericTestStateInterface<T> {
+  value: T;
+  setValue(v: T): Promise<void>;
+}
+
 export interface LoggerInterface {
   log(message: string): void;
   error(message: string, error?: Error): void;
@@ -41,14 +51,32 @@ export interface AnotherNonExistentInterface {
 
 // Non-DI service classes
 export class ApiService implements ApiInterface {
-  async getData() { return []; }
-  async getUserData(id: string) { return {}; }
+  async getData() {
+    return [];
+  }
+  async getUserData(id: string) {
+    return {};
+  }
   async refreshData() {}
   configure(config: any) {}
 }
 
+// Non-DI service classes
+export class StateService implements GenericTestStateInterface<string> {
+  value = "foo";
+  async setValue(v: string): Promise<void> {
+    this.value = v;
+  }
+}
+
 export class LoggerService implements LoggerInterface {
-  log(message: string) { console.log(message); }
-  error(message: string, error?: Error) { console.error(message, error); }
-  warn(message: string) { console.warn(message); }
+  log(message: string) {
+    console.log(message);
+  }
+  error(message: string, error?: Error) {
+    console.error(message, error);
+  }
+  warn(message: string) {
+    console.warn(message);
+  }
 }
