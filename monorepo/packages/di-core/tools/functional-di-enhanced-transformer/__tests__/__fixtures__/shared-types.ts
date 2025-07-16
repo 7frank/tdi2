@@ -62,7 +62,7 @@ export class ApiService implements ApiInterface {
 }
 
 // Non-DI service classes
-export class StateService implements TestStateInterface<string> {
+export class StateService implements GenericTestStateInterface<string> {
   value = "foo";
   async setValue(v: string): Promise<void> {
     this.value = v;
