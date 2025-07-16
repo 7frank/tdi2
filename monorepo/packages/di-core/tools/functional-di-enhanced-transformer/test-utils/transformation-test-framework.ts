@@ -22,7 +22,6 @@ export interface TransformationTestOptions {
   validateSyntax?: boolean; // Whether to validate TypeScript syntax
   failOnSyntaxErrors?: boolean; // Whether to fail tests if syntax validation fails
 }
-
 export interface TransformationTestResult {
   input: string;
   output: string;
@@ -31,6 +30,17 @@ export interface TransformationTestResult {
   dependencies: any[];
   inputFilePath: string;
   validation: {
+    isValid: boolean;
+    diagnostics: Array<{
+      message: string;
+      line?: number;
+      column?: number;
+      category: "error" | "warning" | "suggestion" | "message";
+    }>;
+    hasErrors: boolean;
+    hasWarnings: boolean;
+  };
+  inputValidation: {
     isValid: boolean;
     diagnostics: Array<{
       message: string;
@@ -395,8 +405,40 @@ export class TransformationTestFramework {
     // Extract the full filename without extension for proper snapshot naming
     // e.g., "inline-with-destructuring.basic.input.tsx" -> "inline-with-destructuring.basic"
     const fullBaseName = path.basename(inputFilePath, ".input.tsx");
-
     const componentName = this.extractComponentName(inputContent);
+
+    // Validate input file syntax if enabled
+    const inputValidation =
+      this.options.validateSyntax !== false
+        ? this.validateTypeScriptSyntax(inputContent, `${componentName}-input`)
+        : {
+            isValid: true,
+            diagnostics: [],
+            hasErrors: false,
+            hasWarnings: false,
+          };
+
+    if (!inputValidation.isValid) {
+      if (this.options.verbose) {
+        console.error(
+          `❌ Input TypeScript validation failed for ${componentName}: ${inputFilePath}`
+        );
+        inputValidation.diagnostics.forEach((diag) => {
+          const location = diag.line
+            ? ` (line ${diag.line}, col ${diag.column})`
+            : "";
+          console.error(
+            `  INPUT ${diag.category.toUpperCase()}: ${diag.message}${location}`
+          );
+        });
+      }
+
+      if (this.options.failOnSyntaxErrors) {
+        throw new Error(
+          `Input TypeScript validation failed for ${componentName}. Enable verbose mode to see details.`
+        );
+      }
+    }
 
     // Add input file to project
     const sourceFile = this.project.createSourceFile(
@@ -418,10 +460,13 @@ export class TransformationTestFramework {
     const dependencies =
       this.extractDependenciesFromTransformed(transformedContent);
 
-    // Validate TypeScript syntax if enabled
-    const validation =
+    // Validate output TypeScript syntax if enabled
+    const outputValidation =
       this.options.validateSyntax !== false
-        ? this.validateTypeScriptSyntax(transformedContent, componentName)
+        ? this.validateTypeScriptSyntax(
+            transformedContent,
+            `${componentName}-output`
+          )
         : {
             isValid: true,
             diagnostics: [],
@@ -429,15 +474,17 @@ export class TransformationTestFramework {
             hasWarnings: false,
           };
 
-    if (!validation.isValid) {
+    if (!outputValidation.isValid) {
       if (this.options.verbose) {
-        console.error(`❌ TypeScript validation failed for ${componentName}: ${inputFilePath}`);
-        validation.diagnostics.forEach((diag) => {
+        console.error(
+          `❌ Output TypeScript validation failed for ${componentName}: ${inputFilePath}`
+        );
+        outputValidation.diagnostics.forEach((diag) => {
           const location = diag.line
             ? ` (line ${diag.line}, col ${diag.column})`
             : "";
           console.error(
-            `  ${diag.category.toUpperCase()}: ${diag.message}${location}`
+            `  OUTPUT ${diag.category.toUpperCase()}: ${diag.message}${location}`
           );
         });
       }
@@ -445,14 +492,14 @@ export class TransformationTestFramework {
       // Fail if configured to do so
       if (this.options.failOnSyntaxErrors) {
         throw new Error(
-          `TypeScript validation failed for ${componentName}. Enable verbose mode to see details.`
+          `Output TypeScript validation failed for ${componentName}. Enable verbose mode to see details.`
         );
       }
-    } else if (validation.isValid && this.options.verbose) {
+    } else if (outputValidation.isValid && this.options.verbose) {
       console.log(`✅ TypeScript validation passed for ${componentName}`);
-      if (validation.hasWarnings) {
-        console.warn(`⚠️  ${componentName} has warnings:`);
-        validation.diagnostics
+      if (outputValidation.hasWarnings) {
+        console.warn(`⚠️ ${componentName} has warnings:`);
+        outputValidation.diagnostics
           .filter((d) => d.category === "warning")
           .forEach((diag) => {
             const location = diag.line
@@ -470,7 +517,8 @@ export class TransformationTestFramework {
       componentName,
       dependencies,
       inputFilePath, // Track the original input file path
-      validation,
+      validation: outputValidation, // Keep output validation as the main validation
+      inputValidation, // Add input validation separately
     };
 
     // Generate or verify snapshot using the full base name (including variant)
