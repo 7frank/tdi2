@@ -12,6 +12,9 @@
   - export these as (ts not compiled) fixtures so that our ladle stories can use them directly
   - as well as the compile results so that we can show the code before and aftertransformation in ladle
 
+- diff ignore pattern array e.g. timestamp
+- tsc
+
 ### [❌] release di-core 2.3.0 or 2.2.1
 
 ### [❌] DI bugs & side effects (part 1)

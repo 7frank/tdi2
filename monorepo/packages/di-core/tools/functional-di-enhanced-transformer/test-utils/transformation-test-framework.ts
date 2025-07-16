@@ -7,11 +7,18 @@ import * as path from "path";
 import { glob } from "glob";
 import { diffLines, createTwoFilesPatch } from "diff";
 
+export interface IgnorePattern {
+  pattern: RegExp;
+  replacement?: string;
+  description?: string;
+}
+
 export interface TransformationTestOptions {
   fixtureDir: string;
   outputDir?: string;
   verbose?: boolean;
   updateSnapshots?: boolean;
+  ignorePatterns?: IgnorePattern[];
 }
 
 export interface TransformationTestResult {
@@ -20,13 +27,14 @@ export interface TransformationTestResult {
   transformedFilePath: string;
   componentName: string;
   dependencies: any[];
-  inputFilePath: string; // Track the original input file path
+  inputFilePath: string;
 }
 
 export class TransformationTestFramework {
   private project: Project;
   private transformer: FunctionalDIEnhancedTransformer;
   private mockInterfaceResolver: IntegratedInterfaceResolver;
+  private defaultIgnorePatterns: IgnorePattern[];
 
   constructor(private options: TransformationTestOptions) {
     this.project = new Project({
@@ -39,6 +47,25 @@ export class TransformationTestFramework {
         module: 99, // ESNext
       },
     });
+
+    // Setup default ignore patterns
+    this.defaultIgnorePatterns = [
+      {
+        pattern: /\/\/ Generated: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g,
+        replacement: "// Generated: [TIMESTAMP]",
+        description: "ISO timestamp in generated comments",
+      },
+      {
+        pattern: /Generated at: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g,
+        replacement: "Generated at: [TIMESTAMP]",
+        description: "Human readable timestamp",
+      },
+      {
+        pattern: /\btimestamp: "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"/g,
+        replacement: 'timestamp: "[TIMESTAMP]"',
+        description: "JSON timestamp fields",
+      },
+    ];
 
     // Create mock interface resolver with common implementations
     this.setupMockInterfaceResolver();
@@ -113,6 +140,54 @@ export class TransformationTestFramework {
       getInterfaceImplementations: jest.fn(() => commonImplementations),
       getServiceDependencies: jest.fn(() => new Map()),
     } as any;
+  }
+
+  /**
+   * Apply ignore patterns to normalize content before comparison
+   */
+  private normalizeContentForComparison(content: string): string {
+    const allPatterns = [
+      ...this.defaultIgnorePatterns,
+      ...(this.options.ignorePatterns || []),
+    ];
+
+    let normalizedContent = content;
+
+    for (const pattern of allPatterns) {
+      const replacement = pattern.replacement || "[IGNORED]";
+      normalizedContent = normalizedContent.replace(
+        pattern.pattern,
+        replacement
+      );
+
+      if (this.options.verbose && pattern.pattern.test(content)) {
+        console.log(
+          `🔍 Applied ignore pattern: ${pattern.description || pattern.pattern.source}`
+        );
+      }
+    }
+
+    return normalizedContent;
+  }
+
+  /**
+   * Get all effective ignore patterns (default + custom)
+   */
+  public getIgnorePatterns(): IgnorePattern[] {
+    return [
+      ...this.defaultIgnorePatterns,
+      ...(this.options.ignorePatterns || []),
+    ];
+  }
+
+  /**
+   * Add a custom ignore pattern
+   */
+  public addIgnorePattern(pattern: IgnorePattern): void {
+    if (!this.options.ignorePatterns) {
+      this.options.ignorePatterns = [];
+    }
+    this.options.ignorePatterns.push(pattern);
   }
 
   /**
@@ -311,10 +386,16 @@ export class TransformationTestFramework {
     } else {
       // Verify existing snapshot
       const existingSnapshot = fs.readFileSync(snapshotPath, "utf8");
-      if (existingSnapshot !== snapshotContent) {
+
+      // Normalize both contents before comparison
+      const normalizedExisting =
+        this.normalizeContentForComparison(existingSnapshot);
+      const normalizedNew = this.normalizeContentForComparison(snapshotContent);
+
+      if (normalizedExisting !== normalizedNew) {
         const diff = this.generateDiff(
-          existingSnapshot,
-          snapshotContent,
+          normalizedExisting,
+          normalizedNew,
           snapshotPath
         );
         throw new Error(
@@ -384,8 +465,15 @@ ${result.output}`;
             .join("\n")
             .trim();
 
+          // Normalize both contents before comparison
+          const normalizedExpected =
+            this.normalizeContentForComparison(expectedOutput);
+          const normalizedActual = this.normalizeContentForComparison(
+            result.output.trim()
+          );
+
           // Compare transformation output
-          expect(result.output.trim()).toBe(expectedOutput);
+          expect(normalizedActual).toBe(normalizedExpected);
         } else {
           throw new Error(
             `Snapshot not found: ${snapshotPath}. Run the test with UPDATE_SNAPSHOTS=1 first.`
@@ -393,6 +481,27 @@ ${result.output}`;
         }
       }
     };
+  }
+
+  /**
+   * Utility method to test ignore patterns without running full transformation
+   */
+  public testIgnorePattern(
+    content: string,
+    pattern: IgnorePattern
+  ): {
+    matches: boolean;
+    result: string;
+    matchCount: number;
+  } {
+    const matches = pattern.pattern.test(content);
+    const result = content.replace(
+      pattern.pattern,
+      pattern.replacement || "[IGNORED]"
+    );
+    const matchCount = (content.match(pattern.pattern) || []).length;
+
+    return { matches, result, matchCount };
   }
 }
 
@@ -417,7 +526,7 @@ export interface TransformationSnapshot {
   };
 }
 
-// Utility function for creating tests
+// Utility function for creating tests with ignore patterns
 export function defineTransformationTest(
   testName: string,
   fixtureDir: string,
@@ -440,3 +549,64 @@ export function defineTransformationTest(
 
   return framework.createJestTest(testName);
 }
+
+// Predefined ignore pattern factories for common use cases
+export const IgnorePatternFactories = {
+  timestamp: (format?: "iso" | "human" | "unix"): IgnorePattern => {
+    switch (format) {
+      case "human":
+        return {
+          pattern: /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g,
+          replacement: "[TIMESTAMP]",
+          description: "Human readable timestamp (YYYY-MM-DD HH:mm:ss)",
+        };
+      case "unix":
+        return {
+          pattern: /\b\d{10,13}\b/g,
+          replacement: "[TIMESTAMP]",
+          description: "Unix timestamp",
+        };
+      case "iso":
+      default:
+        return {
+          pattern: /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g,
+          replacement: "[TIMESTAMP]",
+          description: "ISO 8601 timestamp",
+        };
+    }
+  },
+
+  uuid: (): IgnorePattern => ({
+    pattern: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+    replacement: "[UUID]",
+    description: "UUID v4",
+  }),
+
+  hash: (length?: number): IgnorePattern => ({
+    pattern: new RegExp(`\\b[a-f0-9]{${(length || 32, 64)}}\\b`, "gi"),
+    replacement: "[HASH]",
+    description: `Hash (${length || "32-64"} chars)`,
+  }),
+
+  buildNumber: (): IgnorePattern => ({
+    pattern: /build[:\s]+\d+/gi,
+    replacement: "build: [NUMBER]",
+    description: "Build number",
+  }),
+
+  version: (): IgnorePattern => ({
+    pattern: /v?\d+\.\d+\.\d+(-[\w\.-]+)?/g,
+    replacement: "[VERSION]",
+    description: "Semantic version",
+  }),
+
+  custom: (
+    pattern: RegExp,
+    replacement: string,
+    description?: string
+  ): IgnorePattern => ({
+    pattern,
+    replacement,
+    description: description || `Custom pattern: ${pattern.source}`,
+  }),
+};
