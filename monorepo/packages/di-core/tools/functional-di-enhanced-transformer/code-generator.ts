@@ -1,5 +1,6 @@
 // tools/functional-di-enhanced-transformer/code-generator.ts - Generates DI code
 
+import { ExtractedDependency } from "../shared/SharedDependencyExtractor";
 import {
   FunctionalDependency,
   TransformationOptions,
@@ -12,7 +13,7 @@ export class CodeGenerator {
   /**
    * Generate DI hook calls and services object
    */
-  generateDICode(dependencies: FunctionalDependency[]): DICodeGenerationResult {
+  generateDICode(dependencies: ExtractedDependency[]): DICodeGenerationResult {
     const statements: string[] = [];
     const serviceKeys: string[] = [];
 
