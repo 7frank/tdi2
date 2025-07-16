@@ -9,6 +9,12 @@ describe('Functional DI Transformation Tests', () => {
   
   // Basic inline transformations
   describe('Inline Interface Transformations', () => {
+
+    it('should transform destructured keys and types in parameters', 
+      defineTransformationTest('inline-destructured', FIXTURES_DIR)
+    );
+   
+
     it('should transform inline interface with destructuring', 
       defineTransformationTest('inline-with-destructuring', FIXTURES_DIR)
     );
