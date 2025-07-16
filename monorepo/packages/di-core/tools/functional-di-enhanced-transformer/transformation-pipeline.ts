@@ -1,10 +1,12 @@
-// tools/functional-di-enhanced-transformer/transformation-pipeline.ts
+// tools/functional-di-enhanced-transformer/transformation-pipeline.ts - FIXED COMPLETE VERSION
+
 import {
   FunctionDeclaration,
   ArrowFunction,
   SourceFile,
   Node,
-  SyntaxKind
+  SyntaxKind,
+  VariableStatement
 } from 'ts-morph';
 import { ParameterNormalizer } from './parameter-normalizer';
 import { EnhancedComponentTransformer } from './enhanced-component-transformer';
@@ -40,7 +42,7 @@ export class TransformationPipeline {
   }
 
   /**
-   * Complete transformation pipeline that matches your expected output
+   * FIXED: Complete transformation pipeline that preserves non-DI destructuring
    */
   transformComponent(
     func: FunctionDeclaration | ArrowFunction,
@@ -48,20 +50,20 @@ export class TransformationPipeline {
     sourceFile: SourceFile
   ): void {
     if (this.options.verbose) {
-      console.log(`🚀 Starting complete transformation pipeline`);
+      console.log(`🚀 Starting FIXED transformation pipeline`);
     }
 
     // Step 1: Normalize parameters (remove destructuring from function signature)
     this.normalizeParameters(func);
 
-    // Step 2: FIXED - Generate DI hook calls with proper optional chaining
-    this.generateDIHookCallsWithOptionalChaining(func, dependencies);
+    // Step 2: FIXED - Generate DI hook calls with proper optional chaining AND preserve non-DI destructuring
+    this.generateDIHookCallsAndPreserveDestructuring(func, dependencies);
 
     // Step 3: Update property access expressions to use new variables
     this.propertyUpdater.updatePropertyAccessAdvanced(func, dependencies);
 
-    // Step 4: Remove any unused destructuring statements
-    this.removeUnusedDestructuring(func);
+    // Step 4: FIXED - Only remove DI-related destructuring, preserve other destructuring
+    this.removeOnlyDIDestructuring(func, dependencies);
 
     // Step 5: Validate the transformation
     if (this.options.verbose) {
@@ -74,7 +76,7 @@ export class TransformationPipeline {
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Transformation pipeline completed`);
+      console.log(`✅ FIXED transformation pipeline completed`);
     }
   }
 
@@ -114,9 +116,9 @@ export class TransformationPipeline {
   }
 
   /**
-   * Step 2: Generate direct property access with DI fallbacks
+   * FIXED: Step 2 - Generate DI hook calls AND preserve non-DI destructuring
    */
-  private generateDIHookCallsWithOptionalChaining(
+  private generateDIHookCallsAndPreserveDestructuring(
     func: FunctionDeclaration | ArrowFunction,
     dependencies: ExtractedDependency[]
   ): void {
@@ -124,27 +126,258 @@ export class TransformationPipeline {
     if (!body || !Node.isBlock(body)) return;
 
     // Generate DI hook statements for each dependency
-    const statements: string[] = [];
+    const diStatements: string[] = [];
 
     for (const dep of dependencies) {
       const statement = this.generateDIHookStatementWithOptionalChaining(dep);
       if (statement) {
-        statements.push(statement);
+        diStatements.push(statement);
       }
     }
 
-    // Insert statements at the beginning of function body
-    for (let i = statements.length - 1; i >= 0; i--) {
-      body.insertStatements(0, statements[i]);
+    // FIXED: Analyze existing destructuring to preserve non-DI parts
+    const preservedDestructuring = this.extractNonDIDestructuring(func, dependencies);
+
+    // Insert DI statements at the beginning of function body
+    for (let i = diStatements.length - 1; i >= 0; i--) {
+      body.insertStatements(0, diStatements[i]);
+    }
+
+    // FIXED: Re-add preserved destructuring after DI statements
+    if (preservedDestructuring.length > 0) {
+      for (let i = preservedDestructuring.length - 1; i >= 0; i--) {
+        body.insertStatements(diStatements.length, preservedDestructuring[i]);
+      }
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Generated ${statements.length} DI hook statements with optional chaining`);
+      console.log(`✅ Generated ${diStatements.length} DI hook statements with optional chaining`);
+      if (preservedDestructuring.length > 0) {
+        console.log(`✅ Preserved ${preservedDestructuring.length} non-DI destructuring statements`);
+      }
     }
   }
 
   /**
-   * FIXED: Generate DI hook statement with proper optional chaining fallback
+   * FIXED: Extract non-DI destructuring that should be preserved using actual dependency paths
+   */
+  private extractNonDIDestructuring(
+    func: FunctionDeclaration | ArrowFunction,
+    dependencies: ExtractedDependency[]
+  ): string[] {
+    const body = this.getFunctionBody(func);
+    if (!body || !Node.isBlock(body)) return [];
+
+    const statements = body.getStatements();
+    const preservedStatements: string[] = [];
+    
+    // Build a set of all property paths that are DI-related
+    const diPropertyPaths = new Set<string>();
+    for (const dep of dependencies) {
+      // Add the full property path (e.g., "services.api", "config.cache", etc.)
+      if (dep.propertyPath && dep.propertyPath.length > 0) {
+        diPropertyPaths.add(dep.propertyPath.join('.'));
+      }
+      // Also add just the service key for direct access
+      diPropertyPaths.add(dep.serviceKey);
+    }
+
+    for (const statement of statements) {
+      if (Node.isVariableStatement(statement)) {
+        const declarations = statement.getDeclarationList().getDeclarations();
+        
+        for (const declaration of declarations) {
+          const nameNode = declaration.getNameNode();
+          
+          // Check for destructuring assignments from props
+          if (Node.isObjectBindingPattern(nameNode)) {
+            const initializer = declaration.getInitializer();
+            if (initializer && Node.isIdentifier(initializer) && initializer.getText() === 'props') {
+              
+              // FIXED: Extract only non-DI properties from destructuring
+              const nonDIProperties = this.extractNonDIPropertiesFromDestructuring(nameNode, diPropertyPaths);
+              
+              if (nonDIProperties.length > 0) {
+                const preservedDestructuring = `const { ${nonDIProperties.join(', ')} } = props;`;
+                preservedStatements.push(preservedDestructuring);
+                
+                if (this.options.verbose) {
+                  console.log(`📝 Preserving non-DI destructuring: ${preservedDestructuring}`);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return preservedStatements;
+  }
+
+  /**
+   * FIXED: Extract non-DI properties from object binding pattern using actual dependency paths
+   */
+  private extractNonDIPropertiesFromDestructuring(
+    bindingPattern: any,
+    diPropertyPaths: Set<string>
+  ): string[] {
+    const nonDIProperties: string[] = [];
+    
+    // Recursively analyze the destructuring pattern
+    const analyzePattern = (pattern: any, currentPath: string[] = []): void => {
+      const elements = pattern.getElements();
+
+      for (const element of elements) {
+        if (Node.isBindingElement(element)) {
+          const nameNode = element.getNameNode();
+          const propertyNameNode = element.getPropertyNameNode();
+          
+          let propertyName: string;
+          let localName: string;
+
+          if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
+            // { propertyName: localName } pattern
+            propertyName = propertyNameNode.getText();
+            localName = Node.isIdentifier(nameNode) ? nameNode.getText() : nameNode.getText();
+          } else if (Node.isIdentifier(nameNode)) {
+            // { localName } shorthand pattern
+            propertyName = nameNode.getText();
+            localName = nameNode.getText();
+          } else {
+            // Complex destructuring - try to extract text
+            const elementText = element.getText();
+            const match = elementText.match(/^(\w+)(?:\s*:\s*(\w+))?/);
+            if (match) {
+              propertyName = match[1];
+              localName = match[2] || match[1];
+            } else {
+              continue; // Skip complex patterns we can't parse
+            }
+          }
+
+          const fullPath = [...currentPath, propertyName].join('.');
+          
+          // Check if this property path is DI-related
+          const isDIRelated = this.isPathDIRelated(fullPath, propertyName, diPropertyPaths);
+          
+          if (!isDIRelated) {
+            // Handle nested destructuring
+            if (Node.isObjectBindingPattern(nameNode)) {
+              // This is nested destructuring like: { config: { theme, language } }
+              // We need to preserve the structure but exclude DI parts
+              const nestedNonDI: string[] = [];
+              this.extractNestedNonDIProperties(nameNode, [...currentPath, propertyName], diPropertyPaths, nestedNonDI);
+              
+              if (nestedNonDI.length > 0) {
+                const nestedPattern = `${propertyName}: { ${nestedNonDI.join(', ')} }`;
+                nonDIProperties.push(nestedPattern);
+                
+                if (this.options.verbose) {
+                  console.log(`🔒 Preserving nested non-DI property: ${nestedPattern}`);
+                }
+              }
+            } else {
+              // Simple property - preserve it
+              if (propertyNameNode && propertyName !== localName) {
+                nonDIProperties.push(`${propertyName}: ${localName}`);
+              } else {
+                nonDIProperties.push(propertyName);
+              }
+              
+              if (this.options.verbose) {
+                console.log(`🔒 Preserving non-DI property: ${propertyName}${propertyName !== localName ? ` as ${localName}` : ''}`);
+              }
+            }
+          } else {
+            if (this.options.verbose) {
+              console.log(`🎯 Skipping DI-related property: ${fullPath}`);
+            }
+          }
+        }
+      }
+    };
+
+    analyzePattern(bindingPattern);
+    return nonDIProperties;
+  }
+
+  /**
+   * Check if a property path is DI-related by comparing against actual dependency paths
+   */
+  private isPathDIRelated(fullPath: string, propertyName: string, diPropertyPaths: Set<string>): boolean {
+    // Direct match
+    if (diPropertyPaths.has(fullPath)) {
+      return true;
+    }
+    
+    // Check if this property is a service key
+    if (diPropertyPaths.has(propertyName)) {
+      return true;
+    }
+    
+    // Check if this path is a parent of any DI path
+    for (const diPath of diPropertyPaths) {
+      if (diPath.startsWith(fullPath + '.')) {
+        return true; // This is a parent container of DI properties
+      }
+    }
+    
+    // Check if this path is a child of any DI path  
+    for (const diPath of diPropertyPaths) {
+      if (fullPath.startsWith(diPath + '.')) {
+        return true; // This is a child of a DI property
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * Helper method to extract nested non-DI properties recursively
+   */
+  private extractNestedNonDIProperties(
+    pattern: any, 
+    currentPath: string[], 
+    diPropertyPaths: Set<string>, 
+    result: string[]
+  ): void {
+    const elements = pattern.getElements();
+
+    for (const element of elements) {
+      if (Node.isBindingElement(element)) {
+        const nameNode = element.getNameNode();
+        const propertyNameNode = element.getPropertyNameNode();
+        
+        let propertyName: string;
+        
+        if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
+          propertyName = propertyNameNode.getText();
+        } else if (Node.isIdentifier(nameNode)) {
+          propertyName = nameNode.getText();
+        } else {
+          continue;
+        }
+
+        const fullPath = [...currentPath, propertyName].join('.');
+        
+        if (!this.isPathDIRelated(fullPath, propertyName, diPropertyPaths)) {
+          if (Node.isObjectBindingPattern(nameNode)) {
+            // Further nested destructuring
+            const nestedResult: string[] = [];
+            this.extractNestedNonDIProperties(nameNode, [...currentPath, propertyName], diPropertyPaths, nestedResult);
+            if (nestedResult.length > 0) {
+              result.push(`${propertyName}: { ${nestedResult.join(', ')} }`);
+            }
+          } else {
+            result.push(propertyName);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Generate DI hook statement with proper optional chaining
    */
   private generateDIHookStatementWithOptionalChaining(dependency: ExtractedDependency): string | null {
     // Determine the property path with optional chaining
@@ -176,24 +409,29 @@ export class TransformationPipeline {
       const path = dependency.propertyPath.join('?.');
       return `props.${path}`;
     } else {
-      //  Use optional chaining for direct property access: props.serviceKey
+      // Use optional chaining for direct property access: props.serviceKey
       return `props.${dependency.serviceKey}`;
     }
   }
 
   /**
-   * Step 3: Update variable references and remove unused destructuring
+   * FIXED: Step 4 - Remove ALL original destructuring that contains ANY DI properties
    */
-  private removeUnusedDestructuring(func: FunctionDeclaration | ArrowFunction): void {
+  private removeOnlyDIDestructuring(func: FunctionDeclaration | ArrowFunction, dependencies: ExtractedDependency[]): void {
     const body = this.getFunctionBody(func);
     if (!body || !Node.isBlock(body)) return;
 
-    // First, update all property access expressions to use the new variables
-    this.updatePropertyAccessExpressions(func);
-
-    // Then remove any unused destructuring statements
     const statements = body.getStatements();
-    const toRemove: any[] = [];
+    const toRemove: VariableStatement[] = [];
+    
+    // Build a set of all property paths that are DI-related
+    const diPropertyPaths = new Set<string>();
+    for (const dep of dependencies) {
+      if (dep.propertyPath && dep.propertyPath.length > 0) {
+        diPropertyPaths.add(dep.propertyPath.join('.'));
+      }
+      diPropertyPaths.add(dep.serviceKey);
+    }
 
     for (const statement of statements) {
       if (Node.isVariableStatement(statement)) {
@@ -202,16 +440,23 @@ export class TransformationPipeline {
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
           
-          // Remove destructuring assignments from props
+          // FIXED: Remove ANY destructuring from props that contains DI properties
           if (Node.isObjectBindingPattern(nameNode)) {
             const initializer = declaration.getInitializer();
             if (initializer && Node.isIdentifier(initializer) && initializer.getText() === 'props') {
-              toRemove.push(statement);
-              break;
+              
+              // Check if this destructuring contains ANY DI-related properties
+              if (this.containsAnyDIProperties(nameNode, diPropertyPaths)) {
+                toRemove.push(statement);
+                
+                if (this.options.verbose) {
+                  console.log(`🗑️  Removing original destructuring (contains DI): ${statement.getText()}`);
+                }
+              }
             }
           }
           
-          // Remove simple assignments that are now redundant
+          // Remove simple assignments that are now redundant (like const api = props.services?.api)
           if (Node.isIdentifier(nameNode)) {
             const initializer = declaration.getInitializer();
             if (initializer && initializer.getText().includes('props.') && !initializer.getText().includes('??')) {
@@ -219,6 +464,10 @@ export class TransformationPipeline {
               // Check if this variable is used elsewhere in the function
               if (!this.isVariableUsedInFunction(func, varName, statement)) {
                 toRemove.push(statement);
+                
+                if (this.options.verbose) {
+                  console.log(`🗑️  Removing redundant assignment: ${statement.getText()}`);
+                }
               }
             }
           }
@@ -232,8 +481,56 @@ export class TransformationPipeline {
     }
 
     if (this.options.verbose && toRemove.length > 0) {
-      console.log(`🗑️  Removed ${toRemove.length} unused destructuring statements`);
+      console.log(`🗑️  Removed ${toRemove.length} original destructuring statements`);
     }
+  }
+
+  /**
+   * FIXED: Check if destructuring contains ANY DI-related properties (not just only DI)
+   */
+  private containsAnyDIProperties(bindingPattern: any, diPropertyPaths: Set<string>): boolean {
+    return this.findAnyDIInDestructuring(bindingPattern, [], diPropertyPaths);
+  }
+
+  /**
+   * Recursively search for ANY DI-related properties in destructuring pattern
+   */
+  private findAnyDIInDestructuring(pattern: any, currentPath: string[], diPropertyPaths: Set<string>): boolean {
+    const elements = pattern.getElements();
+    
+    for (const element of elements) {
+      if (Node.isBindingElement(element)) {
+        const nameNode = element.getNameNode();
+        const propertyNameNode = element.getPropertyNameNode();
+        
+        let propertyName: string;
+        
+        if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
+          propertyName = propertyNameNode.getText();
+        } else if (Node.isIdentifier(nameNode)) {
+          propertyName = nameNode.getText();
+        } else {
+          // For complex patterns, continue checking
+          continue;
+        }
+        
+        const fullPath = [...currentPath, propertyName].join('.');
+        
+        // Check if this property is DI-related
+        if (this.isPathDIRelated(fullPath, propertyName, diPropertyPaths)) {
+          return true; // Found a DI property
+        }
+        
+        // If this has nested destructuring, check recursively
+        if (Node.isObjectBindingPattern(nameNode)) {
+          if (this.findAnyDIInDestructuring(nameNode, [...currentPath, propertyName], diPropertyPaths)) {
+            return true; // Found DI properties in nested structure
+          }
+        }
+      }
+    }
+    
+    return false; // No DI properties found
   }
 
   /**
@@ -285,7 +582,6 @@ export class TransformationPipeline {
     return propertyAccess;
   }
 
- 
   /**
    * Check if a variable is used in the function body (excluding the declaration statement)
    */

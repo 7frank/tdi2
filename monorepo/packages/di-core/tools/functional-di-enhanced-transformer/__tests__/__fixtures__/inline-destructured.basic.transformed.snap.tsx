@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineValueProps
-// Generated: 2025-07-16T19:06:26.301Z
+// Generated: 2025-07-16T19:25:41.009Z
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface, TestStateInterface } from "./shared-types";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -78,5 +78,6 @@ interface TodoCardProps {
 
 export function TodoCard(props: TodoCardProps) {
     const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
+    const { todo } = props;
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
