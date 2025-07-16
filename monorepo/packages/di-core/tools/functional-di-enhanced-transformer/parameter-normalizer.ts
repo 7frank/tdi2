@@ -385,26 +385,3 @@ interface BindingInfo {
   isOptional: boolean;      // Whether the binding has a question mark
   hasDefaultValue: boolean; // Whether the binding has a default value
 }
-
-// Example usage
-export function demonstrateNormalization() {
-  // This would be used in the main transformer like this:
-  
-  const normalizer = new ParameterNormalizer({
-    verbose: true,
-    generateFallbacks: true
-  });
-
-  // Before transformation:
-  // function MyComponent({ services }: { services: { api: Inject<ApiInterface> } }) {
-  //   return <div>{services.api.getData()}</div>;
-  // }
-
-  // After normalization:
-  // function MyComponent(props: { services: { api: Inject<ApiInterface> } }) {
-  //   const services = props.services ?? /* DI_PLACEHOLDER_services */;
-  //   return <div>{services.api.getData()}</div>;
-  // }
-
-  // Then the DI transformer can work with the normalized form and replace placeholders
-}

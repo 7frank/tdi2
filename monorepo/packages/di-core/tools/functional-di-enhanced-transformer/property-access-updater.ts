@@ -4,14 +4,14 @@ import {
   ArrowFunction,
   Node,
   PropertyAccessExpression,
-  Identifier
-} from 'ts-morph';
-import { ExtractedDependency } from '../shared/SharedDependencyExtractor';
+  Identifier,
+} from "ts-morph";
+import { ExtractedDependency } from "../shared/SharedDependencyExtractor";
 
 export interface PropertyAccessMapping {
-  originalAccess: string;     // "services.api"
-  newVariable: string;        // "api"
-  propertyPath: string[];     // ["services", "api"]
+  originalAccess: string; // "services.api"
+  newVariable: string; // "api"
+  propertyPath: string[]; // ["services", "api"]
 }
 
 export class PropertyAccessUpdater {
@@ -22,20 +22,24 @@ export class PropertyAccessUpdater {
   /**
    * Generate property access mappings from dependencies
    */
-  generateMappings(dependencies: ExtractedDependency[]): PropertyAccessMapping[] {
+  generateMappings(
+    dependencies: ExtractedDependency[]
+  ): PropertyAccessMapping[] {
     this.accessMappings = [];
 
     for (const dep of dependencies) {
       if (dep.propertyPath && dep.propertyPath.length > 0) {
         const mapping: PropertyAccessMapping = {
-          originalAccess: dep.propertyPath.join('.'),
+          originalAccess: dep.propertyPath.join("."),
           newVariable: dep.serviceKey,
-          propertyPath: dep.propertyPath
+          propertyPath: dep.propertyPath,
         };
         this.accessMappings.push(mapping);
 
         if (this.options.verbose) {
-          console.log(`📝 Generated mapping: ${mapping.originalAccess} -> ${mapping.newVariable}`);
+          console.log(
+            `📝 Generated mapping: ${mapping.originalAccess} -> ${mapping.newVariable}`
+          );
         }
       }
     }
@@ -52,7 +56,7 @@ export class PropertyAccessUpdater {
   ): void {
     // Generate mappings from dependencies
     const mappings = this.generateMappings(dependencies);
-    
+
     if (mappings.length === 0) {
       return;
     }
@@ -61,10 +65,14 @@ export class PropertyAccessUpdater {
     if (!body) return;
 
     // Get all property access expressions
-    const propertyAccesses = body.getDescendantsOfKind(Node.SyntaxKind.PropertyAccessExpression);
-    
+    const propertyAccesses = body.getDescendantsOfKind(
+      Node.SyntaxKind.PropertyAccessExpression
+    );
+
     // Sort by length (longest first) to handle nested properties correctly
-    const sortedMappings = mappings.sort((a, b) => b.originalAccess.length - a.originalAccess.length);
+    const sortedMappings = mappings.sort(
+      (a, b) => b.originalAccess.length - a.originalAccess.length
+    );
 
     for (const propAccess of propertyAccesses) {
       this.updateSinglePropertyAccess(propAccess, sortedMappings);
@@ -79,7 +87,7 @@ export class PropertyAccessUpdater {
     mappings: PropertyAccessMapping[]
   ): void {
     const fullExpression = this.getFullPropertyChain(propAccess);
-    
+
     if (this.options.verbose) {
       console.log(`🔍 Analyzing property access: ${fullExpression}`);
     }
@@ -89,10 +97,13 @@ export class PropertyAccessUpdater {
         const replacement = this.generateReplacement(fullExpression, mapping);
         if (replacement !== fullExpression) {
           // Find the root of the property chain to replace
-          const rootAccess = this.findRootPropertyAccess(propAccess, mapping.propertyPath);
+          const rootAccess = this.findRootPropertyAccess(
+            propAccess,
+            mapping.propertyPath
+          );
           if (rootAccess) {
             rootAccess.replaceWithText(replacement);
-            
+
             if (this.options.verbose) {
               console.log(`✅ Updated: ${fullExpression} -> ${replacement}`);
             }
@@ -123,7 +134,7 @@ export class PropertyAccessUpdater {
       }
     }
 
-    return parts.join('.');
+    return parts.join(".");
   }
 
   /**
@@ -147,9 +158,11 @@ export class PropertyAccessUpdater {
     if (originalExpression === mapping.originalAccess) {
       // Exact match: "services.api" -> "api"
       return mapping.newVariable;
-    } else if (originalExpression.startsWith(mapping.originalAccess + '.')) {
+    } else if (originalExpression.startsWith(mapping.originalAccess + ".")) {
       // Nested access: "services.api.getData()" -> "api.getData()"
-      const remainingPath = originalExpression.substring(mapping.originalAccess.length + 1);
+      const remainingPath = originalExpression.substring(
+        mapping.originalAccess.length + 1
+      );
       return `${mapping.newVariable}.${remainingPath}`;
     }
 
@@ -165,25 +178,28 @@ export class PropertyAccessUpdater {
   ): PropertyAccessExpression | Identifier | null {
     // We need to find the node that represents the start of our target path
     let current: any = propAccess;
-    
+
     // First, walk up to find the complete property chain
-    while (current.getParent() && Node.isPropertyAccessExpression(current.getParent())) {
+    while (
+      current.getParent() &&
+      Node.isPropertyAccessExpression(current.getParent())
+    ) {
       current = current.getParent();
     }
-    
+
     // Now we have the root of the property chain
     // Check if this matches our target path
     const fullChain = this.getFullPropertyChain(current);
-    
+
     // Find the longest matching path
     for (let i = targetPath.length; i > 0; i--) {
-      const partialPath = targetPath.slice(0, i).join('.');
+      const partialPath = targetPath.slice(0, i).join(".");
       if (fullChain.startsWith(partialPath)) {
         // Found a match, now find the corresponding node
         return this.findNodeForPath(current, i);
       }
     }
-    
+
     return current;
   }
 
@@ -193,13 +209,13 @@ export class PropertyAccessUpdater {
   private findNodeForPath(rootNode: any, depth: number): any {
     let current = rootNode;
     let currentDepth = this.getPropertyDepth(rootNode);
-    
+
     // Navigate to the correct depth
     while (currentDepth > depth && Node.isPropertyAccessExpression(current)) {
       current = current.getExpression();
       currentDepth--;
     }
-    
+
     return current;
   }
 
@@ -209,7 +225,7 @@ export class PropertyAccessUpdater {
   private getPropertyDepth(node: any): number {
     let depth = 0;
     let current = node;
-    
+
     while (current) {
       if (Node.isPropertyAccessExpression(current)) {
         depth++;
@@ -221,7 +237,7 @@ export class PropertyAccessUpdater {
         break;
       }
     }
-    
+
     return depth;
   }
 
@@ -254,20 +270,22 @@ export class PropertyAccessUpdater {
     body.forEachDescendant((node, traversal) => {
       if (Node.isPropertyAccessExpression(node)) {
         const fullChain = this.getFullPropertyChain(node);
-        
+
         for (const mapping of mappings) {
           if (this.shouldReplacePropertyAccess(node, mapping, fullChain)) {
             const replacement = this.generateReplacement(fullChain, mapping);
-            
+
             // Find the correct node to replace
             const nodeToReplace = this.findExactNodeToReplace(node, mapping);
             if (nodeToReplace && replacement !== fullChain) {
               nodeToReplace.replaceWithText(replacement);
-              
+
               if (this.options.verbose) {
-                console.log(`🔄 Advanced update: ${fullChain} -> ${replacement}`);
+                console.log(
+                  `🔄 Advanced update: ${fullChain} -> ${replacement}`
+                );
               }
-              
+
               // Skip traversing children since we replaced the node
               traversal.skip();
               return;
@@ -291,7 +309,7 @@ export class PropertyAccessUpdater {
     if (Node.isPropertyAccessExpression(parent)) {
       return false;
     }
-    
+
     return fullChain.startsWith(mapping.originalAccess);
   }
 
@@ -304,12 +322,15 @@ export class PropertyAccessUpdater {
   ): any {
     // Walk up the tree to find the root of the property chain that matches our mapping
     let current: any = node;
-    
+
     // Go to the root of the property access chain
-    while (current.getParent() && Node.isPropertyAccessExpression(current.getParent())) {
+    while (
+      current.getParent() &&
+      Node.isPropertyAccessExpression(current.getParent())
+    ) {
       current = current.getParent();
     }
-    
+
     return current;
   }
 
@@ -329,21 +350,25 @@ export class PropertyAccessUpdater {
 
     // Check that old property access patterns are removed
     for (const mapping of mappings) {
-      if (bodyText.includes(mapping.originalAccess + '.')) {
-        issues.push(`Old property access pattern still present: ${mapping.originalAccess}`);
+      if (bodyText.includes(mapping.originalAccess + ".")) {
+        issues.push(
+          `Old property access pattern still present: ${mapping.originalAccess}`
+        );
       }
     }
 
     // Check that new variables are used
     for (const mapping of mappings) {
       if (!bodyText.includes(mapping.newVariable)) {
-        issues.push(`New variable not found in function body: ${mapping.newVariable}`);
+        issues.push(
+          `New variable not found in function body: ${mapping.newVariable}`
+        );
       }
     }
 
     return {
       isValid: issues.length === 0,
-      issues
+      issues,
     };
   }
 
@@ -356,17 +381,19 @@ export class PropertyAccessUpdater {
   ): Array<{ from: string; to: string; location: string }> {
     const updates: Array<{ from: string; to: string; location: string }> = [];
     const mappings = this.generateMappings(dependencies);
-    
+
     if (mappings.length === 0) return updates;
 
     const body = this.getFunctionBody(func);
     if (!body) return updates;
 
-    const propertyAccesses = body.getDescendantsOfKind(Node.SyntaxKind.PropertyAccessExpression);
-    
+    const propertyAccesses = body.getDescendantsOfKind(
+      Node.SyntaxKind.PropertyAccessExpression
+    );
+
     for (const propAccess of propertyAccesses) {
       const fullChain = this.getFullPropertyChain(propAccess);
-      
+
       for (const mapping of mappings) {
         if (this.matchesPropertyPattern(fullChain, mapping)) {
           const replacement = this.generateReplacement(fullChain, mapping);
@@ -374,7 +401,7 @@ export class PropertyAccessUpdater {
             updates.push({
               from: fullChain,
               to: replacement,
-              location: `Line ${propAccess.getStartLineNumber()}`
+              location: `Line ${propAccess.getStartLineNumber()}`,
             });
           }
         }
@@ -393,49 +420,27 @@ export class PropertyAccessUpdater {
     maxDepth: number;
   } {
     const body = this.getFunctionBody(func);
-    if (!body) return { totalPropertyAccesses: 0, uniquePatterns: [], maxDepth: 0 };
+    if (!body)
+      return { totalPropertyAccesses: 0, uniquePatterns: [], maxDepth: 0 };
 
-    const propertyAccesses = body.getDescendantsOfKind(Node.SyntaxKind.PropertyAccessExpression);
+    const propertyAccesses = body.getDescendantsOfKind(
+      Node.SyntaxKind.PropertyAccessExpression
+    );
     const patterns = new Set<string>();
     let maxDepth = 0;
 
     for (const propAccess of propertyAccesses) {
       const chain = this.getFullPropertyChain(propAccess);
       patterns.add(chain);
-      
-      const depth = chain.split('.').length;
+
+      const depth = chain.split(".").length;
       maxDepth = Math.max(maxDepth, depth);
     }
 
     return {
       totalPropertyAccesses: propertyAccesses.length,
       uniquePatterns: Array.from(patterns),
-      maxDepth
+      maxDepth,
     };
   }
-}
-
-// Usage example
-export function demonstratePropertyAccessUpdater() {
-  console.log(`
-=== PROPERTY ACCESS UPDATER EXAMPLE ===
-
-BEFORE:
-function MyComponent(props: { services: { api: Inject<ApiInterface> } }) {
-  const api = props.services.api ?? useService('ApiInterface');
-  return <div>{services.api.getData()}</div>;  // ❌ Still using old access
-}
-
-AFTER:
-function MyComponent(props: { services: { api: Inject<ApiInterface> } }) {
-  const api = props.services.api ?? useService('ApiInterface');
-  return <div>{api.getData()}</div>;  // ✅ Using new variable
-}
-
-The PropertyAccessUpdater:
-1. Generates mappings: services.api -> api
-2. Finds all property access expressions
-3. Replaces services.api.* with api.*
-4. Validates the updates are correct
-  `);
 }

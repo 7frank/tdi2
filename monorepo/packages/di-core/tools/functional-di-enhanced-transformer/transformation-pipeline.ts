@@ -347,72 +347,7 @@ export class TransformationPipeline {
     return null;
   }
 
-  /**
-   * Demonstrate the complete transformation with examples
-   */
-  static demonstrateTransformation(): void {
-    console.log(`
-=== TRANSFORMATION EXAMPLES ===
-
-INPUT 1:
-export function InlineDestructuredWorking(props: {
-  services: {
-    api: Inject<ApiInterface>;
-  };
-}) {
-  const { services } = props;
-  return <div>{services.api.getData()}Mixed dependencies component</div>;
-}
-
-OUTPUT 1:
-export function InlineDestructuredWorking(props: {
-  services: {
-    api: Inject<ApiInterface>;
-  };
-}) {
-  const api = props.services.api ?? (useService('ApiInterface') as unknown as ApiInterface);
-  return <div>{api.getData()}Mixed dependencies component</div>;
-}
-
-INPUT 2:
-export function InlineDestructuredFailingA({
-  services,
-}: {
-  services: {
-    api: Inject<ApiInterface>;
-  };
-}) {
-  return <div>{services.api.getData()}Mixed dependencies component</div>;
-}
-
-OUTPUT 2:
-export function InlineDestructuredFailingA(props: {
-  services: {
-    api: Inject<ApiInterface>;
-  };
-}) {
-  const api = props.services.api ?? (useService('ApiInterface') as unknown as ApiInterface);
-  return <div>{api.getData()}Mixed dependencies component</div>;
-}
-
-INPUT 3:
-export function InlineDestructuredFailingB({
-  api,
-}: {
-  api: Inject<ApiInterface>;
-}) {
-  return <div>{api.getData()}Mixed dependencies component</div>;
-}
-
-OUTPUT 3:
-export function InlineDestructuredFailingB(props: {
-  api: Inject<ApiInterface>;
-}) {
-  const api = props.api ?? (useService('ApiInterface') as unknown as ApiInterface);
-  return <div>{api.getData()}Mixed dependencies component</div>;
-}
-    `);
-  }
+ 
 }
 
 // Integration with the main transformer

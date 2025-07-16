@@ -1,7 +1,7 @@
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
-import { ApiInterface } from "./shared-types";
+import { ApiInterface, TestStateInterface } from "./shared-types";
 
-export function InlineDestructuredWorking(props: {
+export function InlineValueProps(props: {
   services: {
     api: Inject<ApiInterface>;
   };
@@ -10,7 +10,16 @@ export function InlineDestructuredWorking(props: {
   return <div>{services.api.getData()}Mixed dependencies component</div>;
 }
 
-export function InlineDestructuredFailingA({
+export function InlineValueFoo(foo: {
+  services: {
+    api: Inject<ApiInterface>;
+  };
+}) {
+  const { services } = foo;
+  return <div>{services.api.getData()}Mixed dependencies component</div>;
+}
+
+export function InlineDestructuredNested({
   services,
 }: {
   services: {
@@ -20,10 +29,23 @@ export function InlineDestructuredFailingA({
   return <div>{services.api.getData()}Mixed dependencies component</div>;
 }
 
-export function InlineDestructuredFailingB({
-  api,
-}: {
-  api: Inject<ApiInterface>;
-}) {
+export function InlineDestructured({ api }: { api: Inject<ApiInterface> }) {
   return <div>{api.getData()}Mixed dependencies component</div>;
+}
+
+/**
+ * 
+ *  FIXME no inejcted useService hook
+
+ */
+export function InlineDestructured2ndApi({
+  services,
+}: {
+  services: {
+    api: Inject<ApiInterface>;
+
+    state: TestStateInterface<string>;
+  };
+}) {
+  return <div>{services.state.value}Mixed dependencies component</div>;
 }
