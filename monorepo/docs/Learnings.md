@@ -156,3 +156,10 @@ ts-prune -p ./tsconfig.app.json
 #### Codex
 
 
+## Cons
+- cumbersome
+- often frustrating
+- bot creates lot of unneccesary stuff or digresses from prompt 
+- recreates the wheel often flooding code base with things that a opackage would have solved
+  - own git diff  instead of diff package or child_process
+  - build own file traversal instead of built in tsx file resolution

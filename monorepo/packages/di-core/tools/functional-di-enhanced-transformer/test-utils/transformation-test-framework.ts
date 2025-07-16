@@ -5,6 +5,7 @@ import { IntegratedInterfaceResolver } from '../../interface-resolver/integrated
 import * as fs from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
+import { diffLines, createTwoFilesPatch } from 'diff';
 
 export interface TransformationTestOptions {
   fixtureDir: string;
@@ -250,7 +251,7 @@ export class TransformationTestFramework {
     const snapshotDir = this.options.outputDir || path.join(this.options.fixtureDir, '__snapshots__');
     
     // Use the full base name (including variant) for snapshot naming
-    // e.g., "inline-with-destructuring.basic" -> "inline-with-destructuring.basic.transformed.snap.ts"
+    // e.g., "inline-with-destructuring.basic" -> "inline-with-destructuring.basic.transformed.snap.tsx"
     const snapshotPath = path.join(snapshotDir, `${fullBaseName}.transformed.snap.tsx`);
 
     // Ensure snapshot directory exists
@@ -270,9 +271,32 @@ export class TransformationTestFramework {
       // Verify existing snapshot
       const existingSnapshot = fs.readFileSync(snapshotPath, 'utf8');
       if (existingSnapshot !== snapshotContent) {
-        throw new Error(`Snapshot mismatch for ${fullBaseName}. Run with updateSnapshots: true to update.`);
+        const diff = this.generateDiff(existingSnapshot, snapshotContent, snapshotPath);
+        throw new Error(`Snapshot mismatch for ${fullBaseName}. Run with updateSnapshots: true to update.\n\n${diff}`);
       }
     }
+  }
+
+  /**
+   * Generate a unified diff using the 'diff' package
+   */
+  private generateDiff(expected: string, actual: string, filePath: string): string {
+    const fileName = path.basename(filePath);
+    
+    // Use createTwoFilesPatch for git-style diff output
+    const patch = createTwoFilesPatch(
+      `a/${fileName}`, // old file name
+      `b/${fileName}`, // new file name
+      expected,        // old content
+      actual,          // new content
+      'Expected',      // old header
+      'Actual',        // new header
+      {
+        context: 3     // lines of context
+      }
+    );
+    
+    return patch;
   }
 
   private generateSnapshotContent(result: TransformationTestResult): string {
