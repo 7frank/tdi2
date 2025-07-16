@@ -19,6 +19,8 @@ export interface TransformationTestOptions {
   verbose?: boolean;
   updateSnapshots?: boolean;
   ignorePatterns?: IgnorePattern[];
+  validateSyntax?: boolean; // Whether to validate TypeScript syntax
+  failOnSyntaxErrors?: boolean; // Whether to fail tests if syntax validation fails
 }
 
 export interface TransformationTestResult {
@@ -28,6 +30,17 @@ export interface TransformationTestResult {
   componentName: string;
   dependencies: any[];
   inputFilePath: string;
+  validation: {
+    isValid: boolean;
+    diagnostics: Array<{
+      message: string;
+      line?: number;
+      column?: number;
+      category: "error" | "warning" | "suggestion" | "message";
+    }>;
+    hasErrors: boolean;
+    hasWarnings: boolean;
+  };
 }
 
 export class TransformationTestFramework {
@@ -35,7 +48,6 @@ export class TransformationTestFramework {
   private transformer: FunctionalDIEnhancedTransformer;
   private mockInterfaceResolver: IntegratedInterfaceResolver;
   private defaultIgnorePatterns: IgnorePattern[];
-  private snapshotSubDirectory = "."; // Previously "__snapshots__" but we prefer to keep snapshots next to input files, which reduces complexity with imports
 
   constructor(private options: TransformationTestOptions) {
     this.project = new Project({
@@ -219,6 +231,104 @@ export class TransformationTestFramework {
   }
 
   /**
+   * Validate that TypeScript content is syntactically valid and compiles
+   */
+  private validateTypeScriptSyntax(
+    content: string,
+    componentName: string
+  ): {
+    isValid: boolean;
+    diagnostics: Array<{
+      message: string;
+      line?: number;
+      column?: number;
+      category: "error" | "warning" | "suggestion" | "message";
+    }>;
+    hasErrors: boolean;
+    hasWarnings: boolean;
+  } {
+    try {
+      // Create a temporary file for validation
+      const tempFileName = `validation-${componentName}-${Date.now()}.tsx`;
+      const tempFile = this.project.createSourceFile(tempFileName, content, {
+        overwrite: true,
+      });
+
+      // Get diagnostics (syntax errors, type errors, etc.)
+      const diagnostics = tempFile.getPreEmitDiagnostics();
+
+      const processedDiagnostics = diagnostics.map((diagnostic) => {
+        const start = diagnostic.getStart();
+        const sourceFile = diagnostic.getSourceFile();
+        let line: number | undefined;
+        let column: number | undefined;
+
+        if (start && sourceFile) {
+          const lineAndColumn = sourceFile.getLineAndColumnAtPos(start);
+          line = lineAndColumn.line;
+          column = lineAndColumn.column;
+        }
+
+        return {
+          message: diagnostic.getMessageText().toString(),
+          line,
+          column,
+          category: this.mapDiagnosticCategory(diagnostic.getCategory()),
+        };
+      });
+
+      const hasErrors = processedDiagnostics.some(
+        (d) => d.category === "error"
+      );
+      const hasWarnings = processedDiagnostics.some(
+        (d) => d.category === "warning"
+      );
+
+      // Clean up
+      tempFile.delete();
+
+      return {
+        isValid: !hasErrors,
+        diagnostics: processedDiagnostics,
+        hasErrors,
+        hasWarnings,
+      };
+    } catch (error) {
+      return {
+        isValid: false,
+        diagnostics: [
+          {
+            message: `Validation failed: ${error}`,
+            category: "error" as const,
+          },
+        ],
+        hasErrors: true,
+        hasWarnings: false,
+      };
+    }
+  }
+
+  /**
+   * Map ts-morph diagnostic category to our string representation
+   */
+  private mapDiagnosticCategory(
+    category: number
+  ): "error" | "warning" | "suggestion" | "message" {
+    switch (category) {
+      case 1:
+        return "error";
+      case 2:
+        return "warning";
+      case 3:
+        return "suggestion";
+      case 4:
+        return "message";
+      default:
+        return "error";
+    }
+  }
+
+  /**
    * Get all effective ignore patterns (default + custom)
    */
   public getIgnorePatterns(): IgnorePattern[] {
@@ -308,6 +418,51 @@ export class TransformationTestFramework {
     const dependencies =
       this.extractDependenciesFromTransformed(transformedContent);
 
+    // Validate TypeScript syntax if enabled
+    const validation =
+      this.options.validateSyntax !== false
+        ? this.validateTypeScriptSyntax(transformedContent, componentName)
+        : {
+            isValid: true,
+            diagnostics: [],
+            hasErrors: false,
+            hasWarnings: false,
+          };
+
+    if (!validation.isValid) {
+      if (this.options.verbose) {
+        console.error(`❌ TypeScript validation failed for ${componentName}: ${inputFilePath}`);
+        validation.diagnostics.forEach((diag) => {
+          const location = diag.line
+            ? ` (line ${diag.line}, col ${diag.column})`
+            : "";
+          console.error(
+            `  ${diag.category.toUpperCase()}: ${diag.message}${location}`
+          );
+        });
+      }
+
+      // Fail if configured to do so
+      if (this.options.failOnSyntaxErrors) {
+        throw new Error(
+          `TypeScript validation failed for ${componentName}. Enable verbose mode to see details.`
+        );
+      }
+    } else if (validation.isValid && this.options.verbose) {
+      console.log(`✅ TypeScript validation passed for ${componentName}`);
+      if (validation.hasWarnings) {
+        console.warn(`⚠️  ${componentName} has warnings:`);
+        validation.diagnostics
+          .filter((d) => d.category === "warning")
+          .forEach((diag) => {
+            const location = diag.line
+              ? ` (line ${diag.line}, col ${diag.column})`
+              : "";
+            console.warn(`  WARNING: ${diag.message}${location}`);
+          });
+      }
+    }
+
     const result: TransformationTestResult = {
       input: inputContent,
       output: transformedContent,
@@ -315,6 +470,7 @@ export class TransformationTestFramework {
       componentName,
       dependencies,
       inputFilePath, // Track the original input file path
+      validation,
     };
 
     // Generate or verify snapshot using the full base name (including variant)
@@ -409,7 +565,7 @@ export class TransformationTestFramework {
   ): Promise<void> {
     const snapshotDir =
       this.options.outputDir ||
-      path.join(this.options.fixtureDir, this.snapshotSubDirectory);
+      path.join(this.options.fixtureDir, "__snapshots__");
 
     // Use the full base name (including variant) for snapshot naming
     // e.g., "inline-with-destructuring.basic" -> "inline-with-destructuring.basic.transformed.snap.tsx"
@@ -501,7 +657,7 @@ ${result.output}`;
         // Load snapshot with the correct name
         const snapshotPath = path.join(
           this.options.outputDir ||
-            path.join(this.options.fixtureDir, this.snapshotSubDirectory),
+            path.join(this.options.fixtureDir, "__snapshots__"),
           `${fullBaseName}.transformed.snap.tsx`
         );
 
@@ -577,6 +733,42 @@ ${result.output}`;
       finalResult,
     };
   }
+
+  /**
+   * Debug method to test formatting
+   */
+  public debugFormatting(content: string): {
+    original: string;
+    formatted: string;
+    isFormatted: boolean;
+  } {
+    const formatted = this.formatTypeScriptContent(content);
+    return {
+      original: content,
+      formatted,
+      isFormatted: content !== formatted,
+    };
+  }
+
+  /**
+   * Public method to validate any TypeScript content
+   */
+  public validateContent(
+    content: string,
+    name: string = "content"
+  ): {
+    isValid: boolean;
+    diagnostics: Array<{
+      message: string;
+      line?: number;
+      column?: number;
+      category: "error" | "warning" | "suggestion" | "message";
+    }>;
+    hasErrors: boolean;
+    hasWarnings: boolean;
+  } {
+    return this.validateTypeScriptSyntax(content, name);
+  }
 }
 
 // Type definitions for snapshots
@@ -600,7 +792,7 @@ export interface TransformationSnapshot {
   };
 }
 
-// Utility function for creating tests with ignore patterns
+// Utility function for creating tests with ignore patterns and validation
 export function defineTransformationTest(
   testName: string,
   fixtureDir: string,
@@ -618,6 +810,8 @@ export function defineTransformationTest(
       "Yes",
       "YES",
     ].includes(process.env.UPDATE_SNAPSHOTS || ""),
+    validateSyntax: true, // Enable syntax validation by default
+    failOnSyntaxErrors: false, // Don't fail tests by default, just log
     ...options,
   });
 
