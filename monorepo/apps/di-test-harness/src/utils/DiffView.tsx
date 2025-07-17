@@ -8,12 +8,12 @@ interface DiffViewProps {
   /**
    * Async import function for the original/input file
    */
-  originalImport: () => Promise<any>;
+  src: () => Promise<any>;
   
   /**
    * Async import function for the transformed/output file  
    */
-  transformedImport: () => Promise<any>;
+  dest: () => Promise<any>;
   
   /**
    * Optional title for the diff view
@@ -49,8 +49,8 @@ interface LoadingState {
 }
 
 export function DiffView({
-  originalImport,
-  transformedImport,
+  src: originalImport,
+  dest: transformedImport,
   title = "Code Transformation Diff",
   originalFileName = "original.tsx",
   transformedFileName = "transformed.tsx", 
