@@ -1,6 +1,6 @@
 // src/components/DiffView.tsx
 import React, { useState, useEffect } from 'react';
-import { parseDiff, Diff, Hunk, getChangeKey } from 'react-diff-view';
+import { parseDiff, Diff, Hunk } from 'react-diff-view';
 import { diffLines, createTwoFilesPatch } from 'diff';
 import 'react-diff-view/style/index.css';
 
@@ -115,11 +115,26 @@ export function DiffView({
         
         // Check if files are identical
         if (cleanOriginal === cleanTransformed) {
+          // Create a fake diff with no changes to show the file content
+          const lines = cleanOriginal.split('\n');
+          const unchangedChanges = lines.map((line, index) => ({
+            type: 'normal' as const,
+            content: line,
+            oldLineNumber: index + 1,
+            newLineNumber: index + 1
+          }));
+          
           setDiffData({
             oldRevision: originalFileName,
             newRevision: transformedFileName,
             type: 'modify',
-            hunks: []
+            hunks: [{
+              oldStart: 1,
+              oldLines: lines.length,
+              newStart: 1,
+              newLines: lines.length,
+              changes: unchangedChanges
+            }]
           });
           return;
         }
@@ -182,21 +197,21 @@ export function DiffView({
             for (const line of lines) {
               if (change.added) {
                 manualChanges.push({
-                  type: 'insert',
+                  type: 'insert' as const,
                   content: line,
                   oldLineNumber: undefined,
                   newLineNumber: newLineNumber++
                 });
               } else if (change.removed) {
                 manualChanges.push({
-                  type: 'delete',
+                  type: 'delete' as const,
                   content: line,
                   oldLineNumber: oldLineNumber++,
                   newLineNumber: undefined
                 });
               } else {
                 manualChanges.push({
-                  type: 'normal',
+                  type: 'normal' as const,
                   content: line,
                   oldLineNumber: oldLineNumber++,
                   newLineNumber: newLineNumber++
@@ -298,24 +313,8 @@ export function DiffView({
 
   const hunks = diffData.hunks || [];
   
-  // Handle case where files are identical
-  if (hunks.length === 0) {
-    return (
-      <div style={{ 
-        padding: '1rem',
-        border: '1px solid #28a745',
-        borderRadius: '8px',
-        backgroundColor: '#d4edda'
-      }}>
-        <h4 style={{ color: '#155724', marginTop: 0 }}>
-          ✅ Files are Identical
-        </h4>
-        <p style={{ color: '#155724', margin: 0 }}>
-          No differences found between the original and transformed files.
-        </p>
-      </div>
-    );
-  }
+  // Check if files are identical
+  const areIdentical = state.original?.trim() === state.transformed?.trim();
 
   return (
     <div style={{ 
@@ -326,29 +325,30 @@ export function DiffView({
     }}>
       {/* Header */}
       <div style={{ 
-        backgroundColor: '#f8f9fa',
+        backgroundColor: areIdentical ? '#d4edda' : '#f8f9fa',
         padding: '1rem',
         borderBottom: '1px solid #dee2e6'
       }}>
         <h3 style={{ 
           margin: 0,
-          color: '#495057',
+          color: areIdentical ? '#155724' : '#495057',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem'
         }}>
-          <span>🔄</span>
+          <span>{areIdentical ? '✅' : '🔄'}</span>
           {title}
+          {areIdentical && <span style={{ fontSize: '0.8rem', marginLeft: '0.5rem' }}>(Files are identical)</span>}
         </h3>
         <div style={{ 
           display: 'flex',
           gap: '2rem',
           marginTop: '0.5rem',
           fontSize: '0.9rem',
-          color: '#6c757d'
+          color: areIdentical ? '#155724' : '#6c757d'
         }}>
           <span>📄 {originalFileName}</span>
-          <span>➜</span>
+          <span>{areIdentical ? '=' : '➜'}</span>
           <span>⚡ {transformedFileName}</span>
         </div>
       </div>
@@ -360,7 +360,9 @@ export function DiffView({
             viewType={viewType}
             diffType={diffData.type || "modify"}
             hunks={hunks}
-            renderHunk={(hunk) => {
+            gutterType={showLineNumbers ? "anchor" : "none"}
+          >
+            {(hunks) => hunks.map((hunk) => {
               // Validate hunk before rendering
               if (!hunk || !hunk.changes) {
                 console.warn('Invalid hunk:', hunk);
@@ -369,14 +371,11 @@ export function DiffView({
               
               return (
                 <Hunk 
-                  key={getChangeKey(hunk)}
+                  key={`${hunk.oldStart}-${hunk.newStart}`}
                   hunk={hunk}
-                  showLineNumbers={showLineNumbers}
                 />
               );
-            }}
-          >
-            {/* Custom styling can be added here */}
+            })}
           </Diff>
         ) : (
           <div style={{ padding: '2rem', textAlign: 'center', color: '#6c757d' }}>
@@ -394,9 +393,15 @@ export function DiffView({
         color: '#6c757d'
       }}>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <span>📊 {hunks.length} change block(s)</span>
-          <span>➕ {countChanges(hunks, 'insert')} additions</span>
-          <span>➖ {countChanges(hunks, 'delete')} deletions</span>
+          {areIdentical ? (
+            <span>✅ Files are identical - no changes</span>
+          ) : (
+            <>
+              <span>📊 {hunks.length} change block(s)</span>
+              <span>➕ {countChanges(hunks, 'insert')} additions</span>
+              <span>➖ {countChanges(hunks, 'delete')} deletions</span>
+            </>
+          )}
         </div>
       </div>
     </div>

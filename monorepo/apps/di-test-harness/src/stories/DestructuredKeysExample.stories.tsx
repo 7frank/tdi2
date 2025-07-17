@@ -1,11 +1,11 @@
+
+
 import type { Story } from "@ladle/react";
 import { CompileTimeDIContainer } from "@tdi2/di-core/container";
-import { DIProvider } from "@tdi2/di-core/context";
-import { DI_CONFIG } from "../.tdi2/di-config";
-import { lazy } from "../utils/simpleLazy";
-import { DIStory } from "../utils/DIStory";
 
-import source from "../components/DestructuredKeysExample.tsx?raw";
+import { DI_CONFIG } from "../.tdi2/di-config";
+
+import { lazy } from "../utils/simpleLazy";
 
 const DestructuredKeysExample = lazy(
   () => import("../components/DestructuredKeysExample"),
@@ -16,15 +16,18 @@ const DestructuredKeysExample = lazy(
 const container = new CompileTimeDIContainer();
 container.loadConfiguration(DI_CONFIG);
 
-export const ADestructuredKeysExample: Story = () => {
+import { DITransformationDemo } from "../utils/DITransformationDemo";
+
+export const AInlineDestructuredTransformation: Story = () => {
   return (
-    <DIStory>
-      <DIProvider container={container}>
-        <DestructuredKeysExample />
-      </DIProvider>
-      <pre>
-        <code>{source}</code>
-      </pre>
-    </DIStory>
+    <DITransformationDemo
+      diContainer={container}
+      sourceImport={() => import("../components/DestructuredKeysExample.tsx?raw")}
+      destImport={() => import("../components/DestructuredKeysExample.tsx?raw")}
+      transformedComponent={DestructuredKeysExample}
+      title="Inline Destructured Props Transformation"
+      originalFileName="DestructuredKeysExample.tsx"
+      transformedFileName="..."
+    />
   );
 };

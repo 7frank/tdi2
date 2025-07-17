@@ -1,12 +1,9 @@
 import type { Story } from "@ladle/react";
 import { CompileTimeDIContainer } from "@tdi2/di-core/container";
-import { DIProvider } from "@tdi2/di-core/context";
+
 import { DI_CONFIG } from "../.tdi2/di-config";
 
 import { lazy } from "../utils/simpleLazy";
-import { DIStory } from "../utils/DIStory";
-
-import source from "../components/SimpleAnimalComponent.tsx?raw";
 
 const SimpleAnimalComponent = lazy(
   () => import("../components/SimpleAnimalComponent"),
@@ -17,15 +14,18 @@ const SimpleAnimalComponent = lazy(
 const container = new CompileTimeDIContainer();
 container.loadConfiguration(DI_CONFIG);
 
-export const ASimpleAnimal: Story = () => {
+import { DITransformationDemo } from "../utils/DITransformationDemo";
+
+export const AInlineDestructuredTransformation: Story = () => {
   return (
-    <DIStory>
-      <DIProvider container={container}>
-        <SimpleAnimalComponent />
-      </DIProvider>{" "}
-      <pre>
-        <code>{source}</code>
-      </pre>
-    </DIStory>
+    <DITransformationDemo
+      diContainer={container}
+      sourceImport={() => import("../components/SimpleAnimalComponent.tsx?raw")}
+      destImport={() => import("../components/SimpleAnimalComponent.tsx?raw")}
+      transformedComponent={SimpleAnimalComponent}
+      title="Inline Destructured Props Transformation"
+      originalFileName="SimpleAnimalComponent.tsx"
+      transformedFileName="..."
+    />
   );
 };

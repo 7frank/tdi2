@@ -36,13 +36,13 @@ interface DITransformationDemoProps {
    * Transformed filename for display
    */
   transformedFileName?: string;
+
+  diContainer:CompileTimeDIContainer
 }
 
-// Create and configure the DI container (shared instance)
-const container = new CompileTimeDIContainer();
-container.loadConfiguration(DI_CONFIG);
 
 export function DITransformationDemo({
+    diContainer,
   sourceImport,
   destImport,
   transformedComponent: TransformedComponent,
@@ -100,7 +100,7 @@ export function DITransformationDemo({
           textAlign: "center",
         }}>
           <DIStory name="Transformation Demo">
-            <DIProvider container={container}>
+            <DIProvider container={diContainer}>
               <TransformedComponent />
             </DIProvider>
           </DIStory>
