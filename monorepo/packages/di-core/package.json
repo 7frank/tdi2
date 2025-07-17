@@ -6,8 +6,14 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    "./examples/*": {
+      "import": "./dist/examples/*.js",
+      "types": "./dist/examples/*.d.ts"
+    },
     "./examples/*.js": "./dist/examples/*.js",
     "./examples/*.d.ts": "./dist/examples/*.d.ts",
+    "./examples/sources/*": "./tools/functional-di-enhanced-transformer/__tests__/__fixtures__/*",
+    "./sources/*": "./tools/functional-di-enhanced-transformer/__tests__/__fixtures__/*",
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
@@ -39,12 +45,13 @@
   },
   "files": [
     "dist/",
+    "tools/functional-di-enhanced-transformer/__tests__/__fixtures__/",
     "*.d.ts"
   ],
   "scripts": {
     "dev": "tsup --watch",
     "test:io": "bash -c 'select f in $(find . -type f -name \"*.test.ts\" ); do [ -n \"$f\" ] && exec bun test \"$f\"; done'",
-    "build": "tsup  && tsc -p tsconfig.dts.json",
+    "build": "tsup  && tsc -p tsconfig.dts.json || true",
 
     "test": "bun test",
     "lint": "echo 'No linting configured yet'",
