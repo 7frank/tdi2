@@ -10,8 +10,9 @@
     "clean": "rm -rf src/.tdi2 node_modules/.vite"
   },
   "dependencies": {
-    "ts-morph": "^21.0.1",
-    "@tdi2/di-core": "workspace:*"
+    "@tdi2/di-core": "workspace:*",
+    "react-diff-view": "^3.3.1",
+    "ts-morph": "^21.0.1"
   },
   "devDependencies": {
     "@ladle/react": "^5.0.3",
