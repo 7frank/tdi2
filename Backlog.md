@@ -2,9 +2,15 @@
 
 ## ordered log
 
-### [❌] improve testing v2
+### [❌] focus on meaningful test cases and create snapshot tests for failing scenarios that we want to support
 
-- integrate snapshot tests into ladle
+> focus debugging, how can we easily provide info to developer with ladle or snapshot tests, to find out why things fail and what they can do
+
+- inline examples in test harness
+- examples of snapshot tests
+- both should provide similar experience
+  - side by side comparision of source and generated
+  - working DI (This might be still ahrd because 2 different packages)
 
 ### [❌] release di-core 2.3.0 or 2.2.1
 
@@ -348,6 +354,10 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] improve testing v2
+
+- integrate snapshot tests into ladle
 
 ### [✅] improve testing
 
