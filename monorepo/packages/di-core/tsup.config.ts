@@ -5,7 +5,7 @@ const examples = {
     "tools/functional-di-enhanced-transformer/__tests__/__fixtures__/*.ts*",
   ],
   format: ["esm"],
-  dts: true,
+  dts: false,
   outDir: "dist/examples",
   splitting: false,
   clean: true,

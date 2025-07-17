@@ -9,6 +9,9 @@
 ### [❌] release di-core 2.3.0 or 2.2.1
 
 - test with basic and enterprise to prevent regressions or at least not bump versions when regressions occur
+
+- maybe separate tsup tools&dist and examples in separate tsup config
+
 - test with local instead of npm ?
 
 ```
@@ -187,6 +190,8 @@ maybe normalization could help
 - use cas edriven more feature, goal reduce DI friction for DX
 
 "faster" what causes this? **and** alternative to dependency viewer
+
+- it must be clear why a certain component doesnt work
 
 ### [❌] test mobx in favor of valtio
 

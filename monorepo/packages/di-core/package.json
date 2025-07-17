@@ -6,6 +6,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    "./examples/*.js": "./dist/examples/*.js",
+    "./examples/*.d.ts": "./dist/examples/*.d.ts",
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
@@ -42,8 +44,8 @@
   "scripts": {
     "dev": "tsup --watch",
     "test:io": "bash -c 'select f in $(find . -type f -name \"*.test.ts\" ); do [ -n \"$f\" ] && exec bun test \"$f\"; done'",
-    "build": "tsup || echo 'probably ok if you have worries run the  build:strict command' ; tsc -p tsconfig.dts.json",
-    "build:strict": "tsup ",
+    "build": "tsup  && tsc -p tsconfig.dts.json",
+
     "test": "bun test",
     "lint": "echo 'No linting configured yet'",
     "clean": "rm -rf dist",
