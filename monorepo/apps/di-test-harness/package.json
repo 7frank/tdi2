@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "ladle serve",
-    "build": "ladle build -o ./dist",
+    "build": "ladle build -o ./dist --base tdi2",
     "preview": "ladle preview",
     "clean": "rm -rf src/.tdi2 node_modules/.vite"
   },
