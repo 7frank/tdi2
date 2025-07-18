@@ -1,3 +1,21 @@
+# manchmal hui 
+- manchla hätt ichs doch selber gemacht
+
+# claude code
+
+- !!mit subscription
+- https://www.npmjs.com/package/@anthropic-ai/claude-code
+-  vscode plugin
+
+# login & init
+
+## plan mode
+## autoaccept edit
+
+- clear => new chat
+- compact => new chat and summary
+- dinge automatisieren via cli
+
 # Learnings of using Claude.AI and other AI Tool
 
 - Working with AI does somewhat resemble working with teams
