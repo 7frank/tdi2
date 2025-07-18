@@ -8,8 +8,6 @@ import {
   SyntaxKind,
   VariableStatement
 } from 'ts-morph';
-import { ParameterNormalizer } from './parameter-normalizer';
-import { EnhancedComponentTransformer } from './enhanced-component-transformer';
 import { PropertyAccessUpdater } from './property-access-updater';
 import { ExtractedDependency } from '../shared/SharedDependencyExtractor';
 
@@ -20,21 +18,10 @@ export interface TransformationPipelineOptions {
 }
 
 export class TransformationPipeline {
-  private normalizer: ParameterNormalizer;
-  private transformer: EnhancedComponentTransformer;
+
   private propertyUpdater: PropertyAccessUpdater;
 
   constructor(private options: TransformationPipelineOptions = {}) {
-    this.normalizer = new ParameterNormalizer({
-      verbose: this.options.verbose,
-      generateFallbacks: this.options.generateFallbacks,
-      preserveTypeAnnotations: this.options.preserveTypeAnnotations
-    });
-
-    this.transformer = new EnhancedComponentTransformer({
-      verbose: this.options.verbose,
-      srcDir: './src'
-    } as any);
 
     this.propertyUpdater = new PropertyAccessUpdater({
       verbose: this.options.verbose
@@ -384,13 +371,19 @@ export class TransformationPipeline {
     const propertyPath = this.determineOptionalPropertyPath(dependency);
     
     if (!dependency.resolvedImplementation) {
-      if (dependency.isOptional) {
-        // Optional dependency that couldn't be resolved - use optional chaining
-        return `const ${dependency.serviceKey} = ${propertyPath} ?? undefined;`;
-      } else {
-        // Required dependency that couldn't be resolved - use optional chaining with useService fallback
-        return `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`;
-      }
+      // if (dependency.isOptional) {
+      //   // Optional dependency that couldn't be resolved - use optional chaining
+      //   return `const ${dependency.serviceKey} = ${propertyPath} ?? undefined; // ${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType}`;
+      // } else {
+      //   // Required dependency that couldn't be resolved - use optional chaining with useService fallback
+      //   return `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`;
+      // }
+
+   
+      console.error(`❌❌❌ "Could not find implementation for '${dependency.interfaceType}'`,dependency)
+     
+
+      return `const ${dependency.serviceKey} = ${propertyPath}; if (!${dependency.serviceKey}) {throw new Error("Could not find implementation for '${dependency.interfaceType}'");}`;
     }
 
     const token = dependency.resolvedImplementation.sanitizedKey;
