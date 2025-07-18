@@ -12,6 +12,10 @@
   - side by side comparision of source and generated
   - working DI (This might be still ahrd because 2 different packages)
 
+### [❌] testing utilities package
+
+- https://claude.ai/chat/ce705f0a-1f89-4e05-b0cb-3e5655e9c193
+
 ### [❌] release di-core 2.3.0 or 2.2.1
 
 - test with basic and enterprise to prevent regressions or at least not bump versions when regressions occur
@@ -27,6 +31,18 @@
       "@tdi2/di-core/*": ["./src/*"]
     },
 ```
+
+### [❌] restructure, for smaller package sizes
+
+- graph und structur https://claude.ai/chat/ff284e67-cac3-4c5e-a4b1-54fdfe6a8128
+
+### [❌] potential use case, "contracts"
+
+-di & contracts https://claude.ai/chat/59abb30a-20c2-48da-9e05-5bf6798310cb
+
+### [❌]improve coding with ai tools
+
+- ai coding tools https://claude.ai/chat/8fc03e1d-4679-4762-931c-4f23f1581f20
 
 ### [❌] T_T separate ... each needs to be under 60% ~ 120k token test included, otherwise we loose in the long term
 
