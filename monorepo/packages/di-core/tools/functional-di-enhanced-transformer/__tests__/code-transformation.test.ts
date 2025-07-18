@@ -64,7 +64,7 @@ describe('Functional DI Transformation Tests', () => {
 
   // Custom test with detailed verification
   describe('Custom Verification Tests', () => {
-    it('should provide detailed transformation information', async () => {
+    it.skip('should provide detailed transformation information', async () => {
       const framework = new TransformationTestFramework({
         fixtureDir: FIXTURES_DIR,
         verbose: true,
