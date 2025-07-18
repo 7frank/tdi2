@@ -1,13 +1,15 @@
-import React from 'react';
+import React from "react";
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
-import { ApiInterface, LoggerInterface, CacheInterface, UserServiceInterface } from './shared-types';
+import {
+  ApiInterface,
+  LoggerInterface,
+  CacheInterface,
+  UserServiceInterface,
+} from "./shared-types";
 
 export function ComplexComponent(props: {
   userId: string;
-  config: {
-    theme: string;
-    debug: boolean;
-  };
+
   services: {
     api: Inject<ApiInterface>;
     logger: Inject<LoggerInterface>;
@@ -15,26 +17,16 @@ export function ComplexComponent(props: {
     user?: InjectOptional<UserServiceInterface>;
   };
 }) {
-  const { userId, config, services } = props;
-  
+  const { userId, services } = props;
+
   React.useEffect(() => {
-    services.logger.log(`Loading complex component for user ${userId}`);
-    
-    services.api.getUserData(userId).then(data => {
+    services.api.getUserData(userId).then((data) => {
       services.cache?.set(`user-${userId}`, data);
       services.user?.updateProfile(data);
-      
-      if (config.debug) {
-        services.logger.log(`Debug: Loaded user data for ${userId}`);
-      }
-    });
-  }, [userId, config.debug]);
 
-  return (
-    <div data-theme={config.theme}>
-      <h1>Complex Component</h1>
-      <p>User: {userId}</p>
-      <p>Debug: {config.debug ? 'ON' : 'OFF'}</p>
-    </div>
-  );
+      services.logger.log(`Debug: Loaded user data for ${userId}`);
+    });
+  }, [userId]);
+
+  return <p>User: {userId}</p>;
 }
