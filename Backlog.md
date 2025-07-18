@@ -12,10 +12,6 @@
   - side by side comparision of source and generated
   - working DI (This might be still ahrd because 2 different packages)
 
-### [❌] testing utilities package
-
-- https://claude.ai/chat/ce705f0a-1f89-4e05-b0cb-3e5655e9c193
-
 ### [❌] release di-core 2.3.0 or 2.2.1
 
 - test with basic and enterprise to prevent regressions or at least not bump versions when regressions occur
@@ -115,11 +111,17 @@ export function TodoApp2({
 }: AppProps) {}
 ```
 
-### [❌] testing
+### [❌] testing utilities package
+
+- https://claude.ai/chat/ce705f0a-1f89-4e05-b0cb-3e5655e9c193
 
 - AST should not remove but conditionally inject if service was passed use that if not then inject like before
 - create test utility. that makes creating a config for a test easy
   - maybe use thing like @Mockbean in test or scope test / integration ...
+
+### ADR of bundler options
+
+- https://lirantal.com/blog/typescript-in-2025-with-esm-and-cjs-npm-publishing
 
 ### use different inject strategy
 
