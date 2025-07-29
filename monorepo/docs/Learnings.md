@@ -1,15 +1,17 @@
-# manchmal hui 
+# manchmal hui
+
 - manchla hätt ichs doch selber gemacht
 
 # claude code
 
 - !!mit subscription
 - https://www.npmjs.com/package/@anthropic-ai/claude-code
--  vscode plugin
+- vscode plugin
 
 # login & init
 
 ## plan mode
+
 ## autoaccept edit
 
 - clear => new chat
@@ -17,16 +19,50 @@
 - dinge automatisieren via cli
 
 ## MPC
+
 - https://mcp.so/server/ref-tools-mcp/ref-tools
 - https://mcp.so/server/otelcol-mcp/mottibec
 
-## Token usage 
+## Token usage
+
 https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor
 
+## (private) quota alle?
 
-## proxy
+- https://github.com/musistudio/claude-code-router
+- https://github.com/1rgs/claude-code-proxy
 
-https://github.com/1rgs/claude-code-proxy
+
+> creat eapi key for gemini at https://aistudio.google.com/apikey
+
+`npm install -g @musistudio/claude-code-router`
+
+> ~/.claude-code-router/config.json
+
+````
+{
+  "LOG": false,
+  "OPENAI_API_KEY": "",
+  "OPENAI_BASE_URL": "",
+  "OPENAI_MODEL": "",
+  "Providers": [
+    {
+      "name": "gemini",
+      "api_base_url": "https://generativelanguage.googleapis.com/v1beta/models/",
+      "api_key": "<your api key>",
+      "models": ["gemini-2.5-flash", "gemini-2.5-pro"],
+      "transformer": {
+        "use": ["gemini"]
+      }
+    }
+  ],
+  "Router": {
+    "default": "gemini,gemini-2.5-flash"
+  }
+}
+
+- `ccr restart`
+- `ccr code`
 
 
 # Learnings of using Claude.AI and other AI Tool
@@ -122,7 +158,7 @@ https://github.com/1rgs/claude-code-proxy
 - somehow my files no longer are transformed .
 - **if there are multiple problems then create multiple patch files / artifacts**
   - **that i can apply with "patch" cli not "git apply"** so that i can fix this step by step
-```
+````
 
 - if you dont have a test but want to generate one now this could work
   - now you are in the position to compare the outputs ad give some context to the bot
@@ -200,6 +236,6 @@ suggest a file that i should test  integration test with bun:test that should wo
 - recreates the wheel often flooding code base with things that a opackage would have solved
   - own git diff instead of diff package or child_process
   - build own file traversal instead of built in tsx file resolution
-- manchmal statt schneller frustrierender 
-  - => devops setup läuft nicht 
+- manchmal statt schneller frustrierender
+  - => devops setup läuft nicht
   - => debugging und arbeit wie immer aber mit höherem erwartungsdruck
