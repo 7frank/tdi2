@@ -16,6 +16,19 @@
 - compact => new chat and summary
 - dinge automatisieren via cli
 
+## MPC
+- https://mcp.so/server/ref-tools-mcp/ref-tools
+- https://mcp.so/server/otelcol-mcp/mottibec
+
+## Token usage 
+https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor
+
+
+## proxy
+
+https://github.com/1rgs/claude-code-proxy
+
+
 # Learnings of using Claude.AI and other AI Tool
 
 - Working with AI does somewhat resemble working with teams
@@ -187,3 +200,6 @@ suggest a file that i should test  integration test with bun:test that should wo
 - recreates the wheel often flooding code base with things that a opackage would have solved
   - own git diff instead of diff package or child_process
   - build own file traversal instead of built in tsx file resolution
+- manchmal statt schneller frustrierender 
+  - => devops setup läuft nicht 
+  - => debugging und arbeit wie immer aber mit höherem erwartungsdruck
