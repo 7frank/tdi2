@@ -33,26 +33,71 @@ https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor
 - https://github.com/1rgs/claude-code-proxy
 
 
-> creat eapi key for gemini at https://aistudio.google.com/apikey
+> create api key for gemini at https://aistudio.google.com/apikey
 
 `npm install -g @musistudio/claude-code-router`
 
 > ~/.claude-code-router/config.json
 
-````
+```
+// throttle-gemini.js
+
+let lastRequestTime = 0;
+const MIN_INTERVAL_MS = 7000; // ~8.5 req/min
+
+class ThrottleGeminiTransformer {
+  static TransformerName = "throttle-gemini";
+  
+  constructor(options) {
+    this.name = "throttle-gemini"; // REQUIRED
+    this.minInterval = options?.min_interval_ms || MIN_INTERVAL_MS;
+  }
+
+  async transformRequestIn(request) {
+    const now = Date.now();
+    const elapsed = now - lastRequestTime;
+    const wait = this.minInterval - elapsed;
+
+    if (wait > 0) {
+      await new Promise(resolve => setTimeout(resolve, wait));
+    }
+
+    lastRequestTime = Date.now();
+    return request;
+  }
+}
+
+module.exports = ThrottleGeminiTransformer;
+
+```
+
+
+```
 {
   "LOG": false,
   "OPENAI_API_KEY": "",
   "OPENAI_BASE_URL": "",
   "OPENAI_MODEL": "",
+
+  "transformers": [
+    {
+      "name": "throttle-gemini",
+      "type": "module",
+      "path": "/home/frank/.claude-code-router/transformers/throttle-gemini.js",
+      "options": {
+        "min_interval_ms": 7000
+      }
+    }
+  ],
+
   "Providers": [
     {
       "name": "gemini",
       "api_base_url": "https://generativelanguage.googleapis.com/v1beta/models/",
-      "api_key": "<your api key>",
+      "api_key": "your api key",
       "models": ["gemini-2.5-flash", "gemini-2.5-pro"],
       "transformer": {
-        "use": ["gemini"]
+        "use": ["throttle-gemini","gemini"]
       }
     }
   ],
@@ -61,8 +106,10 @@ https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor
   }
 }
 
+```
+
 - `ccr restart`
-- `ccr code`
+- `ccr code` or `ccr code --resume` if you where in a session that was interputed
 
 
 # Learnings of using Claude.AI and other AI Tool
