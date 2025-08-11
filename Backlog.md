@@ -1,5 +1,12 @@
 # Backlog
 
+## unordered important features
+
+- qualifier maybe already implemented due to not necessary with generic ionterfaces and no type reasure in ts
+- scoped
+- confugration bean
+- mockbean
+
 ## ordered log
 
 ### [❌] focus on meaningful test cases and create snapshot tests for failing scenarios that we want to support

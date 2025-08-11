@@ -15,6 +15,13 @@ date: "2025"
 
 Note: Welcome to Leipzig.js! Tonight we're going to challenge everything you think you know about React architecture. I'm going to show you how to eliminate useEffect and props from React components entirely.
 
+
+## WHOAMI
+
+- M.Sc. computer science
+- collects IT skills like others collect Pokémon
+- on and off in react ecosystem since 2019
+
 ---
 
 ## Opening Hook: Hooks Hell Survivors 🙋‍♀️🙋‍♂️
