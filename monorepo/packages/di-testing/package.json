@@ -1,0 +1,58 @@
+{
+  "name": "@tdi2/di-testing",
+  "version": "0.1.0",
+  "description": "Testing utilities for TDI2 dependency injection framework",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./decorators": {
+      "import": "./dist/decorators.js",
+      "types": "./dist/decorators.d.ts"
+    },
+    "./test-container": {
+      "import": "./dist/test-container.js",
+      "types": "./dist/test-container.d.ts"
+    },
+    "./test-utils": {
+      "import": "./dist/test-utils.js",
+      "types": "./dist/test-utils.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "*.d.ts"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup && tsc -p tsconfig.dts.json || true",
+    "test": "bun test",
+    "lint": "echo 'No linting configured yet'",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "dependency-injection",
+    "testing",
+    "typescript",
+    "react",
+    "mocking"
+  ],
+  "author": "TDI2 Team",
+  "license": "MIT",
+  "dependencies": {
+    "@tdi2/di-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^20.0.0",
+    "typescript": "~5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
