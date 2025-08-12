@@ -6,7 +6,7 @@
   "scripts": {
     "prebuild": "npm run di:build-prepare",
     "dev": "vite",
-    "dev:clean":"npm run clean && npm run di:reset && npm run dev",
+    "dev:clean": "npm run clean && npm run di:reset && npm run dev",
     "build-bak": "tsc -b && vite build",
     "clean": "rm -rf node_modules/.tdi2 src/.tdi2 node_modules/.vite node_modules/.vite-temp",
     "lint": "eslint .",

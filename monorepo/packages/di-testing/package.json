@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/di-testing",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Testing utilities for TDI2 dependency injection framework",
   "type": "module",
   "main": "./dist/index.js",
