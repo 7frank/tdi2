@@ -35,7 +35,8 @@
     - cd slides ... uv run mkslides build Meetup-Leipzig.js/slides.md  --config-file Meetup-Leipzig.js/config.yaml 
 - add notes from above
 - get the talk finished by 2pm
-
+- https://hogenttin.github.io/hogent-markdown-slides/
+- https://github.com/HoGentTIN/hogent-markdown-slides
 
 ## Notes for Presentation
 - schedule a new stream tomorrow

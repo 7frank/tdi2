@@ -4,6 +4,8 @@
 # Slide-specific configuration
 slides:
   theme: Meetup-Leipzig.js/example-theme.css  # Custom theme with Leipzig.js branding
+  # css file or one of https://highlightjs.org/examples 
+  highlight_theme: atom-one-dark
 
 # Reveal.js configuration
 revealjs:

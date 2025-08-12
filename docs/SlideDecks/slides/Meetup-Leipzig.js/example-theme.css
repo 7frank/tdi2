@@ -105,9 +105,9 @@ a {
 a:hover {
     text-decoration: underline;
 }
-
+/* 
 code {
-    background-color: var(--inline-code-bg-color);
+    background-color: var(--inline-code-bg-color); 
     font-family: "Inconsolata", monospace;
     font-size: 0.8em;
     padding: 0.2em 0.4em 0.2em 0.4em;
@@ -127,7 +127,7 @@ pre code:not(.mermaid) {
     border-style: solid;
     border-color: var(--code-border-color);
     border-radius: 0.2em;
-}
+} */
 
 p {
     line-height: var(--content-line-height);
