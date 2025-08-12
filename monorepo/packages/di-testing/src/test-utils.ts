@@ -14,8 +14,8 @@ export interface TestSetupOptions {
 
 export interface TestContext {
   container: TestContainer;
-  mockService: <T>(token: string | symbol, implementation: T, scope?: "singleton" | "transient" | "scoped") => void;
-  restoreService: (token: string | symbol) => void;
+  mockServiceByInterface: <T>(interfaceName: string, implementation: T, scope?: "singleton" | "transient" | "scoped") => void;
+  restoreServiceByInterface: (interfaceName: string) => void;
   restoreAllServices: () => void;
   reset: () => void;
 }
@@ -52,18 +52,18 @@ export function setupTest(options: TestSetupOptions = {}): TestContext {
     container.loadConfiguration(diMap);
   }
 
-  // Apply mock overrides
+  // Apply mock overrides using interface-based approach
   for (const mock of mocks) {
-    container.mockService(mock.token, mock.implementation, mock.scope);
+    container.mockServiceByInterface(mock.token as string, mock.implementation, mock.scope);
   }
 
   // Create test context
   const context: TestContext = {
     container,
-    mockService: (token, implementation, scope) => 
-      container.mockService(token, implementation, scope),
-    restoreService: (token) => 
-      container.restoreService(token),
+    mockServiceByInterface: (interfaceName, implementation, scope) => 
+      container.mockServiceByInterface(interfaceName, implementation, scope),
+    restoreServiceByInterface: (interfaceName) => 
+      container.restoreServiceByInterface(interfaceName),
     restoreAllServices: () => 
       container.restoreAllServices(),
     reset: () => 
@@ -162,13 +162,13 @@ export function expectServiceRegistered(container: TestContainer, token: string 
 }
 
 /**
- * Utility to verify service mock
+ * Utility to verify service mock using interface-based resolution
  */
-export function expectServiceMocked(container: TestContainer, token: string | symbol): void {
+export function expectServiceMocked(container: TestContainer, interfaceName: string): void {
   const overrides = container.getTestOverrides();
-  const isMocked = overrides.some((override: any) => override.token === token);
+  const isMocked = overrides.some((override: any) => override.interfaceName === interfaceName);
   
   if (!isMocked) {
-    throw new Error(`Service not mocked: ${String(token)}`);
+    throw new Error(`Service not mocked: ${interfaceName}`);
   }
 }

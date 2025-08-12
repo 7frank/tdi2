@@ -2,7 +2,7 @@ import { CompileTimeDIContainer } from "@tdi2/di-core/container";
 import type { DIContainer } from "@tdi2/di-core/types";
 
 export interface TestOverride {
-  token: string | symbol;
+  interfaceName: string;
   implementation: any;
   scope?: "singleton" | "transient" | "scoped";
 }
@@ -11,63 +11,56 @@ export class TestContainer implements DIContainer {
   private container: CompileTimeDIContainer;
   private originalServices = new Map<string, any>();
   private testOverrides = new Map<string, TestOverride>();
-  private tokenMap = new Map<string, string | symbol>(); // Maps tokenKey back to original token
 
   constructor(parent?: DIContainer) {
     this.container = new CompileTimeDIContainer(parent);
   }
 
   /**
-   * Override a service with a mock or test implementation
+   * Override a service with a mock or test implementation using interface-based resolution
    */
-  mockService<T>(
-    token: string | symbol,
+  mockServiceByInterface<T>(
+    interfaceName: string,
     implementation: T,
     scope: "singleton" | "transient" | "scoped" = "singleton"
   ): void {
-    const tokenKey = this.getTokenKey(token);
-    
-    // Store token mapping
-    this.tokenMap.set(tokenKey, token);
-    
-    // Store original if not already stored
-    if (!this.originalServices.has(tokenKey) && this.container.has(token)) {
-      this.originalServices.set(tokenKey, this.getCurrentImplementation(token));
+    // Store original if it exists
+    if (!this.originalServices.has(interfaceName) && this.container.hasInterface(interfaceName)) {
+      this.originalServices.set(interfaceName, this.container.resolveByInterface(interfaceName));
     }
-
-    // Store the override
-    this.testOverrides.set(tokenKey, { token, implementation, scope });
-
-    // Register the mock
-    this.container.register(token, implementation, scope);
+    
+    // Store override
+    this.testOverrides.set(interfaceName, {
+      interfaceName,
+      implementation,
+      scope
+    });
+    
+    // Register in container using interface-based resolution
+    this.container.registerByInterface(interfaceName, implementation, scope);
   }
 
   /**
-   * Restore a service to its original implementation
+   * Restore a service to its original implementation using interface-based resolution
    */
-  restoreService(token: string | symbol): void {
-    const tokenKey = this.getTokenKey(token);
-    
-    if (this.originalServices.has(tokenKey)) {
-      const original = this.originalServices.get(tokenKey);
-      this.container.register(token, original);
-      this.originalServices.delete(tokenKey);
-      this.testOverrides.delete(tokenKey);
-      this.tokenMap.delete(tokenKey);
+  restoreServiceByInterface(interfaceName: string): void {
+    if (this.originalServices.has(interfaceName)) {
+      const original = this.originalServices.get(interfaceName);
+      this.container.registerByInterface(interfaceName, original);
+      this.originalServices.delete(interfaceName);
+      this.testOverrides.delete(interfaceName);
     }
   }
 
   /**
-   * Restore all services to their original implementations
+   * Restore all services to their original implementations using interface-based resolution
    */
   restoreAllServices(): void {
-    for (const [tokenKey, original] of this.originalServices) {
-      const token = this.tokenFromKey(tokenKey);
-      this.container.register(token, original);
+    for (const [interfaceName, original] of this.originalServices) {
+      this.container.registerByInterface(interfaceName, original);
     }
     this.originalServices.clear();
     this.testOverrides.clear();
-    this.tokenMap.clear();
   }
 
   /**
@@ -126,8 +119,8 @@ export class TestContainer implements DIContainer {
     const scope = new TestContainer(this);
     
     // Copy current overrides to the new scope
-    for (const [tokenKey, override] of this.testOverrides) {
-      scope.mockService(override.token, override.implementation, override.scope);
+    for (const [interfaceName, override] of this.testOverrides) {
+      scope.mockServiceByInterface(override.interfaceName, override.implementation, override.scope);
     }
     
     return scope;
@@ -136,20 +129,11 @@ export class TestContainer implements DIContainer {
   /**
    * Get information about current test overrides
    */
-  getTestOverrides(): Array<{ token: string | symbol; hasOriginal: boolean }> {
-    return Array.from(this.testOverrides.keys()).map(tokenKey => ({
-      token: this.tokenFromKey(tokenKey),
-      hasOriginal: this.originalServices.has(tokenKey)
+  getTestOverrides(): Array<{ interfaceName: string; hasOriginal: boolean }> {
+    return Array.from(this.testOverrides.keys()).map(interfaceName => ({
+      interfaceName,
+      hasOriginal: this.originalServices.has(interfaceName)
     }));
-  }
-
-  private getCurrentImplementation(token: string | symbol): any {
-    // Since we can't access private properties, we'll try to resolve and catch errors
-    try {
-      return this.container.resolve(token);
-    } catch {
-      return null;
-    }
   }
 
   private clearInstances(): void {
@@ -157,18 +141,9 @@ export class TestContainer implements DIContainer {
     const parent = (this.container as any).parent;
     this.container = new CompileTimeDIContainer(parent);
     
-    // Re-apply current test overrides
-    for (const [_tokenKey, override] of this.testOverrides) {
-      this.container.register(override.token, override.implementation, override.scope);
+    // Re-apply current test overrides using interface-based registration
+    for (const [_interfaceName, override] of this.testOverrides) {
+      this.container.registerByInterface(override.interfaceName, override.implementation, override.scope);
     }
-  }
-
-  private tokenFromKey(tokenKey: string): string | symbol {
-    // Use the stored token mapping if available
-    return this.tokenMap.get(tokenKey) || tokenKey;
-  }
-
-  private getTokenKey(token: string | symbol): string {
-    return typeof token === "symbol" ? token.toString() : token;
   }
 }

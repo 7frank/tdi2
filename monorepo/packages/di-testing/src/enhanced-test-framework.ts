@@ -42,14 +42,11 @@ export function setupEnhancedTest(
     // In interface-based DI, the property name corresponds to the service identity
     const serviceKey = propertyKey as string;
     
-    // Create mock - try to get original service first
+    // Create mock - try to get original service first using interface-based resolution
     let originalService = null;
     try {
-      // Try interface-based resolution first
-      if (container.hasInterface && container.hasInterface(serviceKey)) {
+      if (container.hasInterface(serviceKey)) {
         originalService = container.resolveByInterface(serviceKey);
-      } else if (container.has(serviceKey)) {
-        originalService = container.resolve(serviceKey);
       }
     } catch {
       // Service doesn't exist yet - that's ok for mocking
@@ -58,12 +55,7 @@ export function setupEnhancedTest(
     const mock = new MockedService(originalService, serviceKey);
     
     // Register mock in container using interface-based approach
-    if (container.registerByInterface) {
-      container.registerByInterface(serviceKey, mock, scope);
-    } else {
-      // Fallback to token-based registration
-      container.register(serviceKey, mock, scope);
-    }
+    container.mockServiceByInterface(serviceKey, mock, scope);
     
     // Store in local registry
     mockMap.set(serviceKey, mock);
