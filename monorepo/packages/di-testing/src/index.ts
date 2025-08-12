@@ -8,9 +8,30 @@ export {
   TestInject,
   TestConfig,
   TestBean,
-  SpyService
+  SpyService,
+  MockBean,
+  TestContext
 } from "./decorators";
-export type { MockServiceOptions } from "./decorators";
+export type { MockServiceOptions, MockBeanOptions } from "./decorators";
+
+// Enhanced mock API
+export {
+  MockedService,
+  mockBean,
+  verify,
+  verifyNoInteractions,
+  reset
+} from "./mock-api";
+export type { CallRecord, MockSetup } from "./mock-api";
+
+// Enhanced test framework
+export {
+  setupEnhancedTest,
+  runTestWithContext,
+  withMocks,
+  createTestInstance
+} from "./enhanced-test-framework";
+export type { EnhancedTestContext, TestClassSetupOptions } from "./enhanced-test-framework";
 
 // Test utilities
 export {

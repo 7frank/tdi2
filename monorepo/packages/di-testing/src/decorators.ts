@@ -3,6 +3,12 @@ export interface MockServiceOptions {
   token?: string | symbol;
 }
 
+export interface MockBeanOptions {
+  token?: string | symbol;
+  scope?: "singleton" | "transient" | "scoped";
+  reset?: boolean; // Whether to reset mock between tests
+}
+
 /**
  * Decorator to mark a class as a mock service for testing
  * Can be used with or without explicit token
@@ -89,6 +95,43 @@ export function SpyService(options: MockServiceOptions = {}): ClassDecorator {
       token: options.token || null,
       isSpy: true,
       originalTarget: target,
+    };
+  };
+}
+
+/**
+ * Spring Boot-style @MockBean decorator
+ * Automatically creates a fluent mock for the specified service
+ */
+export function MockBean(options: MockBeanOptions = {}): PropertyDecorator {
+  return function (target: any, propertyKey: string | symbol) {
+    if (!target.constructor.__di_mock_beans__) {
+      target.constructor.__di_mock_beans__ = [];
+    }
+
+    target.constructor.__di_mock_beans__.push({
+      propertyKey,
+      token: options.token,
+      scope: options.scope || "singleton",
+      reset: options.reset !== false, // Default to true
+      autoResolve: options.token === undefined,
+    });
+  };
+}
+
+/**
+ * Decorator for test classes to enable automatic DI setup
+ * Similar to Spring Boot's test context
+ */
+export function TestContext(options: { 
+  isolateTest?: boolean;
+  autoReset?: boolean;
+} = {}): ClassDecorator {
+  return function (target: any) {
+    target.__di_test_context__ = {
+      isolateTest: options.isolateTest !== false, // Default to true
+      autoReset: options.autoReset !== false, // Default to true
+      isTestContext: true,
     };
   };
 }
