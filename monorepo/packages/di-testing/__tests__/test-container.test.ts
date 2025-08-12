@@ -18,7 +18,7 @@ describe("TestContainer Edge Cases", () => {
     }).not.toThrow();
 
     // Should be able to resolve the mocked service
-    const service = container.resolve("NonExistentService");
+    const service = container.resolve<{ getData: () => string }>("NonExistentService");
     expect(service.getData()).toBe("mock data");
   });
 
@@ -34,7 +34,7 @@ describe("TestContainer Edge Cases", () => {
     const mockImpl = { test: () => "symbol mock" };
 
     container.mockService(serviceSymbol, mockImpl);
-    const service = container.resolve(serviceSymbol);
+    const service = container.resolve<{ test: () => string }>(serviceSymbol);
     
     expect(service.test()).toBe("symbol mock");
 
@@ -54,8 +54,8 @@ describe("TestContainer Edge Cases", () => {
     scope.mockService("Service1", { value: "scoped" });
     
     // Original should be unchanged
-    expect(container.resolve("Service1").value).toBe("original");
-    expect(scope.resolve("Service1").value).toBe("scoped");
+    expect(container.resolve<{ value: string }>("Service1").value).toBe("original");
+    expect(scope.resolve<{ value: string }>("Service1").value).toBe("scoped");
   });
 
   it("should track test overrides correctly", () => {
