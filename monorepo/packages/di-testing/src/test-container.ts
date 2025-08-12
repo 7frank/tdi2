@@ -1,5 +1,5 @@
 import { CompileTimeDIContainer } from "@tdi2/di-core/container";
-import type { DIContainer, DIMap } from "@tdi2/di-core/types";
+import type { DIContainer } from "@tdi2/di-core/types";
 
 export interface TestOverride {
   token: string | symbol;
@@ -7,12 +7,14 @@ export interface TestOverride {
   scope?: "singleton" | "transient" | "scoped";
 }
 
-export class TestContainer extends CompileTimeDIContainer {
+export class TestContainer implements DIContainer {
+  private container: CompileTimeDIContainer;
   private originalServices = new Map<string, any>();
   private testOverrides = new Map<string, TestOverride>();
+  private tokenMap = new Map<string, string | symbol>(); // Maps tokenKey back to original token
 
   constructor(parent?: DIContainer) {
-    super(parent);
+    this.container = new CompileTimeDIContainer(parent);
   }
 
   /**
@@ -25,16 +27,19 @@ export class TestContainer extends CompileTimeDIContainer {
   ): void {
     const tokenKey = this.getTokenKey(token);
     
+    // Store token mapping
+    this.tokenMap.set(tokenKey, token);
+    
     // Store original if not already stored
-    if (!this.originalServices.has(tokenKey) && this.has(token)) {
+    if (!this.originalServices.has(tokenKey) && this.container.has(token)) {
       this.originalServices.set(tokenKey, this.getCurrentImplementation(token));
     }
 
     // Store the override
     this.testOverrides.set(tokenKey, { token, implementation, scope });
 
-    // Register the mock - use any to bypass type issues
-    (this as any).register(token, implementation, scope);
+    // Register the mock
+    this.container.register(token, implementation, scope);
   }
 
   /**
@@ -45,9 +50,10 @@ export class TestContainer extends CompileTimeDIContainer {
     
     if (this.originalServices.has(tokenKey)) {
       const original = this.originalServices.get(tokenKey);
-      (this as any).register(token, original);
+      this.container.register(token, original);
       this.originalServices.delete(tokenKey);
       this.testOverrides.delete(tokenKey);
+      this.tokenMap.delete(tokenKey);
     }
   }
 
@@ -57,10 +63,11 @@ export class TestContainer extends CompileTimeDIContainer {
   restoreAllServices(): void {
     for (const [tokenKey, original] of this.originalServices) {
       const token = this.tokenFromKey(tokenKey);
-      (this as any).register(token, original);
+      this.container.register(token, original);
     }
     this.originalServices.clear();
     this.testOverrides.clear();
+    this.tokenMap.clear();
   }
 
   /**
@@ -68,6 +75,48 @@ export class TestContainer extends CompileTimeDIContainer {
    */
   reset(): void {
     this.clearInstances();
+  }
+
+  // Implement DIContainer interface
+  register<T>(
+    token: string | symbol,
+    implementation: any,
+    scope?: "singleton" | "transient" | "scoped"
+  ): void {
+    this.container.register(token, implementation, scope);
+  }
+
+  resolve<T>(token: string | symbol): T {
+    return this.container.resolve<T>(token);
+  }
+
+  has(token: string | symbol): boolean {
+    return this.container.has(token);
+  }
+
+  createScope(): DIContainer {
+    return new TestContainer(this.container);
+  }
+
+  registerByInterface<T>(
+    interfaceName: string,
+    implementation: () => T,
+    scope?: "singleton" | "transient" | "scoped"
+  ): void {
+    this.container.registerByInterface(interfaceName, implementation, scope);
+  }
+
+  resolveByInterface<T>(interfaceName: string): T {
+    return this.container.resolveByInterface<T>(interfaceName);
+  }
+
+  hasInterface(interfaceName: string): boolean {
+    return this.container.hasInterface(interfaceName);
+  }
+
+  // Expose container methods for testing
+  loadConfiguration(diMap: any): void {
+    this.container.loadConfiguration(diMap);
   }
 
   /**
@@ -95,48 +144,28 @@ export class TestContainer extends CompileTimeDIContainer {
   }
 
   private getCurrentImplementation(token: string | symbol): any {
-    const tokenKey = this.getTokenKey(token);
-    
-    // Try to get from factories first, then services, then instances
-    if (this.factories && this.factories.has(tokenKey)) {
-      return this.factories.get(tokenKey);
+    // Since we can't access private properties, we'll try to resolve and catch errors
+    try {
+      return this.container.resolve(token);
+    } catch {
+      return null;
     }
-    if (this.services && this.services.has(tokenKey)) {
-      return this.services.get(tokenKey);
-    }
-    if (this.instances && this.instances.has(tokenKey)) {
-      return this.instances.get(tokenKey);
-    }
-    
-    return null;
   }
 
   private clearInstances(): void {
-    // Clear singleton instances to force recreation
-    if (this.instances) {
-      this.instances.clear();
+    // Reset the container by creating a new one with the same parent
+    const parent = (this.container as any).parent;
+    this.container = new CompileTimeDIContainer(parent);
+    
+    // Re-apply current test overrides
+    for (const [_tokenKey, override] of this.testOverrides) {
+      this.container.register(override.token, override.implementation, override.scope);
     }
   }
 
   private tokenFromKey(tokenKey: string): string | symbol {
-    // Simple heuristic: if it looks like a symbol toString, treat as symbol
-    if (tokenKey.startsWith('Symbol(') && tokenKey.endsWith(')')) {
-      return Symbol(tokenKey.slice(7, -1));
-    }
-    return tokenKey;
-  }
-
-  // Expose private methods from parent for testing
-  private get factories() {
-    return (this as any).factories as Map<string, any>;
-  }
-
-  private get services() {
-    return (this as any).services as Map<string, any>;
-  }
-
-  private get instances() {
-    return (this as any).instances as Map<string, any>;
+    // Use the stored token mapping if available
+    return this.tokenMap.get(tokenKey) || tokenKey;
   }
 
   private getTokenKey(token: string | symbol): string {

@@ -98,7 +98,7 @@ export function getCurrentTestContext(): TestContext | null {
 /**
  * Create a service mock helper
  */
-export function createMock<T>(token: string | symbol, partial: Partial<T> = {}): T {
+export function createMock<T>(_token: string | symbol, partial: Partial<T> = {}): T {
   // Simple mock implementation - you can enhance this with a proper mocking library
   const mock = { ...partial } as T;
   

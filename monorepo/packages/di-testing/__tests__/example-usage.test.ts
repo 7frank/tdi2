@@ -50,12 +50,16 @@ describe("TDI2 Testing Framework", () => {
         UserService: {
           factory: () => () => new RealUserService(),
           scope: "singleton",
-          implementationClass: "RealUserService"
+          dependencies: [],
+          implementationClass: "RealUserService",
+          isAutoResolved: false
         },
         EmailService: {
           factory: () => () => new RealEmailService(),
-          scope: "singleton", 
-          implementationClass: "RealEmailService"
+          scope: "singleton",
+          dependencies: [],
+          implementationClass: "RealEmailService", 
+          isAutoResolved: false
         }
       }
     });
