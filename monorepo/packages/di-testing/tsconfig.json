@@ -1,5 +1,5 @@
 {
-  "extends": "@tdi2/typescript-config/base.json",
+  "extends": "../typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
     "experimentalDecorators": true,

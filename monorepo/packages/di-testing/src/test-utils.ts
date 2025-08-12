@@ -1,5 +1,5 @@
 import { TestContainer, type TestOverride } from "./test-container";
-import type { DIMap } from "@tdi2/di-core/container";
+import type { DIMap } from "@tdi2/di-core/types";
 
 export interface TestSetupOptions {
   /** Service overrides for this test */
@@ -166,7 +166,7 @@ export function expectServiceRegistered(container: TestContainer, token: string 
  */
 export function expectServiceMocked(container: TestContainer, token: string | symbol): void {
   const overrides = container.getTestOverrides();
-  const isMocked = overrides.some(override => override.token === token);
+  const isMocked = overrides.some((override: any) => override.token === token);
   
   if (!isMocked) {
     throw new Error(`Service not mocked: ${String(token)}`);

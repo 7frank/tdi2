@@ -1,4 +1,5 @@
-import { CompileTimeDIContainer, type DIContainer, type DIMap } from "@tdi2/di-core/container";
+import { CompileTimeDIContainer } from "@tdi2/di-core/container";
+import type { DIContainer, DIMap } from "@tdi2/di-core/types";
 
 export interface TestOverride {
   token: string | symbol;
@@ -7,8 +8,8 @@ export interface TestOverride {
 }
 
 export class TestContainer extends CompileTimeDIContainer {
-  private originalServices = new Map<string | symbol, any>();
-  private testOverrides = new Map<string | symbol, TestOverride>();
+  private originalServices = new Map<string, any>();
+  private testOverrides = new Map<string, TestOverride>();
 
   constructor(parent?: DIContainer) {
     super(parent);
@@ -32,8 +33,8 @@ export class TestContainer extends CompileTimeDIContainer {
     // Store the override
     this.testOverrides.set(tokenKey, { token, implementation, scope });
 
-    // Register the mock
-    this.register(token, implementation, scope);
+    // Register the mock - use any to bypass type issues
+    (this as any).register(token, implementation, scope);
   }
 
   /**
@@ -44,7 +45,7 @@ export class TestContainer extends CompileTimeDIContainer {
     
     if (this.originalServices.has(tokenKey)) {
       const original = this.originalServices.get(tokenKey);
-      this.register(token, original);
+      (this as any).register(token, original);
       this.originalServices.delete(tokenKey);
       this.testOverrides.delete(tokenKey);
     }
@@ -56,7 +57,7 @@ export class TestContainer extends CompileTimeDIContainer {
   restoreAllServices(): void {
     for (const [tokenKey, original] of this.originalServices) {
       const token = this.tokenFromKey(tokenKey);
-      this.register(token, original);
+      (this as any).register(token, original);
     }
     this.originalServices.clear();
     this.testOverrides.clear();

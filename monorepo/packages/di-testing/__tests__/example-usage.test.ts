@@ -4,7 +4,6 @@ import {
   teardownTest, 
   createMock, 
   createSpy,
-  TestContainer,
   MockService,
   type TestContext 
 } from "../src";
@@ -35,7 +34,7 @@ class RealUserService implements UserService {
 }
 
 class RealEmailService implements EmailService {
-  async sendEmail(to: string, subject: string, body: string) {
+  async sendEmail(to: string, subject: string, _body: string) {
     console.log(`Sending email to ${to}: ${subject}`);
     // Real implementation would send email
   }
@@ -189,7 +188,7 @@ describe("Decorator-based Testing", () => {
       return { id, name: `Mock ${id}` };
     }
     
-    updateUser(id: string, name: string) {
+    updateUser(_id: string, _name: string) {
       // Mock implementation
     }
   }
