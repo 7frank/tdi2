@@ -8,9 +8,18 @@ export interface CallRecord {
 }
 
 export interface MockSetup<T> {
-  thenReturn(value: any): T;
-  thenThrow(error: Error | string): T;
-  thenCall(callback: (...args: any[]) => any): T;
+  thenReturn(value: any): MockedService<T>;
+  thenThrow(error: Error | string): MockedService<T>;
+  thenCall(callback: (...args: any[]) => any): MockedService<T>;
+}
+
+// Interface to describe what MockedService provides
+export interface MockedService<T> extends Partial<T> {
+  when(methodName: keyof T): MockSetup<T>;
+  verify(methodName: keyof T): VerifyAPI;
+  verifyNoInteractions(): void;
+  reset(): void;
+  getCallHistory(): CallRecord[];
 }
 
 export class MockedService<T> {
@@ -23,17 +32,18 @@ export class MockedService<T> {
   }>();
 
   constructor(private originalService: T, private serviceName: string) {
-    // Create proxy to intercept method calls
-    return new Proxy(this, {
+    // Return a Proxy that provides both service methods and mock methods
+    const proxy = new Proxy(this as any, {
       get: (target, prop: string | symbol) => {
         // Always return MockedService's own methods first
         if (typeof prop === 'string') {
+          // Mock API methods
           if (prop === 'when' || prop === 'verify' || prop === 'verifyNoInteractions' || 
               prop === 'reset' || prop === 'getCallHistory') {
-            return (target as any)[prop].bind(target);
+            return target[prop].bind(target);
           }
 
-          // Handle service method calls
+          // Service method calls - return a function that handles mocking
           return (...args: any[]) => {
             const mockConfig = target.methodMocks.get(prop);
             const timestamp = Date.now();
@@ -87,7 +97,9 @@ export class MockedService<T> {
 
         return undefined;
       }
-    }) as any;
+    });
+    
+    return proxy;
   }
 
   // Fluent API methods

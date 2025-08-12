@@ -61,13 +61,13 @@ describe("Clean API Example - Spring Boot Style", () => {
 
   @TestContext({ isolateTest: true, autoReset: true })
   class UserManagementTests {
-    @MockBean({ token: "UserService" })
+    @MockBean()
     userService!: MockedService<UserService>;
 
-    @MockBean({ token: "EmailService" })
+    @MockBean()
     emailService!: MockedService<EmailService>;
 
-    @MockBean({ token: "NotificationService" })
+    @MockBean()
     notificationService!: MockedService<NotificationService>;
 
     // Business service under test

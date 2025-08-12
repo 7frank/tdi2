@@ -22,7 +22,7 @@ export {
   verifyNoInteractions,
   reset
 } from "./mock-api";
-export type { CallRecord, MockSetup } from "./mock-api";
+export type { CallRecord, MockSetup, MockedServiceType } from "./mock-api";
 
 // Enhanced test framework
 export {

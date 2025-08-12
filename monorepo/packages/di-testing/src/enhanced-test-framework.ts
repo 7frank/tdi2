@@ -1,5 +1,6 @@
 import { TestContainer } from "./test-container";
 import { MockedService, mockBean, mockBeanRegistry } from "./mock-api";
+import { TestInterfaceExtractor } from "./interface-extractor";
 import type { DIMap } from "@tdi2/di-core/types";
 
 export interface EnhancedTestContext {
@@ -30,32 +31,43 @@ export function setupEnhancedTest(
     container.loadConfiguration(diMap);
   }
 
-  // Process @MockBean decorators
+  // Process @MockBean decorators using interface resolution
   const mockBeans = testClass.constructor.__di_mock_beans__ || [];
   const mockMap = new Map<string | symbol, MockedService<any>>();
 
   for (const mockBean of mockBeans) {
-    const { propertyKey, token, scope } = mockBean;
+    const { propertyKey, scope } = mockBean;
     
-    // Determine the service token (use property name if no token specified)
-    const serviceToken = token || (propertyKey as string);
+    // Use property name as service key for interface-based DI
+    // In interface-based DI, the property name corresponds to the service identity
+    const serviceKey = propertyKey as string;
     
     // Create mock - try to get original service first
     let originalService = null;
     try {
-      originalService = container.resolve(serviceToken);
+      // Try interface-based resolution first
+      if (container.hasInterface && container.hasInterface(serviceKey)) {
+        originalService = container.resolveByInterface(serviceKey);
+      } else if (container.has(serviceKey)) {
+        originalService = container.resolve(serviceKey);
+      }
     } catch {
       // Service doesn't exist yet - that's ok for mocking
     }
 
-    const mock = new MockedService(originalService, String(serviceToken));
+    const mock = new MockedService(originalService, serviceKey);
     
-    // Register mock in container
-    container.mockService(serviceToken, mock, scope);
+    // Register mock in container using interface-based approach
+    if (container.registerByInterface) {
+      container.registerByInterface(serviceKey, mock, scope);
+    } else {
+      // Fallback to token-based registration
+      container.register(serviceKey, mock, scope);
+    }
     
     // Store in local registry
-    mockMap.set(serviceToken, mock);
-    mockBeanRegistry.registerMock(String(serviceToken), mock);
+    mockMap.set(serviceKey, mock);
+    mockBeanRegistry.registerMock(serviceKey, mock);
     
     // Inject into test class instance
     if (testClass[propertyKey] === undefined) {
@@ -121,5 +133,9 @@ export function createTestInstance<T>(
   const instance = new TestClass();
   const testContext = setupEnhancedTest(instance, options);
   
-  return Object.assign(instance, { __testContext: testContext });
+  // The setupEnhancedTest already injects mocks into the instance
+  // Just add the test context for access to container utilities
+  (instance as any).__testContext = testContext;
+  
+  return instance as T & { __testContext: EnhancedTestContext };
 }

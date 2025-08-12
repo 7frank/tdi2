@@ -4,7 +4,6 @@ export interface MockServiceOptions {
 }
 
 export interface MockBeanOptions {
-  token?: string | symbol;
   scope?: "singleton" | "transient" | "scoped";
   reset?: boolean; // Whether to reset mock between tests
 }
@@ -101,9 +100,10 @@ export function SpyService(options: MockServiceOptions = {}): ClassDecorator {
 
 /**
  * Spring Boot-style @MockBean decorator
- * Automatically creates a fluent mock for the specified service
+ * Automatically creates a fluent mock for the interface type detected from the property
+ * Uses interface resolution - no tokens needed
  */
-export function MockBean(options: MockBeanOptions = {}): PropertyDecorator {
+export function MockBean(options?: MockBeanOptions): PropertyDecorator {
   return function (target: any, propertyKey: string | symbol) {
     if (!target.constructor.__di_mock_beans__) {
       target.constructor.__di_mock_beans__ = [];
@@ -111,10 +111,9 @@ export function MockBean(options: MockBeanOptions = {}): PropertyDecorator {
 
     target.constructor.__di_mock_beans__.push({
       propertyKey,
-      token: options.token,
-      scope: options.scope || "singleton",
-      reset: options.reset !== false, // Default to true
-      autoResolve: options.token === undefined,
+      scope: options?.scope || "singleton",
+      reset: options?.reset !== false, // Default to true
+      autoResolve: true, // Always use interface resolution
     });
   };
 }
