@@ -1,5 +1,5 @@
 import { TestContainer } from "./test-container";
-import { MockedService, mockBean, mockBeanRegistry } from "./mock-api";
+import { MockedService, createMockedService, mockBeanRegistry } from "./mock-api";
 import { TestInterfaceExtractor } from "./interface-extractor";
 import type { DIMap } from "@tdi2/di-core/types";
 
@@ -52,7 +52,7 @@ export function setupEnhancedTest(
       // Service doesn't exist yet - that's ok for mocking
     }
 
-    const mock = new MockedService(originalService, serviceKey);
+    const mock = createMockedService(originalService, serviceKey);
     
     // Register mock in container using interface-based approach
     container.mockServiceByInterface(serviceKey, mock, scope);

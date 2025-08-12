@@ -3,10 +3,11 @@ import {
   MockBean, 
   TestContext, 
   createTestInstance,
-  MockedService,
+  createMockedService,
   verify,
   verifyNoInteractions
 } from "../src";
+import type { MockedService } from "../src";
 
 // Example service interfaces
 interface UserService {
@@ -91,15 +92,15 @@ describe("Clean API Example - Spring Boot Style", () => {
   });
 
   it("should create user with proper service interactions", async () => {
-    // Arrange - Setup mock behaviors using fluent API
-    testInstance.userService
+    // Arrange - Setup mock behaviors using the new __mock__ API
+    testInstance.userService.__mock__
       .when('getUser').thenReturn({ id: '123', name: 'John Doe' })
       .when('updateUser').thenReturn(undefined);
 
-    testInstance.emailService
+    testInstance.emailService.__mock__
       .when('sendWelcomeEmail').thenReturn(Promise.resolve());
 
-    testInstance.notificationService
+    testInstance.notificationService.__mock__
       .when('notify').thenReturn(undefined);
 
     // Act
@@ -119,14 +120,14 @@ describe("Clean API Example - Spring Boot Style", () => {
     const userId = '123';
     const userData = { id: userId, name: 'John Doe' };
 
-    testInstance.userService
+    testInstance.userService.__mock__
       .when('getUser').thenReturn(userData)
       .when('deleteUser').thenReturn(true);
 
-    testInstance.emailService
+    testInstance.emailService.__mock__
       .when('sendEmail').thenReturn(Promise.resolve());
 
-    testInstance.notificationService
+    testInstance.notificationService.__mock__
       .when('notify').thenReturn(undefined);
 
     // Act
@@ -146,7 +147,7 @@ describe("Clean API Example - Spring Boot Style", () => {
 
   it("should handle user not found scenario", async () => {
     // Arrange
-    testInstance.userService
+    testInstance.userService.__mock__
       .when('getUser').thenReturn(null)
       .when('deleteUser').thenReturn(false);
 
@@ -164,13 +165,13 @@ describe("Clean API Example - Spring Boot Style", () => {
 
   it("should handle email service failures gracefully", async () => {
     // Arrange
-    testInstance.userService
+    testInstance.userService.__mock__
       .when('updateUser').thenReturn(undefined);
 
-    testInstance.emailService
+    testInstance.emailService.__mock__
       .when('sendWelcomeEmail').thenThrow(new Error('Email service down'));
 
-    testInstance.notificationService
+    testInstance.notificationService.__mock__
       .when('notify').thenReturn(undefined);
 
     // Act & Assert
@@ -189,16 +190,16 @@ describe("Clean API Example - Spring Boot Style", () => {
     // Arrange with callback-based mock
     let capturedUserId: string = '';
     
-    testInstance.userService
+    testInstance.userService.__mock__
       .when('updateUser').thenCall((id: string, name: string) => {
         capturedUserId = id;
         console.log(`Updating user ${id} with name ${name}`);
       });
 
-    testInstance.emailService
+    testInstance.emailService.__mock__
       .when('sendWelcomeEmail').thenReturn(Promise.resolve());
 
-    testInstance.notificationService
+    testInstance.notificationService.__mock__
       .when('notify').thenReturn(undefined);
 
     // Act
@@ -212,15 +213,15 @@ describe("Clean API Example - Spring Boot Style", () => {
 
 describe("Manual Mock API Usage", () => {
   it("demonstrates direct mock usage without decorators", () => {
-    // Create mock manually
-    const mockUserService = new MockedService<UserService>(null as any, 'UserService');
+    // Create mock manually using the new API
+    const mockUserService = createMockedService<UserService>(null as any, 'UserService');
     
     // Setup behavior
-    mockUserService
+    mockUserService.__mock__
       .when('getUser').thenReturn({ id: '1', name: 'Test User' })
       .when('updateUser').thenReturn(undefined);
 
-    // Use the mock
+    // Use the mock - now works with TypeScript!
     const user = mockUserService.getUser('1');
     expect(user.name).toBe('Test User');
 

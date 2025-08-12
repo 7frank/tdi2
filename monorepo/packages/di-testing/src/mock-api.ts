@@ -13,16 +13,19 @@ export interface MockSetup<T> {
   thenCall(callback: (...args: any[]) => any): MockedService<T>;
 }
 
-// Interface to describe what MockedService provides
-export interface MockedService<T> extends Partial<T> {
-  when(methodName: keyof T): MockSetup<T>;
-  verify(methodName: keyof T): VerifyAPI;
-  verifyNoInteractions(): void;
-  reset(): void;
-  getCallHistory(): CallRecord[];
-}
+// TypeScript-friendly mocked service type following the Inject<T> pattern
+export type MockedService<T> = T & {
+  readonly __mock__: {
+    when(methodName: keyof T): MockSetup<T>;
+    verify(methodName: keyof T): VerifyAPI;
+    verifyNoInteractions(): void;
+    reset(): void;
+    getCallHistory(): CallRecord[];
+  };
+};
 
-export class MockedService<T> {
+// Internal class for creating mock implementations
+export class MockedServiceImpl<T> {
   private callHistory: CallRecord[] = [];
   private methodMocks = new Map<string, { 
     returnValue?: any; 
@@ -32,74 +35,7 @@ export class MockedService<T> {
   }>();
 
   constructor(private originalService: T, private serviceName: string) {
-    // Return a Proxy that provides both service methods and mock methods
-    const proxy = new Proxy(this as any, {
-      get: (target, prop: string | symbol) => {
-        // Always return MockedService's own methods first
-        if (typeof prop === 'string') {
-          // Mock API methods
-          if (prop === 'when' || prop === 'verify' || prop === 'verifyNoInteractions' || 
-              prop === 'reset' || prop === 'getCallHistory') {
-            return target[prop].bind(target);
-          }
-
-          // Service method calls - return a function that handles mocking
-          return (...args: any[]) => {
-            const mockConfig = target.methodMocks.get(prop);
-            const timestamp = Date.now();
-
-            if (mockConfig) {
-              mockConfig.callCount++;
-              
-              // Record the call
-              target.callHistory.push({
-                methodName: prop,
-                args: [...args],
-                returnValue: mockConfig.returnValue,
-                timestamp
-              });
-
-              // Handle different mock behaviors
-              if (mockConfig.throwError) {
-                throw mockConfig.throwError;
-              }
-              if (mockConfig.callback) {
-                return mockConfig.callback(...args);
-              }
-              return mockConfig.returnValue;
-            }
-
-            // No mock configured - call original if available
-            if (originalService && (originalService as any)[prop]) {
-              const originalMethod = (originalService as any)[prop];
-              if (typeof originalMethod === 'function') {
-                const result = originalMethod.apply(originalService, args);
-                target.callHistory.push({
-                  methodName: prop,
-                  args: [...args],
-                  returnValue: result,
-                  timestamp
-                });
-                return result;
-              }
-            }
-
-            // No mock and no original - provide default behavior
-            target.callHistory.push({
-              methodName: prop,
-              args: [...args],
-              returnValue: undefined,
-              timestamp
-            });
-            return undefined;
-          };
-        }
-
-        return undefined;
-      }
-    });
-    
-    return proxy;
+    // Constructor is now only for initialization, factory function creates the mock
   }
 
   // Fluent API methods
@@ -151,6 +87,57 @@ export class MockedService<T> {
   // Get call history for debugging
   getCallHistory(): CallRecord[] {
     return [...this.callHistory];
+  }
+
+  // Handle service method calls with mocking logic
+  callServiceMethod(methodName: string, ...args: any[]): any {
+    const mockConfig = this.methodMocks.get(methodName);
+    const timestamp = Date.now();
+
+    if (mockConfig) {
+      mockConfig.callCount++;
+      
+      // Record the call
+      this.callHistory.push({
+        methodName,
+        args: [...args],
+        returnValue: mockConfig.returnValue,
+        timestamp
+      });
+
+      // Handle different mock behaviors
+      if (mockConfig.throwError) {
+        throw mockConfig.throwError;
+      }
+      if (mockConfig.callback) {
+        return mockConfig.callback(...args);
+      }
+      return mockConfig.returnValue;
+    }
+
+    // No mock configured - call original if available
+    if (this.originalService && (this.originalService as any)[methodName]) {
+      const originalMethod = (this.originalService as any)[methodName];
+      if (typeof originalMethod === 'function') {
+        const result = originalMethod.apply(this.originalService, args);
+        this.callHistory.push({
+          methodName,
+          args: [...args],
+          returnValue: result,
+          timestamp
+        });
+        return result;
+      }
+    }
+
+    // No mock and no original - provide default behavior
+    this.callHistory.push({
+      methodName,
+      args: [...args],
+      returnValue: undefined,
+      timestamp
+    });
+    return undefined;
   }
 }
 
@@ -230,20 +217,52 @@ class MockBeanRegistry {
 
 export const mockBeanRegistry = new MockBeanRegistry();
 
-// Factory function for creating mocks
+// Factory function for creating TypeScript-friendly mocks
+export function createMockedService<T>(originalService: T, serviceName: string = 'UnknownService'): MockedService<T> {
+  const mockImpl = new MockedServiceImpl(originalService, serviceName);
+  
+  // Create a proxy that provides both the service interface AND the __mock__ property
+  const mockedService = new Proxy({} as MockedService<T>, {
+    get: (target, prop: string | symbol) => {
+      if (prop === '__mock__') {
+        // Return the mock API object
+        return {
+          when: mockImpl.when.bind(mockImpl),
+          verify: mockImpl.verify.bind(mockImpl),
+          verifyNoInteractions: mockImpl.verifyNoInteractions.bind(mockImpl),
+          reset: mockImpl.reset.bind(mockImpl),
+          getCallHistory: mockImpl.getCallHistory.bind(mockImpl)
+        };
+      }
+
+      // Handle service method calls
+      if (typeof prop === 'string') {
+        return (...args: any[]) => {
+          return mockImpl.callServiceMethod(prop, ...args);
+        };
+      }
+
+      return undefined;
+    }
+  });
+
+  return mockedService;
+}
+
+// Legacy factory function for backward compatibility
 export function mockBean<T>(originalService: T, serviceName: string = 'UnknownService'): MockedService<T> {
-  return new MockedService(originalService, serviceName);
+  return createMockedService(originalService, serviceName);
 }
 
 // Shorthand for common verification patterns
 export function verify<T>(mockedService: MockedService<T>, methodName: keyof T): VerifyAPI {
-  return mockedService.verify(methodName);
+  return mockedService.__mock__.verify(methodName);
 }
 
 export function verifyNoInteractions<T>(mockedService: MockedService<T>): void {
-  mockedService.verifyNoInteractions();
+  mockedService.__mock__.verifyNoInteractions();
 }
 
 export function reset<T>(mockedService: MockedService<T>): void {
-  mockedService.reset();
+  mockedService.__mock__.reset();
 }

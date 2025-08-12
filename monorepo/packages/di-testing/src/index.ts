@@ -16,13 +16,13 @@ export type { MockServiceOptions, MockBeanOptions } from "./decorators";
 
 // Enhanced mock API
 export {
-  MockedService,
+  createMockedService,
   mockBean,
   verify,
   verifyNoInteractions,
   reset
 } from "./mock-api";
-export type { CallRecord, MockSetup, MockedServiceType } from "./mock-api";
+export type { MockedService, CallRecord, MockSetup } from "./mock-api";
 
 // Enhanced test framework
 export {
