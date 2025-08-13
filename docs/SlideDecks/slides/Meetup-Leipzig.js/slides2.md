@@ -15,6 +15,13 @@ _Leipzig.js Meetup - January 2025_
 
 **github.com/7frank**
 
+
+
+**Follow along with slides**  
+
+![https://github.com/7frank/tdi2/blob/main/docs/SlideDecks/slides/Meetup-Leipzig.js/slides2.md](./frame.png)
+
+
 Note: Hello and welcome. Tonight we'll explore how coupling is one of the root causes of React's scaling problems and demonstrate a service injection solution that has the potential of bringing enterprise-grade architecture to React.
 
 ---
@@ -50,10 +57,6 @@ npm run dev
 
 **Enterprise Example:**  
 https://github.com/7frank/tdi2/tree/main/examples/tdi2-enterprise-forms-example
-
-**Follow along with slides:**  
-
-- ![./frame.png](https://github.com/7frank/tdi2/blob/main/docs/SlideDecks/slides/Meetup-Leipzig.js/slides2.md)
 
 
 **Features advanced patterns:**
@@ -510,21 +513,6 @@ Note: Same UI, but now the component is a pure template. Services handle all coo
 
 ---
 
-## Live Demo: UserProfile Transformation
-
-**Let's see the transformation in action:**
-
-1. Start with hooks-based UserProfile
-2. Extract UserService
-3. Transform component to use injection
-4. Show automatic reactivity
-
-**Demo repository:** github.com/7frank/tdi2/examples
-
-Note: I'll show a quick live transformation to demonstrate how this works in practice.
-
----
-
 ## How TDI2 Works
 
 **Built on proven technologies:**
@@ -540,6 +528,8 @@ Note: TDI2 combines mature technologies in a new way to solve React's architectu
 ---
 
 ## Getting Started
+
+> Already setup for you in the code examples mentioned earlier
 
 **1. Install TDI2**
 ```bash
@@ -584,13 +574,13 @@ Note: Getting started is straightforward. Add the plugin, create services, use t
 2. Extract one service from your most complex component
 3. Experience the difference
 
-**💡 Remember:** Every architectural revolution starts with early adopters
-
 Note: The framework is ready for experimentation. Start small, see the benefits, then expand usage.
 
 ---
 
 ## Q&A: Your React Challenges
+
+<img src="./frame.png" alt="QR Code" style="position: absolute; top: 50px; right: 50px; width: 250px; height: 250px;">
 
 **Common questions:**
 - "How does this work with our existing state management?"
@@ -599,6 +589,8 @@ Note: The framework is ready for experimentation. Start small, see the benefits,
 - "How do we convince the team?"
 
 **Let's discuss your specific React pain points and how service injection could help**
+
+**After Q&A: Live coding session**
 
 **Contact:** github.com/7frank - Questions and collaboration welcome!
 
@@ -615,5 +607,7 @@ Note: I want to hear about your React challenges and discuss how service injecti
 _Let's make React truly enterprise-ready together!_
 
 **🔗 github.com/7frank/tdi2**
+
+**Next: Live coding session**
 
 Note: Thank you for your attention. I'm excited to discuss this further and hear your thoughts on bringing enterprise architecture patterns to React.
