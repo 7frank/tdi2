@@ -70,6 +70,21 @@ Note: I'll show you how to get started, and after the presentation we can do som
 
 ---
 
+## Agenda
+
+**Tonight's Journey:**
+
+1. **The Problem** - React's scaling challenges
+2. **Proven Solutions** - How backend & Angular solved this
+3. **Service Injection** - The React solution
+4. **Benefits** - Testing, architecture, SOLID principles
+5. **Getting Started** - Migration & examples
+6. **Live Coding** - After the presentation
+
+Note: This is our roadmap for tonight. We'll start with the fundamental problems, show proven solutions from other frameworks, then demonstrate how to bring those patterns to React.
+
+---
+
 ## The Problem: React at Scale
 
 **6 years of React development led to this realization:**
