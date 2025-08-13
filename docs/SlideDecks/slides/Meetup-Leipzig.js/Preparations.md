@@ -7,12 +7,15 @@
 - Build command:
   ```bash
   cd slides
-  uv run mkslides build Meetup-Leipzig.js/slides.md --config-file Meetup-Leipzig.js/config.yaml
+  uv run mkslides build Meetup-Leipzig.js/slides2.md --config-file Meetup-Leipzig.js/config.yaml
   ```
 - Serve command:
   ```bash
   uv run mkslides serve "Meetup-Leipzig.js/slides2.md" --config-file Meetup-Leipzig.js/config.yaml
   ```
+
+chromium --app=file:///home/frank/Projects/7frank/tdi2/docs/SlideDecks/slides/site/index.html
+chromium --app=file:///home/frank/Projects/7frank/tdi2/docs/SlideDecks/slides/site/index.html --window-size=1600,1200 
 
 ### Resources
 - [HoGent Markdown Slides Documentation](https://hogenttin.github.io/hogent-markdown-slides/)
