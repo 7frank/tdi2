@@ -38,6 +38,35 @@ Note: Companies: Frelancing, public german televion ARD/MDR, Check24 <br/><br/> 
 
 ---
 
+## Try It Yourself Right Now!
+
+**Basic Example - Get started in 2 minutes:**
+```bash
+npx degit 7frank/tdi2/examples/tdi2-basic-example di-react-example
+cd di-react-example
+npm i
+npm run dev
+```
+
+**Enterprise Example:**  
+https://github.com/7frank/tdi2/tree/main/examples/tdi2-enterprise-forms-example
+
+**Follow along with slides:**  
+
+- ![./frame.png](https://github.com/7frank/tdi2/blob/main/docs/SlideDecks/slides/Meetup-Leipzig.js/slides2.md)
+
+
+**Features advanced patterns:**
+- Services for business logic
+- Controllers for view state logic  
+- Real-world enterprise forms
+
+**Try these examples after the presentation - we'll do live coding together!**
+
+Note: I'll show you how to get started, and after the presentation we can do some live coding together. The basic example shows the core concepts, while the enterprise example demonstrates how this scales to complex business applications with proper separation between business logic and view state.
+
+---
+
 ## The Problem: React at Scale
 
 **6 years of React development led to this realization:**
