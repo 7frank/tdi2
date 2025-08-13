@@ -30,6 +30,10 @@
 
 - get the styling fixed
   - cd slides ... uv run mkslides build Meetup-Leipzig.js/slides.md --config-file Meetup-Leipzig.js/config.yaml
+
+ uv run mkslides serve "Meetup-Leipzig.js/slides2.md" --config-file Meetup-Leipzig.js/config.yaml
+
+
 - add notes from above
 - get the talk finished by 2pm
 - https://hogenttin.github.io/hogent-markdown-slides/
