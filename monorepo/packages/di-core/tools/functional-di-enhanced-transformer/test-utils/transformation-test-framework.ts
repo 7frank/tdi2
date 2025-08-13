@@ -53,6 +53,24 @@ export interface TransformationTestResult {
   };
 }
 
+export const DEFAULT_IGNORE_PATTERNS=[
+      {
+        pattern: /\/\/ Generated: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g,
+        replacement: "// Generated: [TIMESTAMP]",
+        description: "ISO timestamp in generated comments",
+      },
+      {
+        pattern: /Generated at: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g,
+        replacement: "Generated at: [TIMESTAMP]",
+        description: "Human readable timestamp",
+      },
+      {
+        pattern: /\btimestamp: "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"/g,
+        replacement: 'timestamp: "[TIMESTAMP]"',
+        description: "JSON timestamp fields",
+      },
+    ];
+
 export class TransformationTestFramework {
   private project: Project;
   private transformer: FunctionalDIEnhancedTransformer;
@@ -73,23 +91,7 @@ export class TransformationTestFramework {
     });
 
     // Setup default ignore patterns
-    this.defaultIgnorePatterns = [
-      {
-        pattern: /\/\/ Generated: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g,
-        replacement: "// Generated: [TIMESTAMP]",
-        description: "ISO timestamp in generated comments",
-      },
-      {
-        pattern: /Generated at: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g,
-        replacement: "Generated at: [TIMESTAMP]",
-        description: "Human readable timestamp",
-      },
-      {
-        pattern: /\btimestamp: "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"/g,
-        replacement: 'timestamp: "[TIMESTAMP]"',
-        description: "JSON timestamp fields",
-      },
-    ];
+    this.defaultIgnorePatterns = DEFAULT_IGNORE_PATTERNS
 
     // Create mock interface resolver with common implementations
     this.setupMockInterfaceResolver();
@@ -616,8 +618,6 @@ export class TransformationTestFramework {
       this.options.outputDir ||
       path.join(this.options.fixtureDir, this.snapshotSubDirectory);
 
-    // Use the full base name (including variant) for snapshot naming
-    // e.g., "inline-with-destructuring.basic" -> "inline-with-destructuring.basic.transformed.snap.tsx"
     const snapshotPath = path.join(
       snapshotDir,
       `${fullBaseName}.transformed.snap.tsx`
@@ -630,31 +630,45 @@ export class TransformationTestFramework {
 
     const snapshotContent = this.generateSnapshotContent(result);
 
-    if (this.options.updateSnapshots || !fs.existsSync(snapshotPath)) {
+    if (!fs.existsSync(snapshotPath)) {
+      // File doesn't exist, create it
       fs.writeFileSync(snapshotPath, snapshotContent, "utf8");
 
       if (this.options.verbose) {
-        console.log(`📸 Created/updated snapshot: ${snapshotPath}`);
+        console.log(`📸 Created snapshot: ${snapshotPath}`);
       }
     } else {
-      // Verify existing snapshot
+      // File exists, check if we need to update it
       const existingSnapshot = fs.readFileSync(snapshotPath, "utf8");
 
       // Format and normalize both contents before comparison
-      const normalizedExisting =
-        this.normalizeAndFormatForComparison(existingSnapshot);
-      const normalizedNew =
-        this.normalizeAndFormatForComparison(snapshotContent);
+      const normalizedExisting = this.normalizeAndFormatForComparison(existingSnapshot);
+      const normalizedNew = this.normalizeAndFormatForComparison(snapshotContent);
 
       if (normalizedExisting !== normalizedNew) {
-        const diff = this.generateDiff(
-          normalizedExisting,
-          normalizedNew,
-          snapshotPath
-        );
-        throw new Error(
-          `Snapshot mismatch for ${fullBaseName}. Run with UPDATE_SNAPSHOTS=1 to update.\n\n${diff}`
-        );
+        // Content actually changed, need to update
+        if (this.options.updateSnapshots) {
+          fs.writeFileSync(snapshotPath, snapshotContent, "utf8");
+
+          if (this.options.verbose) {
+            console.log(`📸 Updated snapshot: ${snapshotPath} (content changed)`);
+          }
+        } else {
+          // Content changed but not updating snapshots
+          const diff = this.generateDiff(
+            normalizedExisting,
+            normalizedNew,
+            snapshotPath
+          );
+          throw new Error(
+            `Snapshot mismatch for ${fullBaseName}. Run with UPDATE_SNAPSHOTS=1 to update.\n\n${diff}`
+          );
+        }
+      } else {
+        // Content is the same after normalization, no need to update
+        if (this.options.verbose) {
+          console.log(`✅ Snapshot unchanged for ${fullBaseName} (ignoring timestamps/patterns)`);
+        }
       }
     }
   }

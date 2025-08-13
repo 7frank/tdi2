@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for ComplexGenerics
-// Generated: 2025-07-16T19:55:48.817Z
+// Generated: 2025-07-18T10:23:49.384Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { CacheInterface, RepositoryInterface, LoggerInterface } from './shared-types';
@@ -22,9 +22,9 @@ export function ComplexGenerics(props: {
     logger?: InjectOptional<LoggerInterface>;
   };
 }) {
-    const cache = props.services?.cache ?? (useService('CacheInterface_Map_string_UserData') as unknown as CacheInterface<Map<string, UserData>>);
-    const repository = props.services?.repository ?? (useService('RepositoryInterface_UserEntity') as unknown as RepositoryInterface<UserEntity>);
-    const logger = props.services?.logger ?? undefined;
+    const cache = props.services?.cache; if (!cache) {throw new Error("Could not find implementation for 'CacheInterface<Map<string, UserData>>'");}
+    const repository = props.services?.repository; if (!repository) {throw new Error("Could not find implementation for 'RepositoryInterface<UserEntity>'");}
+    const logger = props.services?.logger; if (!logger) {throw new Error("Could not find implementation for 'LoggerInterface'");}
   React.useEffect(() => {
     repository.findAll().then(users => {
       const userMap = new Map(users.map(u => [u.userId, u.profile]));

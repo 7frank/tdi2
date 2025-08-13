@@ -1,0 +1,32 @@
+{
+  "name": "@tdi2/di-testing",
+  "version": "0.1.0",
+  "description": "Testing utilities for TDI2 dependency injection framework",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/7frank/tdi2.git"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./decorators": "./src/decorators.ts",
+    "./test-container": "./src/test-container.ts",
+    "./test-utils": "./src/test-utils.ts"
+  },
+  "publish": {
+    "exclude": [
+      "node_modules",
+      ".git",
+      "dist",
+      "*.test.ts",
+      "*.spec.ts",
+      "test/",
+      "tests/",
+      "__tests__/",
+      ".github/",
+      ".vscode/",
+      "tsup.config.ts",
+      "vitest.config.ts"
+    ]
+  }
+}

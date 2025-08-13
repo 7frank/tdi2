@@ -1,7 +1,10 @@
-import React from 'react';
+import React from "react";
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
-import { ApiInterface, LoggerInterface, CacheInterface } from './shared-types';
+import { ApiInterface, LoggerInterface, CacheInterface } from "./shared-types";
 
+/**
+ * TODO optinoal should still resolve not  "?? undefined" in transformed
+ */
 export function InlineWithDestructuring(props: {
   message: string;
   services: {
@@ -11,11 +14,11 @@ export function InlineWithDestructuring(props: {
   };
 }) {
   const { message, services } = props;
-  
+
   React.useEffect(() => {
-    services.api.getData().then(data => {
+    services.api.getData().then((data) => {
       services.logger?.log(`Got data: ${data.length} items`);
-      services.cache?.set('data', data);
+      services.cache?.set("data", data);
     });
   }, []);
 

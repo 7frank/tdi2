@@ -1,3 +1,118 @@
+# manchmal hui
+
+- manchla hätt ichs doch selber gemacht
+
+# claude code
+
+- !!mit subscription
+- https://www.npmjs.com/package/@anthropic-ai/claude-code
+- vscode plugin
+
+# login & init
+
+## plan mode
+
+- use plan mode , the after each planned step check if the app still is working
+- sometimes you rather want to fix it forst
+- sometimes the bot generates weird things like duplicate fromtendsthat you rather want o unify instead of leaving too much noise in the project
+
+## autoaccept edit
+
+- clear => new chat
+- compact => new chat and summary
+- dinge automatisieren via cli
+
+## MPC
+
+- https://mcp.so/server/ref-tools-mcp/ref-tools
+- https://mcp.so/server/otelcol-mcp/mottibec
+
+## Token usage
+
+https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor
+
+## (private) quota alle?
+
+- https://github.com/musistudio/claude-code-router
+- https://github.com/1rgs/claude-code-proxy
+
+> create api key for gemini at https://aistudio.google.com/apikey
+
+`npm install -g @musistudio/claude-code-router`
+
+> ~/.claude-code-router/config.json
+
+```
+// transformers/throttle-gemini.js
+
+let lastRequestTime = 0;
+const MIN_INTERVAL_MS = 7000; // ~8.5 req/min
+
+class ThrottleGeminiTransformer {
+  static TransformerName = "throttle-gemini";
+
+  constructor(options) {
+    this.name = "throttle-gemini"; // REQUIRED
+    this.minInterval = options?.min_interval_ms || MIN_INTERVAL_MS;
+  }
+
+  async transformRequestIn(request) {
+    const now = Date.now();
+    const elapsed = now - lastRequestTime;
+    const wait = this.minInterval - elapsed;
+
+    if (wait > 0) {
+      await new Promise(resolve => setTimeout(resolve, wait));
+    }
+
+    lastRequestTime = Date.now();
+    return request;
+  }
+}
+
+module.exports = ThrottleGeminiTransformer;
+
+```
+
+```
+{
+  "LOG": false,
+  "OPENAI_API_KEY": "",
+  "OPENAI_BASE_URL": "",
+  "OPENAI_MODEL": "",
+
+  "transformers": [
+    {
+      "name": "throttle-gemini",
+      "type": "module",
+      "path": "/home/frank/.claude-code-router/transformers/throttle-gemini.js",
+      "options": {
+        "min_interval_ms": 7000
+      }
+    }
+  ],
+
+  "Providers": [
+    {
+      "name": "gemini",
+      "api_base_url": "https://generativelanguage.googleapis.com/v1beta/models/",
+      "api_key": "your api key",
+      "models": ["gemini-2.5-flash", "gemini-2.5-pro"],
+      "transformer": {
+        "use": ["throttle-gemini","gemini"]
+      }
+    }
+  ],
+  "Router": {
+    "default": "gemini,gemini-2.5-flash"
+  }
+}
+
+```
+
+- `ccr restart`
+- `ccr code` or `ccr code --resume` if you where in a session that was interputed
+
 # Learnings of using Claude.AI and other AI Tool
 
 - Working with AI does somewhat resemble working with teams
@@ -169,3 +284,39 @@ suggest a file that i should test  integration test with bun:test that should wo
 - recreates the wheel often flooding code base with things that a opackage would have solved
   - own git diff instead of diff package or child_process
   - build own file traversal instead of built in tsx file resolution
+- manchmal statt schneller frustrierender
+  - => devops setup läuft nicht
+  - => debugging und arbeit wie immer aber mit höherem erwartungsdruck
+
+## keep your logs clean and use otel MCP
+
+- you want your logs to be as tidy aspossible so that if claude code runs your app it does not burn token for "heap dumps"
+- using otel mcp in frontend and backend allows claude code to focus on logs in your app related to the problems they are looking for without restarting the individual services
+
+## somethmes dangling carrot
+
+- frustrating be cause its promising its working but one has no agenda and is only a consumer of the ai
+
+- mother of all carrots tilt-ts-2.. WTF
+
+# fast mid slow each time we start soething
+
+- **fast** intial attempt is quite solid
+  - repetetive tasks are great to automate
+- **mid** we make some changes they are working mostly
+
+- continuing work on a oproject is easier afterfew days
+  
+
+- **slow** the chatbot reaches its limit and starts generating so-so results
+  - sometimes straying away from the problem entirely
+  - sometimes generating lots of code instead of using a good framework or better alternative
+  - needs a lot of steering and we need to learn and understand what the bot wrote to a certain degree
+
+> so all in all we often have similar pace, soetimes maybe even slower
+> but the but can even create decent changes, and will produce often enough working examples
+
+> whats really good is that is can "curl" "start your app" start storp services access logs autonomously
+
+
+- anything that is a bit comploex bejound the owncurrent understanding has still high potential to fail

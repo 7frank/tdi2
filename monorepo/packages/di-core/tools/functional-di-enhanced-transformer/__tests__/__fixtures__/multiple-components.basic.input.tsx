@@ -1,6 +1,5 @@
-import React from 'react';
-import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
-import { ApiInterface, LoggerInterface, CacheInterface } from './shared-types';
+import type { Inject } from "@tdi2/di-core/markers";
+import { ApiInterface, LoggerInterface } from "./shared-types";
 
 export function FirstComponent(props: {
   services: {
@@ -13,10 +12,12 @@ export function FirstComponent(props: {
 export const SecondComponent = (props: {
   services: {
     logger: Inject<LoggerInterface>;
-    cache?: InjectOptional<CacheInterface<any>>;
   };
 }) => {
   const { services } = props;
+
+  services.logger.log("");
+
   return <div>Second component</div>;
 };
 

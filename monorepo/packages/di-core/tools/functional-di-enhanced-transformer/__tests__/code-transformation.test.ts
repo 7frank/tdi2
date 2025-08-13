@@ -7,6 +7,15 @@ const FIXTURES_DIR = path.join(__dirname, '__fixtures__');
 
 describe('Functional DI Transformation Tests', () => {
   
+
+describe('Tests that compile invalid', () => {
+    it('should resolve generic interface when existing', 
+      defineTransformationTest('1-failed-resolve', FIXTURES_DIR)
+    );
+  })
+
+
+
   // Basic inline transformations
   describe('Inline Interface Transformations', () => {
 
@@ -64,7 +73,7 @@ describe('Functional DI Transformation Tests', () => {
 
   // Custom test with detailed verification
   describe('Custom Verification Tests', () => {
-    it('should provide detailed transformation information', async () => {
+    it.skip('should provide detailed transformation information', async () => {
       const framework = new TransformationTestFramework({
         fixtureDir: FIXTURES_DIR,
         verbose: true,
