@@ -1,6 +1,10 @@
+// ============================================================================
+// CORE DI TESTING EXPORTS (Backward Compatibility)
+// ============================================================================
+
 // Core testing exports
-export { TestContainer } from "./test-container";
-export type { TestOverride } from "./test-container";
+export { TestContainer } from "./test-container.js";
+export type { TestOverride } from "./test-container.js";
 
 // Testing decorators
 export { 
@@ -11,8 +15,8 @@ export {
   SpyService,
   MockBean,
   TestContext
-} from "./decorators";
-export type { MockServiceOptions, MockBeanOptions } from "./decorators";
+} from "./decorators.js";
+export type { MockServiceOptions, MockBeanOptions } from "./decorators.js";
 
 // Enhanced mock API
 export {
@@ -21,8 +25,8 @@ export {
   verify,
   verifyNoInteractions,
   reset
-} from "./mock-api";
-export type { MockedService, CallRecord, MockSetup } from "./mock-api";
+} from "./mock-api.js";
+export type { MockedService, CallRecord, MockSetup } from "./mock-api.js";
 
 // Enhanced test framework
 export {
@@ -30,8 +34,8 @@ export {
   runTestWithContext,
   withMocks,
   createTestInstance
-} from "./enhanced-test-framework";
-export type { EnhancedTestContext, TestClassSetupOptions } from "./enhanced-test-framework";
+} from "./enhanced-test-framework.js";
+export type { EnhancedTestContext, TestClassSetupOptions } from "./enhanced-test-framework.js";
 
 // Test utilities
 export {
@@ -43,9 +47,31 @@ export {
   setupComponentTest,
   expectServiceRegistered,
   expectServiceMocked
-} from "./test-utils";
+} from "./test-utils.js";
 export type { 
   TestSetupOptions,
-  TestContext,
   ComponentTestOptions
-} from "./test-utils";
+} from "./test-utils.js";
+
+// ============================================================================
+// ORGANIZED TESTING NAMESPACES
+// ============================================================================
+
+// Shared utilities across all testing approaches
+export * as SharedTesting from "./shared-testing.js";
+
+// Pure service-to-service testing (no React/UI)
+export * as ServiceTesting from "./service-testing.js";
+
+// React component service orchestration testing
+export * as ReactServiceTesting from "./react-service-testing.js";
+
+// React behavior-first testing with DI control
+export * as ReactBehaviorTesting from "./react-behavior-testing.js";
+
+// ============================================================================
+// CONVENIENCE RE-EXPORTS
+// ============================================================================
+
+// Re-export commonly used types for convenience
+export type { Inject } from "./shared-testing.js";

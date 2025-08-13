@@ -21,6 +21,22 @@
     "./test-utils": {
       "import": "./dist/test-utils.js",
       "types": "./dist/test-utils.d.ts"
+    },
+    "./shared": {
+      "import": "./dist/shared-testing.js",
+      "types": "./dist/shared-testing.d.ts"
+    },
+    "./service": {
+      "import": "./dist/service-testing.js",
+      "types": "./dist/service-testing.d.ts"
+    },
+    "./react-service": {
+      "import": "./dist/react-service-testing.js",
+      "types": "./dist/react-service-testing.d.ts"
+    },
+    "./react-behavior": {
+      "import": "./dist/react-behavior-testing.js",
+      "types": "./dist/react-behavior-testing.d.ts"
     }
   },
   "files": [

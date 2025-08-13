@@ -1,9 +1,11 @@
 {
-  "extends": "../typescript-config/base.json",
+  
   "compilerOptions": {
     "outDir": "dist",
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "module": "esnext",
+    "moduleResolution": "nodenext",
   },
   "include": [
     "src/**/*"
