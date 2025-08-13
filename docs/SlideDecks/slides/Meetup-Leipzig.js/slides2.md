@@ -11,14 +11,59 @@ date: "2025"
 
 _Leipzig.js Meetup - January 2025_
 
-**7Frank**  
-_Solving React's scaling crisis with proven patterns_
+**Frank Reimann M.Sc.** Software Engineer @ Jambit
 
-Note: Tonight we'll explore how coupling is one of the root causes of React's scaling problems and demonstrate a service injection solution that has the potential of bringing enterprise-grade architecture to React.
+**github.com/7frank**
+
+Note: Hello and welcome. Tonight we'll explore how coupling is one of the root causes of React's scaling problems and demonstrate a service injection solution that has the potential of bringing enterprise-grade architecture to React.
 
 ---
 
-## The Scaling Crisis
+## WHOAMI
+
+- developing software since 2003 privately or in companies
+- currently employed at [jambit.com](https://jambit.com/)
+  - doing fullstack,architecture and ai
+- collecting tech skills like others collect pokemon
+  - [roadmap.sh/u/7frank](https://roadmap.sh/u/7frank)
+
+> but for this presentation important infos are
+
+- jquery 2011-2017
+- react since 2018 on and off
+- angular, vue, java
+  - current favorite is svelte 5 with runes api
+
+Note: Companies: Frelancing, public german televion ARD/MDR, Check24 <br/><br/> I'll try to talk in english for the mayority of the time but might switch back to german in case i need to explain certain more complex details
+
+---
+
+## Disclaimer
+
+- I'll try to talk in english for the mayority of the time but might switch back to german in case i need to explain certain more complex details.
+- Also this talk will be life streamed and recorded / put on youtube
+
+---
+
+## Table of Contents
+
+- Scaling Problem
+- Problems with FC & React Hooks
+- Coupling
+- Java Spring Boot
+
+- Dependency Injection Fundamentals
+- Current Workarounds Degrade Maintainability
+
+- Our Solution: Auto-Wiring in React
+
+Note: We'll talk about why hooks are what they are. Well talk about what coupling is. how often enough business logic is coupled to hooks and the "view" with react
+
+---
+
+## Note: First well talk about the initial problem that lead me to create this
+
+## The Scaling Problem
 
 ### React at Scale: The Evidence
 
@@ -42,38 +87,64 @@ Note: Let's start with brutal honesty. React's component-centric approach create
 ### The Coupling Problem
 
 ```typescript
-// Every hook increases component coupling
-function UserDashboard({ userId, theme, permissions }) {
+import React, { useEffect, useState } from "react";
+
+
+export default function UserDashboard({ userId, theme, permissions }) {
+  const user = useUser(userId);
+  const notifications = useNotifications(user?.id);
+  const metrics = useMetrics(permissions);
+
+  return (
+    <div>
+      <div>User: {user?.name}</div>
+      <div>Notifications: {notifications.length}</div>
+      <div>Metrics: {metrics ? JSON.stringify(metrics) : "No metrics"}</div>
+    </div>
+  );
+}
+
+function useUser(userId) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [metrics, setMetrics] = useState(null);
-
   useEffect(() => {
-    // User loading logic tangled with component
-    if (userId) {
-      fetchUser(userId).then(setUser);
-    }
+    if (!userId) return;
+    fetchUser(userId).then(setUser);
   }, [userId]);
+  return user;
+}
 
+function useNotifications(userId) {
+  const [notifications, setNotifications] = useState([]);
   useEffect(() => {
-    // Notification logic mixed in
-    if (user?.id) {
-      subscribeToNotifications(user.id, setNotifications);
-    }
-  }, [user?.id]);
+    if (!userId) return;
+    const unsub = subscribeToNotifications(userId, setNotifications);
+    return unsub;
+  }, [userId]);
+  return notifications;
+}
 
+function useMetrics(permissions) {
+  const [metrics, setMetrics] = useState(null);
   useEffect(() => {
-    // Metrics logic adds more coupling
     if (permissions.includes("analytics")) {
       loadMetrics().then(setMetrics);
     }
   }, [permissions]);
-
-  // Component now knows about users, notifications, AND metrics
-  // Impossible to test in isolation
-  // Change any concern = touch the component
+  return metrics;
 }
+
+function fetchUser(id) {
+  return Promise.resolve({ id, name: "Demo" });
+}
+
+function subscribeToNotifications(userId, onMessage) {
+  return () => {};
+}
+
+function loadMetrics() {
+  return Promise.resolve({ activeUsers: 42 });
+}
+
 ```
 
 **Result:** Mixed concerns, impossible testing, exponential complexity
@@ -115,6 +186,10 @@ Note: The equivalent pattern in other languages - static classes with global mut
 ---
 
 ## Problem 3: React Is Not Functional Programming
+
+> React FC was meant to be easy
+
+> calling it fucntional prrogramming is
 
 ### Side Effects Break Everything
 
