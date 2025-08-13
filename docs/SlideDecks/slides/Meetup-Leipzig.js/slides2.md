@@ -95,7 +95,7 @@ _Hooks and props are fundamentally incompatible with enterprise architecture_
 
 **Tonight's thesis:** _Coupling is the root cause, dependency injection is the proven solution_
 
-Note: Let's start with the core problem. After years of React development, the same patterns keep breaking down at scale.
+Note: (show of hands) Who likes react hooks. Let's start with the core problem. After years of React development, the same patterns keep breaking down at scale.
 
 ---
 
@@ -159,9 +159,11 @@ function UserProfile({
 }
 ```
 
-**Result:** Exponential complexity, impossible testing, tight coupling
+**Result:** Everytime someone touches the code base either your view or one of your hooks imports another hook
 
-Note: This is the inevitable evolution. Every new requirement adds more props, more hooks, more complexity.
+> Because we are only using the mechanism react introduced for a problem react created in the first place
+
+Note: This is the inevitable evolution. Every new requirement adds more props, more hooks, more complexity. 
 
 ---
 
@@ -305,7 +307,7 @@ const userService = container.get<UserServiceInterface>("UserService");
 
 **Benefits:** Testable, reusable, composable business logic independent of React
 
-Note: This is huge - your business logic becomes completely portable. Same service works in React components, Node.js scripts, tests, CLI tools. True separation of concerns through dependency injection.
+Note: This is huge - your business logic becomes completely portable. Same service works in React components, Node.js scripts, tests, CLI tools. True separation of concerns through dependency injection. A sign for good architecture is that you can replace parts easily.
 
 ---
 
@@ -317,7 +319,7 @@ Note: This is huge - your business logic becomes completely portable. Same servi
 | **O**pen/Closed           | ❌ Adding features requires modifying components            | ✅ Extend through new services, modify through interfaces |
 | **L**iskov Substitution   | ❌ No clear contracts, prop drilling breaks substitution    | ✅ Interface-based injection enables true substitution    |
 | **I**nterface Segregation | ❌ Components depend on everything via props                | ✅ Components depend only on needed service interfaces    |
-| **D**ependency Inversion  | ❌ Components depend on concrete implementations            | ✅ Components depend on abstractions (interfaces)         |
+| **Dependency Inversion**  | ❌ Components depend on concrete implementations            | ✅ Components depend on abstractions (interfaces)         |
 
 **Traditional React violates every SOLID principle. Service injection follows them all.**
 
@@ -340,7 +342,7 @@ function UserProfile({
 }
 ```
 
-Note: This is why React feels chaotic at scale - it fundamentally violates established software engineering principles. Service injection brings SOLID principles to React development.
+Note: (show of hands) who Knows SOLID. This is why React feels chaotic at scale - it fundamentally violates established software engineering principles. Service injection brings SOLID principles to React development.
 
 ---
 
@@ -552,17 +554,31 @@ export default defineConfig({
 **3. Create your first service**
 
 ```typescript
+interface MyServiceInterface {
+  state: { count: number };
+  increment(): void;
+}
+
 @Service()
-class MyService {
+class MyService implements MyServiceInterface {
   state = { count: 0 };
+  
+  increment() {
+    this.state.count++;
+  }
 }
 ```
 
 **4. Use it in components**
 
 ```typescript
-function MyComponent({ myService }: { myService: Inject<MyService> }) {
-  return <div>{myService.state.count}</div>;
+function MyComponent({ myService }: { myService: Inject<MyServiceInterface> }) {
+  return (
+    <div>
+      Count: {myService.state.count}
+      <button onClick={() => myService.increment()}>+</button>
+    </div>
+  );
 }
 ```
 
