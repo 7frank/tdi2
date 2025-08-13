@@ -1,5 +1,11 @@
 # @tdi2/di-core
 
+## 3.1.0
+
+### Minor Changes
+
+- Support testing for DI services, React Components with focus on services, React Components with focus on behaviour
+
 ## 3.0.0
 
 ### Major Changes
