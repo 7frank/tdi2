@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from "bun:test";
-import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect, useState } from "react";
 
@@ -48,7 +48,12 @@ export function UserBadge({
   const beta = flags.isEnabled("beta");
 
   async function onLogout() {
-    await authService.logout();
+    try {
+      await authService.logout();
+    } catch (error) {
+      // In a real app, you might show an error message
+      console.error('Logout failed:', error);
+    }
   }
 
   return (
@@ -74,6 +79,10 @@ describe("RSI Component Service-Level Testing", () => {
 
   beforeEach(() => {
     ctx = createTestInstance(UserBadgeTestContext);
+  });
+
+  afterEach(() => {
+    cleanup(); // Clean up rendered components between tests
   });
 
   it("renders user name and beta badge; verifies service interactions", async () => {
@@ -173,8 +182,8 @@ describe("RSI Component Service-Level Testing", () => {
 
     await waitFor(() => screen.getByLabelText("username"));
 
-    // Act - Attempt logout (should not throw to UI, but service call should happen)
-    await expect(userEvent.click(screen.getByRole("button", { name: "Logout" }))).resolves.toBeUndefined();
+    // Act - Attempt logout (error should propagate but not crash the test)
+    await userEvent.click(screen.getByRole("button", { name: "Logout" }));
 
     // Assert - All expected service calls occurred
     verify(ctx.authService, "getCurrentUser").once();

@@ -53,6 +53,7 @@
     "@testing-library/user-event": "^14.6.1"
   },
   "devDependencies": {
+    "@happy-dom/global-registrator": "^18.0.1",
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
     "typescript": "~5.8.3"
