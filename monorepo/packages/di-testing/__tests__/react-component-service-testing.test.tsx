@@ -1,3 +1,61 @@
+/**
+ * @fileoverview React Component Service-Level Testing with TDI2
+ * 
+ * This test file demonstrates how to test React components that use service injection
+ * instead of traditional prop drilling or context patterns. It focuses on testing
+ * service orchestration and business logic coordination at the component level.
+ * 
+ * ## When to Use This Testing Pattern
+ * 
+ * Use React component service-level testing when:
+ * 
+ * 1. **Service Orchestration**: Your component primarily coordinates between multiple
+ *    services rather than managing complex UI state
+ * 
+ * 2. **Business Logic Integration**: You need to verify that business services are
+ *    called with correct parameters and in the right sequence
+ * 
+ * 3. **Side Effect Testing**: Testing components that trigger side effects through
+ *    services (API calls, logging, notifications, etc.)
+ * 
+ * 4. **Enterprise Architecture**: Working with codebases that use dependency injection
+ *    for service management and want consistent testing patterns
+ * 
+ * ## What This Tests vs Traditional React Testing
+ * 
+ * **Service-Level Testing** (This approach):
+ * - Verifies service method calls and interactions
+ * - Tests business logic coordination through services
+ * - Focuses on "what services are called and how"
+ * - Uses precise interaction verification with verify()
+ * - Deterministic service behavior through MockBean
+ * 
+ * **Traditional React Testing** (RTL + MSW):
+ * - Tests user-observable behavior and DOM interactions
+ * - Focuses on "what the user sees and does"
+ * - Uses network mocking for integration testing
+ * - Better for accessibility and user experience testing
+ * 
+ * ## Key Benefits of This Approach
+ * 
+ * - **Deterministic Dependencies**: Services are injected as mocks, no module mocking
+ * - **Interaction Verification**: Precise control over service call verification
+ * - **Business Logic Focus**: Tests the component's role as service coordinator
+ * - **Fast Execution**: No network calls or heavy DOM manipulation
+ * - **Enterprise Alignment**: Consistent with Spring Boot / .NET testing patterns
+ * 
+ * ## TDI2/RSI Testing Framework Features Demonstrated
+ * 
+ * - `@TestContext`: Test class-based organization with automatic cleanup
+ * - `@MockBean`: Type-safe service mocking with fluent API
+ * - `MockedService<T>`: Full TypeScript support for mock behavior setup
+ * - `verify()` / `verifyNoInteractions()`: Spring Boot-style interaction verification
+ * - `createTestInstance()`: Test context instantiation with dependency injection
+ * 
+ * Use this pattern for components that act as service coordinators in DI-based
+ * React architectures. For pure UI components, prefer traditional RTL testing.
+ */
+
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

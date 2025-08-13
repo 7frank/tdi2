@@ -1,3 +1,80 @@
+/**
+ * @fileoverview Pure Service-Level Testing with TDI2 (No React)
+ * 
+ * This test file demonstrates how to test business services and their interactions
+ * using TDI2's testing framework without React components. It focuses on testing
+ * business logic, service orchestration, and dependency interactions at the pure
+ * service layer.
+ * 
+ * ## When to Use This Testing Pattern
+ * 
+ * Use pure service-level testing when:
+ * 
+ * 1. **Business Logic Testing**: Testing core business services that contain domain
+ *    logic, validation, and business rules independent of UI
+ * 
+ * 2. **Service Orchestration**: Testing services that coordinate multiple other
+ *    services to complete complex business operations
+ * 
+ * 3. **Integration Logic**: Verifying that services correctly integrate with external
+ *    dependencies (databases, APIs, message queues, etc.)
+ * 
+ * 4. **Domain-Driven Design**: Testing domain services, aggregates, and business
+ *    workflows in isolation from presentation layers
+ * 
+ * 5. **Enterprise Architecture**: Testing the service layer in multi-layer applications
+ *    where business logic is separated from UI concerns
+ * 
+ * ## What This Tests vs Other Testing Approaches
+ * 
+ * **Pure Service Testing** (This approach):
+ * - Tests business logic without UI dependencies  
+ * - Verifies service-to-service interactions and call sequences
+ * - Focuses on business rules, validation, and domain workflows
+ * - Fast execution with precise dependency control
+ * - Clear separation of concerns between business and presentation logic
+ * 
+ * **Component Service Testing** (react-component-service-testing.test.tsx):
+ * - Tests React components that use service injection
+ * - Combines UI rendering with service interaction testing
+ * - Focuses on component orchestration of services
+ * 
+ * **Unit Testing** (Traditional):
+ * - Tests individual methods in isolation
+ * - Often requires extensive mocking setup
+ * - May miss integration issues between services
+ * 
+ * ## Key Benefits of This Approach
+ * 
+ * - **Business Logic Focus**: Tests pure business functionality without UI complexity
+ * - **Interaction Verification**: Precise tracking of service method calls and parameters
+ * - **Deterministic Dependencies**: All external services are controlled via mocks
+ * - **Fast Feedback**: No DOM rendering, network calls, or heavy framework overhead
+ * - **Enterprise Pattern**: Familiar testing style for backend/enterprise developers
+ * - **Clear Architecture**: Enforces separation between business logic and presentation
+ * 
+ * ## TDI2 Testing Framework Features Demonstrated
+ * 
+ * - `@TestContext`: Organizes test dependencies with automatic reset between tests
+ * - `@MockBean`: Creates type-safe mocks for service dependencies
+ * - `MockedService<T>`: Fluent API for setting up mock behavior and responses
+ * - `verify()`: Spring Boot-style verification of service interactions
+ * - `verifyNoInteractions()`: Ensures services are not called when they shouldn't be
+ * - `createTestInstance()`: Instantiates test context with dependency injection
+ * - Callback-based mocking with `thenCall()` for complex scenarios
+ * 
+ * ## Testing Patterns Shown
+ * 
+ * - **Happy Path Testing**: Normal business flow with expected inputs/outputs
+ * - **Error Handling**: Service failures and exception propagation
+ * - **Conditional Logic**: Business rules that affect service call patterns
+ * - **Interaction Sequencing**: Verifying services are called in correct order
+ * - **Partial Execution**: Testing rollback and cleanup scenarios
+ * 
+ * Use this pattern for testing the core business logic layer of your application.
+ * Combine with integration tests for full end-to-end coverage.
+ */
+
 import { describe, it, expect, beforeEach } from "bun:test";
 import { 
   MockBean, 
