@@ -1,14 +1,16 @@
 # Features
 
-Looking at Spring Boot we are focusing on implementing the more often used decorators.
+Looking at our system from a Spring Boot perspective, we are focusing on implementing the more often used decorators.
 We believe that feature wise a production ready system can be achieved with the following:
 
 ## Core Features
 
+> package `@tdi2/di-core`
+
 | Feature            | Description                    | Implementation Status | Note                                                                                                                                                      |
 | ------------------ | ------------------------------ | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | @Service/Component | Service registration decorator | ✅                    |                                                                                                                                                           |
-| @Inject            | Dependency injection decorator | ✅                    |                                                                                                                                                           |
+| @Inject            | Dependency injection decorator | ✅                    | Decorator for classes and Marker Interface for Functional Components                                                                                      |
 | @Qualifier         | Qualifier for disambiguation   | ✅                    | Currently not planned. Instead create generic interface LoggerInterface\<T> with marker type Otel\|Console={} and use "implements LoggerInterface\<Otel>" |
 | @Scope             | Scope management               | ❌                    |                                                                                                                                                           |
 | @Value             | Value injection                | ✅                    | Currently not planned. Instead for env variables better create ApplicationConfig interface and import where necessary                                     |
@@ -34,6 +36,8 @@ We believe that feature wise a production ready system can be achieved with the 
 | @PreDestroy    | Pre-destruction lifecycle hook   | ❌                    |      |
 
 ## Testing
+
+> package `@tdi2/di-testing`
 
 | Feature   | Description           | Implementation Status | Note |
 | --------- | --------------------- | --------------------- | ---- |

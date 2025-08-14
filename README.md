@@ -52,6 +52,8 @@ function UserDashboard({ userService, appState }: {
 
 **🤝 Contributing**: Found issues or have suggestions? Please [open an issue](https://github.com/your-repo/issues) or submit a pull request. Your feedback helps shape RSI's development.
 
+> [see feature status](./Features.md) for the "production" ready system
+
 ---
 
 ## Primary Targets
