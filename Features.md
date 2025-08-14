@@ -12,8 +12,26 @@ We believe that feature wise a production ready system can be achieved with the 
 | @Service/Component | Service registration decorator | ✅                    |                                                                                                                                                           |
 | @Inject            | Dependency injection decorator | ✅                    | Decorator for classes and Marker Interface for Functional Components                                                                                      |
 | @Qualifier         | Qualifier for disambiguation   | ✅                    | Currently not planned. Instead create generic interface LoggerInterface\<T> with marker type Otel\|Console={} and use "implements LoggerInterface\<Otel>" |
-| @Scope             | Scope management               | ✅                    | Supports singleton (default) and transient scopes                                                                                                        |
+| @Scope             | Scope management               | ✅                    | Spring Boot style: `@Service @Scope("singleton\|transient")`. Separate decorators follow separation of concerns                                         |
 | @Value             | Value injection                | ✅                    | Currently not planned. Instead for env variables better create ApplicationConfig interface and import where necessary                                     |
+
+### @Scope Usage Examples (Spring Boot Convention)
+
+```typescript
+// Singleton service (default)
+@Service()
+class DatabaseConnection { }
+
+// Explicit singleton 
+@Service()
+@Scope("singleton")
+class ConfigService { }
+
+// Transient service (new instance each time)
+@Service()
+@Scope("transient") 
+class RequestLogger { }
+```
 
 ## Configuration
 

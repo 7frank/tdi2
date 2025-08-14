@@ -41,7 +41,6 @@ export interface DIContainer {
 
 // Service decorator options - now supports interface resolution
 export interface ServiceOptions {
-  scope?: "singleton" | "transient" | "scoped";
   token?: string | symbol; // Optional - auto-resolved if not provided
   profiles?: string[]; // Environment profiles
   primary?: boolean; // Mark as primary implementation

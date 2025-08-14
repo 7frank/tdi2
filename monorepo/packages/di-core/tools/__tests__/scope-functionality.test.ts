@@ -48,8 +48,9 @@ describe("@Scope Functionality", () => {
 
   describe("Transient Scope", () => {
     it("should return different instances for transient services", () => {
-      // Given - A transient service
-      @Service({ scope: "transient" })
+      // Given - A transient service (Spring Boot style)
+      @Service()
+      @Scope("transient")
       class TransientService {
         value = Math.random();
       }
@@ -86,8 +87,9 @@ describe("@Scope Functionality", () => {
 
   describe("Scope Focus: Singleton and Transient", () => {
     it("should demonstrate singleton vs transient behavior clearly", () => {
-      // Given - Both singleton and transient services
-      @Service({ scope: "singleton" })
+      // Given - Both singleton and transient services (Spring Boot style)
+      @Service()
+      @Scope("singleton")
       class SingletonCounter {
         static instanceCount = 0;
         instanceId: number;
@@ -97,7 +99,8 @@ describe("@Scope Functionality", () => {
         }
       }
 
-      @Service({ scope: "transient" })
+      @Service()
+      @Scope("transient")
       class TransientCounter {
         static instanceCount = 0;
         instanceId: number;
@@ -130,7 +133,8 @@ describe("@Scope Functionality", () => {
 
   describe("Mixed Scope Behavior", () => {
     it("should handle services with different scopes correctly", () => {
-      @Service({ scope: "singleton" })
+      @Service()
+      @Scope("singleton")
       class SingletonRepository {
         static instanceCount = 0;
         instanceId: number;
@@ -140,7 +144,8 @@ describe("@Scope Functionality", () => {
         }
       }
 
-      @Service({ scope: "transient" })
+      @Service()
+      @Scope("transient")
       class TransientLogger {
         static instanceCount = 0;
         instanceId: number;
@@ -172,7 +177,8 @@ describe("@Scope Functionality", () => {
 
   describe("Container Hierarchy", () => {
     it("should respect singleton inheritance in parent-child relationships", () => {
-      @Service({ scope: "singleton" })
+      @Service()
+      @Scope("singleton")
       class SharedService {
         value = "shared";
       }
@@ -196,7 +202,8 @@ describe("@Scope Functionality", () => {
     });
 
     it("should handle transient services from parent definitions", () => {
-      @Service({ scope: "transient" })
+      @Service()
+      @Scope("transient")
       class TransientService {
         id = Math.random();
       }
@@ -225,7 +232,8 @@ describe("@Scope Functionality", () => {
     });
 
     it("should handle invalid scope values gracefully", () => {
-      @Service({ scope: "invalid" as any })
+      @Service()
+      @Scope("invalid" as any)
       class InvalidScopeService {}
 
       // Should default to singleton behavior
