@@ -69,12 +69,6 @@ from a TypeScript perspective:
 
 🟢 Low Hanging Fruits (Easy to Implement)
 
-1. @Scope ✅ Already implemented in decorators but needs container support
-
-- Why easy: Decorator already exists in decorators.ts:89-98
-- Missing: Container logic to respect scope metadata
-- Implementation: Just needs to wire the existing decorator metadata to container behavior
-
 2. @PostConstruct
 
 - Why easy: Simple lifecycle hook pattern
@@ -107,13 +101,7 @@ from a TypeScript perspective:
 - Implementation: Runtime profile filtering during service registration
 - TypeScript complexity: Moderate - environment configuration and service filtering
 
-🔴 Hard to Implement
-
-7. Enhanced @Scope with "scoped" lifecycle
-
-- Why hard: "scoped" scope is complex - requires request/session-like contexts
-- Implementation: Context-aware container with scope boundaries
-- TypeScript complexity: High - generic context management, scope disposal
+> @Profile(string|string[]) (KISS)
 
 8. Advanced @Profile with conditional logic
 
@@ -125,13 +113,12 @@ from a TypeScript perspective:
 
 Start with these (immediate value):
 
-1. Complete @Scope container support (already 90% done)
-2. @PostConstruct (lifecycle hooks are essential)
-3. @PreDestroy (completes lifecycle management)
+>2. @PostConstruct (lifecycle hooks are essential)
+>3. @PreDestroy (completes lifecycle management)
+>
+>Next phase: 4. @Configuration + @Bean (enables external library integration) 5. Complete @Profile runtime support
 
-Next phase: 4. @Configuration + @Bean (enables external library integration) 5. Complete @Profile runtime support
-
-Advanced features (if needed): 6. Advanced scoping scenarios 7. Complex profile conditions
+(out of scope) Advanced features (if needed): 6. Advanced scoping scenarios 7. Complex profile conditions
 
 🔧 Technical Implementation Notes
 
