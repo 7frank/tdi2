@@ -30,6 +30,13 @@ export interface DIContainer {
   ): void;
   resolveByInterface<T>(interfaceName: string): T;
   hasInterface(interfaceName: string): boolean;
+
+  // Helper methods for parent-child scope resolution
+  getScope(token: string | symbol): "singleton" | "transient" | "scoped" | undefined;
+  hasFactory(token: string | symbol): boolean;
+  getFactory(token: string | symbol): any;
+  hasService(token: string | symbol): boolean;
+  getService(token: string | symbol): any;
 }
 
 // Service decorator options - now supports interface resolution

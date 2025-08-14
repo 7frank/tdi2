@@ -4,6 +4,7 @@ import {
   Project,
   SourceFile,
   ClassDeclaration,
+  Node,
 } from "ts-morph";
 import * as path from "path";
 
@@ -228,6 +229,10 @@ export class IntegratedInterfaceResolver {
   ): Promise<void> {
     const sanitizedKey = this.keySanitizer.sanitizeKey(interfaceInfo.fullType);
 
+    // Extract scope from @Service decorator
+    const classDecl = sourceFile.getClass(className);
+    const scope = classDecl ? this.extractScopeFromDecorator(classDecl) : "singleton";
+
     const implementation: InterfaceImplementation = {
       interfaceName: interfaceInfo.name,
       implementationClass: className,
@@ -238,6 +243,7 @@ export class IntegratedInterfaceResolver {
       isClassBased: false,
       isInheritanceBased: false,
       isStateBased: false,
+      scope,
     };
 
     const uniqueKey = `${sanitizedKey}_${className}`;
@@ -258,6 +264,10 @@ export class IntegratedInterfaceResolver {
   ): Promise<void> {
     const sanitizedKey = this.keySanitizer.sanitizeInheritanceKey(inheritanceMapping.baseClassGeneric);
 
+    // Extract scope from @Service decorator
+    const classDecl = sourceFile.getClass(className);
+    const scope = classDecl ? this.extractScopeFromDecorator(classDecl) : "singleton";
+
     const implementation: InterfaceImplementation = {
       interfaceName: inheritanceMapping.baseTypeName,
       implementationClass: className,
@@ -271,6 +281,7 @@ export class IntegratedInterfaceResolver {
       inheritanceChain: inheritanceInfo.inheritanceChain,
       baseClass: inheritanceMapping.baseClass,
       baseClassGeneric: inheritanceMapping.baseClassGeneric,
+      scope,
     };
 
     const uniqueKey = `${sanitizedKey}_${className}`;
@@ -290,6 +301,10 @@ export class IntegratedInterfaceResolver {
   ): Promise<void> {
     const sanitizedKey = this.keySanitizer.sanitizeKey(stateRegistration.serviceInterface);
 
+    // Extract scope from @Service decorator
+    const classDecl = sourceFile.getClass(className);
+    const scope = classDecl ? this.extractScopeFromDecorator(classDecl) : "singleton";
+
     const implementation: InterfaceImplementation = {
       interfaceName: stateRegistration.serviceInterface,
       implementationClass: className,
@@ -302,6 +317,7 @@ export class IntegratedInterfaceResolver {
       isStateBased: true,
       stateType: stateRegistration.stateType,
       serviceInterface: stateRegistration.serviceInterface,
+      scope,
     };
 
     const uniqueKey = `${sanitizedKey}_${className}_state`;
@@ -321,6 +337,10 @@ export class IntegratedInterfaceResolver {
   ): Promise<void> {
     const sanitizedKey = this.keySanitizer.sanitizeKey(className);
 
+    // Extract scope from @Service decorator
+    const classDecl = sourceFile.getClass(className);
+    const scope = classDecl ? this.extractScopeFromDecorator(classDecl) : "singleton";
+
     const implementation: InterfaceImplementation = {
       interfaceName: className,
       implementationClass: className,
@@ -331,6 +351,7 @@ export class IntegratedInterfaceResolver {
       isClassBased: true,
       isInheritanceBased: false,
       isStateBased: false,
+      scope,
     };
 
     const uniqueKey = isPrimary 
@@ -651,5 +672,95 @@ export class IntegratedInterfaceResolver {
       sourceConfig: this.getSourceConfiguration(),
       resolutionSamples
     };
+  }
+
+  /**
+   * Extract scope from @Service decorator on a class
+   */
+  private extractScopeFromDecorator(classDecl: ClassDeclaration): "singleton" | "transient" | "scoped" {
+    const decorators = classDecl.getDecorators();
+
+    for (const decorator of decorators) {
+      try {
+        const expression = decorator.getExpression();
+        const decoratorName = this.getDecoratorName(decorator);
+
+        if (decoratorName && this.isServiceDecoratorName(decoratorName)) {
+          // Check if decorator has arguments: @Service({scope: "transient"})
+          if (Node.isCallExpression(expression)) {
+            const args = expression.getArguments();
+            if (args.length > 0) {
+              const optionsArg = args[0];
+              if (Node.isObjectLiteralExpression(optionsArg)) {
+                const scopeProperty = optionsArg.getProperty("scope");
+                if (scopeProperty && Node.isPropertyAssignment(scopeProperty)) {
+                  const initializer = scopeProperty.getInitializer();
+                  if (Node.isStringLiteral(initializer)) {
+                    const scopeValue = initializer.getLiteralValue();
+                    if (scopeValue === "singleton" || scopeValue === "transient" || scopeValue === "scoped") {
+                      return scopeValue;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        // Continue searching other decorators
+      }
+    }
+
+    // Also check for @Scope decorator
+    for (const decorator of decorators) {
+      try {
+        const decoratorName = this.getDecoratorName(decorator);
+        if (decoratorName === "Scope") {
+          const expression = decorator.getExpression();
+          if (Node.isCallExpression(expression)) {
+            const args = expression.getArguments();
+            if (args.length > 0) {
+              const scopeArg = args[0];
+              if (Node.isStringLiteral(scopeArg)) {
+                const scopeValue = scopeArg.getLiteralValue();
+                if (scopeValue === "singleton" || scopeValue === "transient" || scopeValue === "scoped") {
+                  return scopeValue;
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        // Continue searching
+      }
+    }
+
+    return "singleton"; // Default scope
+  }
+
+  private getDecoratorName(decorator: any): string | null {
+    try {
+      const expression = decorator.getExpression();
+      
+      if (Node.isCallExpression(expression)) {
+        const expr = expression.getExpression();
+        if (Node.isIdentifier(expr)) {
+          return expr.getText();
+        }
+      } else if (Node.isIdentifier(expression)) {
+        return expression.getText();
+      }
+    } catch (error) {
+      // Return null if extraction fails
+    }
+    return null;
+  }
+
+  private isServiceDecoratorName(decoratorName: string): boolean {
+    return [
+      'Service',
+      'Component',
+      'Injectable'
+    ].includes(decoratorName);
   }
 }

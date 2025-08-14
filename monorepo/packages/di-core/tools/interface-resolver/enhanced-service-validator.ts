@@ -268,7 +268,6 @@ export class EnhancedServiceValidator {
   private isServiceDecoratorName(decoratorName: string): boolean {
     const serviceDecorators = [
       "Service",
-      "AutoWireService",
       "Component",
       "Injectable",
       "Repository",
@@ -290,7 +289,6 @@ export class EnhancedServiceValidator {
   private isInjectDecoratorName(decoratorName: string): boolean {
     const injectDecorators = [
       "Inject",
-      "AutoWireInject",
       "Autowired",
       "Dependency",
       "Resource",

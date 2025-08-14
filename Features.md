@@ -12,7 +12,7 @@ We believe that feature wise a production ready system can be achieved with the 
 | @Service/Component | Service registration decorator | ✅                    |                                                                                                                                                           |
 | @Inject            | Dependency injection decorator | ✅                    | Decorator for classes and Marker Interface for Functional Components                                                                                      |
 | @Qualifier         | Qualifier for disambiguation   | ✅                    | Currently not planned. Instead create generic interface LoggerInterface\<T> with marker type Otel\|Console={} and use "implements LoggerInterface\<Otel>" |
-| @Scope             | Scope management               | ❌                    |                                                                                                                                                           |
+| @Scope             | Scope management               | ✅                    | Supports singleton (default) and transient scopes                                                                                                        |
 | @Value             | Value injection                | ✅                    | Currently not planned. Instead for env variables better create ApplicationConfig interface and import where necessary                                     |
 
 ## Configuration
@@ -33,7 +33,7 @@ We believe that feature wise a production ready system can be achieved with the 
 | Feature        | Description                      | Implementation Status | Note |
 | -------------- | -------------------------------- | --------------------- | ---- |
 | @PostConstruct | Post-construction lifecycle hook | ❌                    |      |
-| @PreDestroy    | Pre-destruction lifecycle hook   | ❌                    |      |
+| @PreDestroy    | Pre-destruction lifecycle hook   | ❌                    |    TBD  TC39 vs Angular Style |
 
 ## Testing
 
@@ -43,3 +43,84 @@ We believe that feature wise a production ready system can be achieved with the 
 | --------- | --------------------- | --------------------- | ---- |
 | @DiTest   | DI testing framework  | ✅                    |      |
 | @MockBean | Mock bean for testing | ✅                    |      |
+
+##
+
+Based on my analysis of the Features.md file and the existing codebase, here's my categorization of the unimplemented features
+from a TypeScript perspective:
+
+🟢 Low Hanging Fruits (Easy to Implement)
+
+1. @Scope ✅ Already implemented in decorators but needs container support
+
+- Why easy: Decorator already exists in decorators.ts:89-98
+- Missing: Container logic to respect scope metadata
+- Implementation: Just needs to wire the existing decorator metadata to container behavior
+
+2. @PostConstruct
+
+- Why easy: Simple lifecycle hook pattern
+- Implementation: Add metadata to decorator, call after instantiation in container
+- TypeScript complexity: Low - just method invocation after construction
+
+3. @PreDestroy
+
+- Why easy: Similar to @PostConstruct but for cleanup
+- Implementation: Store cleanup functions, call on container disposal
+- TypeScript complexity: Low - standard dispose pattern
+
+🟡 Medium Complexity
+
+4. @Configuration
+
+- Why medium: Requires new class processing pattern
+- Implementation: Classes that define @Bean methods instead of service classes
+- TypeScript complexity: Moderate - needs method metadata extraction and factory generation
+
+5. @Bean
+
+- Why medium: Method-level decorators for external class registration
+- Implementation: Process @Configuration class methods, generate factories
+- TypeScript complexity: Moderate - method return type inference, dependency injection into factory methods
+
+6. @Profile ✅ Already implemented in decorators but needs runtime support
+
+- Why medium: Decorator exists but needs environment-aware container logic
+- Implementation: Runtime profile filtering during service registration
+- TypeScript complexity: Moderate - environment configuration and service filtering
+
+🔴 Hard to Implement
+
+7. Enhanced @Scope with "scoped" lifecycle
+
+- Why hard: "scoped" scope is complex - requires request/session-like contexts
+- Implementation: Context-aware container with scope boundaries
+- TypeScript complexity: High - generic context management, scope disposal
+
+8. Advanced @Profile with conditional logic
+
+- Why hard: Beyond simple string matching - could need expressions
+- Implementation: Profile expression evaluation, complex activation conditions
+- TypeScript complexity: High - potentially needs expression parser
+
+📊 Implementation Priority Recommendations
+
+Start with these (immediate value):
+
+1. Complete @Scope container support (already 90% done)
+2. @PostConstruct (lifecycle hooks are essential)
+3. @PreDestroy (completes lifecycle management)
+
+Next phase: 4. @Configuration + @Bean (enables external library integration) 5. Complete @Profile runtime support
+
+Advanced features (if needed): 6. Advanced scoping scenarios 7. Complex profile conditions
+
+🔧 Technical Implementation Notes
+
+- Most decorators already have basic metadata collection
+- Main work is in container.ts to respect the metadata
+- Interface resolution system is already sophisticated
+- Vite plugin transformation pipeline can handle the compile-time aspects
+
+The architecture is well-positioned for these additions since the metadata collection and transformation pipeline
+infrastructure already exists.

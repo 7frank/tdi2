@@ -376,7 +376,6 @@ export class SharedDependencyExtractor {
   private isInjectDecoratorName(decoratorName: string): boolean {
     const injectDecorators = [
       'Inject',
-      'AutoWireInject', 
       'Autowired',
       'Dependency',
       'Resource',

@@ -211,7 +211,7 @@ export class SharedServiceRegistry {
       token: implementation.sanitizedKey,
       interfaceName: implementation.interfaceName,
       implementationClass: implementation.implementationClass,
-      scope: 'singleton', // Default scope
+      scope: implementation.scope || 'singleton', // Use scope from decorator or default to singleton
       dependencies: dependencyTokens,
       factory: this.generateFactoryName(implementation.implementationClass),
       filePath: implementation.filePath,

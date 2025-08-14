@@ -359,7 +359,6 @@ export class EnhancedDITransformer {
   private isServiceDecoratorName(decoratorName: string): boolean {
     const serviceDecorators = [
       'Service',
-      'AutoWireService', 
       'Component',
       'Injectable',
       'Repository',

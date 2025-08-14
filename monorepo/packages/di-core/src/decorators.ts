@@ -50,25 +50,6 @@ export function Inject(token?: string | symbol): any {
  */
 export const Autowired = Inject;
 
-/**
- * AutoWireService decorator - alias for Service with auto-resolution enabled
- * This matches the naming from your TDI proof-of-concept
- */
-export function AutoWireService(options: ServiceOptions = {}): ClassDecorator {
-  return Service({
-    ...options,
-    // Force auto-resolution for AutoWireService
-    token: options.token || undefined,
-  });
-}
-
-/**
- * AutoWireInject decorator - alias for Inject with auto-resolution
- * This matches the naming from your TDI proof-of-concept
- */
-export function AutoWireInject(token?: string | symbol): any {
-  return Inject(token);
-}
 
 /**
  * Profile decorator - marks a service for specific environments
