@@ -100,8 +100,10 @@ Note: (show of hands) Who likes react hooks. Let's start with the core problem. 
 ---
 
 ## Example: The UserProfile Problem
+## Example: The UserProfile Problem
 
 ```typescript
+// Typical React component - looks simple at first
 // Typical React component - looks simple at first
 function UserProfile({ userId }) {
   const [user, setUser] = useState(null);
@@ -109,6 +111,13 @@ function UserProfile({ userId }) {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
+    setLoading(true);
+    fetchUser(userId).then(user => {
+      setUser(user);
+      setLoading(false);
+      // Load related data
+      fetchNotifications(user.id).then(setNotifications);
+    });
     setLoading(true);
     fetchUser(userId).then(user => {
       setUser(user);
@@ -168,8 +177,10 @@ Note: This is the inevitable evolution. Every new requirement adds more props, m
 ---
 
 ## Backend Solved This: Spring Boot
+## Backend Solved This: Spring Boot
 
 ```java
+// Clean separation of concerns
 // Clean separation of concerns
 @RestController
 public class UserController {
@@ -177,6 +188,7 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("/users/{id}")
+    public User getUser(@PathVariable String id) {
     public User getUser(@PathVariable String id) {
         return userService.findById(id); // Pure delegation
     }
@@ -189,6 +201,7 @@ public class UserService {
 
     public User findById(String id) {
         return repository.findById(id); // Pure business logic
+        return repository.findById(id); // Pure business logic
     }
 }
 ```
@@ -196,9 +209,13 @@ public class UserService {
 **Benefits:** Single responsibility, easy testing, loose coupling
 
 Note: Backend development solved this decades ago with dependency injection. Controllers handle HTTP, services handle business logic. Although Type erasure requires @Qualifier Annotation
+**Benefits:** Single responsibility, easy testing, loose coupling
+
+Note: Backend development solved this decades ago with dependency injection. Controllers handle HTTP, services handle business logic. Although Type erasure requires @Qualifier Annotation
 
 ---
 
+## Angular Also Solved This: Dependency Injection
 ## Angular Also Solved This: Dependency Injection
 
 ```typescript
@@ -237,10 +254,21 @@ Note: Angular solved this from day one with dependency injection. Services handl
 ## The Solution: Service Injection for React
 
 **Core Concept:** Components depend on services, not implementations
+**Angular got it right:** Services injected, components focus on templates
+
+Note: Angular solved this from day one with dependency injection. Services handle business logic, components handle templates. React missed this architectural lesson. Although Angular uses token and class based injection.
+
+---
+
+## The Solution: Service Injection for React
+
+**Core Concept:** Components depend on services, not implementations
 
 ```typescript
 // 1. Define what the component needs
+// 1. Define what the component needs
 interface UserServiceInterface {
+  state: { user: User | null; loading: boolean };
   state: { user: User | null; loading: boolean };
   loadUser(id: string): Promise<void>;
 }
@@ -261,6 +289,8 @@ class UserService implements UserServiceInterface {
     this.state.loading = true;
     this.state.user = await fetch(`/api/users/${id}`).then(r => r.json());
     this.state.loading = false;
+    this.state.user = await fetch(`/api/users/${id}`).then(r => r.json());
+    this.state.loading = false;
   }
 }
 ```
@@ -272,8 +302,16 @@ Note: This is the core insight - separate UI from business logic using service i
 ## Key Advantage: Services Work Everywhere
 
 **Services are framework-agnostic and composable through DI:**
+Note: This is the core insight - separate UI from business logic using service injection, just like backend frameworks do.
+
+---
+
+## Key Advantage: Services Work Everywhere
+
+**Services are framework-agnostic and composable through DI:**
 
 ```typescript
+// UserService can inject other services and work outside React
 // UserService can inject other services and work outside React
 @Service()
 class UserService implements UserServiceInterface {
@@ -628,11 +666,18 @@ Note: I want to hear about your React challenges and discuss how service injecti
 ## Thank You Leipzig.js!
 
 ### Ready to Escape Props Hell?
+### Ready to Escape Props Hell?
 
+**The future of React architecture starts with conversations like this**
 **The future of React architecture starts with conversations like this**
 
 _Let's make React truly enterprise-ready together!_
 
+**🔗 github.com/7frank/tdi2**
+
+**Next: Live coding session**
+
+Note: Thank you for your attention. I'm excited to discuss this further and hear your thoughts on bringing enterprise architecture patterns to React.
 **🔗 github.com/7frank/tdi2**
 
 **Next: Live coding session**
