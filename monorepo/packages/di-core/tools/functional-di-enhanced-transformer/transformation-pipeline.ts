@@ -10,21 +10,32 @@ import {
 } from 'ts-morph';
 import { PropertyAccessUpdater } from './property-access-updater';
 import { ExtractedDependency } from '../shared/SharedDependencyExtractor';
+import { LifecycleGenerator, LifecycleGenerationOptions } from './lifecycle-generator';
 
 export interface TransformationPipelineOptions {
   verbose?: boolean;
   generateFallbacks?: boolean;
   preserveTypeAnnotations?: boolean;
+  enableLifecycleGeneration?: boolean;
+  lifecycleOptions?: LifecycleGenerationOptions;
 }
 
 export class TransformationPipeline {
 
   private propertyUpdater: PropertyAccessUpdater;
+  private lifecycleGenerator: LifecycleGenerator;
 
   constructor(private options: TransformationPipelineOptions = {}) {
 
     this.propertyUpdater = new PropertyAccessUpdater({
       verbose: this.options.verbose
+    });
+
+    this.lifecycleGenerator = new LifecycleGenerator({
+      verbose: this.options.verbose,
+      generateAbortController: true,
+      combineMultipleServices: true,
+      ...this.options.lifecycleOptions
     });
   }
 
@@ -52,7 +63,12 @@ export class TransformationPipeline {
     // Step 4: FIXED - Only remove DI-related destructuring, preserve other destructuring
     this.removeOnlyDIDestructuring(func, dependencies);
 
-    // Step 5: Validate the transformation
+    // Step 5: Generate lifecycle hooks (NEW)
+    if (this.options.enableLifecycleGeneration) {
+      this.lifecycleGenerator.generateLifecycleHooks(func, dependencies, sourceFile);
+    }
+
+    // Step 6: Validate the transformation
     if (this.options.verbose) {
       const validation = this.propertyUpdater.validateUpdates(func, dependencies);
       if (!validation.isValid) {

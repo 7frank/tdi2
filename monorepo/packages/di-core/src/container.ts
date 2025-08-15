@@ -1,6 +1,14 @@
 // src/di/container.ts - FIXED to properly load all services
 
-import type { DIContainer, ServiceFactory, DIMap } from './types';
+import type { 
+  DIContainer, 
+  ServiceFactory, 
+  DIMap, 
+  ServiceLifecycleMetadata,
+  LifecycleExecutionContext,
+  LifecycleExecutionResult,
+  ComponentLifecycleOptions
+} from './types';
 
 export class CompileTimeDIContainer implements DIContainer {
   private services = new Map<string | symbol, any>();
@@ -10,6 +18,8 @@ export class CompileTimeDIContainer implements DIContainer {
     string | symbol,
     "singleton" | "transient" | "scoped"
   >();
+  private lifecycleMetadata = new Map<string | symbol, ServiceLifecycleMetadata>();
+  private destructionCallbacks = new Map<string | symbol, (() => void | Promise<void>)[]>();
   private parent?: DIContainer;
 
   constructor(parent?: DIContainer) {
@@ -69,7 +79,7 @@ export class CompileTimeDIContainer implements DIContainer {
 
       case "transient":
         // Always create new instance for transient scope
-        return this.createInstance<T>(token);
+        return this.createInstanceSync<T>(token);
     }
 
     // Check if service exists locally or in parent
@@ -79,7 +89,7 @@ export class CompileTimeDIContainer implements DIContainer {
     }
 
     // Create new instance
-    const instance = this.createInstance<T>(token);
+    const instance = this.createInstanceSync<T>(token);
 
     // Store instances only for singleton scope
     if (scope === "singleton") {
@@ -90,39 +100,89 @@ export class CompileTimeDIContainer implements DIContainer {
     return instance;
   }
 
-  private createInstance<T>(token: string | symbol): T {
+  private async createInstance<T>(token: string | symbol): Promise<T> {
     const tokenKey = this.getTokenKey(token);
+    let instance: T;
 
     if (this.factories.has(tokenKey)) {
       // Use generated factory
       const factory = this.factories.get(tokenKey)!;
-      return factory();
+      instance = factory();
     } else if (this.services.has(tokenKey)) {
       // Use constructor
       const constructor = this.services.get(tokenKey);
       if (typeof constructor === "function") {
-        return new constructor();
+        instance = new constructor();
       } else {
-        return constructor;
+        instance = constructor;
       }
     } else if (this.parent && this.parent.has(token)) {
       // Service is defined in parent - get the factory/service and create instance
       if (this.parent.hasFactory(token)) {
         const factory = this.parent.getFactory(token);
-        return factory();
+        instance = factory();
       } else if (this.parent.hasService(token)) {
         const constructor = this.parent.getService(token);
         if (typeof constructor === "function") {
-          return new constructor();
+          instance = new constructor();
         } else {
-          return constructor;
+          instance = constructor;
         }
+      } else {
+        // Fallback to parent resolve (shouldn't happen but for safety)
+        instance = this.parent.resolve<T>(token);
       }
-      // Fallback to parent resolve (shouldn't happen but for safety)
-      return this.parent.resolve<T>(token);
     } else {
       throw new Error(`Service not registered: ${String(token)}`);
     }
+
+    // Execute @PostConstruct lifecycle hook after dependency injection
+    await this.executePostConstructLifecycle(token, instance);
+
+    return instance;
+  }
+
+  // Create instance synchronously for backward compatibility
+  private createInstanceSync<T>(token: string | symbol): T {
+    const tokenKey = this.getTokenKey(token);
+    let instance: T;
+
+    if (this.factories.has(tokenKey)) {
+      // Use generated factory
+      const factory = this.factories.get(tokenKey)!;
+      instance = factory();
+    } else if (this.services.has(tokenKey)) {
+      // Use constructor
+      const constructor = this.services.get(tokenKey);
+      if (typeof constructor === "function") {
+        instance = new constructor();
+      } else {
+        instance = constructor;
+      }
+    } else if (this.parent && this.parent.has(token)) {
+      // Service is defined in parent - get the factory/service and create instance
+      if (this.parent.hasFactory(token)) {
+        const factory = this.parent.getFactory(token);
+        instance = factory();
+      } else if (this.parent.hasService(token)) {
+        const constructor = this.parent.getService(token);
+        if (typeof constructor === "function") {
+          instance = new constructor();
+        } else {
+          instance = constructor;
+        }
+      } else {
+        // Fallback to parent resolve (shouldn't happen but for safety)
+        instance = this.parent.resolve<T>(token);
+      }
+    } else {
+      throw new Error(`Service not registered: ${String(token)}`);
+    }
+
+    // Execute @PostConstruct lifecycle hook synchronously (for non-async methods)
+    this.executePostConstructLifecycleSync(token, instance);
+
+    return instance;
   }
 
   has(token: string | symbol): boolean {
@@ -246,5 +306,167 @@ export class CompileTimeDIContainer implements DIContainer {
   getService(token: string | symbol): any {
     const tokenKey = this.getTokenKey(token);
     return this.services.get(tokenKey);
+  }
+
+  // Lifecycle management methods
+  registerWithLifecycle<T>(
+    token: string | symbol,
+    implementation: any,
+    scope: "singleton" | "transient" | "scoped" = "singleton",
+    lifecycle?: ServiceLifecycleMetadata
+  ): void {
+    this.register(token, implementation, scope);
+    if (lifecycle) {
+      const tokenKey = this.getTokenKey(token);
+      this.lifecycleMetadata.set(tokenKey, lifecycle);
+    }
+  }
+
+  private async executePostConstructLifecycle<T>(token: string | symbol, instance: T): Promise<void> {
+    const tokenKey = this.getTokenKey(token);
+    const lifecycle = this.lifecycleMetadata.get(tokenKey);
+    
+    if (!lifecycle?.postConstruct) {
+      // Check if instance has lifecycle metadata from decorators
+      const constructor = (instance as any)?.constructor;
+      const decoratorLifecycle = constructor?.__di_lifecycle__;
+      if (decoratorLifecycle?.postConstruct) {
+        await this.executeLifecycleHook(instance, decoratorLifecycle.postConstruct, 'postConstruct');
+      }
+      return;
+    }
+
+    await this.executeLifecycleHook(instance, lifecycle.postConstruct, 'postConstruct');
+  }
+
+  private executePostConstructLifecycleSync<T>(token: string | symbol, instance: T): void {
+    const tokenKey = this.getTokenKey(token);
+    const lifecycle = this.lifecycleMetadata.get(tokenKey);
+    
+    if (!lifecycle?.postConstruct) {
+      // Check if instance has lifecycle metadata from decorators
+      const constructor = (instance as any)?.constructor;
+      const decoratorLifecycle = constructor?.__di_lifecycle__;
+      if (decoratorLifecycle?.postConstruct) {
+        this.executeLifecycleHookSync(instance, decoratorLifecycle.postConstruct, 'postConstruct');
+      }
+      return;
+    }
+
+    this.executeLifecycleHookSync(instance, lifecycle.postConstruct, 'postConstruct');
+  }
+
+  private async executeLifecycleHook<T>(
+    instance: T, 
+    hook: { methodName: string; method: Function; async: boolean }, 
+    phase: string
+  ): Promise<void> {
+    try {
+      const method = (instance as any)[hook.methodName];
+      if (typeof method === 'function') {
+        if (hook.async) {
+          await method.call(instance);
+        } else {
+          method.call(instance);
+        }
+      }
+    } catch (error) {
+      console.error(`Lifecycle hook ${phase} failed for service:`, error);
+    }
+  }
+
+  private executeLifecycleHookSync<T>(
+    instance: T, 
+    hook: { methodName: string; method: Function; async: boolean }, 
+    phase: string
+  ): void {
+    try {
+      const method = (instance as any)[hook.methodName];
+      if (typeof method === 'function' && !hook.async) {
+        method.call(instance);
+      } else if (hook.async) {
+        // For async methods in sync context, execute but don't wait
+        console.warn(`Async lifecycle hook ${phase} called in sync context - will execute without waiting`);
+        method.call(instance).catch((error: Error) => {
+          console.error(`Async lifecycle hook ${phase} failed:`, error);
+        });
+      }
+    } catch (error) {
+      console.error(`Lifecycle hook ${phase} failed for service:`, error);
+    }
+  }
+
+  // Component lifecycle methods for React integration
+  async executeOnMountLifecycle<T>(instance: T, options: ComponentLifecycleOptions = {}): Promise<void> {
+    const constructor = (instance as any)?.constructor;
+    const lifecycle = constructor?.__di_lifecycle__;
+    
+    if (lifecycle?.onMount) {
+      try {
+        const method = (instance as any)[lifecycle.onMount.methodName];
+        if (typeof method === 'function') {
+          if (lifecycle.onMount.async) {
+            await method.call(instance, options);
+          } else {
+            method.call(instance, options);
+          }
+        }
+      } catch (error) {
+        console.error('OnMount lifecycle hook failed:', error);
+      }
+    }
+  }
+
+  async executeOnUnmountLifecycle<T>(instance: T): Promise<void> {
+    const constructor = (instance as any)?.constructor;
+    const lifecycle = constructor?.__di_lifecycle__;
+    
+    if (lifecycle?.onUnmount) {
+      try {
+        const method = (instance as any)[lifecycle.onUnmount.methodName];
+        if (typeof method === 'function') {
+          if (lifecycle.onUnmount.async) {
+            await method.call(instance);
+          } else {
+            method.call(instance);
+          }
+        }
+      } catch (error) {
+        console.error('OnUnmount lifecycle hook failed:', error);
+      }
+    }
+  }
+
+  // Cleanup method for container destruction
+  async destroyContainer(): Promise<void> {
+    // Execute @PreDestroy on all singleton instances
+    for (const [token, instance] of this.instances.entries()) {
+      const lifecycle = this.lifecycleMetadata.get(token);
+      if (lifecycle?.preDestroy) {
+        await this.executeLifecycleHook(instance, lifecycle.preDestroy, 'preDestroy');
+      } else {
+        // Check decorator metadata
+        const constructor = (instance as any)?.constructor;
+        const decoratorLifecycle = constructor?.__di_lifecycle__;
+        if (decoratorLifecycle?.preDestroy) {
+          await this.executeLifecycleHook(instance, decoratorLifecycle.preDestroy, 'preDestroy');
+        }
+      }
+    }
+
+    // Execute any registered destruction callbacks
+    for (const callbacks of this.destructionCallbacks.values()) {
+      for (const callback of callbacks) {
+        try {
+          await callback();
+        } catch (error) {
+          console.error('Destruction callback failed:', error);
+        }
+      }
+    }
+
+    // Clear all maps
+    this.instances.clear();
+    this.destructionCallbacks.clear();
   }
 }
