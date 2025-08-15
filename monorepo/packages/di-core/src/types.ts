@@ -10,7 +10,6 @@ export interface ServiceMetadata {
   profiles?: string[]; // Environment profiles
   primary?: boolean; // Primary implementation when multiple exist
   qualifier?: string; // Qualifier for disambiguation
-  lifecycle?: ServiceLifecycleMetadata; // Lifecycle hook metadata
 }
 
 export interface DIContainer {
@@ -153,57 +152,28 @@ export interface EnvironmentConfig {
   mocks: { [interfaceName: string]: any }; // Interface -> mock implementation
 }
 
-// Lifecycle hook metadata
-export interface LifecycleHookMetadata {
-  methodName: string;
-  method: Function;
-  async: boolean;
+// Lifecycle Interfaces (Angular-style)
+// Service-level lifecycle hooks
+export interface OnInit {
+  onInit(): void | Promise<void>;
 }
 
-export interface ServiceLifecycleMetadata {
-  postConstruct?: LifecycleHookMetadata;
-  preDestroy?: LifecycleHookMetadata;
-  onMount?: LifecycleHookMetadata;
-  onUnmount?: LifecycleHookMetadata;
+export interface OnDestroy {
+  onDestroy(): void | Promise<void>;
+}
+
+// Component-level lifecycle hooks  
+export interface OnMount {
+  onMount(options?: { signal?: AbortSignal }): void | Promise<void>;
+}
+
+export interface OnUnmount {
+  onUnmount(): void | Promise<void>;
 }
 
 // Lifecycle hook options for component-scoped services
 export interface ComponentLifecycleOptions {
   signal?: AbortSignal; // For cancellation on unmount
-}
-
-// Interface for services that implement lifecycle hooks
-export interface HasPostConstruct {
-  __postConstruct?(): void | Promise<void>;
-}
-
-export interface HasPreDestroy {
-  __preDestroy?(): void | Promise<void>;
-}
-
-export interface HasComponentLifecycle {
-  __onMount?(options: ComponentLifecycleOptions): void | Promise<void>;
-  __onUnmount?(): void | Promise<void>;
-}
-
-// Combined lifecycle interface
-export interface HasLifecycle extends HasPostConstruct, HasPreDestroy, HasComponentLifecycle {}
-
-// Lifecycle execution context
-export interface LifecycleExecutionContext {
-  serviceName: string;
-  scope: "singleton" | "transient" | "scoped";
-  instance: any;
-  metadata: ServiceLifecycleMetadata;
-  container: DIContainer;
-}
-
-// Lifecycle execution result
-export interface LifecycleExecutionResult {
-  success: boolean;
-  error?: Error;
-  executionTime: number;
-  phase: "postConstruct" | "preDestroy" | "onMount" | "onUnmount";
 }
 
 // Debug information structure

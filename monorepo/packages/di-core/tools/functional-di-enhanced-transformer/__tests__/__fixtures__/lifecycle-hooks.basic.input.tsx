@@ -2,22 +2,19 @@
 import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
 
-// Service interfaces with lifecycle hooks
+// Clean business interfaces (no lifecycle methods)
 export interface UserServiceInterface {
   user: { name: string; id: string };
   loadUserData(): Promise<void>;
-  onMount?(options: { signal: AbortSignal }): void;
-  onUnmount?(): void;
 }
 
 export interface TimerServiceInterface {
   startTimer(): void;
   stopTimer(): void;
-  onMount?(): void;
-  onUnmount?(): void;
+  isRunning(): boolean;
 }
 
-// Component that uses services with lifecycle hooks
+// Component that uses services (transformer will add lifecycle hooks)
 export function UserProfileWithLifecycle({
   userService,
   timerService
@@ -28,7 +25,7 @@ export function UserProfileWithLifecycle({
   return (
     <div>
       <h1>{userService.user.name}</h1>
-      <p>Timer running: {timerService.isRunning ? 'Yes' : 'No'}</p>
+      <p>Timer running: {timerService.isRunning() ? 'Yes' : 'No'}</p>
     </div>
   );
 }

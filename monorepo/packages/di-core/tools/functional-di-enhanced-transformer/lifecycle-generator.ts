@@ -20,9 +20,8 @@ export interface ServiceLifecycleInfo {
   serviceName: string;
   hasOnMount: boolean;
   hasOnUnmount: boolean;
-  hasPostConstruct: boolean;
-  hasPreDestroy: boolean;
-  isAsync: boolean;
+  hasOnInit: boolean;
+  hasOnDestroy: boolean;
 }
 
 export class LifecycleGenerator {
@@ -61,124 +60,49 @@ export class LifecycleGenerator {
   }
 
   /**
-   * Analyze dependencies to determine which have lifecycle hooks
+   * Analyze dependencies - for now, assume all services might need lifecycle hooks
+   * The actual interface checking will happen at runtime
    */
   private analyzeServiceLifecycle(dependencies: ExtractedDependency[]): ServiceLifecycleInfo[] {
-    const servicesWithLifecycle: ServiceLifecycleInfo[] = [];
-
-    for (const dep of dependencies) {
-      // In a real implementation, we would analyze the service class to detect
-      // @OnMount, @OnUnmount, @PostConstruct, @PreDestroy decorators
-      // For now, we'll simulate this analysis
-      const lifecycleInfo = this.detectServiceLifecycleMetadata(dep);
-      
-      if (this.hasAnyLifecycleHook(lifecycleInfo)) {
-        servicesWithLifecycle.push(lifecycleInfo);
-      }
-    }
-
-    return servicesWithLifecycle;
+    return dependencies.map(dep => ({
+      serviceName: dep.serviceKey, // Use the service key (parameter name)
+      hasOnMount: true, // Assume all services might have lifecycle hooks
+      hasOnUnmount: true, // Runtime check will determine actual implementation
+      hasOnInit: true,
+      hasOnDestroy: true
+    }));
   }
 
   /**
-   * Detect lifecycle metadata for a service (placeholder - would analyze actual service class)
-   */
-  private detectServiceLifecycleMetadata(dependency: ExtractedDependency): ServiceLifecycleInfo {
-    // TODO: Implement actual analysis of service class for lifecycle decorators
-    // This would involve:
-    // 1. Reading the service implementation file
-    // 2. Parsing the class for @OnMount, @OnUnmount, @PostConstruct, @PreDestroy
-    // 3. Determining if methods are async
-    
-    // For now, return simulated data based on naming patterns
-    const serviceName = dependency.localVariableName || dependency.interfaceName;
-    
-    return {
-      serviceName,
-      hasOnMount: this.serviceNameSuggestsLifecycle(serviceName, 'mount'),
-      hasOnUnmount: this.serviceNameSuggestsLifecycle(serviceName, 'unmount'),
-      hasPostConstruct: this.serviceNameSuggestsLifecycle(serviceName, 'init'),
-      hasPreDestroy: this.serviceNameSuggestsLifecycle(serviceName, 'cleanup'),
-      isAsync: this.serviceNameSuggestsAsync(serviceName)
-    };
-  }
-
-  /**
-   * Simple heuristic to detect if service name suggests lifecycle usage
-   */
-  private serviceNameSuggestsLifecycle(serviceName: string, type: string): boolean {
-    const name = serviceName.toLowerCase();
-    switch (type) {
-      case 'mount':
-        return name.includes('timer') || name.includes('polling') || name.includes('subscription');
-      case 'unmount':
-        return name.includes('timer') || name.includes('polling') || name.includes('subscription');
-      case 'init':
-        return name.includes('data') || name.includes('cache') || name.includes('api');
-      case 'cleanup':
-        return name.includes('connection') || name.includes('subscription') || name.includes('timer');
-      default:
-        return false;
-    }
-  }
-
-  /**
-   * Simple heuristic to detect if service might have async lifecycle methods
-   */
-  private serviceNameSuggestsAsync(serviceName: string): boolean {
-    const name = serviceName.toLowerCase();
-    return name.includes('api') || name.includes('data') || name.includes('fetch') || name.includes('load');
-  }
-
-  /**
-   * Check if service has any lifecycle hooks
-   */
-  private hasAnyLifecycleHook(info: ServiceLifecycleInfo): boolean {
-    return info.hasOnMount || info.hasOnUnmount || info.hasPostConstruct || info.hasPreDestroy;
-  }
-
-  /**
-   * Generate the useEffect hook code
+   * Generate the useEffect hook code - simple and clean pattern
    */
   private generateUseEffectCode(services: ServiceLifecycleInfo[]): string {
     const mountCalls: string[] = [];
     const unmountCalls: string[] = [];
-    const hasAsyncCalls = services.some(s => s.isAsync);
 
-    // Generate mount calls
+    // Generate mount calls for all services (runtime will check if method exists)
     for (const service of services) {
-      if (service.hasOnMount) {
-        if (hasAsyncCalls && this.options.generateAbortController) {
-          mountCalls.push(
-            `    ${service.serviceName}.onMount?.({ signal: abortController.signal });`
-          );
-        } else {
-          mountCalls.push(`    ${service.serviceName}.onMount?.();`);
-        }
-      }
-      
-      if (service.hasPostConstruct) {
-        // PostConstruct is typically called during service creation, not in useEffect
-        // But for component-scoped services, we might call it here
-        mountCalls.push(`    ${service.serviceName}.__postConstruct?.();`);
+      if (this.options.generateAbortController) {
+        mountCalls.push(`    ${service.serviceName}?.onMount?.({ signal: abortController.signal });`);
+      } else {
+        mountCalls.push(`    ${service.serviceName}?.onMount?.();`);
       }
     }
 
     // Generate unmount calls
     for (const service of services) {
-      if (service.hasOnUnmount) {
-        unmountCalls.push(`      ${service.serviceName}.onUnmount?.();`);
-      }
-      
-      if (service.hasPreDestroy) {
-        unmountCalls.push(`      ${service.serviceName}.__preDestroy?.();`);
-      }
+      unmountCalls.push(`      ${service.serviceName}?.onUnmount?.();`);
     }
 
-    // Build the useEffect code
+    // Only generate if we have services to handle
+    if (mountCalls.length === 0 && unmountCalls.length === 0) {
+      return '';
+    }
+
+    // Build the clean useEffect code
     let useEffectCode = '';
 
-    if (hasAsyncCalls && this.options.generateAbortController) {
+    if (this.options.generateAbortController) {
       useEffectCode = `
   React.useEffect(() => {
     const abortController = new AbortController();

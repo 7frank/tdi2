@@ -4,10 +4,11 @@ import type {
   DIContainer, 
   ServiceFactory, 
   DIMap, 
-  ServiceLifecycleMetadata,
-  LifecycleExecutionContext,
-  LifecycleExecutionResult,
-  ComponentLifecycleOptions
+  ComponentLifecycleOptions,
+  OnInit,
+  OnDestroy,
+  OnMount,
+  OnUnmount
 } from './types';
 
 export class CompileTimeDIContainer implements DIContainer {
@@ -18,7 +19,6 @@ export class CompileTimeDIContainer implements DIContainer {
     string | symbol,
     "singleton" | "transient" | "scoped"
   >();
-  private lifecycleMetadata = new Map<string | symbol, ServiceLifecycleMetadata>();
   private destructionCallbacks = new Map<string | symbol, (() => void | Promise<void>)[]>();
   private parent?: DIContainer;
 
@@ -136,8 +136,8 @@ export class CompileTimeDIContainer implements DIContainer {
       throw new Error(`Service not registered: ${String(token)}`);
     }
 
-    // Execute @PostConstruct lifecycle hook after dependency injection
-    await this.executePostConstructLifecycle(token, instance);
+    // Execute OnInit lifecycle hook after dependency injection
+    await this.executeOnInitLifecycle(instance);
 
     return instance;
   }
@@ -179,8 +179,8 @@ export class CompileTimeDIContainer implements DIContainer {
       throw new Error(`Service not registered: ${String(token)}`);
     }
 
-    // Execute @PostConstruct lifecycle hook synchronously (for non-async methods)
-    this.executePostConstructLifecycleSync(token, instance);
+    // Execute OnInit lifecycle hook synchronously (for non-async methods)
+    this.executeOnInitLifecycleSync(instance);
 
     return instance;
   }
@@ -308,109 +308,39 @@ export class CompileTimeDIContainer implements DIContainer {
     return this.services.get(tokenKey);
   }
 
-  // Lifecycle management methods
-  registerWithLifecycle<T>(
-    token: string | symbol,
-    implementation: any,
-    scope: "singleton" | "transient" | "scoped" = "singleton",
-    lifecycle?: ServiceLifecycleMetadata
-  ): void {
-    this.register(token, implementation, scope);
-    if (lifecycle) {
-      const tokenKey = this.getTokenKey(token);
-      this.lifecycleMetadata.set(tokenKey, lifecycle);
-    }
-  }
-
-  private async executePostConstructLifecycle<T>(token: string | symbol, instance: T): Promise<void> {
-    const tokenKey = this.getTokenKey(token);
-    const lifecycle = this.lifecycleMetadata.get(tokenKey);
-    
-    if (!lifecycle?.postConstruct) {
-      // Check if instance has lifecycle metadata from decorators
-      const constructor = (instance as any)?.constructor;
-      const decoratorLifecycle = constructor?.__di_lifecycle__;
-      if (decoratorLifecycle?.postConstruct) {
-        await this.executeLifecycleHook(instance, decoratorLifecycle.postConstruct, 'postConstruct');
+  // Interface-based lifecycle management
+  private async executeOnInitLifecycle<T>(instance: T): Promise<void> {
+    if (this.implementsInterface<OnInit>(instance, 'onInit')) {
+      try {
+        await (instance as any).onInit();
+      } catch (error) {
+        console.error('OnInit lifecycle hook failed:', error);
       }
-      return;
     }
-
-    await this.executeLifecycleHook(instance, lifecycle.postConstruct, 'postConstruct');
   }
 
-  private executePostConstructLifecycleSync<T>(token: string | symbol, instance: T): void {
-    const tokenKey = this.getTokenKey(token);
-    const lifecycle = this.lifecycleMetadata.get(tokenKey);
-    
-    if (!lifecycle?.postConstruct) {
-      // Check if instance has lifecycle metadata from decorators
-      const constructor = (instance as any)?.constructor;
-      const decoratorLifecycle = constructor?.__di_lifecycle__;
-      if (decoratorLifecycle?.postConstruct) {
-        this.executeLifecycleHookSync(instance, decoratorLifecycle.postConstruct, 'postConstruct');
-      }
-      return;
-    }
-
-    this.executeLifecycleHookSync(instance, lifecycle.postConstruct, 'postConstruct');
-  }
-
-  private async executeLifecycleHook<T>(
-    instance: T, 
-    hook: { methodName: string; method: Function; async: boolean }, 
-    phase: string
-  ): Promise<void> {
-    try {
-      const method = (instance as any)[hook.methodName];
-      if (typeof method === 'function') {
-        if (hook.async) {
-          await method.call(instance);
-        } else {
-          method.call(instance);
+  private executeOnInitLifecycleSync<T>(instance: T): void {
+    if (this.implementsInterface<OnInit>(instance, 'onInit')) {
+      try {
+        const result = (instance as any).onInit();
+        // If it returns a promise but we're in sync context, handle it
+        if (result instanceof Promise) {
+          console.warn('Async onInit called in sync context - will execute without waiting');
+          result.catch((error: Error) => {
+            console.error('Async onInit failed:', error);
+          });
         }
+      } catch (error) {
+        console.error('OnInit lifecycle hook failed:', error);
       }
-    } catch (error) {
-      console.error(`Lifecycle hook ${phase} failed for service:`, error);
-    }
-  }
-
-  private executeLifecycleHookSync<T>(
-    instance: T, 
-    hook: { methodName: string; method: Function; async: boolean }, 
-    phase: string
-  ): void {
-    try {
-      const method = (instance as any)[hook.methodName];
-      if (typeof method === 'function' && !hook.async) {
-        method.call(instance);
-      } else if (hook.async) {
-        // For async methods in sync context, execute but don't wait
-        console.warn(`Async lifecycle hook ${phase} called in sync context - will execute without waiting`);
-        method.call(instance).catch((error: Error) => {
-          console.error(`Async lifecycle hook ${phase} failed:`, error);
-        });
-      }
-    } catch (error) {
-      console.error(`Lifecycle hook ${phase} failed for service:`, error);
     }
   }
 
   // Component lifecycle methods for React integration
   async executeOnMountLifecycle<T>(instance: T, options: ComponentLifecycleOptions = {}): Promise<void> {
-    const constructor = (instance as any)?.constructor;
-    const lifecycle = constructor?.__di_lifecycle__;
-    
-    if (lifecycle?.onMount) {
+    if (this.implementsInterface<OnMount>(instance, 'onMount')) {
       try {
-        const method = (instance as any)[lifecycle.onMount.methodName];
-        if (typeof method === 'function') {
-          if (lifecycle.onMount.async) {
-            await method.call(instance, options);
-          } else {
-            method.call(instance, options);
-          }
-        }
+        await (instance as any).onMount(options);
       } catch (error) {
         console.error('OnMount lifecycle hook failed:', error);
       }
@@ -418,38 +348,39 @@ export class CompileTimeDIContainer implements DIContainer {
   }
 
   async executeOnUnmountLifecycle<T>(instance: T): Promise<void> {
-    const constructor = (instance as any)?.constructor;
-    const lifecycle = constructor?.__di_lifecycle__;
-    
-    if (lifecycle?.onUnmount) {
+    if (this.implementsInterface<OnUnmount>(instance, 'onUnmount')) {
       try {
-        const method = (instance as any)[lifecycle.onUnmount.methodName];
-        if (typeof method === 'function') {
-          if (lifecycle.onUnmount.async) {
-            await method.call(instance);
-          } else {
-            method.call(instance);
-          }
-        }
+        await (instance as any).onUnmount();
       } catch (error) {
         console.error('OnUnmount lifecycle hook failed:', error);
       }
     }
   }
 
+  // Helper method to check if instance implements a lifecycle interface
+  private implementsInterface<T>(instance: any, methodName: string): instance is T {
+    return instance && typeof instance[methodName] === 'function';
+  }
+
+  // Check if service has any lifecycle hooks (for transformer use)
+  hasLifecycleHooks(instance: any): { onMount: boolean; onUnmount: boolean; onInit: boolean; onDestroy: boolean } {
+    return {
+      onMount: this.implementsInterface<OnMount>(instance, 'onMount'),
+      onUnmount: this.implementsInterface<OnUnmount>(instance, 'onUnmount'),
+      onInit: this.implementsInterface<OnInit>(instance, 'onInit'),
+      onDestroy: this.implementsInterface<OnDestroy>(instance, 'onDestroy')
+    };
+  }
+
   // Cleanup method for container destruction
   async destroyContainer(): Promise<void> {
-    // Execute @PreDestroy on all singleton instances
+    // Execute OnDestroy on all singleton instances
     for (const [token, instance] of this.instances.entries()) {
-      const lifecycle = this.lifecycleMetadata.get(token);
-      if (lifecycle?.preDestroy) {
-        await this.executeLifecycleHook(instance, lifecycle.preDestroy, 'preDestroy');
-      } else {
-        // Check decorator metadata
-        const constructor = (instance as any)?.constructor;
-        const decoratorLifecycle = constructor?.__di_lifecycle__;
-        if (decoratorLifecycle?.preDestroy) {
-          await this.executeLifecycleHook(instance, decoratorLifecycle.preDestroy, 'preDestroy');
+      if (this.implementsInterface<OnDestroy>(instance, 'onDestroy')) {
+        try {
+          await (instance as any).onDestroy();
+        } catch (error) {
+          console.error('OnDestroy lifecycle hook failed:', error);
         }
       }
     }
