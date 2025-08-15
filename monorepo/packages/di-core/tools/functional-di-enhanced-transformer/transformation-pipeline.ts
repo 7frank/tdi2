@@ -389,6 +389,9 @@ export class TransformationPipeline {
     const propertyPath = this.determineOptionalPropertyPath(dependency);
     
     if (!dependency.resolvedImplementation) {
+      // Log for debugging - this helps track which services couldn't be resolved
+      console.error(`❌❌❌ "Could not find implementation for '${dependency.interfaceType}'`, dependency);
+      
       if (dependency.isOptional) {
         // Optional dependency that couldn't be resolved - use optional chaining with useOptionalService fallback
         return [
