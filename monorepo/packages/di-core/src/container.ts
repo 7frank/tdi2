@@ -48,44 +48,81 @@ export class CompileTimeDIContainer implements DIContainer {
 
   resolve<T>(token: string | symbol): T {
     const tokenKey = this.getTokenKey(token);
+    // Check local scope first, then parent scope
+    const scope = this.scopes.get(tokenKey) || this.parent?.getScope(token) || "singleton";
 
-    // Check if already instantiated for singletons
-    if (
-      this.scopes.get(tokenKey) === "singleton" &&
-      this.instances.has(tokenKey)
-    ) {
-      return this.instances.get(tokenKey);
+    // Handle different scopes
+    switch (scope) {
+      case "singleton":
+        // Check if already instantiated for singletons
+        if (this.instances.has(tokenKey)) {
+          return this.instances.get(tokenKey);
+        }
+        // Check parent container for singleton instances
+        if (this.parent && this.parent.has(token)) {
+          const parentInstance = this.parent.resolve<T>(token);
+          // Cache the parent's singleton instance locally for faster access
+          this.instances.set(tokenKey, parentInstance);
+          return parentInstance;
+        }
+        break;
+
+      case "transient":
+        // Always create new instance for transient scope
+        return this.createInstance<T>(token);
     }
 
-    // Check parent container if not found locally
-    if (!this.has(token) && this.parent) {
+    // Check if service exists locally or in parent
+    if (!this.hasLocalService(token) && this.parent) {
+      // For singletons, always delegate to parent
       return this.parent.resolve(token);
     }
 
-    let instance: T;
+    // Create new instance
+    const instance = this.createInstance<T>(token);
+
+    // Store instances only for singleton scope
+    if (scope === "singleton") {
+      this.instances.set(tokenKey, instance);
+    }
+    // Transient instances are never stored
+
+    return instance;
+  }
+
+  private createInstance<T>(token: string | symbol): T {
+    const tokenKey = this.getTokenKey(token);
 
     if (this.factories.has(tokenKey)) {
       // Use generated factory
       const factory = this.factories.get(tokenKey)!;
-      instance = factory();
+      return factory();
     } else if (this.services.has(tokenKey)) {
       // Use constructor
       const constructor = this.services.get(tokenKey);
       if (typeof constructor === "function") {
-        instance = new constructor();
+        return new constructor();
       } else {
-        instance = constructor;
+        return constructor;
       }
+    } else if (this.parent && this.parent.has(token)) {
+      // Service is defined in parent - get the factory/service and create instance
+      if (this.parent.hasFactory(token)) {
+        const factory = this.parent.getFactory(token);
+        return factory();
+      } else if (this.parent.hasService(token)) {
+        const constructor = this.parent.getService(token);
+        if (typeof constructor === "function") {
+          return new constructor();
+        } else {
+          return constructor;
+        }
+      }
+      // Fallback to parent resolve (shouldn't happen but for safety)
+      return this.parent.resolve<T>(token);
     } else {
       throw new Error(`Service not registered: ${String(token)}`);
     }
-
-    // Store singleton instances
-    if (this.scopes.get(tokenKey) === "singleton") {
-      this.instances.set(tokenKey, instance);
-    }
-
-    return instance;
   }
 
   has(token: string | symbol): boolean {
@@ -95,6 +132,16 @@ export class CompileTimeDIContainer implements DIContainer {
       this.services.has(tokenKey) ||
       this.instances.has(tokenKey) ||
       (this.parent?.has(token) ?? false)
+    );
+  }
+
+  // Check if service is registered locally (not including parent)
+  hasLocalService(token: string | symbol): boolean {
+    const tokenKey = this.getTokenKey(token);
+    return (
+      this.factories.has(tokenKey) ||
+      this.services.has(tokenKey) ||
+      this.instances.has(tokenKey)
     );
   }
 
@@ -173,5 +220,31 @@ export class CompileTimeDIContainer implements DIContainer {
   // NEW: Method to check if interface is registered
   hasInterface(interfaceName: string): boolean {
     return this.has(interfaceName);
+  }
+
+  // Helper methods for parent-child scope resolution
+  getScope(token: string | symbol): "singleton" | "transient" | "scoped" | undefined {
+    const tokenKey = this.getTokenKey(token);
+    return this.scopes.get(tokenKey);
+  }
+
+  hasFactory(token: string | symbol): boolean {
+    const tokenKey = this.getTokenKey(token);
+    return this.factories.has(tokenKey);
+  }
+
+  getFactory(token: string | symbol): any {
+    const tokenKey = this.getTokenKey(token);
+    return this.factories.get(tokenKey);
+  }
+
+  hasService(token: string | symbol): boolean {
+    const tokenKey = this.getTokenKey(token);
+    return this.services.has(tokenKey);
+  }
+
+  getService(token: string | symbol): any {
+    const tokenKey = this.getTokenKey(token);
+    return this.services.get(tokenKey);
   }
 }

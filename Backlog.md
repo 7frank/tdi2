@@ -1,13 +1,56 @@
 # Backlog
 
-## unordered important features
-
-- qualifier maybe already implemented due to not necessary with generic ionterfaces and no type reasure in ts
-- scoped
-- confugration bean
-- mockbean
-
 ## ordered log
+
+### [❌] add di-testing to basic example
+
+### [❌] @Scoped singleton|instance default singleton without settings scope
+
+### [❌] fix tests
+
+10 tests failed:
+✗ FunctionalDIEnhancedTransformer > Feature: Inline Injection Markers > Given components with inline service definitions > When component uses inline services with destructuring, Then should transform correctly [49.00ms]
+✗ FunctionalDIEnhancedTransformer > Feature: Inline Injection Markers > Given components with inline service definitions > When component uses inline services without destructuring, Then should transform correctly [24.00ms]
+✗ FunctionalDIEnhancedTransformer > Feature: Inline Injection Markers > Given components with inline service definitions > When component has all required services, Then should use useService for all [18.00ms]
+✗ FunctionalDIEnhancedTransformer > Feature: Separate Interface Definitions > Given components with separate interface definitions > When component uses separate interface with destructuring, Then should transform correctly [12.00ms]
+✗ FunctionalDIEnhancedTransformer > Feature: Separate Interface Definitions > Given components with separate interface definitions > When arrow function uses separate interface, Then should transform correctly [9.00ms]
+✗ FunctionalDIEnhancedTransformer > Feature: Edge Cases and Error Handling > Given components with edge cases > When component has mixed DI and non-DI services, Then should transform only DI services [6.00ms]
+✗ FunctionalDIEnhancedTransformer > Feature: Service Resolution and Key Sanitization > Given different interface types > When component uses complex generic types, Then should sanitize keys correctly [6.00ms]
+✗ FunctionalDIEnhancedTransformer > Feature: Missing Dependencies Handling > Given services that cannot be resolved > When required dependency is missing, Then should add warning comment [5.00ms]
+✗ FunctionalDIEnhancedTransformer > Feature: Error Recovery and Robustness > Given malformed or problematic components > When component has complex destructuring, Then should handle gracefully [5.00ms]
+✗ Functional DI Transformation Tests > Tests that compile invalid > should resolve generic interface when existing [418.00ms]
+
+161 pass
+7 skip
+10 fail
+544 expect() calls
+
+### [❌] @Configration "bean"
+
+> for things we don't own
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public PaymentService paymentService() {
+        return new PaymentService();
+    }
+
+}
+
+### handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
+
+> test with local instead of npm ?
+> maybe by setting these otions
+
+```
+"compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@tdi2/di-core/*": ["./src/*"]
+    },
+```
 
 ### [❌] focus on meaningful test cases and create snapshot tests for failing scenarios that we want to support
 
@@ -18,40 +61,6 @@
 - both should provide similar experience
   - side by side comparision of source and generated
   - working DI (This might be still ahrd because 2 different packages)
-
-### [❌] release di-core 2.3.0 or 2.2.1
-
-- test with basic and enterprise to prevent regressions or at least not bump versions when regressions occur
-
-- maybe separate tsup tools&dist and examples in separate tsup config
-
-- test with local instead of npm ?
-
-```
-"compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@tdi2/di-core/*": ["./src/*"]
-    },
-```
-
-### [❌] restructure, for smaller package sizes
-
-- graph und structur https://claude.ai/chat/ff284e67-cac3-4c5e-a4b1-54fdfe6a8128
-
-### [❌] potential use case, "contracts"
-
--di & contracts https://claude.ai/chat/59abb30a-20c2-48da-9e05-5bf6798310cb
-
-### [❌]improve coding with ai tools
-
-- ai coding tools https://claude.ai/chat/8fc03e1d-4679-4762-931c-4f23f1581f20
-
-### [❌] T_T separate ... each needs to be under 60% ~ 120k token test included, otherwise we loose in the long term
-
-- di-core
-- di-shared
-- di-react
 
 ### [❌] DI bugs & side effects (part 1)
 
@@ -76,7 +85,7 @@ e.g.:
 1 TodoService implements TodoServiceInterface
 2 TodoService implements TodoServiceType
 
-#### [❌] FIXME duplicated keys see generated list of services
+#### [❌] FIXME duplicated keys, see generated list of services
 
 - potential duplicate
 
@@ -118,13 +127,38 @@ export function TodoApp2({
 }: AppProps) {}
 ```
 
-### [❌] testing utilities package
+### [❌] lifecycle
 
-- https://claude.ai/chat/ce705f0a-1f89-4e05-b0cb-3e5655e9c193
+simlarly to angular we should have some form of lifecycle utility
+either as interfaces or decorators. below are the most common ones needed:
 
-- AST should not remove but conditionally inject if service was passed use that if not then inject like before
-- create test utility. that makes creating a config for a test easy
-  - maybe use thing like @Mockbean in test or scope test / integration ...
+- ngOnInit — 80%
+- ngOnDestroy — 60%
+- ngOnChanges — 40%
+
+### [❌] potential use case, "contracts"
+
+> This deserves its own category
+> but also should actually be much lower prio, stays up for the idea itself
+
+-di & contracts https://claude.ai/chat/59abb30a-20c2-48da-9e05-5bf6798310cb
+
+```typescript
+// Meta-Framework APIs
+export interface ComponentLifecycle {
+  onMount?(): Promise<void>;
+  onUnmount?(): Promise<void>;
+  onPropsChanged?(newProps: any, oldProps: any): void;
+}
+```
+
+The idea is that we can create a meta framework similar to luigi or piral and have something like microfrontends with different frameworks mixed.
+
+## ordered (low priority)
+
+### [❌] restructure, for smaller package sizes
+
+- graph und structur https://claude.ai/chat/ff284e67-cac3-4c5e-a4b1-54fdfe6a8128
 
 ### ADR of bundler options
 
@@ -160,7 +194,7 @@ maybe normalization could help
 
 ### [❌] classes vs zustand vanilla inject / maybe both
 
-### [❌] VCS document approach
+### [❌] ViewControllerService document approach
 
 > Common in practice, though not always named "VCS." Frequently used in:
 
@@ -181,9 +215,24 @@ maybe normalization could help
 
 !!! there is a gradient of what works best
 
-### use crossnote cli to render to pdf
+### [❌] separate packages if code base grows
+
+> this would be benefitial for ppl using only the core features with other languages that react
+
+- di-core
+- di-shared
+- di-react
+
+### [❌] use crossnote cli to render to pdf
+
+> we would use this to generate pdf from certain markdown documents that are feature heavy
 
 - https://github.com/7frank/crossnote-cli
+
+> alternatively we can use
+
+https://github.com/quarto-dev
+https://github.com/MartenBE/mkslides
 
 ### [❌] useObservable
 
@@ -379,6 +428,28 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅]improve coding with ai tools
+
+- ai coding tools https://claude.ai/chat/8fc03e1d-4679-4762-931c-4f23f1581f20
+
+### [✅] testing utilities package
+
+- https://claude.ai/chat/ce705f0a-1f89-4e05-b0cb-3e5655e9c193
+
+- AST should not remove but conditionally inject if service was passed use that if not then inject like before
+- create test utility. that makes creating a config for a test easy
+  - maybe use thing like @Mockbean in test or scope test / integration ...
+
+### [✅] qualifier maybe already implemented due to not necessary with generic ionterfaces and no type reasure in ts
+
+### [✅]mockbean
+
+### [✅] release di-core 2.3.0 or 2.2.1
+
+- test with basic and enterprise to prevent regressions or at least not bump versions when regressions occur
+
+- maybe separate tsup tools&dist and examples in separate tsup config
 
 ### [✅] improve testing v2
 

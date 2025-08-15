@@ -68,7 +68,6 @@ describe("Decorator Detection - Baseline Test", () => {
               console.log(`  - @${decoratorName} (kind: ${SyntaxKind[expression.getKind()]}, text: "${expression.getText()}")`);
               
               if (decoratorName === 'Service' || 
-                  decoratorName === 'AutoWireService' ||
                   decoratorName.includes('Service')) {
                 hasServiceDecorator = true;
               }

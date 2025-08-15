@@ -29,6 +29,7 @@ export interface InterfaceImplementation {
   baseClassGeneric?: string;
   stateType?: string; // NEW: The state type this service manages
   serviceInterface?: string; // NEW: The service interface (e.g., AsyncStateService<T>)
+  scope?: "singleton" | "transient" | "scoped"; // NEW: Scope extracted from @Service decorator
 }
 
 export interface ServiceDependency {
