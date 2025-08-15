@@ -11,6 +11,7 @@ import {
 import { PropertyAccessUpdater } from './property-access-updater';
 import { ExtractedDependency } from '../shared/SharedDependencyExtractor';
 import { LifecycleGenerator, LifecycleGenerationOptions } from './lifecycle-generator';
+import type { IntegratedInterfaceResolver } from '../interface-resolver/integrated-interface-resolver';
 
 export interface TransformationPipelineOptions {
   verbose?: boolean;
@@ -18,6 +19,7 @@ export interface TransformationPipelineOptions {
   preserveTypeAnnotations?: boolean;
   enableLifecycleGeneration?: boolean;
   lifecycleOptions?: LifecycleGenerationOptions;
+  interfaceResolver?: IntegratedInterfaceResolver;
 }
 
 export class TransformationPipeline {
@@ -36,7 +38,7 @@ export class TransformationPipeline {
       generateAbortController: true,
       combineMultipleServices: true,
       ...this.options.lifecycleOptions
-    });
+    }, this.options.interfaceResolver);
   }
 
   /**
@@ -132,9 +134,9 @@ export class TransformationPipeline {
     const diStatements: string[] = [];
 
     for (const dep of dependencies) {
-      const statement = this.generateDIHookStatementWithOptionalChaining(dep);
-      if (statement) {
-        diStatements.push(statement);
+      const statements = this.generateDIHookStatementsWithOptionalChaining(dep);
+      if (statements) {
+        diStatements.push(...statements);
       }
     }
 
@@ -382,7 +384,7 @@ export class TransformationPipeline {
   /**
    * Generate DI hook statement with proper optional chaining
    */
-  private generateDIHookStatementWithOptionalChaining(dependency: ExtractedDependency): string | null {
+  private generateDIHookStatementsWithOptionalChaining(dependency: ExtractedDependency): string[] | null {
     // Determine the property path with optional chaining
     const propertyPath = this.determineOptionalPropertyPath(dependency);
     
@@ -399,14 +401,18 @@ export class TransformationPipeline {
       console.error(`❌❌❌ "Could not find implementation for '${dependency.interfaceType}'`,dependency)
      
 
-      return `const ${dependency.serviceKey} = ${propertyPath}; if (!${dependency.serviceKey}) {throw new Error("Could not find implementation for '${dependency.interfaceType}'");}`;
+      return [
+        `const ${dependency.serviceKey} = ${propertyPath}; if (!${dependency.serviceKey}) {throw new Error("Could not find implementation for '${dependency.interfaceType}'");}`
+      ];
     }
 
     const token = dependency.resolvedImplementation.sanitizedKey;
     const hookName = dependency.isOptional ? 'useOptionalService' : 'useService';
     
     // Generate the exact pattern from your expected output
-    return `const ${dependency.serviceKey} = ${propertyPath} ?? (${hookName}('${token}') as unknown as ${dependency.interfaceType});`;
+    return [
+      `const ${dependency.serviceKey} = ${propertyPath} ?? (${hookName}('${token}') as unknown as ${dependency.interfaceType});`
+    ];
   }
 
   /**
