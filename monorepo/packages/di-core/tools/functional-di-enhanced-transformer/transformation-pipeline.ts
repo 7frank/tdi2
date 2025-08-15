@@ -389,21 +389,17 @@ export class TransformationPipeline {
     const propertyPath = this.determineOptionalPropertyPath(dependency);
     
     if (!dependency.resolvedImplementation) {
-      // if (dependency.isOptional) {
-      //   // Optional dependency that couldn't be resolved - use optional chaining
-      //   return `const ${dependency.serviceKey} = ${propertyPath} ?? undefined; // ${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType}`;
-      // } else {
-      //   // Required dependency that couldn't be resolved - use optional chaining with useService fallback
-      //   return `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`;
-      // }
-
-   
-      console.error(`❌❌❌ "Could not find implementation for '${dependency.interfaceType}'`,dependency)
-     
-
-      return [
-        `const ${dependency.serviceKey} = ${propertyPath}; if (!${dependency.serviceKey}) {throw new Error("Could not find implementation for '${dependency.interfaceType}'");}`
-      ];
+      if (dependency.isOptional) {
+        // Optional dependency that couldn't be resolved - use optional chaining with useOptionalService fallback
+        return [
+          `const ${dependency.serviceKey} = ${propertyPath} ?? (useOptionalService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`
+        ];
+      } else {
+        // Required dependency that couldn't be resolved - use optional chaining with useService fallback
+        return [
+          `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`
+        ];
+      }
     }
 
     const token = dependency.resolvedImplementation.sanitizedKey;
