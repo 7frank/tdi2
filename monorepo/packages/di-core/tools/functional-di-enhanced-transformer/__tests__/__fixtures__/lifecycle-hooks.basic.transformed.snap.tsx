@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for UserProfileWithLifecycle
-// Generated: 2025-08-17T08:49:29.023Z
+// Generated: 2025-08-17T09:58:22.562Z
 // Test fixture for lifecycle hooks transformation
 import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
@@ -69,18 +69,6 @@ export function UserProfileWithLifecycle(props: {
     }) {
     const userService = props.userService ?? (useService('UserServiceInterface') as unknown as UserServiceInterface);
     const timerService = props.timerService ?? (useService('TimerServiceInterface') as unknown as TimerServiceInterface);
-    React.useEffect(() => {
-        const abortController = new AbortController();
-        
-        userService?.onMount?.({ signal: abortController.signal });
-        timerService?.onMount?.({ signal: abortController.signal });
-
-        return () => {
-          abortController.abort();
-          userService?.onUnmount?.();
-          timerService?.onUnmount?.();
-        };
-      }, []);
   return (
     <div>
       <h1>{userService.user.name}</h1>

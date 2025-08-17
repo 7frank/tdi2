@@ -10,35 +10,23 @@ import {
 } from 'ts-morph';
 import { PropertyAccessUpdater } from './property-access-updater';
 import { ExtractedDependency } from '../shared/SharedDependencyExtractor';
-import { LifecycleGenerator, LifecycleGenerationOptions } from './lifecycle-generator';
 import type { IntegratedInterfaceResolver } from '../interface-resolver/integrated-interface-resolver';
 
 export interface TransformationPipelineOptions {
   verbose?: boolean;
   generateFallbacks?: boolean;
   preserveTypeAnnotations?: boolean;
-  enableLifecycleGeneration?: boolean;
-  lifecycleOptions?: LifecycleGenerationOptions;
   interfaceResolver?: IntegratedInterfaceResolver;
 }
 
 export class TransformationPipeline {
 
   private propertyUpdater: PropertyAccessUpdater;
-  private lifecycleGenerator: LifecycleGenerator;
 
   constructor(private options: TransformationPipelineOptions = {}) {
-
     this.propertyUpdater = new PropertyAccessUpdater({
       verbose: this.options.verbose
     });
-
-    this.lifecycleGenerator = new LifecycleGenerator({
-      verbose: this.options.verbose,
-      generateAbortController: true,
-      combineMultipleServices: true,
-      ...this.options.lifecycleOptions
-    }, this.options.interfaceResolver);
   }
 
   /**
@@ -115,10 +103,8 @@ export class TransformationPipeline {
     // Step 4: FIXED - Only remove DI-related destructuring, preserve other destructuring
     this.removeOnlyDIDestructuring(func, enhancedDependencies);
 
-    // Step 5: Generate lifecycle hooks (NEW)
-    if (this.options.enableLifecycleGeneration) {
-      this.lifecycleGenerator.generateLifecycleHooks(func, enhancedDependencies, sourceFile);
-    }
+    // Step 5: Lifecycle hooks are now handled automatically in useService() hooks
+    // No code generation needed - lifecycle management is built into the DI system
 
     // Step 6: Validate the transformation
     if (this.options.verbose) {

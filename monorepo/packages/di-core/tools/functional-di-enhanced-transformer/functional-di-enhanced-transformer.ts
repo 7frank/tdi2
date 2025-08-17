@@ -117,18 +117,12 @@ export class FunctionalDIEnhancedTransformer {
       verbose: this.options.verbose
     });
 
-    // NEW: Initialize transformation pipeline with enhanced options including lifecycle
+    // Initialize transformation pipeline with enhanced options
     const pipelineOptions: TransformationPipelineOptions = {
       verbose: this.options.verbose,
       generateFallbacks: options.generateFallbacks !== false, // Default to true
       preserveTypeAnnotations: true,
-      enableLifecycleGeneration: true, // Enable lifecycle hooks by default
-      lifecycleOptions: {
-        verbose: this.options.verbose,
-        generateAbortController: true,
-        combineMultipleServices: true
-      },
-      interfaceResolver: this.interfaceResolver // Pass interface resolver for lifecycle detection
+      interfaceResolver: this.interfaceResolver // Pass interface resolver for dependency resolution
     };
     this.transformationPipeline = new TransformationPipeline(pipelineOptions);
 
