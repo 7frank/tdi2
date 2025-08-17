@@ -106,6 +106,14 @@ export class TransformationTestFramework {
     // Inject mocked dependencies
     (this.transformer as any).project = this.project;
     (this.transformer as any).interfaceResolver = this.mockInterfaceResolver;
+    
+    // Also inject the mock into shared components that use the interface resolver
+    if ((this.transformer as any).typeResolver) {
+      (this.transformer as any).typeResolver.interfaceResolver = this.mockInterfaceResolver;
+    }
+    if ((this.transformer as any).dependencyExtractor?.typeResolver) {
+      (this.transformer as any).dependencyExtractor.typeResolver.interfaceResolver = this.mockInterfaceResolver;
+    }
   }
 
   private setupMockInterfaceResolver(): void {
@@ -147,24 +155,38 @@ export class TransformationTestFramework {
           interfaceName: "UserServiceInterface",
           implementationClass: "UserService",
           sanitizedKey: "UserServiceInterface",
-          filePath: "/src/services/UserService.ts",
+          filePath: "/lifecycle-hooks.basic.tsx", // Service is in the test fixture file
+          isGeneric: false,
+        },
+      ],
+      [
+        "TimerServiceInterface",
+        {
+          interfaceName: "TimerServiceInterface",
+          implementationClass: "TimerService",
+          sanitizedKey: "TimerServiceInterface",
+          filePath: "/lifecycle-hooks.basic.tsx", // Service is in the test fixture file
           isGeneric: false,
         },
       ],
     ]);
 
     this.mockInterfaceResolver = {
-      scanProject: jest.fn().mockResolvedValue(undefined),
-      resolveImplementation: jest.fn((interfaceType: string) => {
-        return commonImplementations.get(interfaceType);
-      }),
-      validateDependencies: jest.fn(() => ({
+      scanProject: async () => undefined,
+      resolveImplementation: (interfaceType: string) => {
+        const result = commonImplementations.get(interfaceType);
+        if (this.options.verbose) {
+          console.log(`🔍 Mock resolveImplementation: ${interfaceType} → ${result ? result.implementationClass : 'not found'}`);
+        }
+        return result;
+      },
+      validateDependencies: () => ({
         isValid: true,
         missingImplementations: [],
         circularDependencies: [],
-      })),
-      getInterfaceImplementations: jest.fn(() => commonImplementations),
-      getServiceDependencies: jest.fn(() => new Map()),
+      }),
+      getInterfaceImplementations: () => commonImplementations,
+      getServiceDependencies: () => new Map(),
     } as any;
   }
 
@@ -863,7 +885,7 @@ export function defineTransformationTest(
 ): () => Promise<void> {
   const framework = new TransformationTestFramework({
     fixtureDir,
-    verbose: false,
+    verbose: false, // Disable verbose now that lifecycle is working
     updateSnapshots: [
       "1",
       "true",

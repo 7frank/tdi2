@@ -42,6 +42,53 @@ export class TransformationPipeline {
   }
 
   /**
+   * Step 0: Enhance dependencies with resolved implementations
+   */
+  private enhanceDependenciesWithResolution(dependencies: ExtractedDependency[]): ExtractedDependency[] {
+    if (this.options.verbose) {
+      console.log(`🔍 Enhancing ${dependencies.length} dependencies with resolution...`);
+      dependencies.forEach(dep => {
+        console.log(`  - ${dep.serviceKey}: ${dep.interfaceType} (resolvedImplementation: ${dep.resolvedImplementation ? 'already set' : 'not set'})`);
+      });
+    }
+
+    if (!this.options.interfaceResolver) {
+      if (this.options.verbose) {
+        console.log('⚠️  No interface resolver available for dependency resolution');
+      }
+      return dependencies;
+    }
+
+    return dependencies.map(dep => {
+      // If already resolved, keep the existing resolution
+      if (dep.resolvedImplementation) {
+        if (this.options.verbose) {
+          console.log(`✅ Keeping existing resolution: ${dep.interfaceType} → ${dep.resolvedImplementation.implementationClass}`);
+        }
+        return dep;
+      }
+
+      // Try to resolve if not already resolved
+      const resolvedImplementation = this.options.interfaceResolver!.resolveImplementation(dep.interfaceType);
+      
+      if (resolvedImplementation) {
+        if (this.options.verbose) {
+          console.log(`✅ Newly resolved ${dep.interfaceType} → ${resolvedImplementation.implementationClass}`);
+        }
+        return {
+          ...dep,
+          resolvedImplementation
+        };
+      } else {
+        if (this.options.verbose) {
+          console.log(`❌ Could not resolve implementation for ${dep.interfaceType}`);
+        }
+        return dep;
+      }
+    });
+  }
+
+  /**
    * FIXED: Complete transformation pipeline that preserves non-DI destructuring
    */
   transformComponent(
@@ -53,26 +100,29 @@ export class TransformationPipeline {
       console.log(`🚀 Starting FIXED transformation pipeline`);
     }
 
+    // Step 0: Enhance dependencies with resolved implementations
+    const enhancedDependencies = this.enhanceDependenciesWithResolution(dependencies);
+
     // Step 1: Normalize parameters (remove destructuring from function signature)
     this.normalizeParameters(func);
 
     // Step 2: FIXED - Generate DI hook calls with proper optional chaining AND preserve non-DI destructuring
-    this.generateDIHookCallsAndPreserveDestructuring(func, dependencies);
+    this.generateDIHookCallsAndPreserveDestructuring(func, enhancedDependencies);
 
     // Step 3: Update property access expressions to use new variables
-    this.propertyUpdater.updatePropertyAccessAdvanced(func, dependencies);
+    this.propertyUpdater.updatePropertyAccessAdvanced(func, enhancedDependencies);
 
     // Step 4: FIXED - Only remove DI-related destructuring, preserve other destructuring
-    this.removeOnlyDIDestructuring(func, dependencies);
+    this.removeOnlyDIDestructuring(func, enhancedDependencies);
 
     // Step 5: Generate lifecycle hooks (NEW)
     if (this.options.enableLifecycleGeneration) {
-      this.lifecycleGenerator.generateLifecycleHooks(func, dependencies, sourceFile);
+      this.lifecycleGenerator.generateLifecycleHooks(func, enhancedDependencies, sourceFile);
     }
 
     // Step 6: Validate the transformation
     if (this.options.verbose) {
-      const validation = this.propertyUpdater.validateUpdates(func, dependencies);
+      const validation = this.propertyUpdater.validateUpdates(func, enhancedDependencies);
       if (!validation.isValid) {
         console.warn('⚠️  Property access validation issues:', validation.issues);
       } else {

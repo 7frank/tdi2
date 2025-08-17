@@ -127,7 +127,8 @@ export class FunctionalDIEnhancedTransformer {
         verbose: this.options.verbose,
         generateAbortController: true,
         combineMultipleServices: true
-      }
+      },
+      interfaceResolver: this.interfaceResolver // Pass interface resolver for lifecycle detection
     };
     this.transformationPipeline = new TransformationPipeline(pipelineOptions);
 

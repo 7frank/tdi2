@@ -42,7 +42,7 @@ export class LifecycleGenerator {
     sourceFile: SourceFile
   ): void {
     // Analyze which services need lifecycle hooks
-    const servicesWithLifecycle = this.analyzeServiceLifecycle(dependencies);
+    const servicesWithLifecycle = this.analyzeServiceLifecycle(dependencies, sourceFile);
     
     if (servicesWithLifecycle.length === 0) {
       if (this.options.verbose) {
@@ -69,11 +69,11 @@ export class LifecycleGenerator {
    * Analyze dependencies to check which ones actually implement lifecycle interfaces
    * Only generate hooks for services that implement OnMount/OnUnmount/OnInit/OnDestroy
    */
-  private analyzeServiceLifecycle(dependencies: ExtractedDependency[]): ServiceLifecycleInfo[] {
+  private analyzeServiceLifecycle(dependencies: ExtractedDependency[], sourceFile: SourceFile): ServiceLifecycleInfo[] {
     const servicesWithLifecycle: ServiceLifecycleInfo[] = [];
 
     for (const dep of dependencies) {
-      const lifecycleInfo = this.checkServiceLifecycleInterfaces(dep);
+      const lifecycleInfo = this.checkServiceLifecycleInterfaces(dep, sourceFile);
       
       // Only include services that actually implement lifecycle interfaces
       if (lifecycleInfo.hasOnMount || lifecycleInfo.hasOnUnmount || lifecycleInfo.hasOnInit || lifecycleInfo.hasOnDestroy) {
@@ -102,7 +102,7 @@ export class LifecycleGenerator {
    * Check if a service implementation actually implements lifecycle interfaces
    * This integrates with the interface resolver to check the actual service class
    */
-  private checkServiceLifecycleInterfaces(dependency: ExtractedDependency): ServiceLifecycleInfo {
+  private checkServiceLifecycleInterfaces(dependency: ExtractedDependency, sourceFile: SourceFile): ServiceLifecycleInfo {
     // Default: no lifecycle interfaces
     let hasOnMount = false;
     let hasOnUnmount = false;  
@@ -120,7 +120,7 @@ export class LifecycleGenerator {
         }
 
         // Use the interface resolver to analyze the service class
-        const lifecycleInterfaces = this.analyzeServiceClassForLifecycleInterfaces(filePath, implementationClass);
+        const lifecycleInterfaces = this.analyzeServiceClassForLifecycleInterfaces(filePath, implementationClass, sourceFile);
         
         hasOnMount = lifecycleInterfaces.hasOnMount;
         hasOnUnmount = lifecycleInterfaces.hasOnUnmount;
@@ -166,10 +166,14 @@ export class LifecycleGenerator {
   }
 
   /**
-   * Analyze a service class file to check for lifecycle interface implementations
+   * Analyze a service class to check for lifecycle interface implementations
    * Returns which lifecycle interfaces are actually implemented
    */
-  private analyzeServiceClassForLifecycleInterfaces(filePath: string, className: string): {
+  private analyzeServiceClassForLifecycleInterfaces(
+    filePath: string, 
+    className: string, 
+    currentSourceFile?: SourceFile
+  ): {
     hasOnMount: boolean;
     hasOnUnmount: boolean;
     hasOnInit: boolean;
@@ -181,9 +185,31 @@ export class LifecycleGenerator {
     let hasOnDestroy = false;
 
     try {
-      // Create a temporary project to analyze the specific file
-      const project = new Project();
-      const sourceFile = project.addSourceFileAtPath(filePath);
+      let sourceFile: SourceFile | undefined;
+
+      // First try to find the class in the current source file (for test scenarios)
+      if (currentSourceFile) {
+        const classDecl = currentSourceFile.getClass(className);
+        if (classDecl) {
+          sourceFile = currentSourceFile;
+          if (this.options.verbose) {
+            console.log(`✅ Found ${className} in current source file`);
+          }
+        }
+      }
+
+      // If not found in current file, try to load the specified file path
+      if (!sourceFile) {
+        try {
+          const project = new Project();
+          sourceFile = project.addSourceFileAtPath(filePath);
+        } catch (error) {
+          if (this.options.verbose) {
+            console.warn(`⚠️  Could not load file ${filePath}, will skip lifecycle analysis`);
+          }
+          return { hasOnMount, hasOnUnmount, hasOnInit, hasOnDestroy };
+        }
+      }
       
       // Find the class declaration
       const classDecl = sourceFile.getClass(className);
