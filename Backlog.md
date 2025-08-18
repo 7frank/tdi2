@@ -3,35 +3,17 @@
 ## ordered log
 
 ### improve documentation
+
 - astro starlight
 - better structure
 - examples in di-test-harness
-- ./docs 
+- ./docs
 - ./monorepo/docs
 - ingore docs/SlideDecks
 - keep minimal doku in packages,apps,monorepo root, and root
-- consistent example accross all documentation "ecommerce application" 
-
+- consistent example accross all documentation "ecommerce application"
 
 ### [❌] add di-testing to basic example
-
-### [✅] @Scoped singleton|instance default singleton without settings scope
-
-### [✅] fix tests
-
-
-> fix the testing-framework contradictions
-    The issue requires fixing the test framework logic to 
-    2. Keep comments in both snapshot AND actual output
-  ⎿  Found 4 new diagnostic issues in 1 file (ctrl-r to expand)
-
-
-10 tests failed:
-
-161 pass
-7 skip
-10 fail
-544 expect() calls
 
 ### [❌] @Configration "bean"
 
@@ -436,6 +418,12 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] @Scoped singleton|instance default singleton without settings scope
+
+### [✅] fix tests
+
+> fixed most tests
 
 ### [✅]improve coding with ai tools
 
