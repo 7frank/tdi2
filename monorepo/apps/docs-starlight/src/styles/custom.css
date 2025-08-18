@@ -1,0 +1,154 @@
+/* TDI2 Documentation Custom Styles */
+
+:root {
+  --tdi2-primary: #2563eb;
+  --tdi2-primary-dark: #1d4ed8;
+  --tdi2-accent: #f59e0b;
+  --tdi2-accent-dark: #d97706;
+}
+
+/* Code blocks with TDI2 branding */
+.expressive-code {
+  --ec-brdRad: 8px;
+  margin: 1.5rem 0;
+}
+
+/* Enhanced cards for feature highlights */
+.feature-highlight {
+  background: linear-gradient(135deg, var(--tdi2-primary), var(--tdi2-primary-dark));
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 2rem 0;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.feature-highlight h3 {
+  margin-top: 0;
+  color: white;
+}
+
+.feature-highlight ul {
+  list-style: none;
+  padding: 0;
+}
+
+.feature-highlight li {
+  padding: 0.5rem 0;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.feature-highlight li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--tdi2-accent);
+  font-weight: bold;
+}
+
+/* Example containers */
+.example-container {
+  border: 2px solid var(--tdi2-primary);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.example-title {
+  font-weight: 600;
+  color: var(--tdi2-primary);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* Comparison tables */
+table th {
+  background: var(--tdi2-primary);
+  color: white;
+}
+
+table tr:nth-child(even) {
+  background: rgba(37, 99, 235, 0.05);
+}
+
+/* Navigation improvements */
+nav[aria-label="Primary"] a[aria-current="page"] {
+  background: var(--tdi2-primary) !important;
+  color: white !important;
+}
+
+/* Hero section enhancements */
+.hero {
+  text-align: center;
+}
+
+.hero h1 {
+  background: linear-gradient(135deg, var(--tdi2-primary), var(--tdi2-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Badge styles for status indicators */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.badge.complete {
+  background: #10b981;
+  color: white;
+}
+
+.badge.pending {
+  background: #f59e0b;
+  color: white;
+}
+
+.badge.in-progress {
+  background: var(--tdi2-primary);
+  color: white;
+}
+
+/* Code highlighting for TDI2 specific patterns */
+.language-typescript .token.decorator {
+  color: var(--tdi2-accent);
+  font-weight: bold;
+}
+
+.language-typescript .token.class-name {
+  color: var(--tdi2-primary);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .feature-highlight {
+    margin: 1rem 0;
+    padding: 1rem;
+  }
+  
+  .example-container {
+    margin: 1rem 0;
+    padding: 0.75rem;
+  }
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .feature-highlight {
+  background: linear-gradient(135deg, #1e40af, #1e3a8a);
+}
+
+[data-theme="dark"] .example-container {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: #3b82f6;
+}
+
+[data-theme="dark"] table tr:nth-child(even) {
+  background: rgba(37, 99, 235, 0.1);
+}
