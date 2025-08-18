@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for GenericProcessor
-// Generated: 2025-08-17T08:23:39.092Z
+// Generated: 2025-08-18T07:45:36.176Z
 import { useEffect } from "react";
 import { Inject } from "@tdi2/di-core/markers";
 import { Service } from "@tdi2/di-core/decorators";
@@ -13,13 +13,10 @@ class Foo implements GenericServiceInterface<string> {
   }
 }
 
-// Generic interface example
 interface GenericServiceInterface<T> {
   processed: T;
   process(data: T): Promise<T>;
 }
-
-// Component using generic interface
 export function GenericProcessor<T = any>(props: {
   data: T;
   services: {

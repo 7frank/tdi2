@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for UserProfileWithLifecycle
-// Generated: 2025-08-17T09:58:22.562Z
+// Generated: 2025-08-18T07:45:25.360Z
 // Test fixture for lifecycle hooks transformation
 import React from 'react';
 import type { Inject } from "@tdi2/di-core/markers";
