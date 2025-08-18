@@ -101,7 +101,7 @@ describe('Tests that compile invalid', () => {
 
   // Snapshot update utility test
   describe('Snapshot Management', () => {
-    it.skip('should update snapshots when requested', async () => {
+    it('should update snapshots when requested', async () => {
       const framework = new TransformationTestFramework({
         fixtureDir: FIXTURES_DIR,
         verbose: true,
@@ -117,7 +117,7 @@ describe('Tests that compile invalid', () => {
 
 // Example of testing with specific configuration
 describe('Transformation with Custom Options', () => {
-  it.skip('should handle verbose transformation', async () => {
+  it('should handle verbose transformation', async () => {
     const framework = new TransformationTestFramework({
       fixtureDir: FIXTURES_DIR,
       verbose: true,
