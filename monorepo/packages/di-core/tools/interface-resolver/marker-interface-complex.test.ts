@@ -388,7 +388,7 @@ describe("Enhanced Marker Approach Tests", () => {
           }).not.toThrow();
         });
 
-        it.skip("When type has extremely deep nesting, Then should handle gracefully", () => {
+        it("When type has extremely deep nesting, Then should handle gracefully", () => {
           // Given - Configure with very low max depth for testing
           const testExtractor = new EnhancedDependencyExtractor(
             {
@@ -418,9 +418,9 @@ describe("Enhanced Marker Approach Tests", () => {
           );
           const endTime = Date.now();
 
-          // Then
-          expect(dependencies).toHaveLength(1);
-          expect(dependencies[0].serviceKey).toBe("deepService");
+          // Then - Should find NO dependencies due to depth limit (maxDepth: 3)
+          // The service is nested 10+ levels deep, which exceeds the depth limit
+          expect(dependencies).toHaveLength(0);
 
           // Should complete quickly due to depth limiting
           expect(endTime - startTime).toBeLessThan(1000); // Should complete in under 1 second
@@ -434,7 +434,7 @@ describe("Enhanced Marker Approach Tests", () => {
           );
         });
 
-        it.skip("When disabling circular detection, Then should rely only on depth limiting", () => {
+        it("When disabling circular detection, Then should rely only on depth limiting", () => {
           // Given - Configure with circular detection disabled
           const testExtractor = new EnhancedDependencyExtractor(
             {
@@ -462,8 +462,9 @@ describe("Enhanced Marker Approach Tests", () => {
             sourceFile
           );
 
-          // Then
-          expect(dependencies).toHaveLength(1);
+          // Then - Should find NO dependencies due to depth limit (maxDepth: 8)
+          // The service is nested 10+ levels deep, which still exceeds the depth limit
+          expect(dependencies).toHaveLength(0);
 
           const stats = testExtractor.getExtractionStats();
           expect(stats.circularProtectionConfig.enableCircularDetection).toBe(

@@ -117,15 +117,6 @@ export function TodoApp2({
 }: AppProps) {}
 ```
 
-### [❌] lifecycle
-
-simlarly to angular we should have some form of lifecycle utility
-either as interfaces or decorators. below are the most common ones needed:
-
-- ngOnInit — 80%
-- ngOnDestroy — 60%
-- ngOnChanges — 40%
-
 ### [❌] potential use case, "contracts"
 
 > This deserves its own category
@@ -418,6 +409,16 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] lifecycle
+
+simlarly to angular we should have some form of lifecycle utility
+either as interfaces or decorators. below are the most common ones needed:
+
+- ✅ ngOnInit — 80%
+- ✅ ngOnDestroy — 60%
+- ✅ mount/unmount
+
 
 ### [✅] @Scoped singleton|instance default singleton without settings scope
 
