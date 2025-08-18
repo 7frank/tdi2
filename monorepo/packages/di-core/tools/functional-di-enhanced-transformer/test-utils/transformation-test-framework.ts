@@ -55,6 +55,11 @@ export interface TransformationTestResult {
 
 export const DEFAULT_IGNORE_PATTERNS=[
       {
+        pattern: /\/\/ Auto-generated transformation snapshot for .+/g,
+        replacement: "// Auto-generated transformation snapshot for [COMPONENT]",
+        description: "Auto-generated snapshot header",
+      },
+      {
         pattern: /\/\/ Generated: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g,
         replacement: "// Generated: [TIMESTAMP]",
         description: "ISO timestamp in generated comments",
@@ -748,18 +753,15 @@ ${result.output}`;
 
         if (fs.existsSync(snapshotPath)) {
           const snapshotContent = fs.readFileSync(snapshotPath, "utf8");
-          // Extract just the code part (remove comment headers)
-          const expectedOutput = snapshotContent
-            .split("\n")
-            .filter((line) => !line.startsWith("//"))
-            .join("\n")
-            .trim();
 
-          // Normalize and format both contents before comparison
+          // Generate the same header structure for actual output as snapshots have
+          const actualWithHeaders = this.generateSnapshotContent(result);
+
+          // Normalize and format both contents before comparison (applying ignore patterns)
           const normalizedExpected =
-            this.normalizeAndFormatForComparison(expectedOutput);
+            this.normalizeAndFormatForComparison(snapshotContent.trim());
           const normalizedActual = this.normalizeAndFormatForComparison(
-            result.output.trim()
+            actualWithHeaders.trim()
           );
 
           // Compare transformation output

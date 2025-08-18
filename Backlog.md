@@ -19,6 +19,13 @@
 
 ### [✅] fix tests
 
+
+> fix the testing-framework contradictions
+    The issue requires fixing the test framework logic to 
+    2. Keep comments in both snapshot AND actual output
+  ⎿  Found 4 new diagnostic issues in 1 file (ctrl-r to expand)
+
+
 10 tests failed:
 
 161 pass
