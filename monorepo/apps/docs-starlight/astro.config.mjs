@@ -77,8 +77,21 @@ export default defineConfig({
 							label: '@tdi2/vite-plugin-di',
 							items: [
 								{ label: 'Overview', slug: 'packages/vite-plugin-di/overview' },
+								{ label: 'Configuration', slug: 'packages/vite-plugin-di/configuration' },
 							],
 						},
+						{
+							label: '@tdi2/di-testing',
+							items: [
+								{ label: 'Testing Utilities', slug: 'packages/di-testing/overview' },
+							],
+						},
+					],
+				},
+				{
+					label: 'Advanced Guides',
+					items: [
+						{ label: 'SSR/Next.js Integration', slug: 'guides/advanced/ssr-nextjs' },
 					],
 				},
 				{
