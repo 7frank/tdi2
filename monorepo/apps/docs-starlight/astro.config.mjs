@@ -115,6 +115,18 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Architecture Decisions',
+					items: [
+						{ label: 'ADR Overview', slug: 'adr' },
+						{ label: 'AST Transformation', slug: 'adr/001-ast-transformation' },
+						{ label: 'Valtio State Management', slug: 'adr/002-valtio-state' },
+						{ label: 'Interface-Based Tokens', slug: 'adr/003-interface-tokens' },
+						{ label: 'Build-Time DI', slug: 'adr/004-build-time-di' },
+						{ label: 'Spring Boot Conventions', slug: 'adr/005-spring-boot-conventions' },
+						{ label: 'Client-First Strategy', slug: 'adr/006-client-first-ssr-later' },
+					],
+				},
+				{
 					label: 'Reference',
 					autogenerate: { directory: 'reference' },
 				},

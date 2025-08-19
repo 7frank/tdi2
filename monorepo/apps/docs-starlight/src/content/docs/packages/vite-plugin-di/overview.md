@@ -18,6 +18,8 @@ The Vite plugin that transforms your TDI2 code at build time, providing automati
   </ul>
 </div>
 
+**🔧 Technical Background**: See [ADR-001: AST Transformation](/adr/001-ast-transformation) and [ADR-004: Build-Time DI](/adr/004-build-time-di) for the design rationale.
+
 ---
 
 ## Installation

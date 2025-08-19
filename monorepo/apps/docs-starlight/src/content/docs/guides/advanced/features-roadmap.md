@@ -5,6 +5,8 @@ description: Complete feature matrix, implementation status, and production read
 
 TDI2 follows Spring Boot conventions for familiar enterprise patterns. This guide covers implemented features, roadmap items, and production readiness assessment.
 
+**📋 Architecture Context**: See [ADR-005: Spring Boot Conventions](/adr/005-spring-boot-conventions) for why TDI2 adopts Spring Boot patterns.
+
 ## Design Motivation
 
 TDI2 addresses fundamental scalability issues in React's original architecture. React was designed as a declarative UI library for small to medium applications. However, as complexity and size increase, different requirements emerge: modularity, exchangeability, testing, and environment-based configuration gain importance. The idiomatic React model (Props, Context, Hooks) no longer scales systematically in these scenarios.

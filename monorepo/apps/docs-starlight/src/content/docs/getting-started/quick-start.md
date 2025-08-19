@@ -13,6 +13,8 @@ Transform your React app from props hell to service-oriented architecture with t
   <p>A complete ProductService with reactive state, automatic dependency injection, and zero-props components. By the end, you'll have a working product catalog with real-time updates.</p>
 </div>
 
+**💡 Why these design choices?** See our [Architecture Decisions](/adr/) for the reasoning behind TDI2's approach.
+
 ---
 
 ## Installation
