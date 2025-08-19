@@ -25,6 +25,14 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Why TDI2?',
+					items: [
+						{ label: 'React\'s Architectural Problems', slug: 'why-tdi2/react-problems' },
+						{ label: 'Pain Points Solutions', slug: 'why-tdi2/pain-points-solutions' },
+						{ label: 'Architecture Principles', slug: 'why-tdi2/architecture-principles' },
+					],
+				},
+				{
 					label: 'Core Patterns',
 					items: [
 						{ label: 'Service Patterns', slug: 'patterns/service-patterns' },
