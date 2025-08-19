@@ -355,13 +355,12 @@ describe("FunctionalDIEnhancedTransformer", () => {
         
         // Should inject DI hooks - FIXED: Account for missing implementations
         expect(transformedFile).toContain("useService('ExampleApiInterface')");
-        // FIXED: Optional missing dependencies become undefined, not useOptionalService calls
-        expect(transformedFile).toContain("const logger = undefined; // Optional dependency not found");
+        // FIXED: Optional missing dependencies use useOptionalService fallbacks
+        expect(transformedFile).toContain("useOptionalService('LoggerInterface')");
         
-        // Should create services object
-        expect(transformedFile).toContain("const services = {");
-        expect(transformedFile).toContain("api,");
-        expect(transformedFile).toContain("logger");
+        // Should create individual service variables with proper fallbacks
+        expect(transformedFile).toContain("const api = props.services?.api");
+        expect(transformedFile).toContain("const logger = props.services?.logger");
         
         // Should remove services from destructuring
         expect(transformedFile).toContain("const { message } = props;");
@@ -381,9 +380,11 @@ describe("FunctionalDIEnhancedTransformer", () => {
         
         expect(transformedFile).toBeDefined();
         expect(transformedFile).toContain("useService('ExampleApiInterface')");
-        // FIXED: Expect undefined for missing CacheInterface implementation
-        expect(transformedFile).toContain("const cache = undefined; // Optional dependency not found");
-        expect(transformedFile).toContain("const services = {");
+        // FIXED: Expect useOptionalService for missing CacheInterface implementation  
+        expect(transformedFile).toContain("useOptionalService('CacheInterface_any')");
+        // Should create individual service variables
+        expect(transformedFile).toContain("const api = props.services?.api");
+        expect(transformedFile).toContain("const cache = props.services?.cache");
       });
 
       it("When component has all required services, Then should use useService for all", async () => {
@@ -428,7 +429,7 @@ describe("FunctionalDIEnhancedTransformer", () => {
           
           if (transformedFile) {
             expect(transformedFile).toContain("useService('ExampleApiInterface')");
-            expect(transformedFile).toContain("const services = { api };");
+            expect(transformedFile).toContain("const api = props.services?.api");
             expect(transformedFile).toContain("const { title } = props;");
             expect(transformedFile).not.toContain("const { title, services } = props;");
           } else {
@@ -455,8 +456,8 @@ describe("FunctionalDIEnhancedTransformer", () => {
           );
           
           if (transformedFile) {
-            expect(transformedFile).toContain("const api = useService('ExampleApiInterface');");
-            expect(transformedFile).toContain("const services = { api };");
+            expect(transformedFile).toContain("const api = props.services?.api ?? (useService('ExampleApiInterface')");
+            expect(transformedFile).toContain("const api = props.services?.api");
           }
         }
         
@@ -568,10 +569,11 @@ describe("FunctionalDIEnhancedTransformer", () => {
         // Should inject DI services
         expect(transformedFile).toContain("useService('ExampleApiInterface')");
         // FIXED: Expect undefined for missing CacheInterface 
-        expect(transformedFile).toContain("const cache = undefined; // Optional dependency not found");
+        expect(transformedFile).toContain("useOptionalService('CacheInterface_any')");
         
         // Should create services object with only DI services
-        expect(transformedFile).toContain("const services = { api, cache };");
+        expect(transformedFile).toContain("const api = props.services?.api");
+        expect(transformedFile).toContain("const cache = props.services?.cache");
       });
     });
   });
@@ -613,7 +615,7 @@ export function ComplexGenerics(props: {
         
         expect(transformedFile).toBeDefined();
         // FIXED: Optional missing dependencies become undefined
-        expect(transformedFile).toContain("const logger = undefined; // Optional dependency not found");
+        expect(transformedFile).toContain("useOptionalService('LoggerInterface')");
       });
     });
   });
@@ -668,7 +670,7 @@ export function MissingDependencies(props: {
         expect(transformedFile).toBeDefined();
         
         // Should handle optional missing dependency gracefully
-        expect(transformedFile).toContain("const missingOptional = undefined; // Optional dependency not found");
+        expect(transformedFile).toContain("useOptionalService('AnotherNonExistentInterface')");
         
         // Should still inject existing dependency
         expect(transformedFile).toContain("useService('ExampleApiInterface')");

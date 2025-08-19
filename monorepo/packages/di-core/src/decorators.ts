@@ -142,6 +142,10 @@ export function Qualifier(qualifier: string): any {
   };
 }
 
+
+// Re-export lifecycle interfaces for easy access
+export type { OnInit, OnDestroy, OnMount, OnUnmount } from './types';
+
 // Legacy support - these will be deprecated in favor of interface resolution
 export {
   Service as LegacyService,

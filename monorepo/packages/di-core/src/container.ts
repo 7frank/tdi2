@@ -1,6 +1,15 @@
 // src/di/container.ts - FIXED to properly load all services
 
-import type { DIContainer, ServiceFactory, DIMap } from './types';
+import type { 
+  DIContainer, 
+  ServiceFactory, 
+  DIMap, 
+  ComponentLifecycleOptions,
+  OnInit,
+  OnDestroy,
+  OnMount,
+  OnUnmount
+} from './types';
 
 export class CompileTimeDIContainer implements DIContainer {
   private services = new Map<string | symbol, any>();
@@ -10,6 +19,7 @@ export class CompileTimeDIContainer implements DIContainer {
     string | symbol,
     "singleton" | "transient" | "scoped"
   >();
+  private destructionCallbacks = new Map<string | symbol, (() => void | Promise<void>)[]>();
   private parent?: DIContainer;
 
   constructor(parent?: DIContainer) {
@@ -69,7 +79,7 @@ export class CompileTimeDIContainer implements DIContainer {
 
       case "transient":
         // Always create new instance for transient scope
-        return this.createInstance<T>(token);
+        return this.createInstanceSync<T>(token);
     }
 
     // Check if service exists locally or in parent
@@ -79,7 +89,7 @@ export class CompileTimeDIContainer implements DIContainer {
     }
 
     // Create new instance
-    const instance = this.createInstance<T>(token);
+    const instance = this.createInstanceSync<T>(token);
 
     // Store instances only for singleton scope
     if (scope === "singleton") {
@@ -90,39 +100,89 @@ export class CompileTimeDIContainer implements DIContainer {
     return instance;
   }
 
-  private createInstance<T>(token: string | symbol): T {
+  private async createInstance<T>(token: string | symbol): Promise<T> {
     const tokenKey = this.getTokenKey(token);
+    let instance: T;
 
     if (this.factories.has(tokenKey)) {
       // Use generated factory
       const factory = this.factories.get(tokenKey)!;
-      return factory();
+      instance = factory();
     } else if (this.services.has(tokenKey)) {
       // Use constructor
       const constructor = this.services.get(tokenKey);
       if (typeof constructor === "function") {
-        return new constructor();
+        instance = new constructor();
       } else {
-        return constructor;
+        instance = constructor;
       }
     } else if (this.parent && this.parent.has(token)) {
       // Service is defined in parent - get the factory/service and create instance
       if (this.parent.hasFactory(token)) {
         const factory = this.parent.getFactory(token);
-        return factory();
+        instance = factory();
       } else if (this.parent.hasService(token)) {
         const constructor = this.parent.getService(token);
         if (typeof constructor === "function") {
-          return new constructor();
+          instance = new constructor();
         } else {
-          return constructor;
+          instance = constructor;
         }
+      } else {
+        // Fallback to parent resolve (shouldn't happen but for safety)
+        instance = this.parent.resolve<T>(token);
       }
-      // Fallback to parent resolve (shouldn't happen but for safety)
-      return this.parent.resolve<T>(token);
     } else {
       throw new Error(`Service not registered: ${String(token)}`);
     }
+
+    // Execute OnInit lifecycle hook after dependency injection
+    await this.executeOnInitLifecycle(instance);
+
+    return instance;
+  }
+
+  // Create instance synchronously for backward compatibility
+  private createInstanceSync<T>(token: string | symbol): T {
+    const tokenKey = this.getTokenKey(token);
+    let instance: T;
+
+    if (this.factories.has(tokenKey)) {
+      // Use generated factory
+      const factory = this.factories.get(tokenKey)!;
+      instance = factory();
+    } else if (this.services.has(tokenKey)) {
+      // Use constructor
+      const constructor = this.services.get(tokenKey);
+      if (typeof constructor === "function") {
+        instance = new constructor();
+      } else {
+        instance = constructor;
+      }
+    } else if (this.parent && this.parent.has(token)) {
+      // Service is defined in parent - get the factory/service and create instance
+      if (this.parent.hasFactory(token)) {
+        const factory = this.parent.getFactory(token);
+        instance = factory();
+      } else if (this.parent.hasService(token)) {
+        const constructor = this.parent.getService(token);
+        if (typeof constructor === "function") {
+          instance = new constructor();
+        } else {
+          instance = constructor;
+        }
+      } else {
+        // Fallback to parent resolve (shouldn't happen but for safety)
+        instance = this.parent.resolve<T>(token);
+      }
+    } else {
+      throw new Error(`Service not registered: ${String(token)}`);
+    }
+
+    // Execute OnInit lifecycle hook synchronously (for non-async methods)
+    this.executeOnInitLifecycleSync(instance);
+
+    return instance;
   }
 
   has(token: string | symbol): boolean {
@@ -246,5 +306,98 @@ export class CompileTimeDIContainer implements DIContainer {
   getService(token: string | symbol): any {
     const tokenKey = this.getTokenKey(token);
     return this.services.get(tokenKey);
+  }
+
+  // Interface-based lifecycle management
+  private async executeOnInitLifecycle<T>(instance: T): Promise<void> {
+    if (this.implementsInterface<OnInit>(instance, 'onInit')) {
+      try {
+        await (instance as any).onInit();
+      } catch (error) {
+        console.error('OnInit lifecycle hook failed:', error);
+      }
+    }
+  }
+
+  private executeOnInitLifecycleSync<T>(instance: T): void {
+    if (this.implementsInterface<OnInit>(instance, 'onInit')) {
+      try {
+        const result = (instance as any).onInit();
+        // If it returns a promise but we're in sync context, handle it
+        if (result instanceof Promise) {
+          console.warn('Async onInit called in sync context - will execute without waiting');
+          result.catch((error: Error) => {
+            console.error('Async onInit failed:', error);
+          });
+        }
+      } catch (error) {
+        console.error('OnInit lifecycle hook failed:', error);
+      }
+    }
+  }
+
+  // Component lifecycle methods for React integration
+  async executeOnMountLifecycle<T>(instance: T, options: ComponentLifecycleOptions = {}): Promise<void> {
+    if (this.implementsInterface<OnMount>(instance, 'onMount')) {
+      try {
+        await (instance as any).onMount(options);
+      } catch (error) {
+        console.error('OnMount lifecycle hook failed:', error);
+      }
+    }
+  }
+
+  async executeOnUnmountLifecycle<T>(instance: T): Promise<void> {
+    if (this.implementsInterface<OnUnmount>(instance, 'onUnmount')) {
+      try {
+        await (instance as any).onUnmount();
+      } catch (error) {
+        console.error('OnUnmount lifecycle hook failed:', error);
+      }
+    }
+  }
+
+  // Helper method to check if instance implements a lifecycle interface
+  private implementsInterface<T>(instance: any, methodName: string): instance is T {
+    return instance && typeof instance[methodName] === 'function';
+  }
+
+  // Check if service has any lifecycle hooks (for transformer use)
+  hasLifecycleHooks(instance: any): { onMount: boolean; onUnmount: boolean; onInit: boolean; onDestroy: boolean } {
+    return {
+      onMount: this.implementsInterface<OnMount>(instance, 'onMount'),
+      onUnmount: this.implementsInterface<OnUnmount>(instance, 'onUnmount'),
+      onInit: this.implementsInterface<OnInit>(instance, 'onInit'),
+      onDestroy: this.implementsInterface<OnDestroy>(instance, 'onDestroy')
+    };
+  }
+
+  // Cleanup method for container destruction
+  async destroyContainer(): Promise<void> {
+    // Execute OnDestroy on all singleton instances
+    for (const [token, instance] of this.instances.entries()) {
+      if (this.implementsInterface<OnDestroy>(instance, 'onDestroy')) {
+        try {
+          await (instance as any).onDestroy();
+        } catch (error) {
+          console.error('OnDestroy lifecycle hook failed:', error);
+        }
+      }
+    }
+
+    // Execute any registered destruction callbacks
+    for (const callbacks of this.destructionCallbacks.values()) {
+      for (const callback of callbacks) {
+        try {
+          await callback();
+        } catch (error) {
+          console.error('Destruction callback failed:', error);
+        }
+      }
+    }
+
+    // Clear all maps
+    this.instances.clear();
+    this.destructionCallbacks.clear();
   }
 }

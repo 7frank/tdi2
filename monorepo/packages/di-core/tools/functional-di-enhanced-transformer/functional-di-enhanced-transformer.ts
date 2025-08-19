@@ -117,11 +117,12 @@ export class FunctionalDIEnhancedTransformer {
       verbose: this.options.verbose
     });
 
-    // NEW: Initialize transformation pipeline with enhanced options
+    // Initialize transformation pipeline with enhanced options
     const pipelineOptions: TransformationPipelineOptions = {
       verbose: this.options.verbose,
       generateFallbacks: options.generateFallbacks !== false, // Default to true
-      preserveTypeAnnotations: true
+      preserveTypeAnnotations: true,
+      interfaceResolver: this.interfaceResolver // Pass interface resolver for dependency resolution
     };
     this.transformationPipeline = new TransformationPipeline(pipelineOptions);
 

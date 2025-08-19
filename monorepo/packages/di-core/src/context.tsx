@@ -29,35 +29,103 @@ export function useDI(): DIContainer {
 }
 
 /**
- * Hook to resolve a service from the DI container
+ * Hook to resolve a service from the DI container with automatic lifecycle management
  */
 export function useService(token: string | symbol) {
   const container = useDI();
-  const [_] = React.useState(proxy(container.resolve(token)));
-  if (_ === undefined) {
-    throw new Error(`Service not found: ${String(token)}`);
-  }
-  useSnapshot(_);
-  return _;
+  const [service] = React.useState(() => {
+    const instance = container.resolve(token);
+    if (instance === undefined) {
+      throw new Error(`Service not found: ${String(token)}`);
+    }
+    return proxy(instance);
+  });
+
+  // Automatic lifecycle management
+  React.useEffect(() => {
+    const abortController = new AbortController();
+    
+    // Execute onMount lifecycle if service implements OnMount interface
+    if (container.hasLifecycleHooks && typeof container.hasLifecycleHooks === 'function') {
+      const lifecycleInfo = container.hasLifecycleHooks(service);
+      if (lifecycleInfo.onMount) {
+        container.executeOnMountLifecycle(service, { signal: abortController.signal })
+          .catch(error => console.error('onMount lifecycle failed:', error));
+      }
+    }
+
+    // Cleanup function for onUnmount lifecycle
+    return () => {
+      abortController.abort();
+      
+      if (container.hasLifecycleHooks && typeof container.hasLifecycleHooks === 'function') {
+        const lifecycleInfo = container.hasLifecycleHooks(service);
+        if (lifecycleInfo.onUnmount) {
+          container.executeOnUnmountLifecycle(service)
+            .catch(error => console.error('onUnmount lifecycle failed:', error));
+        }
+      }
+    };
+  }, []); // Empty dependency array - lifecycle runs once per service instance
+
+  useSnapshot(service);
+  return service;
 }
 
 /**
- * Hook to optionally resolve a service from the DI container
+ * Hook to optionally resolve a service from the DI container with automatic lifecycle management
  * Returns undefined if the service is not registered
  */
 export function useOptionalService<T>(
   token: string | symbol 
 ): T | undefined {
   const container = useDI();
-  try {
-    if (container.has(token)) {
-      return container.resolve<T>(token);
+  const [service] = React.useState(() => {
+    try {
+      if (container.has(token)) {
+        const instance = container.resolve<T>(token);
+        return instance ? proxy(instance as any) : undefined;
+      }
+      return undefined;
+    } catch (error) {
+      console.warn(`Optional service not found: ${String(token)}`);
+      return undefined;
     }
-    return undefined;
-  } catch (error) {
-    console.warn(`Optional service not found: ${String(token)}`);
-    return undefined;
+  });
+
+  // Automatic lifecycle management for optional services
+  React.useEffect(() => {
+    if (!service) return; // No service, no lifecycle
+
+    const abortController = new AbortController();
+    
+    // Execute onMount lifecycle if service implements OnMount interface
+    if (container.hasLifecycleHooks && typeof container.hasLifecycleHooks === 'function') {
+      const lifecycleInfo = container.hasLifecycleHooks(service);
+      if (lifecycleInfo.onMount) {
+        container.executeOnMountLifecycle(service, { signal: abortController.signal })
+          .catch(error => console.error('onMount lifecycle failed:', error));
+      }
+    }
+
+    // Cleanup function for onUnmount lifecycle
+    return () => {
+      abortController.abort();
+      
+      if (container.hasLifecycleHooks && typeof container.hasLifecycleHooks === 'function') {
+        const lifecycleInfo = container.hasLifecycleHooks(service);
+        if (lifecycleInfo.onUnmount) {
+          container.executeOnUnmountLifecycle(service)
+            .catch(error => console.error('onUnmount lifecycle failed:', error));
+        }
+      }
+    };
+  }, []); // Empty dependency array - lifecycle runs once per service instance
+
+  if (service) {
+    useSnapshot(service);
   }
+  return service as T | undefined;
 }
 
 /**

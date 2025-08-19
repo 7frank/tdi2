@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineValueProps
-// Generated: 2025-07-18T10:23:47.666Z
+// Generated: 2025-08-17T07:17:00.885Z
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface, TestStateInterface } from "./shared-types";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -9,7 +9,7 @@ export function InlineValueProps(props: {
     api: Inject<ApiInterface>;
   };
 }) {
-    const api = props.services?.api; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
+    const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
   return <div>{api.getData()}Mixed dependencies component</div>;
 }
 
@@ -18,7 +18,7 @@ export function InlineValueFoo(props: {
     api: Inject<ApiInterface>;
   };
 }) {
-    const api = props.services?.api; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
+    const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
   return <div>{api.getData()}Mixed dependencies component</div>;
 }
 
@@ -27,12 +27,12 @@ export function InlineDestructuredNested(props: {
         api: Inject<ApiInterface>;
       };
     }) {
-    const api = props.services?.api; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
+    const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
   return <div>{api.getData()}Mixed dependencies component</div>;
 }
 
 export function InlineDestructured(props: { api: Inject<ApiInterface> }) {
-    const api = props.api; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
+    const api = props.api ?? (useService('ApiInterface') as unknown as ApiInterface);
   return <div>{api.getData()}Mixed dependencies component</div>;
 }
 
@@ -41,7 +41,7 @@ export function InlineDestProps(props: {
     api: Inject<ApiInterface>;
   };
 }) {
-    const api = props.services?.api; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
+    const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
   return <div>{api.getData()}Mixed dependencies component</div>;
 }
 
@@ -52,8 +52,8 @@ export function InlineDestructured2ndApi(props: {
         state: Inject<TestStateInterface>;
       };
     }) {
-    const api = props.services?.api; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
-    const state = props.services?.state; if (!state) {throw new Error("Could not find implementation for 'TestStateInterface'");}
+    const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
+    const state = props.services?.state ?? (useService('TestStateInterface') as unknown as TestStateInterface);
   return <div>{state.value}Mixed dependencies component</div>;
 }
 
@@ -73,14 +73,14 @@ interface TodoCardProps {
 }
 
 export function TodoCard(props: TodoCardProps) {
-    const api = props.services?.api;
-    const { todo } = props; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
+    const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
+    const { todo } = props;
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
 
 export function TodoCard2(props: TodoCardProps) {
-    const api = props.services?.api;
-    const { todo } = props; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
+    const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
+    const { todo } = props;
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
 
@@ -89,7 +89,7 @@ export function TodoCard2(props: TodoCardProps) {
  *    Note we already had a similar issue with function body destructuring
  */
 export function TodoCard3(props: TodoCardProps) {
-    const api = props.services?.api; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
+    const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
 
@@ -98,6 +98,6 @@ export function TodoCard3(props: TodoCardProps) {
  *    Note we already had a similar issue with function body destructuring
  */
 export function TodoCard4(props: TodoCardProps) {
-    const api = props.services?.api; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
+    const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }

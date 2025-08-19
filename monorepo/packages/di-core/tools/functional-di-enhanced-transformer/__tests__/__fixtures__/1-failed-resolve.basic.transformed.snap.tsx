@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for GenericProcessor
-// Generated: 2025-07-18T10:55:20.261Z
+// Generated: 2025-08-18T18:56:37.473Z
 import { useEffect } from "react";
 import { Inject } from "@tdi2/di-core/markers";
 import { Service } from "@tdi2/di-core/decorators";
@@ -26,8 +26,8 @@ export function GenericProcessor<T = any>(props: {
     processor: Inject<GenericServiceInterface<T>>;
   };
 }) {
-    const processor = props.services?.processor;
-    const { data } = props; if (!processor) {throw new Error("Could not find implementation for 'GenericServiceInterface<T>'");}
+    const processor = props.services?.processor ?? (useService('GenericServiceInterface_T') as unknown as GenericServiceInterface<T>);
+    const { data } = props;
   useEffect(() => {
     processor.process(data);
   }, [data]);

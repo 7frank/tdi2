@@ -53,6 +53,7 @@
     "test:io": "bash -c 'select f in $(find . -type f -name \"*.test.ts\" ); do [ -n \"$f\" ] && exec bun test \"$f\"; done'",
     "build": "tsup  && tsc -p tsconfig.dts.json || true",
     "test": "bun test",
+    "test:update":"UPDATE_SNAPSHOTS=1 bun test --updateSnapshots",
     "lint": "echo 'No linting configured yet'",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",

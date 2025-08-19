@@ -10,11 +10,13 @@ import {
 } from 'ts-morph';
 import { PropertyAccessUpdater } from './property-access-updater';
 import { ExtractedDependency } from '../shared/SharedDependencyExtractor';
+import type { IntegratedInterfaceResolver } from '../interface-resolver/integrated-interface-resolver';
 
 export interface TransformationPipelineOptions {
   verbose?: boolean;
   generateFallbacks?: boolean;
   preserveTypeAnnotations?: boolean;
+  interfaceResolver?: IntegratedInterfaceResolver;
 }
 
 export class TransformationPipeline {
@@ -22,9 +24,55 @@ export class TransformationPipeline {
   private propertyUpdater: PropertyAccessUpdater;
 
   constructor(private options: TransformationPipelineOptions = {}) {
-
     this.propertyUpdater = new PropertyAccessUpdater({
       verbose: this.options.verbose
+    });
+  }
+
+  /**
+   * Step 0: Enhance dependencies with resolved implementations
+   */
+  private enhanceDependenciesWithResolution(dependencies: ExtractedDependency[]): ExtractedDependency[] {
+    if (this.options.verbose) {
+      console.log(`🔍 Enhancing ${dependencies.length} dependencies with resolution...`);
+      dependencies.forEach(dep => {
+        console.log(`  - ${dep.serviceKey}: ${dep.interfaceType} (resolvedImplementation: ${dep.resolvedImplementation ? 'already set' : 'not set'})`);
+      });
+    }
+
+    if (!this.options.interfaceResolver) {
+      if (this.options.verbose) {
+        console.log('⚠️  No interface resolver available for dependency resolution');
+      }
+      return dependencies;
+    }
+
+    return dependencies.map(dep => {
+      // If already resolved, keep the existing resolution
+      if (dep.resolvedImplementation) {
+        if (this.options.verbose) {
+          console.log(`✅ Keeping existing resolution: ${dep.interfaceType} → ${dep.resolvedImplementation.implementationClass}`);
+        }
+        return dep;
+      }
+
+      // Try to resolve if not already resolved
+      const resolvedImplementation = this.options.interfaceResolver!.resolveImplementation(dep.interfaceType);
+      
+      if (resolvedImplementation) {
+        if (this.options.verbose) {
+          console.log(`✅ Newly resolved ${dep.interfaceType} → ${resolvedImplementation.implementationClass}`);
+        }
+        return {
+          ...dep,
+          resolvedImplementation
+        };
+      } else {
+        if (this.options.verbose) {
+          console.log(`❌ Could not resolve implementation for ${dep.interfaceType}`);
+        }
+        return dep;
+      }
     });
   }
 
@@ -40,21 +88,27 @@ export class TransformationPipeline {
       console.log(`🚀 Starting FIXED transformation pipeline`);
     }
 
+    // Step 0: Enhance dependencies with resolved implementations
+    const enhancedDependencies = this.enhanceDependenciesWithResolution(dependencies);
+
     // Step 1: Normalize parameters (remove destructuring from function signature)
     this.normalizeParameters(func);
 
     // Step 2: FIXED - Generate DI hook calls with proper optional chaining AND preserve non-DI destructuring
-    this.generateDIHookCallsAndPreserveDestructuring(func, dependencies);
+    this.generateDIHookCallsAndPreserveDestructuring(func, enhancedDependencies);
 
     // Step 3: Update property access expressions to use new variables
-    this.propertyUpdater.updatePropertyAccessAdvanced(func, dependencies);
+    this.propertyUpdater.updatePropertyAccessAdvanced(func, enhancedDependencies);
 
     // Step 4: FIXED - Only remove DI-related destructuring, preserve other destructuring
-    this.removeOnlyDIDestructuring(func, dependencies);
+    this.removeOnlyDIDestructuring(func, enhancedDependencies);
 
-    // Step 5: Validate the transformation
+    // Step 5: Lifecycle hooks are now handled automatically in useService() hooks
+    // No code generation needed - lifecycle management is built into the DI system
+
+    // Step 6: Validate the transformation
     if (this.options.verbose) {
-      const validation = this.propertyUpdater.validateUpdates(func, dependencies);
+      const validation = this.propertyUpdater.validateUpdates(func, enhancedDependencies);
       if (!validation.isValid) {
         console.warn('⚠️  Property access validation issues:', validation.issues);
       } else {
@@ -116,9 +170,9 @@ export class TransformationPipeline {
     const diStatements: string[] = [];
 
     for (const dep of dependencies) {
-      const statement = this.generateDIHookStatementWithOptionalChaining(dep);
-      if (statement) {
-        diStatements.push(statement);
+      const statements = this.generateDIHookStatementsWithOptionalChaining(dep);
+      if (statements) {
+        diStatements.push(...statements);
       }
     }
 
@@ -366,31 +420,34 @@ export class TransformationPipeline {
   /**
    * Generate DI hook statement with proper optional chaining
    */
-  private generateDIHookStatementWithOptionalChaining(dependency: ExtractedDependency): string | null {
+  private generateDIHookStatementsWithOptionalChaining(dependency: ExtractedDependency): string[] | null {
     // Determine the property path with optional chaining
     const propertyPath = this.determineOptionalPropertyPath(dependency);
     
     if (!dependency.resolvedImplementation) {
-      // if (dependency.isOptional) {
-      //   // Optional dependency that couldn't be resolved - use optional chaining
-      //   return `const ${dependency.serviceKey} = ${propertyPath} ?? undefined; // ${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType}`;
-      // } else {
-      //   // Required dependency that couldn't be resolved - use optional chaining with useService fallback
-      //   return `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`;
-      // }
-
-   
-      console.error(`❌❌❌ "Could not find implementation for '${dependency.interfaceType}'`,dependency)
-     
-
-      return `const ${dependency.serviceKey} = ${propertyPath}; if (!${dependency.serviceKey}) {throw new Error("Could not find implementation for '${dependency.interfaceType}'");}`;
+      // Log for debugging - this helps track which services couldn't be resolved
+      console.error(`❌❌❌ "Could not find implementation for '${dependency.interfaceType}'`, dependency);
+      
+      if (dependency.isOptional) {
+        // Optional dependency that couldn't be resolved - use optional chaining with useOptionalService fallback
+        return [
+          `const ${dependency.serviceKey} = ${propertyPath} ?? (useOptionalService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`
+        ];
+      } else {
+        // Required dependency that couldn't be resolved - use optional chaining with useService fallback
+        return [
+          `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`
+        ];
+      }
     }
 
     const token = dependency.resolvedImplementation.sanitizedKey;
     const hookName = dependency.isOptional ? 'useOptionalService' : 'useService';
     
     // Generate the exact pattern from your expected output
-    return `const ${dependency.serviceKey} = ${propertyPath} ?? (${hookName}('${token}') as unknown as ${dependency.interfaceType});`;
+    return [
+      `const ${dependency.serviceKey} = ${propertyPath} ?? (${hookName}('${token}') as unknown as ${dependency.interfaceType});`
+    ];
   }
 
   /**

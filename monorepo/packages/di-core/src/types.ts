@@ -152,6 +152,30 @@ export interface EnvironmentConfig {
   mocks: { [interfaceName: string]: any }; // Interface -> mock implementation
 }
 
+// Lifecycle Interfaces (Angular-style)
+// Service-level lifecycle hooks
+export interface OnInit {
+  onInit(): void | Promise<void>;
+}
+
+export interface OnDestroy {
+  onDestroy(): void | Promise<void>;
+}
+
+// Component-level lifecycle hooks  
+export interface OnMount {
+  onMount(options?: { signal?: AbortSignal }): void | Promise<void>;
+}
+
+export interface OnUnmount {
+  onUnmount(): void | Promise<void>;
+}
+
+// Lifecycle hook options for component-scoped services
+export interface ComponentLifecycleOptions {
+  signal?: AbortSignal; // For cancellation on unmount
+}
+
 // Debug information structure
 export interface DebugInfo {
   configHash: string;

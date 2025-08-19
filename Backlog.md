@@ -2,28 +2,18 @@
 
 ## ordered log
 
+### improve documentation
+
+- astro starlight
+- better structure
+- examples in di-test-harness
+- ./docs
+- ./monorepo/docs
+- ingore docs/SlideDecks
+- keep minimal doku in packages,apps,monorepo root, and root
+- consistent example accross all documentation "ecommerce application"
+
 ### [❌] add di-testing to basic example
-
-### [❌] @Scoped singleton|instance default singleton without settings scope
-
-### [❌] fix tests
-
-10 tests failed:
-✗ FunctionalDIEnhancedTransformer > Feature: Inline Injection Markers > Given components with inline service definitions > When component uses inline services with destructuring, Then should transform correctly [49.00ms]
-✗ FunctionalDIEnhancedTransformer > Feature: Inline Injection Markers > Given components with inline service definitions > When component uses inline services without destructuring, Then should transform correctly [24.00ms]
-✗ FunctionalDIEnhancedTransformer > Feature: Inline Injection Markers > Given components with inline service definitions > When component has all required services, Then should use useService for all [18.00ms]
-✗ FunctionalDIEnhancedTransformer > Feature: Separate Interface Definitions > Given components with separate interface definitions > When component uses separate interface with destructuring, Then should transform correctly [12.00ms]
-✗ FunctionalDIEnhancedTransformer > Feature: Separate Interface Definitions > Given components with separate interface definitions > When arrow function uses separate interface, Then should transform correctly [9.00ms]
-✗ FunctionalDIEnhancedTransformer > Feature: Edge Cases and Error Handling > Given components with edge cases > When component has mixed DI and non-DI services, Then should transform only DI services [6.00ms]
-✗ FunctionalDIEnhancedTransformer > Feature: Service Resolution and Key Sanitization > Given different interface types > When component uses complex generic types, Then should sanitize keys correctly [6.00ms]
-✗ FunctionalDIEnhancedTransformer > Feature: Missing Dependencies Handling > Given services that cannot be resolved > When required dependency is missing, Then should add warning comment [5.00ms]
-✗ FunctionalDIEnhancedTransformer > Feature: Error Recovery and Robustness > Given malformed or problematic components > When component has complex destructuring, Then should handle gracefully [5.00ms]
-✗ Functional DI Transformation Tests > Tests that compile invalid > should resolve generic interface when existing [418.00ms]
-
-161 pass
-7 skip
-10 fail
-544 expect() calls
 
 ### [❌] @Configration "bean"
 
@@ -126,15 +116,6 @@ export function TodoApp2({
   services: { todoService, appState, notifications },
 }: AppProps) {}
 ```
-
-### [❌] lifecycle
-
-simlarly to angular we should have some form of lifecycle utility
-either as interfaces or decorators. below are the most common ones needed:
-
-- ngOnInit — 80%
-- ngOnDestroy — 60%
-- ngOnChanges — 40%
 
 ### [❌] potential use case, "contracts"
 
@@ -428,6 +409,22 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] lifecycle
+
+simlarly to angular we should have some form of lifecycle utility
+either as interfaces or decorators. below are the most common ones needed:
+
+- ✅ ngOnInit — 80%
+- ✅ ngOnDestroy — 60%
+- ✅ mount/unmount
+
+
+### [✅] @Scoped singleton|instance default singleton without settings scope
+
+### [✅] fix tests
+
+> fixed most tests
 
 ### [✅]improve coding with ai tools
 

@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for DeepDestructuring
-// Generated: 2025-07-18T10:23:49.812Z
+// Generated: 2025-08-17T08:21:50.630Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface, LoggerInterface } from './shared-types';
@@ -23,9 +23,9 @@ export function DeepDestructuring(props: {
     logger?: InjectOptional<LoggerInterface>;
   };
 }) {
-    const api = props.services?.api; if (!api) {throw new Error("Could not find implementation for 'ApiInterface'");}
+    const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
+    const logger = props.services?.logger ?? (useOptionalService('LoggerInterface') as unknown as LoggerInterface);
     const { user: { profile: { settings: { theme, notifications } } }, config: { apiUrl, timeout } } = props;
-    const logger = props.services?.logger; if (!logger) {throw new Error("Could not find implementation for 'LoggerInterface'");}
   React.useEffect(() => {
     logger.log(`Theme: ${theme}, Notifications: ${notifications}`);
     api.configure({ url: apiUrl, timeout });
