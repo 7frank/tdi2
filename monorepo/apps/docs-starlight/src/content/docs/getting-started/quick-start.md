@@ -436,12 +436,11 @@ You should see:
 - **[Testing Guide](../packages/di-core/testing/)** - Test services and components
 
 ### Advanced Topics  
-- **[Enterprise Implementation](../guides/enterprise-implementation/)** - Scale to large teams
-- **[Migration Strategy](../guides/migration-strategy/)** - Migrate existing apps
-- **[Performance Optimization](../guides/performance-optimization/)** - Advanced optimization
+- **[Package Documentation](../packages/di-core/overview/)** - Complete feature reference
+- **[Testing Guide](../packages/di-core/testing/)** - Test services and components
 
 ### Examples
-- **[E-Commerce Case Study](../examples/ecommerce-case-study/overview/)** - Complete working application
+- **[Complete E-Commerce App](https://github.com/7frank/tdi2/tree/main/examples/ecommerce-app)** - Working implementation
 - **[Interactive Demos](https://github.com/7frank/tdi2/tree/main/monorepo/apps/di-test-harness)** - Live code transformations
 
 ---
@@ -477,7 +476,7 @@ You should see:
 
 ### Getting Help
 
-- **[Troubleshooting Guide](../packages/vite-plugin-di/troubleshooting/)** - Common issues and solutions
+- **[Vite Plugin Documentation](../packages/vite-plugin-di/overview/)** - Plugin configuration and troubleshooting
 - **[GitHub Issues](https://github.com/7frank/tdi2/issues)** - Report bugs or ask questions
 - **[Examples Repository](https://github.com/7frank/tdi2/tree/main/examples)** - Working example applications
 

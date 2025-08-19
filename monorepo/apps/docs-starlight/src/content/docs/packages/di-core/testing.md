@@ -596,9 +596,9 @@ global.renderWithDI = (component: ReactElement, container?: DIContainer) => {
 ## Next Steps
 
 ### Essential Reading
-- **[API Reference](./api-reference/)** - Complete testing API documentation
 - **[Service Patterns](../../patterns/service-patterns/)** - Testable service design
 - **[Component Transformation](../../guides/component-transformation/)** - Testing transformed components
+- **[Package Overview](./overview/)** - Core features and concepts
 
 ### Examples
 - **[Complete Test Suite](https://github.com/7frank/tdi2/tree/main/examples/ecommerce-app/src/__tests__)** - Working test examples

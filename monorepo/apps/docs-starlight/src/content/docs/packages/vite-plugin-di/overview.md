@@ -458,9 +458,8 @@ export default defineConfig({
 ## Next Steps
 
 ### Essential Reading
-- **[Configuration Guide](./configuration/)** - Complete configuration reference
-- **[Troubleshooting Guide](./troubleshooting/)** - Common issues and solutions
 - **[DI Core Package](../di-core/overview/)** - Core framework features
+- **[Testing Guide](../di-core/testing/)** - Test with build-time DI
 
 ### Setup Guides
 - **[Quick Start](../../getting-started/quick-start/)** - Complete setup tutorial

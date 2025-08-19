@@ -378,9 +378,8 @@ Design service dependencies as a directed acyclic graph.
 ## Next Steps
 
 ### Essential Reading
-- **[API Reference](./api-reference/)** - Complete API documentation
 - **[Testing Guide](./testing/)** - Test services and components
-- **[Lifecycle Guide](./lifecycle/)** - Service lifecycle management
+- **[Service Patterns](../../patterns/service-patterns/)** - Design robust services
 
 ### Configuration
 - **[Vite Plugin](../vite-plugin-di/overview/)** - Build-time transformation

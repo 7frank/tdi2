@@ -428,7 +428,7 @@ state = {
 ### Examples
 - **[Complete E-Commerce App](https://github.com/7frank/tdi2/tree/main/examples/ecommerce-app)** - Working implementation
 - **[Interactive Demos](https://github.com/7frank/tdi2/tree/main/monorepo/apps/di-test-harness)** - Try patterns live
-- **[Enterprise Examples](../examples/ecommerce-case-study/overview/)** - Advanced patterns
+- **[Package Documentation](../packages/di-core/overview/)** - Complete feature reference
 
 <div class="example-container">
   <div class="example-title">🎯 Key Takeaway</div>
