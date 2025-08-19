@@ -2,27 +2,6 @@
 
 ## ordered log
 
-### [✅] improve documentation
-
-- [✅] adr section
-- [✅] astro starlight
-- [✅] better structure
-
-- [✅] migrate ./docs
-- [✅] migrte ./monorepo/docs
-- [✅] ingore docs/SlideDecks
-- [✅]] keep minimal doku in packages,apps,monorepo root, and root
-- [✅]] consistent example accross all documentation "ecommerce application"
-
-- [✅] we need to review the content
-  - [✅] some metrics are hallucinated
-  - [✅] some comparisions like "we dont need redux bla" anymore outdated
-  - [✅] we need more comparisions e.g. zustandjs
-
-- [✅] search for missing info from original files we are about to delete and check if we should add them somewhere in the new docs
-
-- [✅] search for redunancies
-
 ### [❌] ecommerce example
 
 > our documentation should reference snippets of the actual implementation similar to enterprise example
@@ -38,6 +17,10 @@
   - therefore the docuemtation should reflect that
 - [❌]we need the teaser to be up front, degit and run or tldr or teaser.md should be upfront and should communicate our USP in seconds
   - [❌] our usp is decoupling IMO
+
+### clean up talks/RFP for what value it still has
+
+- maybe we simply delete it
 
 ### research claude code subscription schedulers
 
@@ -441,6 +424,27 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] improve documentation
+
+- [✅] adr section
+- [✅] astro starlight
+- [✅] better structure
+
+- [✅] migrate ./docs
+- [✅] migrte ./monorepo/docs
+- [✅] ingore docs/SlideDecks
+- [✅]] keep minimal doku in packages,apps,monorepo root, and root
+- [✅]] consistent example accross all documentation "ecommerce application"
+
+- [✅] we need to review the content
+  - [✅] some metrics are hallucinated
+  - [✅] some comparisions like "we dont need redux bla" anymore outdated
+  - [✅] we need more comparisions e.g. zustandjs
+
+- [✅] search for missing info from original files we are about to delete and check if we should add them somewhere in the new docs
+
+- [✅] search for redunancies
 
 ### [✅] lifecycle
 
