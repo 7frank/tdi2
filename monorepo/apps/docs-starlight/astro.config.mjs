@@ -49,6 +49,9 @@ export default defineConfig({
 					label: 'Framework Comparisons',
 					items: [
 						{ label: 'Redux vs TDI2', slug: 'comparison/redux-vs-tdi2' },
+						{ label: 'Context API vs TDI2', slug: 'comparison/context-vs-tdi2' },
+						{ label: 'Zustand vs TDI2', slug: 'comparison/zustand-vs-tdi2' },
+						{ label: 'Angular DI vs TDI2', slug: 'comparison/angular-vs-tdi2' },
 					],
 				},
 				{
@@ -58,6 +61,7 @@ export default defineConfig({
 							label: '@tdi2/di-core',
 							items: [
 								{ label: 'Overview', slug: 'packages/di-core/overview' },
+								{ label: 'API Reference', slug: 'packages/di-core/api-reference' },
 								{ label: 'Testing Guide', slug: 'packages/di-core/testing' },
 							],
 						},

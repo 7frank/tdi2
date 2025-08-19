@@ -13,7 +13,14 @@
 - keep minimal doku in packages,apps,monorepo root, and root
 - consistent example accross all documentation "ecommerce application"
 
-### research claude code subscriptin schedulers
+- we need to review the conntent
+  - some metrics are hallucinated
+  - some comparisions like "we dont need redux bla" anymore outdated 
+  - we need more comparisions e.g. zustandjs
+- we are trying to solve a problem
+  - therefore the docuemtation should
+
+### research claude code subscription schedulers
 - https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
 
 - maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
