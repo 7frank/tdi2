@@ -30,6 +30,24 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Packages',
+					items: [
+						{ 
+							label: '@tdi2/di-core',
+							items: [
+								{ label: 'Overview', slug: 'packages/di-core/overview' },
+								{ label: 'Testing Guide', slug: 'packages/di-core/testing' },
+							],
+						},
+						{
+							label: '@tdi2/vite-plugin-di',
+							items: [
+								{ label: 'Overview', slug: 'packages/vite-plugin-di/overview' },
+							],
+						},
+					],
+				},
+				{
 					label: 'Examples',
 					items: [
 						{ label: 'Example Guide', slug: 'guides/example' },
