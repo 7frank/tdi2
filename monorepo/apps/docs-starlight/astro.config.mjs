@@ -60,6 +60,7 @@ export default defineConfig({
 						{ label: 'Context API vs TDI2', slug: 'comparison/context-vs-tdi2' },
 						{ label: 'Zustand vs TDI2', slug: 'comparison/zustand-vs-tdi2' },
 						{ label: 'Angular DI vs TDI2', slug: 'comparison/angular-vs-tdi2' },
+						{ label: 'Svelte vs TDI2', slug: 'comparison/svelte-vs-tdi2' },
 					],
 				},
 				{
@@ -91,6 +92,8 @@ export default defineConfig({
 				{
 					label: 'Advanced Guides',
 					items: [
+						{ label: 'Features & Roadmap', slug: 'guides/advanced/features-roadmap' },
+						{ label: 'Troubleshooting', slug: 'guides/advanced/troubleshooting' },
 						{ label: 'SSR/Next.js Integration', slug: 'guides/advanced/ssr-nextjs' },
 					],
 				},

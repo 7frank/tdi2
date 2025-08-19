@@ -255,6 +255,53 @@
 
 ---
 
+### 🔄 Step 9: Phase 6 - Content Audit & Legacy Cleanup
+
+**Target**: Systematic audit of all existing documentation to capture missing content and clean up deprecated files
+
+#### Phase 6A: Content Audit & Gap Analysis
+- ✅ **Root Files Audit**: Review AST.md, Features.md, PotentialProblems.md, Troubleshooting.md for missing content
+- [ ] **Deep Critique Audit**: Review `/docs/critique/examples/` for detailed analyses missing from react-problems.md
+- [ ] **Principles Audit**: Compare `/docs/principles/` content with architecture-principles.md for gaps
+- [ ] **Pain Points Audit**: Verify `/docs/pain-points/` content fully captured in pain-points-solutions.md
+- ✅ **Missing Comparisons**: Identify additional framework comparisons - Added Svelte vs TDI2
+- [ ] **Whitepaper Audit**: Review `/monorepo/docs/React-Whitepaper.md` for unique technical specifications
+- [ ] **Research Content Audit**: Verify research section completeness against `/monorepo/docs/`
+
+#### Phase 6B: Content Integration
+- [ ] **Enhance React Critique**: Add any missing detailed analyses to `why-tdi2/react-problems.md`
+- [ ] **Expand Architecture Guide**: Add missing SOLID/Clean Architecture details to `why-tdi2/architecture-principles.md`
+- [ ] **Complete Pain Points**: Add specific solution details missing from `why-tdi2/pain-points-solutions.md`
+- ✅ **Additional Comparisons**: Create missing framework comparison pages - Added `comparison/svelte-vs-tdi2.md`
+- ✅ **Features Roadmap**: Create comprehensive features and implementation guide - Added `guides/advanced/features-roadmap.md`
+- ✅ **Troubleshooting Guide**: Create architectural considerations and troubleshooting guide - Added `guides/advanced/troubleshooting.md`
+- [ ] **Historical Perspective**: Add "Why nobody invented this earlier" content if valuable
+
+#### Phase 6C: README & Entry Point Updates
+- [ ] **Root README Update**: Transform into entry point linking to Starlight documentation
+- [ ] **Package README Updates**: Update all package READMEs to link to Starlight package docs
+- [ ] **Example README Updates**: Update example app READMEs to link to relevant Starlight guides
+- [ ] **CLAUDE.md Update**: Update project instructions to reference new Starlight documentation structure
+
+#### Phase 6D: Legacy Documentation Cleanup
+- [ ] **Archive `/docs/` Directory**: After confirming all content migrated to Starlight
+- [ ] **Remove Old NextJS App**: Clean up `/monorepo/apps/docs/` deprecated documentation app
+- [ ] **Clean Duplicate Files**: Remove markdown files superseded by Starlight content
+- [ ] **Update Project Scripts**: Update any documentation-related commands to use Starlight
+- [ ] **Update CI/CD**: Ensure build/deploy processes focus on Starlight documentation
+
+#### Verification Criteria:
+- [ ] All valuable technical content from source files captured in Starlight documentation
+- [ ] No duplicate documentation - single source of truth established
+- [ ] All README files serve as entry points with links to comprehensive Starlight docs
+- [ ] All project references (CLAUDE.md, scripts, CI/CD) point to new documentation system
+- [ ] Complete link validation - all internal/external references work correctly
+- [ ] Search functionality covers all migrated content
+
+**Status**: 🔄 PENDING
+
+---
+
 ## Current Content Inventory
 
 ### Existing Documentation Files:
