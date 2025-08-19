@@ -2,29 +2,37 @@
 
 ## ordered log
 
-### [❌] improve documentation
+### [✅] improve documentation
 
-- [❌] astro starlight
-- [❌] better structure
-- [❌] examples in di-test-harness
-- [❌] migrate ./docs
-- [❌] migrte ./monorepo/docs
-- [❌] ingore docs/SlideDecks
-- [❌] keep minimal doku in packages,apps,monorepo root, and root
-- [❌] consistent example accross all documentation "ecommerce application"
+- [✅] adr section
+- [✅] astro starlight
+- [✅] better structure
 
-- [❌] we need to review the conntent
-  - [❌] some metrics are hallucinated
-  - [❌] some comparisions like "we dont need redux bla" anymore outdated
-  - [❌] we need more comparisions e.g. zustandjs
+- [✅] migrate ./docs
+- [✅] migrte ./monorepo/docs
+- [✅] ingore docs/SlideDecks
+- [✅]] keep minimal doku in packages,apps,monorepo root, and root
+- [✅]] consistent example accross all documentation "ecommerce application"
 
-- [❌] search for redunancies
-- [❌] search for missing info from original files we are about to delete and check if we should add them somewhere in the new docs
+- [✅] we need to review the content
+  - [✅] some metrics are hallucinated
+  - [✅] some comparisions like "we dont need redux bla" anymore outdated
+  - [✅] we need more comparisions e.g. zustandjs
 
-- [❌] is there a clear "roter faden"
-- [❌] are there clear levels beginner / intermediate / advanced
+- [✅] search for missing info from original files we are about to delete and check if we should add them somewhere in the new docs
+
+- [✅] search for redunancies
+
+### [❌] ecommerce example
+
+> our documentation should reference snippets of the actual implementation similar to enterprise example
+
+- links to ecommerce example from documentation
+- links from documentation to "storybook" ladle (maybe a bit too much)
 
 ### [❌] the USP early and let people experience the benefit first hand
+
+- [❌] is there a clear "roter faden" the user should be able to follow that
 
 - [❌] we are trying to solve a problem
   - therefore the docuemtation should reflect that
