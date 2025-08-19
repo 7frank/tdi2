@@ -19,7 +19,14 @@ export default defineConfig({
 					label: 'Getting Started',
 					items: [
 						{ label: 'Overview', slug: 'index' },
-						// More pages will be added as we migrate content
+						{ label: 'Quick Start', slug: 'getting-started/quick-start' },
+					],
+				},
+				{
+					label: 'Core Patterns',
+					items: [
+						{ label: 'Service Patterns', slug: 'patterns/service-patterns' },
+						{ label: 'Component Transformation', slug: 'guides/component-transformation' },
 					],
 				},
 				{
