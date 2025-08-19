@@ -30,6 +30,26 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Architecture',
+					items: [
+						{ label: 'Controller vs Service Pattern', slug: 'guides/architecture/controller-service-pattern' },
+					],
+				},
+				{
+					label: 'Enterprise Guides',
+					items: [
+						{ label: 'Implementation Strategy', slug: 'guides/enterprise/implementation' },
+						{ label: 'Migration Strategy', slug: 'guides/migration/strategy' },
+						{ label: 'Team Onboarding', slug: 'guides/enterprise/onboarding' },
+					],
+				},
+				{
+					label: 'Framework Comparisons',
+					items: [
+						{ label: 'Redux vs TDI2', slug: 'comparison/redux-vs-tdi2' },
+					],
+				},
+				{
 					label: 'Packages',
 					items: [
 						{ 
@@ -50,7 +70,16 @@ export default defineConfig({
 				{
 					label: 'Examples',
 					items: [
+						{ label: 'E-Commerce Case Study', slug: 'examples/ecommerce-case-study' },
 						{ label: 'Example Guide', slug: 'guides/example' },
+					],
+				},
+				{
+					label: 'Research & Analysis',
+					items: [
+						{ label: 'Market Analysis', slug: 'research/market-analysis' },
+						{ label: 'Evaluation Plan', slug: 'research/evaluation-plan' },
+						{ label: 'Clean Architecture Analysis', slug: 'research/clean-architecture-analysis' },
 					],
 				},
 				{

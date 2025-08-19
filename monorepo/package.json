@@ -13,7 +13,10 @@
     "release": "bun run build && changeset publish",
     "ci:version": "changeset version && bun install",
     "ci:publish": "changeset publish",
-    "rm":"find . -maxdepth 3 -type d -name \"node_modules\" -exec rm -rf {} +"
+    "rm":"find . -maxdepth 3 -type d -name \"node_modules\" -exec rm -rf {} +",
+    "docs:dev": "cd apps/docs-starlight && bun run dev",
+    "docs:build": "cd apps/docs-starlight && bun run build",
+    "docs:preview": "cd apps/docs-starlight && bun run preview"
 
   },
   "devDependencies": {

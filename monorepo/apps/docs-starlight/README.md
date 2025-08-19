@@ -1,49 +1,105 @@
-# Starlight Starter Kit: Basics
+# TDI2 Documentation Site
 
 [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
 
-```
-npm create astro@latest -- --template starlight
-```
+This is the official documentation site for TDI2 (TypeScript Dependency Injection Attempt #2), built with [Starlight](https://starlight.astro.build/), a modern documentation framework.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## 🚀 Quick Start
 
-## 🚀 Project Structure
-
-Inside of your Astro + Starlight project, you'll see the following folders and files:
-
-```
-.
-├── public/
-├── src/
-│   ├── assets/
-│   ├── content/
-│   │   └── docs/
-│   └── content.config.ts
-├── astro.config.mjs
-├── package.json
-└── tsconfig.json
+```bash
+cd monorepo/apps/docs-starlight
+bun install
+bun run dev
 ```
 
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
+Visit `http://localhost:4321` to view the documentation site.
 
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
+## 📖 Documentation Overview
 
-Static assets, like favicons, can be placed in the `public/` directory.
+### Getting Started
+- **[Quick Start](./src/content/docs/getting-started/quick-start.md)** - 5-minute setup guide with ProductService example
+- **[Service Patterns](./src/content/docs/patterns/service-patterns.md)** - Core patterns and best practices
 
-## 🧞 Commands
+### Architecture & Patterns
+- **[Controller vs Service Pattern](./src/content/docs/guides/architecture/controller-service-pattern.md)** - Critical architectural distinction
+- **[Component Transformation](./src/content/docs/guides/component-transformation.md)** - Migrating React components to TDI2
 
-All commands are run from the root of the project, from a terminal:
+### Enterprise Guides
+- **[Implementation Strategy](./src/content/docs/guides/enterprise/implementation.md)** - 4-phase enterprise adoption plan
+- **[Migration Strategy](./src/content/docs/guides/migration/strategy.md)** - Systematic migration from Redux/Context
+- **[Team Onboarding](./src/content/docs/guides/enterprise/onboarding.md)** - 5-day structured learning program
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+### Package Documentation
+- **[@tdi2/di-core](./src/content/docs/packages/di-core/overview.md)** - Core dependency injection system
+- **[@tdi2/vite-plugin-di](./src/content/docs/packages/vite-plugin-di/overview.md)** - Build-time transformation plugin
 
-## 👀 Want to learn more?
+### Examples & Case Studies
+- **[Complete E-Commerce Application](./src/content/docs/examples/ecommerce-case-study.md)** - Full implementation with ProductService, CartService, UserService, CheckoutService
 
-Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+### Research & Analysis
+- **[Market Analysis](./src/content/docs/research/market-analysis.md)** - Target user segments and pain points
+- **[Clean Architecture Analysis](./src/content/docs/research/clean-architecture-analysis.md)** - SOLID principles compliance
+- **[Evaluation Plan](./src/content/docs/research/evaluation-plan.md)** - Systematic validation approach
+
+### Framework Comparisons
+- **[Redux vs TDI2](./src/content/docs/comparison/redux-vs-tdi2.md)** - Detailed comparison showing 60% code reduction
+
+## 🛠️ Development Commands
+
+| Command              | Action                                           |
+| :------------------- | :----------------------------------------------- |
+| `bun install`        | Install dependencies                             |
+| `bun run dev`        | Start local dev server at `localhost:4321`      |
+| `bun run build`      | Build production site to `./dist/`              |
+| `bun run preview`    | Preview build locally                           |
+| `bun run check`      | Check for broken links and issues              |
+
+## 📁 Content Structure
+
+```
+src/content/docs/
+├── getting-started/       # Getting started guides
+├── patterns/              # Core patterns and concepts
+├── guides/                # Implementation guides
+│   ├── architecture/      # Architectural patterns
+│   ├── enterprise/        # Enterprise-specific guides
+│   └── migration/         # Migration strategies
+├── packages/              # Package-specific documentation
+│   ├── di-core/          # Core DI package docs
+│   └── vite-plugin-di/   # Plugin documentation
+├── examples/              # Complete examples and case studies
+├── research/              # Research and analysis
+├── comparison/            # Framework comparisons
+└── reference/             # API reference (auto-generated)
+```
+
+## 📝 Content Guidelines
+
+All examples use consistent **e-commerce domain models**:
+- **ProductService** - Product catalog and search
+- **CartService** - Shopping cart management  
+- **UserService** - Authentication and profiles
+- **CheckoutService** - Order processing
+- **PaymentService** - Payment handling
+
+Documentation focuses on:
+- **Practical examples** with working code snippets
+- **Progressive complexity** from basic to enterprise patterns
+- **Business scenarios** not toy examples
+- **Links to interactive demos** in di-test-harness
+
+## 🚀 Deployment
+
+The site builds to static files for easy deployment:
+
+```bash
+bun run build  # Output: ./dist/
+```
+
+Deploy `./dist/` to any static hosting service (Vercel, Netlify, GitHub Pages).
+
+## 📚 More Information
+
+- [TDI2 Repository](https://github.com/7frank/tdi2)
+- [Starlight Documentation](https://starlight.astro.build/)
+- [Astro Documentation](https://docs.astro.build)

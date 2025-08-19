@@ -14,9 +14,17 @@
 
 ---
 
-## TL;DR
+## 📚 Documentation
 
-- [Also this link](./monorepo/docs/Teaser.md)
+**📖 [Complete TDI2 Documentation](./monorepo/apps/docs-starlight/README.md)** - Comprehensive guides, examples, and reference materials
+
+Quick Links:
+- **[Quick Start Guide](./monorepo/apps/docs-starlight/src/content/docs/getting-started/quick-start.md)** - Get up and running in 5 minutes
+- **[E-Commerce Case Study](./monorepo/apps/docs-starlight/src/content/docs/examples/ecommerce-case-study.md)** - Complete real-world example
+- **[Enterprise Implementation](./monorepo/apps/docs-starlight/src/content/docs/guides/enterprise/implementation.md)** - Guide for large teams
+- **[Architecture Patterns](./monorepo/apps/docs-starlight/src/content/docs/guides/architecture/controller-service-pattern.md)** - Controller vs Service pattern
+
+## TL;DR
 
 ```typescript
 // ❌ Before: Props hell, manual state management
