@@ -466,3 +466,118 @@ function ComplexComponent({
 | **SSR Complications** | High | High | Avoid SSR initially, plan request scoping |
 
 The key to successful TDI2 adoption is understanding these architectural trade-offs and implementing appropriate safeguards for your specific enterprise requirements.
+
+---
+
+## Common Criticisms & Responses
+
+### "Service Bloat" - Too Many Dependencies
+**Criticism:** Components requiring 5–8 services indicates architectural problems.
+
+**Response:** Excessive service injection signals deeper architectural issues, not a fault of DI itself. Well-designed services should follow single responsibility principle.
+
+**Solution:**
+```typescript
+// ❌ Service bloat - too many dependencies
+function UserDashboard({
+  userService, authService, notificationService, 
+  themeService, analyticsService, cacheService,
+  routingService, validationService
+}: ServiceProps) { /* ... */ }
+
+// ✅ Better - use facade or composition pattern
+function UserDashboard({
+  dashboardService  // Composes other services internally
+}: { dashboardService: Inject<UserDashboardServiceInterface> }) {
+  /* ... */
+}
+```
+
+### "Anti-React" - Avoiding Hooks
+**Criticism:** Avoiding React hooks contradicts idiomatic React patterns.
+
+**Response:** TDI2 coexists with hooks where appropriate. Hooks address symptoms (prop drilling), while TDI2 addresses root causes (architectural boundaries).
+
+**Solution:**
+```typescript
+// ✅ TDI2 + hooks where each serves their purpose
+function UserProfile({ userService }: ServiceProps) {
+  // UI-specific hooks are still appropriate
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Business logic comes from services
+  const { user, loading } = userService.state;
+  
+  return (
+    <div>
+      {isEditing ? (
+        <ProfileEditor onSave={userService.updateProfile} />
+      ) : (
+        <ProfileView user={user} />
+      )}
+    </div>
+  );
+}
+```
+
+### "Compile-Time Magic" - Reduced Debuggability
+**Criticism:** Code transformation reduces debuggability and maintainability.
+
+**Response:** Development tooling is planned to improve traceability. Current debugging is actually clearer due to service boundaries.
+
+**Current Debug Strategy:**
+```typescript
+// Services are directly inspectable
+@Service()
+export class UserService {
+  state = { users: [], loading: false };
+  
+  async loadUsers() {
+    console.log('UserService.loadUsers called'); // Direct debugging
+    this.state.loading = true;
+    // ... business logic
+  }
+}
+```
+
+### "Singleton-Only Services" - No Scope Support
+**Criticism:** No support for subtree or component-scoped instances.
+
+**Response:** Singleton is the initial implementation. Scoped and per-component lifecycles are on the roadmap for v1.0.
+
+**Planned Enhancement:**
+```typescript
+// Future scoped services support
+@Service({ scope: 'component' })
+export class FormValidationService { /* ... */ }
+
+@Service({ scope: 'subtree' })
+export class FeatureStateService { /* ... */ }
+```
+
+### "Existing Alternatives Available"
+**Criticism:** Similar tools already exist (tsyringe, tsinject, LemonDI).
+
+**Response:** Most lack autowiring, strong TypeScript interface integration, or React-specific optimizations. TDI2 fills the enterprise React DI gap.
+
+---
+
+## Known Issues & Limitations
+
+### 🟡 DI Detection Issues
+**Issue**: DI detection is buggy - not all TypeScript type and interface syntax are supported.
+**Impact**: Can create hard-to-debug errors during compilation.
+**Workaround**: Use explicit interface declarations and avoid complex generic types.
+**Status**: Being addressed in upcoming releases.
+
+### 🟡 Valtio Reactivity Incomplete
+**Issue**: Valtio's reactive state is not fully implemented in all scenarios.
+**Impact**: Reactivity may not work consistently across all component patterns.
+**Workaround**: Use direct state access patterns and verify reactivity in testing.
+**Status**: Integration improvements planned for v1.0.
+
+### 🟡 Code Quality Improvements Needed
+**Issue**: Current implementation contains cluttered code and technical debt.
+**Impact**: May affect maintainability and debugging experience.
+**Workaround**: Focus on service logic clarity, use TypeScript for better IntelliSense.
+**Status**: Code cleanup and refactoring ongoing.

@@ -821,3 +821,169 @@ class UserService {
 ```
 
 These architectural principles aren't theoretical - they're proven patterns adapted for React that deliver measurable improvements in development productivity and code quality.
+
+---
+
+## Reactivity Boundaries & Control Flow
+
+### Applied vs Misapplied Reactivity
+
+**Principle**: Reactivity should enhance control flow, not obscure it. Proper reactivity boundaries preserve top-down data flow while keeping side-effects localized.
+
+### ✅ **Good Reactivity**: System Boundaries
+
+**Use reactivity for:**
+- Receiving asynchronous input (user actions, network responses)
+- External state changes (API updates, WebSocket events)  
+- System-level state transitions
+
+```typescript
+// ✅ Good: Reactivity at system boundary
+@Service()
+export class UserService {
+  state = { user: null, loading: false };
+
+  async loadUser(id: string): Promise<void> {
+    this.state.loading = true;
+    this.state.user = await this.userRepository.fetchUser(id);
+    this.state.loading = false;
+    // Reactivity handled by Valtio proxy automatically
+  }
+}
+
+// Component subscribes to state changes transparently
+function UserProfile({ userService }: ServiceProps) {
+  const { user, loading } = userService.state; // Reactive automatically
+  
+  return user ? (
+    <div>{user.name}</div>
+  ) : loading ? (
+    <div>Loading...</div>
+  ) : (
+    <button onClick={() => userService.loadUser('42')}>
+      Load User
+    </button>
+  );
+}
+```
+
+**Why This Works:**
+- **State encapsulation** in services
+- **Transparent reactivity** through Valtio proxies
+- **Declarative components** remain stateless
+- **Explicit control flow** with clear method calls
+
+### ❌ **Bad Reactivity**: Internal Logic
+
+**Avoid reactivity for:**
+- Internal business logic coordination
+- Complex service-to-service communication
+- Control flow between components
+
+```typescript
+// ❌ Bad: Reactivity obscures control flow
+function useUser(id: string) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    
+    if (!id) return;
+    
+    setLoading(true);
+    fetchUser(id).then(userData => {
+      if (!cancelled) {
+        setUser(userData);
+        setLoading(false);
+        // Hidden side-effects cascade through useEffect chains
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [id]); // Dependency array fragility
+
+  return { user, loading };
+}
+```
+
+**Why This Fails:**
+- **Hidden dependencies** in useEffect arrays
+- **Race conditions** requiring manual cleanup
+- **Control flow obscured** by React's scheduler
+- **Side-effects scattered** across multiple hooks
+
+### Reactive Service Communication
+
+**Correct Pattern**: Direct method calls with reactive state
+
+```typescript
+// ✅ Services communicate through direct calls
+@Service()
+export class CartService {
+  constructor(
+    @Inject() private userService: UserServiceInterface
+  ) {}
+
+  addItem(product: Product): void {
+    // Direct method call - explicit control flow
+    if (!this.userService.isAuthenticated()) {
+      throw new AuthenticationError();
+    }
+    
+    this.state.items.push(product);
+    this.state.total += product.price;
+    // State changes are reactive, method calls are not
+  }
+}
+```
+
+**Incorrect Pattern**: Reactive service coordination
+
+```typescript
+// ❌ Reactive coordination breaks traceability
+@Service()
+export class CartService {
+  constructor(
+    @Inject() private userService: UserServiceInterface
+  ) {
+    // ❌ Hidden reactive dependency
+    subscribe(this.userService.state, () => {
+      if (!this.userService.state.authenticated) {
+        this.clearCart(); // Hidden side-effect
+      }
+    });
+  }
+
+  // Control flow becomes unpredictable
+}
+```
+
+### Guidelines for Reactivity Boundaries
+
+**1. Reactivity Flows Down**: State changes propagate down the component tree
+```typescript
+// Service state changes → Component re-renders
+userService.state.user = newUser; // Triggers reactive update
+```
+
+**2. Commands Flow Up**: User actions trigger explicit method calls
+```typescript
+// User action → Service method call
+<button onClick={() => userService.updateProfile(data)}>
+  Update Profile
+</button>
+```
+
+**3. Services Communicate Directly**: No reactive coordination between services
+```typescript
+// ✅ Direct service-to-service calls
+class OrderService {
+  async createOrder(): Promise<void> {
+    await this.paymentService.processPayment(); // Direct call
+    await this.inventoryService.reserveItems(); // Direct call
+  }
+}
+```
+
+This pattern maintains clear control flow while leveraging reactivity for UI updates, creating predictable and debuggable application architecture.

@@ -5,6 +5,54 @@ description: Complete feature matrix, implementation status, and production read
 
 TDI2 follows Spring Boot conventions for familiar enterprise patterns. This guide covers implemented features, roadmap items, and production readiness assessment.
 
+## Design Motivation
+
+TDI2 addresses fundamental scalability issues in React's original architecture. React was designed as a declarative UI library for small to medium applications. However, as complexity and size increase, different requirements emerge: modularity, exchangeability, testing, and environment-based configuration gain importance. The idiomatic React model (Props, Context, Hooks) no longer scales systematically in these scenarios.
+
+### Enterprise React Architecture Problems
+
+**Hard Coupling Through Direct Imports**: Components reference services directly via `import`, eliminating exchangeability.
+
+**Props Drilling and Manual Composition**: Data and function passing across multiple component levels creates structural dependencies and redundancy.
+
+**No Central Lifecycle or Dependency Management**: React offers no native way to centrally register, profile, or scope services.
+
+**Testing and Mocking Fragmentation**: Mocks must be manually injected or replaced through global store adjustments.
+
+**No Environment or Profile Concept**: React lacks service-based environment configuration (Test vs Prod) at the architecture level.
+
+### TDI2's Enterprise Solution
+
+- **Compile-Time Resolver** for dependencies
+- **TypeScript Metadata** utilization for automatic injection
+- **Hooks as Injectable Interface** (`useService`)
+- **Profile and Scoping Support** for environment configuration
+- **OpenTelemetry, Logging, Linting and Debugging** support (planned)
+- **Build-Time Resolution** instead of runtime for maximum performance
+
+### TDI2 Architecture Model
+
+```plaintext
+Application Layer
+├── Controller Components
+│   └── useService(InvoiceService)
+├── UI Components
+│   └── Presentational only
+Domain Layer
+├── Interfaces (e.g. InvoiceService)
+├── Logic (e.g. DefaultInvoiceService)
+Infrastructure Layer
+├── HttpAdapters
+├── Mock Implementations
+```
+
+### Target Audience
+
+- **Enterprise React Applications** with high complexity
+- **Teams** requiring exchangeable infrastructure
+- **Projects** with multiple environments and profiles
+- **Applications** with strict testing and logging requirements
+
 ## Current Implementation Status
 
 ### ✅ **Core Features** (Production Ready)
@@ -13,27 +61,37 @@ TDI2 follows Spring Boot conventions for familiar enterprise patterns. This guid
 |---------|-------------|----------------------|------------------------|
 | **@Service** | Service registration decorator | ✅ Complete | `@Service`, `@Component` |
 | **@Inject** | Dependency injection decorator | ✅ Complete | `@Autowired` |
-| **@Scope** | Scope management (singleton/transient) | ✅ Complete | `@Scope("singleton")` |
+| **Compile-Time DI Resolver** | Build-time dependency resolution | ✅ Complete | N/A (TDI2 innovation) |
+| **TypeScript Metadata** | Automatic injection via TS types | ✅ Complete | N/A (TDI2 innovation) |
+| **useService Hook** | Injectable service interface for React | ✅ Complete | N/A (React-specific) |
 | **Interface Resolution** | Automatic interface → implementation mapping | ✅ Complete | Type-based autowiring |
 | **Container** | DI container with lifecycle management | ✅ Complete | `ApplicationContext` |
-| **React Integration** | `useService` hook and component transformation | ✅ Complete | N/A (React-specific) |
 
 ### 🚧 **In Development** (Next Release)
 
+Based on the original roadmap, these features have decorators implemented but need runtime support:
+
 | Feature | Description | Implementation Status | Priority | ETA |
 |---------|-------------|----------------------|----------|-----|
-| **@PostConstruct** | Post-construction lifecycle hook | 🟡 Decorator exists, runtime needed | High | Q2 2024 |
-| **@PreDestroy** | Pre-destruction lifecycle hook | 🟡 Decorator exists, runtime needed | High | Q2 2024 |
-| **@Profile** | Profile-based service activation | 🟡 Decorator exists, runtime needed | Medium | Q3 2024 |
+| **@PostConstruct** | Post-construction lifecycle hook | 🟡 Partial - onInit equivalent | High | Next sprint |
+| **@PreDestroy** | Pre-destruction lifecycle hook | 🟡 Partial - onDestroy equivalent | High | Next sprint |
+| **@Profile** | Environment/profile-based service activation | 🟡 Decorator exists, runtime needed | Medium | Following sprint |
+| **@Scope** | Advanced scoping (Request, Transient) | 🟡 Basic singleton support only | Medium | Following sprint |
 
 ### 📋 **Planned Features** (Future Releases)
 
-| Feature | Description | Complexity | Priority | ETA |
-|---------|-------------|------------|----------|-----|
-| **@Configuration** | Configuration class decorator | Medium | Medium | Q3 2024 |
-| **@Bean** | Bean definition decorator | Medium | Medium | Q3 2024 |
-| **@Qualifier** | Service disambiguation | Low | Low | Q4 2024 |
-| **@Value** | Environment value injection | Low | Low | Q4 2024 |
+| Feature | Description | Implementation Status | Priority | ETA |
+|---------|-------------|----------------------|----------|-----|
+| **@Configuration** | Configuration class decorator | ❌ Not started | Medium | Q3 2024 |
+| **@Bean** | Bean definition decorator | ❌ Not started | Medium | Q3 2024 |
+| **@Qualifier** | Service disambiguation | ❌ Not started | Low | Q4 2024 |
+| **@Value** | Environment value injection | ❌ Not started | Low | Q4 2024 |
+| **Babel/TS Transformer** | Alternative to current ts-morph approach | ❌ Research phase | Medium | Q4 2024 |
+| **ESLint Plugin** | Rule verification for DI patterns | ❌ Research phase | Low | Q1 2025 |
+| **OpenTelemetry Integration** | Distributed tracing support | ❌ Research phase | Low | Q1 2025 |
+| **DevTools Integration** | Browser debugging interface | ❌ Research phase | Medium | Q1 2025 |
+| **SSR Compatibility** | Server-side rendering support | ❌ Research phase | High | Q2 2025 |
+| **Hot Module Replacement** | HMR support for services | ❌ Research phase | Medium | Q2 2025 |
 
 ## Feature Deep Dive
 
@@ -380,3 +438,9 @@ function ComplexComponent({ userService }: { userService: Inject<UserServiceInte
 6. **Documentation**: Maintain clear service interfaces and usage examples
 
 The current implementation provides a solid foundation for enterprise React applications, with the lifecycle management features completing the production readiness requirements.
+
+## Conclusion
+
+TDI2 aims for the structural reorganization of reactive architectures, without undermining React's declarative foundation. The approach is deliberately systematic, not idiomatic – as a bridge between conventional frontend and architecture-driven software development.
+
+This systematic approach addresses the gap between React's component-centric model and enterprise-scale application requirements, providing a foundation for scalable, testable, and maintainable React applications that align with established software engineering principles.

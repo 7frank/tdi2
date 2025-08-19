@@ -30,6 +30,7 @@ export default defineConfig({
 						{ label: 'React\'s Architectural Problems', slug: 'why-tdi2/react-problems' },
 						{ label: 'Pain Points Solutions', slug: 'why-tdi2/pain-points-solutions' },
 						{ label: 'Architecture Principles', slug: 'why-tdi2/architecture-principles' },
+						{ label: 'React Ecosystem Impact', slug: 'why-tdi2/ecosystem-impact' },
 					],
 				},
 				{
@@ -110,6 +111,7 @@ export default defineConfig({
 						{ label: 'Market Analysis', slug: 'research/market-analysis' },
 						{ label: 'Evaluation Plan', slug: 'research/evaluation-plan' },
 						{ label: 'Clean Architecture Analysis', slug: 'research/clean-architecture-analysis' },
+						{ label: 'Project History', slug: 'research/project-history' },
 					],
 				},
 				{
