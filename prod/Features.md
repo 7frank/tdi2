@@ -50,8 +50,10 @@ class RequestLogger {}
 
 | Feature        | Description                      | Implementation Status | Note                                                                                                                                    |
 | -------------- | -------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| @PostConstruct | Post-construction lifecycle hook | ❌                    | compare to angular onInit/onDestroy frist to find out what we actually expect from lifecycle to implement it correct in the first place |
-| @PreDestroy    | Pre-destruction lifecycle hook   | ❌                    | TBD TC39 vs Angular Style                                                                                                               |
+| @PostConstruct | Post-construction lifecycle hook | ✅                    | compare to angular onInit/onDestroy frist to find out what we actually expect from lifecycle to implement it correct in the first place |
+| @PreDestroy    | Pre-destruction lifecycle hook   | ✅                    | TBD TC39 vs Angular Style                                                                                                               |
+| @onMount       | controller style hook            | ✅                    |                                                                                                                                         |
+| @onUnMount     | controller style hook            | ✅                    |                                                                                                                                         |
 
 ## Testing
 
@@ -69,17 +71,7 @@ from a TypeScript perspective:
 
 🟢 Low Hanging Fruits (Easy to Implement)
 
-2. @PostConstruct
-
-- Why easy: Simple lifecycle hook pattern
-- Implementation: Add metadata to decorator, call after instantiation in container
-- TypeScript complexity: Low - just method invocation after construction
-
-3. @PreDestroy
-
-- Why easy: Similar to @PostConstruct but for cleanup
-- Implementation: Store cleanup functions, call on container disposal
-- TypeScript complexity: Low - standard dispose pattern
+-
 
 🟡 Medium Complexity
 
@@ -103,20 +95,7 @@ from a TypeScript perspective:
 
 > @Profile(string|string[]) (KISS)
 
-8. Advanced @Profile with conditional logic
-
-- Why hard: Beyond simple string matching - could need expressions
-- Implementation: Profile expression evaluation, complex activation conditions
-- TypeScript complexity: High - potentially needs expression parser
-
-📊 Implementation Priority Recommendations
-
-Start with these (immediate value):
-
->2. @PostConstruct (lifecycle hooks are essential)
->3. @PreDestroy (completes lifecycle management)
->
->Next phase: 4. @Configuration + @Bean (enables external library integration) 5. Complete @Profile runtime support
+> Next phase: 4. @Configuration + @Bean (enables external library integration) 5. Complete @Profile runtime support
 
 (out of scope) Advanced features (if needed): 6. Advanced scoping scenarios 7. Complex profile conditions
 
