@@ -4,6 +4,8 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://7frank.github.io',
+	base: '/tdi2',
 	integrations: [
 		starlight({
 			title: 'TDI2 Documentation',

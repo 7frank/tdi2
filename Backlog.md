@@ -13,6 +13,11 @@
 - keep minimal doku in packages,apps,monorepo root, and root
 - consistent example accross all documentation "ecommerce application"
 
+### research claude code subscriptin schedulers
+- https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
+
+- maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
+
 ### [❌] add di-testing to basic example
 
 ### [❌] @Configration "bean"

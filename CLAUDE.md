@@ -220,7 +220,11 @@ Experimental decorators must be enabled:
 
 ## Documentation
 
-**📖 [Complete TDI2 Documentation](./monorepo/apps/docs-starlight/)** - Comprehensive Starlight-based documentation site
+**📖 [Live Documentation Site](https://7frank.github.io/tdi2/)** - Comprehensive Starlight-based documentation site
+
+**🧪 [Interactive Examples](https://7frank.github.io/tdi2/test-harness/)** - Live Storybook demonstrations
+
+**💻 [Local Development](./monorepo/apps/docs-starlight/)** - Documentation source and development
 
 Key documentation resources:
 - **[Quick Start Guide](./monorepo/apps/docs-starlight/src/content/docs/getting-started/quick-start.md)** - Get up and running in 5 minutes

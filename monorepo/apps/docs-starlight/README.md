@@ -90,13 +90,19 @@ Documentation focuses on:
 
 ## 🚀 Deployment
 
-The site builds to static files for easy deployment:
+### GitHub Pages (Automatic)
+The documentation is automatically built and deployed to GitHub Pages on every push to `main`:
+- **Live Site**: `https://7frank.github.io/tdi2/`
+- **Test Harness**: `https://7frank.github.io/tdi2/test-harness/`
+
+### Manual Deployment
+The site builds to static files for deployment to other services:
 
 ```bash
 bun run build  # Output: ./dist/
 ```
 
-Deploy `./dist/` to any static hosting service (Vercel, Netlify, GitHub Pages).
+Deploy `./dist/` to any static hosting service (Vercel, Netlify, etc.).
 
 ## 📚 More Information
 

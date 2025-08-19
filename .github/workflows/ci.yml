@@ -46,11 +46,23 @@ jobs:
           cd monorepo
           bun run build
 
+      - name: Build documentation site
+        run: |
+          cd monorepo/apps/docs-starlight
+          bun install
+          bun run build
+
       - name: Upload test harness for Pages
         uses: actions/upload-artifact@v4
         with:
           name: test-harness-dist
           path: monorepo/apps/di-test-harness/dist/
+
+      - name: Upload documentation for Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-dist
+          path: monorepo/apps/docs-starlight/dist/
 
   # Deploy to GitHub Pages
   deploy-pages:
@@ -65,16 +77,22 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Download documentation build
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-dist
+          path: ./pages-site
+
       - name: Download test harness build
         uses: actions/download-artifact@v4
         with:
           name: test-harness-dist
-          path: ./dist
+          path: ./pages-site/test-harness
 
       - name: Upload to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./pages-site
 
       - name: Deploy to GitHub Pages
         id: deployment

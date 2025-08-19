@@ -16,7 +16,9 @@
 
 ## 📚 Documentation
 
-**📖 [Complete TDI2 Documentation](./monorepo/apps/docs-starlight/README.md)** - Comprehensive guides, examples, and reference materials
+**📖 [Live Documentation Site](https://7frank.github.io/tdi2/)** - Comprehensive guides, examples, and reference materials
+
+**🧪 [Interactive Examples](https://7frank.github.io/tdi2/test-harness/)** - Live Storybook demonstrations
 
 Quick Links:
 - **[Quick Start Guide](./monorepo/apps/docs-starlight/src/content/docs/getting-started/quick-start.md)** - Get up and running in 5 minutes
