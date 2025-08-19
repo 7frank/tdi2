@@ -21,10 +21,10 @@
 **🧪 [Interactive Examples](https://7frank.github.io/tdi2/test-harness/)** - Live Storybook demonstrations
 
 Quick Links:
-- **[Quick Start Guide](./monorepo/apps/docs-starlight/src/content/docs/getting-started/quick-start.md)** - Get up and running in 5 minutes
-- **[E-Commerce Case Study](./monorepo/apps/docs-starlight/src/content/docs/examples/ecommerce-case-study.md)** - Complete real-world example
-- **[Enterprise Implementation](./monorepo/apps/docs-starlight/src/content/docs/guides/enterprise/implementation.md)** - Guide for large teams
-- **[Architecture Patterns](./monorepo/apps/docs-starlight/src/content/docs/guides/architecture/controller-service-pattern.md)** - Controller vs Service pattern
+- **[Quick Start Guide](https://7frank.github.io/tdi2/getting-started/quick-start/)** - Get up and running in 5 minutes
+- **[E-Commerce Case Study](https://7frank.github.io/tdi2/examples/ecommerce-case-study/)** - Complete real-world example
+- **[Enterprise Implementation](https://7frank.github.io/tdi2/guides/enterprise/implementation/)** - Guide for large teams
+- **[Architecture Patterns](https://7frank.github.io/tdi2/guides/architecture/controller-service-pattern/)** - Controller vs Service pattern
 
 ## TL;DR
 
@@ -89,10 +89,10 @@ function UserDashboard({ userService, appState }: {
 
 ## Quick Start
 
-1. **Install**: `npm install @tdi2/core @tdi2/vite-plugin valtio`
-2. **Configure build pipeline** → [Setup Guide](./docs/Quick-Start.md)
-3. **Create services** → [Service Patterns](./docs/Service-Patterns.md)
-4. **Transform components** → [Component Guide](./docs/Component-Guide.md)
+1. **Install**: `npm install @tdi2/di-core @tdi2/vite-plugin-di valtio`
+2. **Configure build pipeline** → [Setup Guide](https://7frank.github.io/tdi2/getting-started/quick-start/)
+3. **Create services** → [Service Patterns](https://7frank.github.io/tdi2/guides/component-transformation/)
+4. **Transform components** → [Component Guide](https://7frank.github.io/tdi2/guides/component-transformation/)
 
 ---
 
@@ -112,27 +112,26 @@ function UserDashboard({ userService, appState }: {
 
 **Getting Started**
 
-- [Quick Start Guide](./docs/Quick-Start.md) - Setup and first service
-- [Component Transformation](./docs/Component-Guide.md) - Converting existing components
-- [Service Patterns](./docs/Service-Patterns.md) - Creating reactive services
+- [Quick Start Guide](https://7frank.github.io/tdi2/getting-started/quick-start/) - Setup and first service
+- [Component Transformation](https://7frank.github.io/tdi2/guides/component-transformation/) - Converting existing components
+- [API Reference](https://7frank.github.io/tdi2/api/di-core/) - Complete package documentation
 
 **Enterprise Implementation**
 
-- [Enterprise Guide](./docs/Enterprise-Implementation.md) - Large team adoption
-- [Team Onboarding](./docs/Team-Onboarding.md) - Developer training
+- [Enterprise Guide](https://7frank.github.io/tdi2/guides/enterprise/implementation/) - Large team adoption
+- [Team Onboarding](https://7frank.github.io/tdi2/guides/enterprise/onboarding/) - Developer training
+- [Migration Strategy](https://7frank.github.io/tdi2/guides/migration/strategy/) - Systematic migration approach
 
 **Architecture Deep Dive**
 
-- [Complete Architecture](./docs/React-Whitepaper.md) - Full technical spec
-- [vs Traditional React](./docs/RSI-vs-Traditional.md) - Detailed comparison
-- [SOLID Principles](./monorepo/docs/RSI-Clean-Architecture-SOLID-Principles-Analysis.md) - Architecture analysis
+- [Why TDI2?](https://7frank.github.io/tdi2/why-tdi2/react-problems/) - React's architectural problems
+- [Architecture Principles](https://7frank.github.io/tdi2/why-tdi2/architecture-principles/) - Service-oriented design
+- [Framework Comparisons](https://7frank.github.io/tdi2/comparison/redux-vs-tdi2/) - vs Redux, Context API, Zustand
 
-**Validation & Research**
+**Advanced Guides**
 
-- [Market Analysis](./monorepo/docs/Market-Analysis.md) - User research and pain points
-- [Evaluation Plan](./monorepo/docs/EvaluationPlan.md) - Proving RSI effectiveness
-- [React - Pain Point Analysis](./docs/pain-points/README.md) - Detailed comparison with current solutions
-- [State of React - Critical Analysis](./docs/critique/README.md) - as well as Addressing common concerns and limitations
+- [Features & Roadmap](https://7frank.github.io/tdi2/guides/advanced/features-roadmap/) - Production readiness status
+- [Troubleshooting](https://7frank.github.io/tdi2/guides/advanced/troubleshooting/) - Common issues and solutions
 ---
 
 ## Community

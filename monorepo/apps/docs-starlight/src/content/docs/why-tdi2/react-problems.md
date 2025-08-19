@@ -11,11 +11,63 @@ React's pursuit of "simplicity" has led to unprecedented complexity. What starte
 
 **React's "solutions" are increasingly complex workarounds for architectural problems that proper dependency injection would have solved from the beginning.**
 
+## The Generational Architecture Gap
+
+**A critical insight**: React attracted developers who never learned enterprise architectural patterns, creating a generation unable to recognize architectural debt. This explains why React's problems persist despite their severity.
+
+### The Distorted Learning Path
+
+**Traditional Software Development:**
+```
+Computer Science Fundamentals
+↓
+Object-Oriented Design Principles  
+↓
+Design Patterns & Architecture
+↓
+Service-Oriented Architecture
+↓
+Domain-Driven Design
+↓
+UI Framework (as presentation layer)
+```
+
+**React-First Development:**
+```
+HTML/CSS/JavaScript Basics
+↓
+React Components & JSX
+↓
+State Management (useState)
+↓
+Hook Composition & Custom Hooks
+↓
+Performance Optimization
+↓
+??? (No architectural foundation)
+```
+
+### The Skills Crisis
+
+**What React developers learn:**
+- Hook composition and optimization patterns
+- Component memoization techniques  
+- Performance debugging and render optimization
+- Context API and state management libraries
+
+**What enterprise development requires:**
+- Service layer architecture and dependency injection
+- Domain modeling and business logic separation
+- Interface-based programming and testability
+- Lifecycle management and resource cleanup
+
+**The Result**: Entire teams grew up thinking **UI is the architecture**, lacking exposure to systemic design patterns that would prevent React's fundamental problems.
+
 ## Key Architectural Issues
 
 ### 1. Hooks Are Classes in Disguise
 
-React hooks present themselves as functional programming, but they're actually implicit classes with hidden state and lifecycle methods.
+React hooks present themselves as functional programming, but they're actually implicit classes with hidden state and lifecycle methods. **Classes with dependency injection provide superior structure, testability, and control.**
 
 **The Problem:**
 ```typescript
@@ -50,17 +102,32 @@ This is actually a class with:
 
 **TDI2's Solution:**
 ```typescript
-// Honest, explicit class-based service
+// Honest, explicit class-based service with clear dependency contracts
 @Service()
 export class ShoppingCartService implements ShoppingCartServiceInterface {
+  constructor(
+    @Inject() private userService: UserServiceInterface,      // Explicit dependency
+    @Inject() private storageService: StorageServiceInterface, // Explicit dependency
+    @Inject() private logger?: LoggerServiceInterface          // Optional dependency
+  ) {}
+  
   state = {
     items: [] as CartItem[],
     total: 0
   };
   
   addItem(product: Product): void {
+    // Clear dependency usage
+    if (!this.userService.isAuthenticated()) {
+      throw new Error('User must be logged in to add items');
+    }
+    
     this.state.items.push(product);
     this.calculateTotal();
+    
+    // Explicit logging and persistence
+    this.logger?.info(`Added ${product.name} to cart`);
+    this.storageService.saveCart(this.state);
   }
   
   private calculateTotal(): void {
@@ -68,6 +135,12 @@ export class ShoppingCartService implements ShoppingCartServiceInterface {
   }
 }
 ```
+
+**Structural Advantages:**
+- **Explicit dependencies**: Clear contracts visible in constructor
+- **Testable isolation**: Each dependency can be mocked independently
+- **Clear lifecycle**: No hidden React scheduler dependencies
+- **Honest architecture**: What you see is what you get
 
 ### 2. Functional Programming Violations
 

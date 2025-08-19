@@ -125,6 +125,32 @@ src/
 ### Phase 2: Pilot Implementation (Weeks 4-8)
 **Goal**: Validate TDI2 with one complete high-value feature
 
+#### Sprint-by-Sprint Breakdown
+
+**Sprint 1 (Week 4): Service Layer Foundation**
+- Day 1-2: Create service interfaces for pilot feature
+- Day 3-5: Implement core business logic services  
+- Day 6-7: Add repository abstractions and mocks
+- Day 8-10: Unit test service layer in isolation
+
+**Sprint 2 (Week 5-6): Component Transformation**
+- Day 1-3: Transform pilot components to use service injection
+- Day 4-6: Remove props and hook dependencies
+- Day 7-8: Update component tests to use service mocks
+- Day 9-10: Integration testing and performance validation
+
+**Sprint 3 (Week 7): Integration & Polish**
+- Day 1-3: Connect to real data sources through repositories
+- Day 4-5: Performance optimization and bundle analysis
+- Day 6-7: Error handling and edge cases
+- Day 8-10: Feature flag rollout and user testing
+
+**Sprint 4 (Week 8): Validation & Documentation**
+- Day 1-2: Metrics collection and performance comparison
+- Day 3-4: Team retrospective and lessons learned
+- Day 5-7: Documentation and architectural decision records
+- Day 8-10: Plan expansion to next features
+
 #### Pilot Feature: E-Commerce Product Catalog
 
 **Selection Criteria:**

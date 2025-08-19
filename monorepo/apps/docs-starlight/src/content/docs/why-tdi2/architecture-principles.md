@@ -595,4 +595,229 @@ For enterprise teams, these principles deliver:
 - **Risk Reduction**: Interfaces limit impact of changes
 - **Technical Debt**: Proactive architecture prevents accumulation
 
+## State Ownership Decision Framework
+
+A critical question in TDI2 architecture: **When should state live in services vs. React components?**
+
+### 🎨 **View State** → React Component State
+
+**Characteristics:**
+- **Ephemeral** - Lost when component unmounts  
+- **UI-specific** - Only affects presentation and interaction
+- **Non-transferable** - Doesn't make sense outside this component
+- **Immediate feedback** - Changes instantly without business rules
+
+**Examples:**
+```typescript
+function ProductForm() {
+  // ✅ View state - UI-only concerns
+  const [showPassword, setShowPassword] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [currentTab, setCurrentTab] = useState('details');
+  const [fieldFocus, setFieldFocus] = useState<string | null>(null);
+  
+  return (
+    <form>
+      {/* Pure UI rendering */}
+    </form>
+  );
+}
+```
+
+### 🏢 **Business State** → Service Layer
+
+**Characteristics:**
+- **Persistent** - Survives component unmounts and page refreshes
+- **Domain-meaningful** - Represents real business concepts  
+- **Transferable** - Makes sense in APIs, tests, other components
+- **Rule-governed** - Changes follow business logic and validation
+
+**Examples:**
+```typescript
+@Service()
+export class ProductFormService {
+  // ✅ Business state - domain entities and rules
+  state = {
+    productData: {} as Product,
+    validationErrors: [] as ValidationError[],
+    isSubmitting: false,
+    lastSavedAt: null as Date | null
+  };
+  
+  updateProduct(updates: Partial<Product>): void {
+    // Business logic and validation
+    Object.assign(this.state.productData, updates);
+    this.validateProduct();
+  }
+}
+```
+
+### 🤔 **Decision Tests**
+
+When unsure, apply these tests:
+
+1. **Persistence Test**: Does it need to survive component unmounts? → Business
+2. **API Test**: Would this be sent to/from an API? → Business  
+3. **Transfer Test**: Could other components use this state? → Business
+4. **Business Rule Test**: Does changing it trigger validation/calculations? → Business
+5. **UI Feedback Test**: Is it purely for visual feedback? → View
+
+### 🔍 **Edge Cases & Contextual Analysis**
+
+#### Loading States
+```typescript
+const [isSubmitting, setIsSubmitting] = useState(false);
+
+// 🎨 VIEW STATE if: Just for button spinner, user feedback
+// 🏢 BUSINESS STATE if: Prevents duplicate submissions, affects business logic
+```
+
+#### Selection State
+```typescript
+const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+// 🎨 VIEW STATE if: Multi-select UI for display filtering
+// 🏢 BUSINESS STATE if: Items selected for business operation (delete, approve)
+```
+
+#### Filter/Search State
+```typescript
+const [searchQuery, setSearchQuery] = useState('');
+
+// 🎨 VIEW STATE if: Just for immediate UI filtering, not persisted
+// 🏢 BUSINESS STATE if: Affects data fetching, needs URL persistence, affects analytics
+```
+
+### ❌ **Anti-Patterns to Avoid**
+
+```typescript
+// ❌ Don't mix view and business state
+const [mixedState, setMixedState] = useState({
+  productName: '',      // 🏢 Business - belongs in service
+  showTooltip: false,   // 🎨 View - belongs in component  
+  errors: [],          // 🏢 Business - belongs in service
+  isAnimating: false   // 🎨 View - belongs in component
+});
+
+// ❌ Don't put UI state in services
+@Service()
+export class ProductService {
+  state = {
+    products: [],
+    tooltipVisible: false  // ❌ UI concern doesn't belong here
+  };
+}
+```
+
+### 📋 **Practical Classification Framework**
+
+```
+Is this state...
+├── Only for visual feedback/interaction?
+│   └── 🎨 VIEW STATE (Component)
+├── Representing domain data/business rules?
+│   └── 🏢 BUSINESS STATE (Service)  
+├── UI-scoped but affects business logic?
+│   └── 🤔 CONTEXT STATE (React Context/Shared Service)
+└── Unclear?
+    └── Apply the 5 tests above ⬆️
+```
+
+**Key Insight**: Think about **who cares** about the state:
+- Only the UI? → View State
+- The business domain? → Business State  
+- Both, but scoped to UI flow? → Context State
+
+## KISS Principles for Services
+
+### Rule 1: Use Proxy State for Reactivity
+
+```typescript
+// ✅ Simple reactive state
+@Service()
+class FormService {
+  state = {
+    data: {},
+    isValid: false,
+    isSubmitting: false
+  }; // Valtio proxy makes this automatically reactive
+}
+
+// ❌ Observable complexity
+@Service() 
+class FormService {
+  private dataSubject = new BehaviorSubject({});
+  private isValidSubject = new BehaviorSubject(false);
+  data$ = this.dataSubject.asObservable();
+  isValid$ = this.isValidSubject.asObservable();
+}
+```
+
+### Rule 2: Direct Method Calls Between Services
+
+```typescript
+// ✅ Clear, direct communication
+@Service()
+class WorkflowService {
+  constructor(
+    @Inject() private demographicsService: DemographicsServiceInterface,
+    @Inject() private insuranceService: InsuranceServiceInterface
+  ) {}
+
+  async completeStep(stepId: string): Promise<void> {
+    if (stepId === 'demographics') {
+      const data = this.demographicsService.getData(); // Direct call
+      
+      if (data.age < 18) {
+        this.unlockStep('guardian_consent'); // Direct method
+      }
+      
+      this.unlockStep('insurance'); // Clear progression
+    }
+  }
+}
+
+// ❌ Event-driven complexity
+@Service()
+class WorkflowService {
+  constructor(@Inject() private eventBus: EventBusInterface) {}
+  
+  async completeStep(stepId: string): Promise<void> {
+    // Complex event orchestration
+    this.eventBus.emit('step.completed', { stepId });
+    this.eventBus.on('demographics.validated', this.handleValidation);
+    this.eventBus.on('insurance.unlocked', this.handleUnlock);
+  }
+}
+```
+
+### Rule 3: Keep Services Focused
+
+```typescript
+// ✅ Single responsibility
+@Service()
+class UserAuthenticationService {
+  state = { currentUser: null, isAuthenticated: false };
+  
+  login(credentials: LoginCredentials): Promise<void> { /* ... */ }
+  logout(): Promise<void> { /* ... */ }
+  refreshToken(): Promise<void> { /* ... */ }
+}
+
+@Service()
+class UserProfileService {
+  state = { profile: null, preferences: {} };
+  
+  updateProfile(updates: ProfileUpdates): Promise<void> { /* ... */ }
+  getPreferences(): UserPreferences { /* ... */ }
+}
+
+// ❌ God service anti-pattern
+@Service()
+class UserService {
+  // Authentication + Profile + Preferences + Analytics + Notifications...
+  // 500+ lines of mixed concerns
+}
+```
+
 These architectural principles aren't theoretical - they're proven patterns adapted for React that deliver measurable improvements in development productivity and code quality.
