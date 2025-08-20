@@ -2,7 +2,7 @@
 
 ## ordered log
 
-### [❌] fix gh-pages actions for
+### [✅] fix gh-pages actions for
 
 - test harness
 - documentation
@@ -16,7 +16,7 @@
 
 
 
-### [❌] clean up talks/RFP for what value it still has
+### [✅] clean up talks/RFP for what value it still has
 
 - maybe we simply delete it
 
