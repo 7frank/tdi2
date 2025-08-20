@@ -2,16 +2,32 @@
 
 ## ordered log
 
-### improve documentation
+### [❌] ecommerce example
 
-- astro starlight
-- better structure
-- examples in di-test-harness
-- ./docs
-- ./monorepo/docs
-- ingore docs/SlideDecks
-- keep minimal doku in packages,apps,monorepo root, and root
-- consistent example accross all documentation "ecommerce application"
+> our documentation should reference snippets of the actual implementation similar to enterprise example
+
+- links to ecommerce example from documentation
+- links from documentation to "storybook" ladle (maybe a bit too much)
+
+### [❌] the USP early and let people experience the benefit first hand
+
+- [❌] is there a clear "roter faden" the user should be able to follow that
+
+- [❌] we are trying to solve a problem
+  - therefore the docuemtation should reflect that
+- [❌]we need the teaser to be up front, degit and run or tldr or teaser.md should be upfront and should communicate our USP in seconds
+  - [❌] our usp is decoupling IMO
+
+### clean up talks/RFP for what value it still has
+
+- maybe we simply delete it
+
+### research claude code subscription schedulers
+
+- https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
+
+- maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
+
 
 ### [❌] add di-testing to basic example
 
@@ -410,6 +426,29 @@ https://github.com/aleclarson/valtio-kit
 
 ## Done
 
+
+### [✅] improve documentation
+
+- [✅] adr section
+- [✅] astro starlight
+- [✅] better structure
+
+- [✅] migrate ./docs
+- [✅] migrte ./monorepo/docs
+- [✅] ingore docs/SlideDecks
+- [✅]] keep minimal doku in packages,apps,monorepo root, and root
+- [✅]] consistent example accross all documentation "ecommerce application"
+
+- [✅] we need to review the content
+  - [✅] some metrics are hallucinated
+  - [✅] some comparisions like "we dont need redux bla" anymore outdated
+  - [✅] we need more comparisions e.g. zustandjs
+
+- [✅] search for missing info from original files we are about to delete and check if we should add them somewhere in the new docs
+
+- [✅] search for redunancies
+
+
 ### [✅] lifecycle
 
 simlarly to angular we should have some form of lifecycle utility
@@ -418,7 +457,6 @@ either as interfaces or decorators. below are the most common ones needed:
 - ✅ ngOnInit — 80%
 - ✅ ngOnDestroy — 60%
 - ✅ mount/unmount
-
 
 ### [✅] @Scoped singleton|instance default singleton without settings scope
 

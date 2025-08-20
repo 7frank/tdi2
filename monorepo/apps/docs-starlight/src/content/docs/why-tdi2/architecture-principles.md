@@ -1,0 +1,989 @@
+---
+title: Architecture Principles
+description: The foundational design principles that make TDI2's service-oriented architecture successful
+sidebar:
+  order: 3
+---
+
+TDI2's architecture is built on proven enterprise software design principles adapted for React. These principles address the fundamental issues that create complexity in traditional React applications.
+
+## Core Architectural Principles
+
+### 1. Separation of Concerns (Single Responsibility)
+
+**Principle:** Each service has one clear responsibility, components handle only rendering.
+
+**Traditional React Problem:**
+```typescript
+function ShoppingCart() {
+  // UI State
+  const [isOpen, setIsOpen] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  
+  // Business State  
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [discount, setDiscount] = useState(null);
+  
+  // Business Logic
+  const addItem = (product) => { /* complex logic */ };
+  const removeItem = (id) => { /* complex logic */ };
+  const applyDiscount = (code) => { /* complex logic */ };
+  
+  // Side Effects
+  useEffect(() => { /* persist to localStorage */ }, [items]);
+  useEffect(() => { /* analytics tracking */ }, [total]);
+  useEffect(() => { /* inventory updates */ }, [items]);
+  
+  // API Integration
+  const submitOrder = async () => { /* API calls */ };
+  
+  // Rendering (mixed with everything above)
+  return <div>{/* Complex UI */}</div>;
+}
+```
+
+**TDI2 Solution:**
+```typescript
+// Service: Pure business logic
+@Service()
+export class CartService implements CartServiceInterface {
+  state = {
+    items: [] as CartItem[],
+    total: 0,
+    discount: null as Discount | null
+  };
+  
+  addItem(product: Product, quantity = 1): void {
+    // Pure business logic
+    const existingItem = this.state.items.find(item => item.productId === product.id);
+    if (existingItem) {
+      existingItem.quantity += quantity;
+    } else {
+      this.state.items.push({ productId: product.id, product, quantity, price: product.price });
+    }
+    this.calculateTotal();
+  }
+}
+
+// Component: Pure presentation
+function ShoppingCart({ cartService, uiService }: ServicesProps) {
+  const { items, total } = cartService.state;
+  const { isCartOpen, animating } = uiService.state;
+  
+  return (
+    <div className={isCartOpen ? 'cart-open' : 'cart-closed'}>
+      {items.map(item => (
+        <CartItem 
+          key={item.productId} 
+          item={item} 
+          onRemove={() => cartService.removeItem(item.productId)} 
+        />
+      ))}
+      <div className="total">Total: ${total}</div>
+    </div>
+  );
+}
+```
+
+**Benefits:**
+- Components focus solely on rendering
+- Services contain testable business logic
+- Clear boundaries between concerns
+- Easier debugging and maintenance
+
+### 2. Dependency Inversion Principle
+
+**Principle:** High-level modules should not depend on low-level modules. Both should depend on abstractions.
+
+**Traditional React Problem:**
+```typescript
+function ProductCatalog() {
+  const [products, setProducts] = useState([]);
+  
+  useEffect(() => {
+    // Direct dependency on specific API implementation
+    fetch('/api/products')
+      .then(response => response.json())
+      .then(data => setProducts(data))
+      .catch(error => console.error(error));
+  }, []);
+  
+  // Component is tightly coupled to:
+  // - Specific API endpoint
+  // - Fetch API implementation  
+  // - Response format
+  // - Error handling approach
+}
+```
+
+**TDI2 Solution:**
+```typescript
+// Abstraction (Interface)
+interface ProductRepositoryInterface {
+  getAll(): Promise<Product[]>;
+  getById(id: string): Promise<Product>;
+  search(query: string): Promise<Product[]>;
+}
+
+// Low-level implementation
+@Service()
+export class ApiProductRepository implements ProductRepositoryInterface {
+  async getAll(): Promise<Product[]> {
+    const response = await this.httpClient.get('/api/products');
+    return response.data;
+  }
+}
+
+// High-level service depends on abstraction
+@Service()
+export class ProductService implements ProductServiceInterface {
+  constructor(
+    private productRepository: Inject<ProductRepositoryInterface>
+  ) {}
+  
+  state = { products: [] as Product[] };
+  
+  async loadProducts(): Promise<void> {
+    this.state.products = await this.productRepository.getAll();
+  }
+}
+
+// Component depends on service abstraction
+function ProductCatalog({ productService }: ServicesProps) {
+  const { products } = productService.state;
+  
+  useEffect(() => { productService.loadProducts(); }, []);
+  
+  return <ProductGrid products={products} />;
+}
+```
+
+**Benefits:**
+- Easy to swap implementations (API → GraphQL → Mock)
+- Services are testable in isolation
+- Components are decoupled from data sources
+- Clear contracts through interfaces
+
+### 3. Interface Segregation Principle
+
+**Principle:** Clients should not be forced to depend on interfaces they don't use.
+
+**Traditional React Problem:**
+```typescript
+// Massive context with everything
+const AppContext = createContext({
+  // User stuff
+  user: null,
+  login: () => {},
+  logout: () => {},
+  updateProfile: () => {},
+  
+  // Cart stuff  
+  cart: { items: [] },
+  addToCart: () => {},
+  removeFromCart: () => {},
+  clearCart: () => {},
+  
+  // Product stuff
+  products: [],
+  searchProducts: () => {},
+  filterProducts: () => {},
+  
+  // Settings stuff
+  theme: 'light',
+  language: 'en',
+  updateSettings: () => {},
+  
+  // ... 50 more properties
+});
+
+function ProductCard() {
+  // Forced to consume entire context even though only needs addToCart
+  const { addToCart } = useContext(AppContext);
+  
+  // Component re-renders when ANY context value changes
+}
+```
+
+**TDI2 Solution:**
+```typescript
+// Focused service interfaces
+interface CartServiceInterface {
+  readonly state: { items: CartItem[], total: number };
+  addItem(product: Product, quantity?: number): void;
+  removeItem(productId: string): void;
+  clear(): void;
+}
+
+interface ProductServiceInterface {
+  readonly state: { products: Product[], loading: boolean };
+  loadProducts(): Promise<void>;
+  searchProducts(query: string): Promise<void>;
+}
+
+// Component only receives services it needs
+function ProductCard({ 
+  product, 
+  cartService 
+}: { 
+  product: Product;
+  cartService: Inject<CartServiceInterface>;
+}) {
+  // Only re-renders when cart state changes, not other services
+  const { items } = cartService.state;
+  const isInCart = items.some(item => item.productId === product.id);
+  
+  return (
+    <div className="product-card">
+      <h3>{product.name}</h3>
+      <button 
+        onClick={() => cartService.addItem(product)}
+        disabled={isInCart}
+      >
+        {isInCart ? 'In Cart' : 'Add to Cart'}
+      </button>
+    </div>
+  );
+}
+```
+
+**Benefits:**
+- Components only depend on what they actually use
+- Precise re-rendering based on specific dependencies
+- Clear, focused interfaces
+- Better testability and maintainability
+
+### 4. Open/Closed Principle
+
+**Principle:** Software entities should be open for extension, closed for modification.
+
+**Traditional React Problem:**
+```typescript
+function PaymentForm() {
+  const [paymentMethod, setPaymentMethod] = useState('creditCard');
+  const [processing, setProcessing] = useState(false);
+  
+  const processPayment = async (paymentData) => {
+    setProcessing(true);
+    
+    // Adding new payment method requires modifying this function
+    try {
+      if (paymentMethod === 'creditCard') {
+        await processCreditCard(paymentData);
+      } else if (paymentMethod === 'paypal') {
+        await processPayPal(paymentData);
+      } else if (paymentMethod === 'applePay') {
+        // New requirement - must modify existing code
+        await processApplePay(paymentData);
+      } else if (paymentMethod === 'crypto') {
+        // Another new requirement - more modifications
+        await processCrypto(paymentData);
+      }
+      // Success handling
+    } catch (error) {
+      // Error handling
+    } finally {
+      setProcessing(false);
+    }
+  };
+}
+```
+
+**TDI2 Solution:**
+```typescript
+// Base abstraction
+interface PaymentProcessorInterface {
+  process(amount: number, paymentData: any): Promise<PaymentResult>;
+  validate(paymentData: any): ValidationResult;
+}
+
+// Concrete implementations
+@Service()
+export class CreditCardProcessor implements PaymentProcessorInterface {
+  async process(amount: number, paymentData: CreditCardData): Promise<PaymentResult> {
+    // Credit card processing logic
+  }
+}
+
+@Service()
+export class PayPalProcessor implements PaymentProcessorInterface {
+  async process(amount: number, paymentData: PayPalData): Promise<PaymentResult> {
+    // PayPal processing logic
+  }
+}
+
+// New implementations don't modify existing code
+@Service()
+export class CryptoProcessor implements PaymentProcessorInterface {
+  async process(amount: number, paymentData: CryptoData): Promise<PaymentResult> {
+    // Crypto processing logic
+  }
+}
+
+// Payment service coordinates but doesn't need modification
+@Service()
+export class PaymentService implements PaymentServiceInterface {
+  constructor(
+    private processors: Map<string, PaymentProcessorInterface> = new Map([
+      ['creditCard', inject(CreditCardProcessor)],
+      ['paypal', inject(PayPalProcessor)],
+      ['crypto', inject(CryptoProcessor)], // Extension, not modification
+    ])
+  ) {}
+  
+  async processPayment(method: string, amount: number, data: any): Promise<void> {
+    const processor = this.processors.get(method);
+    if (!processor) throw new Error(`Unsupported payment method: ${method}`);
+    
+    const result = await processor.process(amount, data);
+    // Handle result
+  }
+}
+```
+
+**Benefits:**
+- New payment methods added without changing existing code
+- Each processor is independently testable
+- No risk of breaking existing payment methods
+- Clean, extensible architecture
+
+### 5. Reactive State Management
+
+**Principle:** State changes should automatically propagate to all interested parties.
+
+**Traditional React Problem:**
+```typescript
+function EcommerceApp() {
+  const [user, setUser] = useState(null);
+  const [cart, setCart] = useState({ items: [], total: 0 });
+  const [wishlist, setWishlist] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  
+  // Manual synchronization nightmare
+  const login = async (credentials) => {
+    const userData = await api.login(credentials);
+    setUser(userData);
+    
+    // Must manually update all dependent state
+    const userCart = await api.getCart(userData.id);
+    setCart(userCart);
+    
+    const userWishlist = await api.getWishlist(userData.id);
+    setWishlist(userWishlist);
+    
+    const userRecommendations = await api.getRecommendations(userData.id);
+    setRecommendations(userRecommendations);
+  };
+  
+  const addToCart = (product) => {
+    setCart(prev => ({
+      items: [...prev.items, product],
+      total: prev.total + product.price
+    }));
+    
+    // Must manually trigger recommendation updates
+    updateRecommendations();
+    
+    // Must manually update wishlist if item was there
+    if (wishlist.includes(product.id)) {
+      setWishlist(prev => prev.filter(id => id !== product.id));
+    }
+  };
+}
+```
+
+**TDI2 Solution:**
+```typescript
+@Service()
+export class UserService implements UserServiceInterface {
+  state = { currentUser: null as User | null };
+  
+  async login(credentials: LoginCredentials): Promise<void> {
+    this.state.currentUser = await this.userRepository.authenticate(credentials);
+    // State change automatically triggers dependent services
+  }
+}
+
+@Service()
+export class CartService implements CartServiceInterface {
+  constructor(private userService: Inject<UserServiceInterface>) {
+    // Automatically react to user changes
+    subscribe(this.userService.state, () => {
+      if (this.userService.state.currentUser) {
+        this.loadUserCart();
+      } else {
+        this.clearCart();
+      }
+    });
+  }
+  
+  state = { items: [] as CartItem[], total: 0 };
+  
+  addItem(product: Product): void {
+    this.state.items.push({ product, quantity: 1 });
+    this.state.total += product.price;
+    // State change automatically triggers other reactive services
+  }
+}
+
+@Service()
+export class RecommendationService implements RecommendationServiceInterface {
+  constructor(
+    private userService: Inject<UserServiceInterface>,
+    private cartService: Inject<CartServiceInterface>
+  ) {
+    // Automatically update recommendations when user or cart changes
+    subscribe(this.userService.state, () => this.updateRecommendations());
+    subscribe(this.cartService.state, () => this.updateRecommendations());
+  }
+  
+  state = { recommendations: [] as Product[] };
+  
+  private async updateRecommendations(): Promise<void> {
+    // Automatically called when dependencies change
+    const user = this.userService.state.currentUser;
+    const cartItems = this.cartService.state.items;
+    
+    if (user && cartItems.length) {
+      this.state.recommendations = await this.recommendationRepository.getPersonalized(
+        user.id, 
+        cartItems.map(item => item.product.id)
+      );
+    }
+  }
+}
+```
+
+**Benefits:**
+- Automatic state synchronization across services
+- No manual coordination required
+- Reactive updates cascade appropriately
+- Reduced bugs from forgot state updates
+
+### 6. Lifecycle Separation
+
+**Principle:** Component lifecycle should be separate from business logic lifecycle.
+
+**Traditional React Problem:**
+```typescript
+function ProductSearch() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [results, setResults] = useState([]);
+  const [debounceTimer, setDebounceTimer] = useState(null);
+  
+  useEffect(() => {
+    // Business logic mixed with component lifecycle
+    if (searchTerm) {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      
+      const timer = setTimeout(async () => {
+        const searchResults = await api.searchProducts(searchTerm);
+        setResults(searchResults);
+        
+        // Analytics tracking
+        analytics.track('product_search', { term: searchTerm, count: searchResults.length });
+        
+        // Cache results
+        localStorage.setItem(`search_${searchTerm}`, JSON.stringify(searchResults));
+      }, 300);
+      
+      setDebounceTimer(timer);
+    } else {
+      setResults([]);
+    }
+    
+    // Cleanup mixed with business logic
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [searchTerm]);
+}
+```
+
+**TDI2 Solution:**
+```typescript
+@Service()
+export class ProductSearchService implements ProductSearchServiceInterface, OnDestroy {
+  private debounceTimer: NodeJS.Timeout | null = null;
+  
+  state = {
+    searchTerm: '',
+    results: [] as Product[],
+    searching: false
+  };
+  
+  search(term: string): void {
+    this.state.searchTerm = term;
+    this.state.searching = true;
+    
+    // Business logic lifecycle independent of component
+    if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    
+    this.debounceTimer = setTimeout(async () => {
+      if (term) {
+        this.state.results = await this.productRepository.search(term);
+        await this.analyticsService.trackSearch(term, this.state.results.length);
+        await this.cacheService.store(`search_${term}`, this.state.results);
+      } else {
+        this.state.results = [];
+      }
+      this.state.searching = false;
+    }, 300);
+  }
+  
+  // Service lifecycle managed by container
+  onDestroy(): void {
+    if (this.debounceTimer) clearTimeout(this.debounceTimer);
+  }
+}
+
+function ProductSearch({ productSearchService }: ServicesProps) {
+  const { searchTerm, results, searching } = productSearchService.state;
+  
+  // Pure component lifecycle
+  return (
+    <div>
+      <input 
+        value={searchTerm}
+        onChange={(e) => productSearchService.search(e.target.value)}
+      />
+      {searching && <Spinner />}
+      <ProductList products={results} />
+    </div>
+  );
+}
+```
+
+**Benefits:**
+- Business logic lifecycle independent of component mounting/unmounting
+- Services can exist longer than components
+- Cleaner component code focused on UI
+- Better resource management through service lifecycle
+
+## Architectural Impact
+
+These principles work together to create:
+
+### 1. **Predictable Architecture**
+- Clear boundaries between layers
+- Consistent patterns across the application
+- Reduced cognitive overhead for developers
+
+### 2. **Testable Design**
+- Services are isolated and mockable
+- Components become pure and predictable
+- Clear interfaces enable focused testing
+
+### 3. **Scalable Structure**
+- New features extend existing patterns
+- Team members can work independently
+- Architecture scales with application complexity
+
+### 4. **Maintainable Codebase**
+- Changes have limited blast radius
+- Debugging follows clear boundaries
+- Refactoring is safer with interfaces
+
+## Enterprise Benefits
+
+For enterprise teams, these principles deliver:
+
+- **Onboarding Speed**: Developers understand familiar patterns
+- **Code Quality**: Architecture enforces good practices
+- **Team Velocity**: Parallel development with clear boundaries
+- **Risk Reduction**: Interfaces limit impact of changes
+- **Technical Debt**: Proactive architecture prevents accumulation
+
+## State Ownership Decision Framework
+
+A critical question in TDI2 architecture: **When should state live in services vs. React components?**
+
+### 🎨 **View State** → React Component State
+
+**Characteristics:**
+- **Ephemeral** - Lost when component unmounts  
+- **UI-specific** - Only affects presentation and interaction
+- **Non-transferable** - Doesn't make sense outside this component
+- **Immediate feedback** - Changes instantly without business rules
+
+**Examples:**
+```typescript
+function ProductForm() {
+  // ✅ View state - UI-only concerns
+  const [showPassword, setShowPassword] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [currentTab, setCurrentTab] = useState('details');
+  const [fieldFocus, setFieldFocus] = useState<string | null>(null);
+  
+  return (
+    <form>
+      {/* Pure UI rendering */}
+    </form>
+  );
+}
+```
+
+### 🏢 **Business State** → Service Layer
+
+**Characteristics:**
+- **Persistent** - Survives component unmounts and page refreshes
+- **Domain-meaningful** - Represents real business concepts  
+- **Transferable** - Makes sense in APIs, tests, other components
+- **Rule-governed** - Changes follow business logic and validation
+
+**Examples:**
+```typescript
+@Service()
+export class ProductFormService {
+  // ✅ Business state - domain entities and rules
+  state = {
+    productData: {} as Product,
+    validationErrors: [] as ValidationError[],
+    isSubmitting: false,
+    lastSavedAt: null as Date | null
+  };
+  
+  updateProduct(updates: Partial<Product>): void {
+    // Business logic and validation
+    Object.assign(this.state.productData, updates);
+    this.validateProduct();
+  }
+}
+```
+
+### 🤔 **Decision Tests**
+
+When unsure, apply these tests:
+
+1. **Persistence Test**: Does it need to survive component unmounts? → Business
+2. **API Test**: Would this be sent to/from an API? → Business  
+3. **Transfer Test**: Could other components use this state? → Business
+4. **Business Rule Test**: Does changing it trigger validation/calculations? → Business
+5. **UI Feedback Test**: Is it purely for visual feedback? → View
+
+### 🔍 **Edge Cases & Contextual Analysis**
+
+#### Loading States
+```typescript
+const [isSubmitting, setIsSubmitting] = useState(false);
+
+// 🎨 VIEW STATE if: Just for button spinner, user feedback
+// 🏢 BUSINESS STATE if: Prevents duplicate submissions, affects business logic
+```
+
+#### Selection State
+```typescript
+const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+// 🎨 VIEW STATE if: Multi-select UI for display filtering
+// 🏢 BUSINESS STATE if: Items selected for business operation (delete, approve)
+```
+
+#### Filter/Search State
+```typescript
+const [searchQuery, setSearchQuery] = useState('');
+
+// 🎨 VIEW STATE if: Just for immediate UI filtering, not persisted
+// 🏢 BUSINESS STATE if: Affects data fetching, needs URL persistence, affects analytics
+```
+
+### ❌ **Anti-Patterns to Avoid**
+
+```typescript
+// ❌ Don't mix view and business state
+const [mixedState, setMixedState] = useState({
+  productName: '',      // 🏢 Business - belongs in service
+  showTooltip: false,   // 🎨 View - belongs in component  
+  errors: [],          // 🏢 Business - belongs in service
+  isAnimating: false   // 🎨 View - belongs in component
+});
+
+// ❌ Don't put UI state in services
+@Service()
+export class ProductService {
+  state = {
+    products: [],
+    tooltipVisible: false  // ❌ UI concern doesn't belong here
+  };
+}
+```
+
+### 📋 **Practical Classification Framework**
+
+```
+Is this state...
+├── Only for visual feedback/interaction?
+│   └── 🎨 VIEW STATE (Component)
+├── Representing domain data/business rules?
+│   └── 🏢 BUSINESS STATE (Service)  
+├── UI-scoped but affects business logic?
+│   └── 🤔 CONTEXT STATE (React Context/Shared Service)
+└── Unclear?
+    └── Apply the 5 tests above ⬆️
+```
+
+**Key Insight**: Think about **who cares** about the state:
+- Only the UI? → View State
+- The business domain? → Business State  
+- Both, but scoped to UI flow? → Context State
+
+## KISS Principles for Services
+
+### Rule 1: Use Proxy State for Reactivity
+
+```typescript
+// ✅ Simple reactive state
+@Service()
+class FormService {
+  state = {
+    data: {},
+    isValid: false,
+    isSubmitting: false
+  }; // Valtio proxy makes this automatically reactive
+}
+
+// ❌ Observable complexity
+@Service() 
+class FormService {
+  private dataSubject = new BehaviorSubject({});
+  private isValidSubject = new BehaviorSubject(false);
+  data$ = this.dataSubject.asObservable();
+  isValid$ = this.isValidSubject.asObservable();
+}
+```
+
+### Rule 2: Direct Method Calls Between Services
+
+```typescript
+// ✅ Clear, direct communication
+@Service()
+class WorkflowService {
+  constructor(
+    @Inject() private demographicsService: DemographicsServiceInterface,
+    @Inject() private insuranceService: InsuranceServiceInterface
+  ) {}
+
+  async completeStep(stepId: string): Promise<void> {
+    if (stepId === 'demographics') {
+      const data = this.demographicsService.getData(); // Direct call
+      
+      if (data.age < 18) {
+        this.unlockStep('guardian_consent'); // Direct method
+      }
+      
+      this.unlockStep('insurance'); // Clear progression
+    }
+  }
+}
+
+// ❌ Event-driven complexity
+@Service()
+class WorkflowService {
+  constructor(@Inject() private eventBus: EventBusInterface) {}
+  
+  async completeStep(stepId: string): Promise<void> {
+    // Complex event orchestration
+    this.eventBus.emit('step.completed', { stepId });
+    this.eventBus.on('demographics.validated', this.handleValidation);
+    this.eventBus.on('insurance.unlocked', this.handleUnlock);
+  }
+}
+```
+
+### Rule 3: Keep Services Focused
+
+```typescript
+// ✅ Single responsibility
+@Service()
+class UserAuthenticationService {
+  state = { currentUser: null, isAuthenticated: false };
+  
+  login(credentials: LoginCredentials): Promise<void> { /* ... */ }
+  logout(): Promise<void> { /* ... */ }
+  refreshToken(): Promise<void> { /* ... */ }
+}
+
+@Service()
+class UserProfileService {
+  state = { profile: null, preferences: {} };
+  
+  updateProfile(updates: ProfileUpdates): Promise<void> { /* ... */ }
+  getPreferences(): UserPreferences { /* ... */ }
+}
+
+// ❌ God service anti-pattern
+@Service()
+class UserService {
+  // Authentication + Profile + Preferences + Analytics + Notifications...
+  // 500+ lines of mixed concerns
+}
+```
+
+These architectural principles aren't theoretical - they're proven patterns adapted for React that deliver measurable improvements in development productivity and code quality.
+
+---
+
+## Reactivity Boundaries & Control Flow
+
+### Applied vs Misapplied Reactivity
+
+**Principle**: Reactivity should enhance control flow, not obscure it. Proper reactivity boundaries preserve top-down data flow while keeping side-effects localized.
+
+### ✅ **Good Reactivity**: System Boundaries
+
+**Use reactivity for:**
+- Receiving asynchronous input (user actions, network responses)
+- External state changes (API updates, WebSocket events)  
+- System-level state transitions
+
+```typescript
+// ✅ Good: Reactivity at system boundary
+@Service()
+export class UserService {
+  state = { user: null, loading: false };
+
+  async loadUser(id: string): Promise<void> {
+    this.state.loading = true;
+    this.state.user = await this.userRepository.fetchUser(id);
+    this.state.loading = false;
+    // Reactivity handled by Valtio proxy automatically
+  }
+}
+
+// Component subscribes to state changes transparently
+function UserProfile({ userService }: ServiceProps) {
+  const { user, loading } = userService.state; // Reactive automatically
+  
+  return user ? (
+    <div>{user.name}</div>
+  ) : loading ? (
+    <div>Loading...</div>
+  ) : (
+    <button onClick={() => userService.loadUser('42')}>
+      Load User
+    </button>
+  );
+}
+```
+
+**Why This Works:**
+- **State encapsulation** in services
+- **Transparent reactivity** through Valtio proxies
+- **Declarative components** remain stateless
+- **Explicit control flow** with clear method calls
+
+### ❌ **Bad Reactivity**: Internal Logic
+
+**Avoid reactivity for:**
+- Internal business logic coordination
+- Complex service-to-service communication
+- Control flow between components
+
+```typescript
+// ❌ Bad: Reactivity obscures control flow
+function useUser(id: string) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    
+    if (!id) return;
+    
+    setLoading(true);
+    fetchUser(id).then(userData => {
+      if (!cancelled) {
+        setUser(userData);
+        setLoading(false);
+        // Hidden side-effects cascade through useEffect chains
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [id]); // Dependency array fragility
+
+  return { user, loading };
+}
+```
+
+**Why This Fails:**
+- **Hidden dependencies** in useEffect arrays
+- **Race conditions** requiring manual cleanup
+- **Control flow obscured** by React's scheduler
+- **Side-effects scattered** across multiple hooks
+
+### Reactive Service Communication
+
+**Correct Pattern**: Direct method calls with reactive state
+
+```typescript
+// ✅ Services communicate through direct calls
+@Service()
+export class CartService {
+  constructor(
+    @Inject() private userService: UserServiceInterface
+  ) {}
+
+  addItem(product: Product): void {
+    // Direct method call - explicit control flow
+    if (!this.userService.isAuthenticated()) {
+      throw new AuthenticationError();
+    }
+    
+    this.state.items.push(product);
+    this.state.total += product.price;
+    // State changes are reactive, method calls are not
+  }
+}
+```
+
+**Incorrect Pattern**: Reactive service coordination
+
+```typescript
+// ❌ Reactive coordination breaks traceability
+@Service()
+export class CartService {
+  constructor(
+    @Inject() private userService: UserServiceInterface
+  ) {
+    // ❌ Hidden reactive dependency
+    subscribe(this.userService.state, () => {
+      if (!this.userService.state.authenticated) {
+        this.clearCart(); // Hidden side-effect
+      }
+    });
+  }
+
+  // Control flow becomes unpredictable
+}
+```
+
+### Guidelines for Reactivity Boundaries
+
+**1. Reactivity Flows Down**: State changes propagate down the component tree
+```typescript
+// Service state changes → Component re-renders
+userService.state.user = newUser; // Triggers reactive update
+```
+
+**2. Commands Flow Up**: User actions trigger explicit method calls
+```typescript
+// User action → Service method call
+<button onClick={() => userService.updateProfile(data)}>
+  Update Profile
+</button>
+```
+
+**3. Services Communicate Directly**: No reactive coordination between services
+```typescript
+// ✅ Direct service-to-service calls
+class OrderService {
+  async createOrder(): Promise<void> {
+    await this.paymentService.processPayment(); // Direct call
+    await this.inventoryService.reserveItems(); // Direct call
+  }
+}
+```
+
+This pattern maintains clear control flow while leveraging reactivity for UI updates, creating predictable and debuggable application architecture.

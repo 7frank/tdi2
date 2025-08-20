@@ -220,10 +220,25 @@ Experimental decorators must be enabled:
 
 ## Documentation
 
-Extensive documentation is available in `/docs/` covering:
-- Architecture analysis
-- Pain point comparisons
-- Migration strategies
-- Enterprise implementation guides
+**📖 [Live Documentation Site](https://7frank.github.io/tdi2/)** - Comprehensive Starlight-based documentation site
+
+**🧪 [Interactive Examples](https://7frank.github.io/tdi2/test-harness/)** - Live Storybook demonstrations
+
+**💻 [Local Development](./monorepo/apps/docs-starlight/)** - Documentation source and development
+
+Key documentation resources:
+- **[Quick Start Guide](./monorepo/apps/docs-starlight/src/content/docs/getting-started/quick-start.md)** - Get up and running in 5 minutes
+- **[Enterprise Implementation](./monorepo/apps/docs-starlight/src/content/docs/guides/enterprise/implementation.md)** - 4-phase enterprise adoption strategy
+- **[Architecture Patterns](./monorepo/apps/docs-starlight/src/content/docs/guides/architecture/controller-service-pattern.md)** - Controller vs Service pattern distinction
+- **[E-Commerce Case Study](./monorepo/apps/docs-starlight/src/content/docs/examples/ecommerce-case-study.md)** - Complete working example
+- **[Migration Strategy](./monorepo/apps/docs-starlight/src/content/docs/guides/migration/strategy.md)** - Systematic migration from Redux/Context
+- **[Research & Analysis](./monorepo/apps/docs-starlight/src/content/docs/research/)** - Market analysis, SOLID principles compliance, evaluation plans
+
+### Development Documentation
+```bash
+cd monorepo/apps/docs-starlight
+bun run dev  # Start documentation development server
+bun run build  # Build static documentation site
+```
 
 The project is experimental and actively seeking feedback from the React community, particularly enterprise teams dealing with prop drilling and state management complexity.

@@ -1,0 +1,111 @@
+---
+title: TDI2 Documentation
+description: TypeScript Dependency Injection for React - Transform React from component chaos to service-centric clarity.
+template: splash
+hero:
+  tagline: Enterprise-grade dependency injection and reactive state management for React applications.
+  image:
+    file: ../../assets/houston.webp
+  actions:
+    - text: Quick Start Guide
+      link: /getting-started/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/7frank/tdi2
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Transform React Development
+
+TDI2 (TypeScript Dependency Injection 2) revolutionizes React development by moving state and logic from components into reactive services, eliminating prop drilling and providing automatic state synchronization.
+
+<CardGrid stagger>
+	<Card title="🏗️ Service-Oriented Architecture" icon="setting">
+		Move business logic into testable, reusable services. Components become pure templates.
+	</Card>
+	<Card title="⚡ Automatic Reactivity" icon="rocket">
+		Valtio-powered reactive state with surgical re-renders. No manual optimization needed.
+	</Card>
+	<Card title="🔧 Compile-Time DI" icon="puzzle">
+		Zero runtime overhead with build-time dependency injection and interface resolution.
+	</Card>
+	<Card title="🧪 Testing Excellence" icon="approve-check">
+		Simple service unit testing and easy component mocking. Test business logic in isolation.
+	</Card>
+</CardGrid>
+
+## Quick Example
+
+Transform your React components from props hell to clean service injection:
+
+```typescript
+// ❌ Before: Props drilling and manual state management
+function ProductList({ 
+  products, 
+  loading, 
+  onAddToCart, 
+  cartItems, 
+  user, 
+  theme,
+  /* ...15+ more props */ 
+}) {
+  // Complex useEffect chains, manual synchronization
+}
+
+// ✅ After: Clean service injection
+function ProductList({ 
+  productService,
+  cartService 
+}: {
+  productService: Inject<ProductServiceInterface>;
+  cartService: Inject<CartServiceInterface>;
+}) {
+  const { products, loading } = productService.state;
+  
+  return (
+    <div>
+      {products.map(product => (
+        <ProductCard 
+          key={product.id}
+          productId={product.id}
+          onAddToCart={() => cartService.addToCart(product)}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+## Why Choose TDI2?
+
+| Traditional React | TDI2 Approach |
+|-------------------|---------------|
+| 15+ props per component | 0 data props |
+| Manual state synchronization | Automatic everywhere |
+| Complex component testing | Pure template testing |
+| No architectural boundaries | Clear service boundaries |
+| Prop drilling hell | Direct service injection |
+
+## Getting Started
+
+1. **[Quick Start Guide](/getting-started/quick-start/)** - Build your first ProductService in 15 minutes
+2. **[Service Patterns](/patterns/service-patterns/)** - Learn essential service design patterns
+3. **[Component Transformation](/guides/component-transformation/)** - Transform React components to use services
+
+*More comprehensive documentation will be available as we migrate content from the existing docs.*
+
+## Enterprise Ready
+
+TDI2 is designed for large-scale React applications with:
+
+- **Team Coordination** - Clear service boundaries prevent teams from stepping on each other
+- **Testing Excellence** - Service unit tests run in milliseconds, no React rendering needed
+- **Performance Optimization** - Automatic reactive updates, no manual memoization
+- **Migration Strategy** - Incremental adoption alongside existing React patterns
+
+---
+
+*Ready to transform your React application architecture?*

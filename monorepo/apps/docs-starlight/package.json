@@ -1,0 +1,30 @@
+{
+  "name": "@tdi2/docs-starlight",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "TDI2 Documentation - TypeScript Dependency Injection for React",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check",
+    "lint": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.35.2",
+    "astro": "^5.6.1",
+    "sharp": "^0.34.2"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/7frank/tdi2.git",
+    "directory": "monorepo/apps/docs-starlight"
+  },
+  "bugs": {
+    "url": "https://github.com/7frank/tdi2/issues"
+  },
+  "homepage": "https://github.com/7frank/tdi2#readme"
+}
