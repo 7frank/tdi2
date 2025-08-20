@@ -3,14 +3,20 @@
 ## ordered log
 
 ### [❌] add di-testing example
+
 - ecommerce, fix failing tests
-- leave basic example out of it, keep the basic example well basic 
+- leave basic example out of it, keep the basic example well basic
 
+### [❌] fix ai system prompt
 
-### fix ai system prompt
 - we have the documentation and degit
-- we also should have a basic system prompt, so that we or any user could simply copy & paste that to claude code,  as baseline then add our requirements (styling / business logic /test quantity)
-- our base prompt would handle that the actually generataed code is using the di approach properly 
+- we also should have a basic system prompt, so that we or any user could simply copy & paste that to claude code, as baseline then add our requirements (styling / business logic /test quantity)
+- our base prompt would handle that the actually generataed code is using the di approach properly
+
+### [❌] fix gh-pages actions for
+
+- test harness
+- documentation
 
 ### [❌] clean up talks/RFP for what value it still has
 
@@ -21,9 +27,6 @@
 - https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
 
 - maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
-
-
-
 
 ### [❌] @Configration "bean"
 
