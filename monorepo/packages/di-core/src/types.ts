@@ -47,6 +47,40 @@ export interface ServiceOptions {
   qualifier?: string; // Qualifier for disambiguation
 }
 
+// Configuration decorator options
+export interface ConfigurationOptions {
+  profiles?: string[]; // Environment profiles when configuration applies
+  priority?: number; // Loading priority when multiple configurations exist
+}
+
+// Configuration class metadata
+export interface ConfigurationMetadata {
+  profiles: string[];
+  priority: number;
+  beans: BeanMetadata[];
+  className: string;
+  filePath: string;
+}
+
+// Bean method metadata
+export interface BeanMetadata {
+  methodName: string | symbol;
+  returnType: string; // Interface name from return type
+  parameters: BeanParameterMetadata[];
+  scope: "singleton" | "transient" | "scoped";
+  primary: boolean;
+  qualifier?: string;
+  autoResolve: boolean;
+}
+
+// Bean method parameter metadata
+export interface BeanParameterMetadata {
+  parameterName: string;
+  parameterType: string; // Interface name from parameter type
+  isOptional: boolean;
+  qualifier?: string;
+}
+
 // Injection metadata - enhanced for interface resolution
 export interface InjectMetadata {
   token?: string | symbol; // Optional - auto-resolved from parameter type
@@ -68,9 +102,12 @@ export interface DIMap {
     scope: "singleton" | "transient" | "scoped";
     dependencies: string[];
     interfaceName?: string; // The interface this service implements
-    implementationClass: string; // The actual implementation class
+    implementationClass: string; // The actual implementation class or configuration class
     isAutoResolved: boolean; // True if resolved automatically from interface
     qualifier?: string; // Qualifier if multiple implementations exist
+    isBean?: boolean; // True if this service comes from @Bean method
+    beanMethodName?: string; // Method name if this is a bean
+    configurationClass?: string; // Configuration class name if this is a bean
   };
 }
 
@@ -87,6 +124,7 @@ export interface InterfaceMapping {
 export interface ContainerConfiguration {
   diMap: DIMap;
   interfaceMapping: InterfaceMapping;
+  configurations: ConfigurationMetadata[]; // Configuration classes with @Bean methods
   profiles?: string[]; // Active profiles
   environment?: string; // Current environment (dev, test, prod)
 }

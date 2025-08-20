@@ -2,10 +2,26 @@
 
 ## ordered log
 
+
+### [❌] @Configration "bean"
+
+> for things we don't own
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public PaymentService paymentService() {
+        return new PaymentService();
+    }
+
+}
+
 ### [❌] add di-testing example
 
 - ecommerce, fix failing tests
 - leave basic example out of it, keep the basic example well basic
+- di-testing seems to be published with workspace:*
 
 ### [❌] fix ai system prompt
 
@@ -28,19 +44,6 @@
 
 - maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
 
-### [❌] @Configration "bean"
-
-> for things we don't own
-
-@Configuration
-public class AppConfig {
-
-    @Bean
-    public PaymentService paymentService() {
-        return new PaymentService();
-    }
-
-}
 
 ### handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
 

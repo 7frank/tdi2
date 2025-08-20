@@ -8,7 +8,9 @@ import type {
   OnInit,
   OnDestroy,
   OnMount,
-  OnUnmount
+  OnUnmount,
+  ConfigurationMetadata,
+  ContainerConfiguration
 } from './types';
 
 export class CompileTimeDIContainer implements DIContainer {
@@ -20,6 +22,8 @@ export class CompileTimeDIContainer implements DIContainer {
     "singleton" | "transient" | "scoped"
   >();
   private destructionCallbacks = new Map<string | symbol, (() => void | Promise<void>)[]>();
+  private configurations = new Map<string, ConfigurationMetadata>();
+  private configurationInstances = new Map<string, any>(); // Configuration class instances
   private parent?: DIContainer;
 
   constructor(parent?: DIContainer) {
@@ -239,6 +243,59 @@ export class CompileTimeDIContainer implements DIContainer {
     }
 
     console.log("✅ DI configuration loaded");
+  }
+
+  // NEW: Enhanced loadConfiguration method that supports full ContainerConfiguration
+  loadContainerConfiguration(config: ContainerConfiguration): void {
+    console.log("🔧 Loading full container configuration...");
+    
+    // Load regular services and beans from DIMap
+    this.loadConfiguration(config.diMap);
+    
+    // Load configuration classes
+    this.loadConfigurationClasses(config.configurations);
+    
+    console.log("✅ Full container configuration loaded");
+  }
+
+  // NEW: Load configuration classes with @Bean methods
+  private loadConfigurationClasses(configurations: ConfigurationMetadata[]): void {
+    console.log("🏗️  Loading configuration classes...");
+    
+    // Sort configurations by priority (higher priority first)
+    const sortedConfigs = configurations.sort((a, b) => b.priority - a.priority);
+    
+    for (const config of sortedConfigs) {
+      try {
+        console.log(`📦 Loading configuration: ${config.className}`);
+        
+        // Store configuration metadata
+        this.configurations.set(config.className, config);
+        
+        // Create configuration instance (will be created when first bean is requested)
+        // This is lazy loading - the configuration instance is created when needed
+        
+        console.log(`✅ Configuration ${config.className} registered with ${config.beans.length} beans`);
+      } catch (error) {
+        console.error(`❌ Failed to load configuration ${config.className}:`, error);
+      }
+    }
+  }
+
+  // NEW: Get or create configuration instance
+  private getConfigurationInstance(className: string): any {
+    if (this.configurationInstances.has(className)) {
+      return this.configurationInstances.get(className);
+    }
+
+    // This will be called by the generated factory functions
+    // The transformer will generate code that creates configuration instances
+    throw new Error(`Configuration instance not found: ${className}. This should be created by the transformer.`);
+  }
+
+  // NEW: Register configuration instance (called by generated code)
+  registerConfigurationInstance(className: string, instance: any): void {
+    this.configurationInstances.set(className, instance);
   }
 
   private getTokenKey(token: string | symbol): string {

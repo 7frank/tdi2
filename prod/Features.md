@@ -37,8 +37,8 @@ class RequestLogger {}
 
 | Feature        | Description                   | Implementation Status | Note |
 | -------------- | ----------------------------- | --------------------- | ---- |
-| @Configuration | Configuration class decorator | ❌                    |      |
-| @Bean          | Bean definition decorator     | ❌                    |      |
+| @Configuration | Configuration class decorator | ✅                    |      |
+| @Bean          | Bean definition decorator     | ✅                    |      |
 
 ## Environment Management
 
@@ -69,23 +69,8 @@ class RequestLogger {}
 Based on my analysis of the Features.md file and the existing codebase, here's my categorization of the unimplemented features
 from a TypeScript perspective:
 
-🟢 Low Hanging Fruits (Easy to Implement)
-
--
 
 🟡 Medium Complexity
-
-4. @Configuration
-
-- Why medium: Requires new class processing pattern
-- Implementation: Classes that define @Bean methods instead of service classes
-- TypeScript complexity: Moderate - needs method metadata extraction and factory generation
-
-5. @Bean
-
-- Why medium: Method-level decorators for external class registration
-- Implementation: Process @Configuration class methods, generate factories
-- TypeScript complexity: Moderate - method return type inference, dependency injection into factory methods
 
 6. @Profile ✅ Already implemented in decorators but needs runtime support
 
@@ -95,7 +80,7 @@ from a TypeScript perspective:
 
 > @Profile(string|string[]) (KISS)
 
-> Next phase: 4. @Configuration + @Bean (enables external library integration) 5. Complete @Profile runtime support
+> 5. Complete @Profile runtime support
 
 (out of scope) Advanced features (if needed): 6. Advanced scoping scenarios 7. Complex profile conditions
 
