@@ -2,6 +2,7 @@
 
 ## ordered log
 
+
 ### [❌] add di-testing example
 
 - ecommerce, fix failing tests
@@ -11,7 +12,7 @@
 
 - we have the documentation and degit
 - we also should have a basic system prompt, so that we or any user could simply copy & paste that to claude code, as baseline then add our requirements (styling / business logic /test quantity)
-- our base prompt would handle that the actually generataed code is using the di approach properly
+- our base prompt would handle that the actually generataed code is using the di approach properlly
 
 ### [❌] fix gh-pages actions for
 
@@ -422,6 +423,9 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] update docs for profile, scope, configuration, bean
+
 
 ### [✅] ecommerce example
 
