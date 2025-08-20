@@ -1,101 +1,109 @@
 ---
 title: TDI2 Documentation
-description: TypeScript Dependency Injection for React - Transform React from component chaos to service-centric clarity.
+description: React without prop drilling. Zero props, automatic state sync, pure dependency injection.
 template: splash
 hero:
-  tagline: Enterprise-grade dependency injection and reactive state management for React applications.
+  tagline: Transform 15+ props per component to zero props. React with automatic dependency injection.
   image:
     file: ../../assets/houston.webp
   actions:
-    - text: Quick Start Guide
-      link: /getting-started/quick-start/
-      icon: right-arrow
+    - text: Try in 30 Seconds
+      link: ./examples/basic/
+      icon: rocket
       variant: primary
+    - text: Quick Start Guide
+      link: ./getting-started/quick-start/
+      icon: right-arrow
+      variant: secondary
     - text: View on GitHub
       link: https://github.com/7frank/tdi2
       icon: external
+      variant: minimal
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Transform React Development
-
-TDI2 (TypeScript Dependency Injection 2) revolutionizes React development by moving state and logic from components into reactive services, eliminating prop drilling and providing automatic state synchronization.
-
-<CardGrid stagger>
-	<Card title="🏗️ Service-Oriented Architecture" icon="setting">
-		Move business logic into testable, reusable services. Components become pure templates.
-	</Card>
-	<Card title="⚡ Automatic Reactivity" icon="rocket">
-		Valtio-powered reactive state with surgical re-renders. No manual optimization needed.
-	</Card>
-	<Card title="🔧 Compile-Time DI" icon="puzzle">
-		Zero runtime overhead with build-time dependency injection and interface resolution.
-	</Card>
-	<Card title="🧪 Testing Excellence" icon="approve-check">
-		Simple service unit testing and easy component mocking. Test business logic in isolation.
-	</Card>
-</CardGrid>
-
-## Quick Example
-
-Transform your React components from props hell to clean service injection:
+## The Problem: React Prop Hell
 
 ```typescript
-// ❌ Before: Props drilling and manual state management
-function ProductList({ 
-  products, 
-  loading, 
-  onAddToCart, 
-  cartItems, 
-  user, 
-  theme,
-  /* ...15+ more props */ 
+// ❌ Your React components today
+function Dashboard({ 
+  user, setUser, 
+  products, setProducts, loading, setLoading,
+  cart, setCart, cartTotal, setCartTotal,
+  theme, setTheme, notifications, setNotifications,
+  permissions, preferences, onUpdate, onError,
+  /* ...and 10+ more props */
 }) {
-  // Complex useEffect chains, manual synchronization
-}
-
-// ✅ After: Clean service injection
-function ProductList({ 
-  productService,
-  cartService 
-}: {
-  productService: Inject<ProductServiceInterface>;
-  cartService: Inject<CartServiceInterface>;
-}) {
-  const { products, loading } = productService.state;
-  
-  return (
-    <div>
-      {products.map(product => (
-        <ProductCard 
-          key={product.id}
-          productId={product.id}
-          onAddToCart={() => cartService.addToCart(product)}
-        />
-      ))}
-    </div>
-  );
+  // Complex useEffect chains, manual synchronization...
 }
 ```
 
-## Why Choose TDI2?
+## The Solution: Zero Props with TDI2
 
-| Traditional React | TDI2 Approach |
-|-------------------|---------------|
-| 15+ props per component | 0 data props |
-| Manual state synchronization | Automatic everywhere |
-| Complex component testing | Pure template testing |
-| No architectural boundaries | Clear service boundaries |
-| Prop drilling hell | Direct service injection |
+```typescript
+// ✅ Your React components with TDI2
+function Dashboard({ 
+  userService,
+  productService,
+  cartService 
+}: {
+  userService: Inject<UserServiceInterface>;
+  productService: Inject<ProductServiceInterface>;
+  cartService: Inject<CartServiceInterface>;
+}) {
+  // Clean, focused, automatically synchronized
+  return <div>{userService.state.name} has {cartService.state.items.length} items</div>;
+}
+```
 
-## Getting Started
+**Result**: Zero prop drilling. Automatic state sync. Pure business logic separation.
 
-1. **[Quick Start Guide](/getting-started/quick-start/)** - Build your first ProductService in 15 minutes
-2. **[Service Patterns](/patterns/service-patterns/)** - Learn essential service design patterns
-3. **[Component Transformation](/guides/component-transformation/)** - Transform React components to use services
+## Try TDI2 Right Now (30 Seconds)
 
-*More comprehensive documentation will be available as we migrate content from the existing docs.*
+```bash
+npx degit 7frank/tdi2/examples/tdi2-basic-example my-di-app
+cd my-di-app && npm install && npm run dev
+```
+
+Open `http://localhost:5173` → **Working React app with zero prop drilling!**
+
+## How TDI2 Works
+
+<CardGrid stagger>
+	<Card title="🚫 Zero Prop Drilling" icon="setting">
+		Transform 15+ props per component to clean service injection. No more manual prop passing.
+	</Card>
+	<Card title="⚡ Automatic State Sync" icon="rocket">
+		Change service state anywhere → all components update automatically. No subscriptions needed.
+	</Card>
+	<Card title="🔧 Build-Time Magic" icon="puzzle">
+		TypeScript interfaces become DI tokens. Zero runtime overhead, perfect tree-shaking.
+	</Card>
+	<Card title="🧪 Simple Testing" icon="approve-check">
+		Mock services, not props. Test business logic separately from UI components.
+	</Card>
+</CardGrid>
+
+## The Dramatic Difference
+
+| Your React Code Today | With TDI2 |
+|----------------------|-----------|
+| **Props**: 15+ props per component | **Props**: Zero data props |
+| **State Sync**: Manual useEffect chains | **State Sync**: Automatic everywhere |
+| **Testing**: Mock dozens of props | **Testing**: Mock clean service interfaces |
+| **Architecture**: No clear boundaries | **Architecture**: Service → Component separation |
+| **Maintenance**: Prop drilling nightmare | **Maintenance**: Change service, all components update |
+
+**Real Impact**: TDI2 transforms React from "component framework with state chaos" to "service-oriented architecture with React rendering".
+
+## Your TDI2 Journey (3 Steps)
+
+1. 🚀 **[Try the Working Example](./examples/basic/)** - Experience TDI2 in 30 seconds (no setup required)
+2. 📖 **[Quick Start Guide](./getting-started/quick-start/)** - Build your first service from scratch
+3. 🏗️ **[Migration Guide](./guides/migration/strategy/)** - Transform your existing React apps
+
+**Next Level**: [Enterprise Implementation](./guides/enterprise/implementation/) • [Framework Comparisons](./comparison/redux-vs-tdi2/) • [Architecture Decisions](./adr/)
 
 ## Enterprise Ready
 

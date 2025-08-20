@@ -101,6 +101,7 @@ export default defineConfig({
 				{
 					label: 'Examples',
 					items: [
+						{ label: 'Try in 30 Seconds', slug: 'examples/basic' },
 						{ label: 'E-Commerce Case Study', slug: 'examples/ecommerce-case-study' },
 						{ label: 'Example Guide', slug: 'guides/example' },
 					],
