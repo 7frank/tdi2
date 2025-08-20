@@ -87,6 +87,44 @@ export class SharedServiceRegistry {
   }
 
   /**
+   * Register a bean implementation from @Configuration class
+   */
+  registerBeanImplementation(token: string, interfaceName: string, config: any): void {
+    const registration: ServiceRegistration = {
+      token,
+      interfaceName,
+      implementationClass: config.configurationClass || 'UnknownConfig',
+      scope: config.scope,
+      dependencies: config.dependencies || [],
+      factory: `bean_${config.beanMethodName}_factory`,
+      filePath: config.filePath || 'unknown',
+      registrationType: 'class', // Beans are essentially class-based
+      metadata: {
+        isGeneric: false,
+        typeParameters: [],
+        sanitizedKey: token,
+        isAutoResolved: config.isAutoResolved || true,
+        serviceInterface: interfaceName
+      }
+    };
+
+    this.services.set(token, registration);
+
+    // Update interface mapping
+    const implementations = this.interfaceMapping.get(interfaceName) || [];
+    if (!implementations.includes(config.configurationClass)) {
+      implementations.push(config.configurationClass);
+      this.interfaceMapping.set(interfaceName, implementations);
+    }
+
+    // Update class mapping
+    this.classMapping.set(config.configurationClass, token);
+
+    // Update dependency graph
+    this.dependencyGraph.set(token, config.dependencies || []);
+  }
+
+  /**
    * Get service registration by token
    */
   getService(token: string): ServiceRegistration | undefined {

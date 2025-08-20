@@ -1,6 +1,6 @@
 // src/di/decorators.ts - Updated for interface-based DI
 
-import type { ServiceOptions } from "./types";
+import type { ServiceOptions, ConfigurationOptions } from "./types";
 
 /**
  * Service decorator - marks a class as injectable
@@ -140,6 +140,48 @@ export function Qualifier(qualifier: string): any {
       target.__di_service__.qualifier = qualifier;
     }
   };
+}
+
+/**
+ * Configuration decorator - marks a class as a configuration provider
+ * Configuration classes contain @Bean methods that define external service factories
+ * Integrates with existing interface resolution and scope management
+ */
+export function Configuration(options: ConfigurationOptions = {}): ClassDecorator {
+  return function (target: any) {
+    // Store metadata for compile-time processing
+    target.__di_configuration__ = {
+      profiles: options.profiles || [],
+      priority: options.priority || 0,
+      ...options,
+    };
+  };
+}
+
+/**
+ * Bean decorator - marks a method as a factory for external services
+ * Must be used inside @Configuration classes
+ * Works with existing decorators: @Primary, @Scope, @Qualifier
+ * Return type is automatically resolved to interface for DI registration
+ */
+export function Bean(
+  target: any,
+  propertyKey: string | symbol,
+  descriptor: PropertyDescriptor
+): void {
+  // Store metadata for compile-time processing
+  if (!target.__di_beans__) {
+    target.__di_beans__ = [];
+  }
+
+  target.__di_beans__.push({
+    methodName: propertyKey,
+    autoResolve: true, // Always use interface resolution for beans
+    // Additional metadata will be extracted at compile-time:
+    // - Return type interface
+    // - Parameter dependencies
+    // - Applied decorators (@Primary, @Scope, @Qualifier)
+  });
 }
 
 

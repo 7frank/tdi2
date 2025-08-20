@@ -35,6 +35,11 @@ import { ImportManager } from './import-manager';
 import { DebugFileGenerator } from './debug-file-generator';
 import { DiInjectMarkers } from './di-inject-markers';
 
+// Import configuration processing capabilities
+import { ConfigurationProcessor } from '../config-processor/index';
+import { BeanFactoryGenerator } from '../config-processor/bean-factory-generator';
+import type { ConfigurationMetadata } from '../../src/types';
+
 interface TransformerOptions {
   srcDir?: string;
   outputDir?: string;
@@ -63,12 +68,17 @@ export class FunctionalDIEnhancedTransformer {
   private importManager: ImportManager;
   private debugFileGenerator: DebugFileGenerator;
   
+  // NEW: Configuration processing components
+  private configurationProcessor: ConfigurationProcessor;
+  private beanFactoryGenerator: BeanFactoryGenerator;
+  
   // Transformation state
   private transformationCandidates: TransformationCandidate[] = [];
   private transformedFiles: Map<string, string> = new Map();
   private transformationCount = 0;
   private errors: TransformationError[] = [];
   private warnings: TransformationWarning[] = [];
+  private configurations: ConfigurationMetadata[] = [];
 
   constructor(options: TransformerOptions = {}) {
     this.options = {
@@ -136,6 +146,16 @@ export class FunctionalDIEnhancedTransformer {
 
     this.importManager = new ImportManager(functionalOptions);
     this.debugFileGenerator = new DebugFileGenerator(this.configManager, functionalOptions);
+    
+    // Initialize configuration processing components
+    this.configurationProcessor = new ConfigurationProcessor({
+      srcDir: this.options.srcDir,
+      verbose: this.options.verbose
+    });
+    
+    this.beanFactoryGenerator = new BeanFactoryGenerator({
+      verbose: this.options.verbose
+    });
   }
 
   async transformForBuild(): Promise<Map<string, string>> {
@@ -154,16 +174,19 @@ export class FunctionalDIEnhancedTransformer {
       // Phase 1: Scan and resolve interfaces using shared logic
       await this.scanAndResolveInterfaces();
 
-      // Phase 2: Find React functional components
+      // Phase 2: Process configuration classes with @Bean methods
+      await this.processConfigurationClasses();
+
+      // Phase 3: Find React functional components
       await this.findFunctionalComponents();
 
-      // Phase 3: Transform components using the new pipeline
+      // Phase 4: Transform components using the new pipeline
       await this.transformComponentsWithPipeline();
 
-      // Phase 4: Register discovered services
+      // Phase 5: Register discovered services (including beans)
       await this.registerDiscoveredServices();
 
-      // Phase 5: Generate debug files if requested
+      // Phase 6: Generate debug files if requested
       if ((this.options as any).generateDebugFiles) {
         await this.debugFileGenerator.generateDebugFiles(this.transformedFiles);
       }
@@ -214,6 +237,54 @@ export class FunctionalDIEnhancedTransformer {
           suggestion: 'Ensure all required services are implemented and decorated with @Service'
         });
       });
+    }
+  }
+
+  private async processConfigurationClasses(): Promise<void> {
+    if (this.options.verbose) {
+      console.log('🏗️  Phase 2: Processing @Configuration classes and @Bean methods...');
+    }
+
+    try {
+      // Process all configuration classes
+      this.configurations = await this.configurationProcessor.processConfigurations();
+
+      if (this.configurations.length > 0) {
+        // Generate DI configuration entries for beans
+        const beanDIMap = this.beanFactoryGenerator.generateDIConfiguration(this.configurations);
+
+        // Add bean entries to the service registry
+        for (const [token, config] of Object.entries(beanDIMap)) {
+          if (config.interfaceName) {
+            // Register the bean as an implementation of its interface
+            this.serviceRegistry.registerBeanImplementation(token, config.interfaceName, config);
+          }
+        }
+
+        if (this.options.verbose) {
+          console.log(`✅ Processed ${this.configurations.length} configuration classes`);
+          console.log(`🫘 Generated ${Object.keys(beanDIMap).length} bean factories`);
+          
+          // Log configuration details
+          for (const config of this.configurations) {
+            console.log(`  📦 ${config.className}: ${config.beans.length} beans`);
+          }
+        }
+      } else {
+        if (this.options.verbose) {
+          console.log('ℹ️  No @Configuration classes found');
+        }
+      }
+    } catch (error) {
+      this.errors.push({
+        type: 'configuration-error' as any,
+        message: error instanceof Error ? error.message : 'Failed to process configuration classes',
+        details: error
+      });
+
+      if (this.options.verbose) {
+        console.error('❌ Configuration processing failed:', error);
+      }
     }
   }
 

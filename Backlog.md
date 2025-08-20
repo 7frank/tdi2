@@ -229,8 +229,6 @@ https://github.com/MartenBE/mkslides
 
 ### [❌] FIXME could not fast refrest useDi export incompatible
 
-### [❌] Profile decorator and marker
-
 ### [❌] Lazy decorator and marker
 
 ### [❌] cli
