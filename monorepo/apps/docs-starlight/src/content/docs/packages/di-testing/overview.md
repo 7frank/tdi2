@@ -1,7 +1,23 @@
 ---
-title: 'TDI2 Testing Utilities'
-description: Simple, focused testing utilities for TDI2 services and components. Learn the three core testing patterns and utility methods.
+title: '@tdi2/di-testing Overview'
+description: Complete testing framework for TDI2 with @DiTest, @MockBean equivalents, and advanced testing utilities. Production-ready testing infrastructure.
 ---
+
+# @tdi2/di-testing Overview
+## Complete Testing Framework for TDI2
+
+Production-ready testing framework that provides Spring Boot-style testing decorators, advanced mocking utilities, and seamless integration with popular testing frameworks.
+
+<div class="feature-highlight">
+  <h3>🧪 Testing Features</h3>
+  <ul>
+    <li><strong>@DiTest Equivalent</strong> - Spring Boot-style test configuration</li>
+    <li><strong>@MockBean Implementation</strong> - Advanced service mocking</li>
+    <li><strong>Test Containers</strong> - Isolated DI containers for testing</li>
+    <li><strong>Mock Utilities</strong> - Comprehensive mocking and stubbing</li>
+    <li><strong>Integration Testing</strong> - Full component and service testing</li>
+  </ul>
+</div>
 
 TDI2 testing is built around three core patterns: **DI-focused tests** (pure service testing), **Service Component-focused tests** (components with service props), and **Behavior Component-focused tests** (full integration testing).
 
@@ -135,6 +151,73 @@ describe('ProductCatalog Integration', () => {
 });
 ```
 
+## Spring Boot-Style Testing
+
+### @DiTest Class Decorator
+
+```typescript
+import { DiTest, MockBean, TestInject } from '@tdi2/di-testing';
+
+@DiTest({
+  profiles: ['test'],
+  mockServices: ['EmailService', 'PaymentService']
+})
+class ProductServiceTest {
+  @TestInject()
+  private productService: ProductServiceInterface;
+  
+  @MockBean()
+  private emailService: EmailServiceInterface;
+  
+  @MockBean()
+  private paymentService: PaymentServiceInterface;
+  
+  @Test()
+  async shouldProcessOrderSuccessfully() {
+    // Arrange
+    const order = { id: '123', total: 100 };
+    this.paymentService.processPayment.mockResolvedValue({ success: true });
+    
+    // Act
+    const result = await this.productService.processOrder(order);
+    
+    // Assert
+    expect(result.success).toBe(true);
+    expect(this.emailService.sendConfirmation).toHaveBeenCalled();
+  }
+}
+```
+
+### @MockBean Advanced Features
+
+```typescript
+@DiTest()
+class AdvancedMockingTest {
+  @MockBean({ 
+    scope: 'singleton',
+    reset: true,
+    spy: true // Create spy instead of mock
+  })
+  private userService: UserServiceInterface;
+  
+  @MockBean({ 
+    autoMock: false // Manual mock setup
+  })
+  private paymentService: PaymentServiceInterface;
+  
+  beforeEach() {
+    // MockBean automatically resets if reset: true
+    this.setupPaymentServiceMock();
+  }
+  
+  private setupPaymentServiceMock() {
+    this.paymentService.processPayment = jest.fn().mockImplementation(
+      async (amount) => ({ success: amount > 0 })
+    );
+  }
+}
+```
+
 ## Testing Utility Methods
 
 ### `createTestContainer(mocks?)`
@@ -224,11 +307,15 @@ const { getByText } = renderWithDI(<ProductList />, {
 
 ### Installation
 
-TDI2 testing utilities are included with the core package:
-
 ```bash
+# Core testing framework
+npm install @tdi2/di-testing
+
+# Or with bun
+bun add @tdi2/di-testing
+
+# Testing utilities also included with di-core
 npm install @tdi2/di-core
-# Testing utilities included
 ```
 
 ### Basic Test Setup
@@ -236,8 +323,9 @@ npm install @tdi2/di-core
 ```typescript
 // src/__tests__/setup.ts
 import '@testing-library/jest-dom';
-import { configureTDI2Testing } from '@tdi2/di-testing';
+import { configureTDI2Testing, DiTest, MockBean } from '@tdi2/di-testing';
 
+// Configure global test settings
 configureTDI2Testing({
   // Global test configuration
   defaultMocks: {
@@ -248,6 +336,15 @@ configureTDI2Testing({
   
   // Automatic cleanup
   autoCleanup: true,
+  
+  // Profile for testing
+  activeProfiles: ['test'],
+  
+  // Mock configuration
+  mockDefaults: {
+    autoMock: true,
+    resetBetweenTests: true
+  }
 });
 ```
 
@@ -258,124 +355,79 @@ configureTDI2Testing({
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
+  transform: {
+    '^.+\\.(ts|tsx)$': '@tdi2/jest-transformer',
+  },
   moduleNameMapping: {
     '^@/(.*)$': '<rootDir>/src/$1',
   }
 };
 ```
 
-## Testing Examples by Pattern
-
-### DI-Focused: Pure Service Testing
-
-```typescript
-describe('CartService', () => {
-  it('should calculate totals correctly', () => {
-    // Test pure business logic
-    const cartService = new CartService();
-    const product = { id: '1', name: 'iPhone', price: 999 };
-    
-    cartService.addItem(product, 2);
-    
-    expect(cartService.state.subtotal).toBe(1998);
-    expect(cartService.state.itemCount).toBe(2);
-  });
-});
-```
-
-### Service Component-Focused: Component with Service Props
-
-```typescript
-import { mockService } from '@tdi2/di-testing';
-
-describe('CartSummary', () => {
-  it('should display cart totals', () => {
-    const mockCartService = mockService<CartServiceInterface>({
-      state: {
-        items: [{ productId: '1', quantity: 2, price: 999 }],
-        subtotal: 1998,
-        tax: 199.8,
-        total: 2197.8
-      }
-    });
-
-    render(<CartSummary cartService={mockCartService} />);
-
-    expect(screen.getByText('$1,998.00')).toBeInTheDocument();
-    expect(screen.getByText('$2,197.80')).toBeInTheDocument();
-  });
-});
-```
-
-### Behavior Component-Focused: Full Integration
-
-```typescript
-import { renderWithDI } from '@tdi2/di-testing';
-
-describe('CheckoutFlow', () => {
-  it('should complete purchase flow', async () => {
-    const { getByText, getByRole } = renderWithDI(<CheckoutFlow />, {
-      cartService: {
-        state: { items: [{ productId: '1', quantity: 1 }] }
-      },
-      paymentService: {
-        processPayment: jest.fn().mockResolvedValue({ success: true })
-      }
-    });
-
-    fireEvent.click(getByRole('button', { name: /complete purchase/i }));
-
-    await waitFor(() => {
-      expect(getByText('Order completed!')).toBeInTheDocument();
-    });
-  });
-});
-```
-
 ## Advanced Testing Patterns
 
-### Testing Service Interactions
+### Profile-Specific Testing
 
 ```typescript
-import { createTestContainer } from '@tdi2/di-testing';
+import { DiTest, withProfiles } from '@tdi2/di-testing';
 
-describe('Service Interactions', () => {
-  it('should update recommendations when cart changes', async () => {
-    const container = createTestContainer();
-    const cartService = container.get('CartService');
-    const recommendationService = container.get('RecommendationService');
-    
-    const product = { id: '1', name: 'iPhone', price: 999 };
-    
-    cartService.addItem(product);
-    
-    // Wait for reactive updates
-    await new Promise(resolve => setTimeout(resolve, 0));
-    
-    expect(recommendationService.state.recommendations).toBeDefined();
-  });
+@DiTest({ profiles: ['test', 'integration'] })
+class IntegrationTest {
+  @Test()
+  async shouldUseTestDatabase() {
+    // This test runs with test profile
+    // Automatically uses test-specific services
+  }
+}
+
+// Test different profile configurations
+describe('Profile Testing', () => {
+  it('should use development services', 
+    withProfiles(['development'], async () => {
+      const container = createTestContainer();
+      const emailService = container.get('EmailService');
+      expect(emailService.constructor.name).toBe('MockEmailService');
+    })
+  );
+  
+  it('should use production services',
+    withProfiles(['production'], async () => {
+      const container = createTestContainer();
+      const emailService = container.get('EmailService');
+      expect(emailService.constructor.name).toBe('SmtpEmailService');
+    })
+  );
 });
 ```
 
-### Testing Error Scenarios
+### Configuration Testing
 
 ```typescript
-describe('Error Handling', () => {
-  it('should handle repository errors gracefully', async () => {
-    const container = createTestContainer({
-      productRepository: {
-        getAll: () => Promise.reject(new Error('Network error'))
-      }
-    });
-    
-    const productService = container.get('ProductService');
-    
-    await productService.loadProducts();
-    
-    expect(productService.state.error).toBe('Network error');
-    expect(productService.state.loading).toBe(false);
-  });
-});
+import { DiTest, TestConfiguration, Bean } from '@tdi2/di-testing';
+
+@TestConfiguration()
+class TestDatabaseConfig {
+  @Bean()
+  createTestDatabase(): DatabaseConnection {
+    return new InMemoryDatabase();
+  }
+  
+  @Bean()
+  createTestEmailService(): EmailServiceInterface {
+    return new MockEmailService();
+  }
+}
+
+@DiTest({ configuration: [TestDatabaseConfig] })
+class ConfigurationTest {
+  @TestInject()
+  private database: DatabaseConnection;
+  
+  @Test()
+  async shouldUseTestConfiguration() {
+    expect(this.database).toBeInstanceOf(InMemoryDatabase);
+  }
+}
 ```
 
 ## Best Practices
@@ -426,26 +478,96 @@ it('should handle error')
 ```typescript
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithDI } from '@tdi2/di-testing';
+import { renderWithDI, DiTest, MockBean } from '@tdi2/di-testing';
 
-// Perfect integration with RTL
-const user = userEvent.setup();
-const { getByRole } = renderWithDI(<MyComponent />);
-await user.click(getByRole('button'));
+@DiTest()
+class ComponentIntegrationTest {
+  @MockBean()
+  private productService: ProductServiceInterface;
+  
+  @Test()
+  async shouldRenderProductList() {
+    // Setup mock data
+    this.productService.state = {
+      products: [{ id: '1', name: 'iPhone' }],
+      loading: false
+    };
+    
+    // Render with DI
+    const user = userEvent.setup();
+    const { getByRole } = renderWithDI(<ProductList />);
+    
+    // Test interactions
+    await user.click(getByRole('button', { name: /load products/i }));
+    expect(this.productService.loadProducts).toHaveBeenCalled();
+  }
+}
 ```
 
-### Vitest
+### Vitest Integration
 
 ```typescript
 // vitest.config.ts
 import { defineConfig } from 'vitest/config';
+import { diTestingPlugin } from '@tdi2/di-testing/vite';
 
 export default defineConfig({
+  plugins: [diTestingPlugin()],
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/__tests__/setup.ts'],
+    globals: true,
   }
 });
+
+// Use decorators in Vitest
+import { DiTest, MockBean } from '@tdi2/di-testing';
+
+@DiTest()
+class VitestExample {
+  @MockBean()
+  private service: MyServiceInterface;
+  
+  @Test()
+  async shouldWork() {
+    expect(this.service).toBeDefined();
+  }
+}
 ```
+
+## Package Structure
+
+```
+@tdi2/di-testing/
+├── decorators/          # @DiTest, @MockBean, @TestInject
+├── containers/          # Test container implementations
+├── mocking/            # Advanced mocking utilities
+├── configuration/      # Test configuration classes
+├── profiles/           # Profile management for tests
+├── utilities/          # Helper functions and test utilities
+├── integrations/       # Framework integrations (Jest, Vitest, RTL)
+└── types/              # TypeScript type definitions
+```
+
+## Next Steps
+
+### Essential Reading
+- **[Testing Patterns Guide](../../patterns/testing-patterns/)** - Advanced testing strategies
+- **[Service Testing](../../guides/testing/service-testing/)** - Service-specific testing approaches
+
+### Integration
+- **[Vite Plugin Testing](../vite-plugin-di/testing/)** - Build-time test optimization
+- **[Component Testing](../../guides/testing/component-testing/)** - Component testing strategies
+
+### Examples
+- **[Complete Test Suite](https://github.com/7frank/tdi2/tree/main/examples/ecommerce-app/src/__tests__)** - Real testing examples
+- **[Testing Patterns](https://github.com/7frank/tdi2/tree/main/monorepo/packages/di-testing/__tests__)** - Framework test examples
+
+<div class="example-container">
+  <div class="example-title">🎯 Key Takeaway</div>
+  <p>@tdi2/di-testing provides enterprise-grade testing infrastructure with Spring Boot familiarity. Start with @DiTest and @MockBean for immediate productivity gains.</p>
+</div>
+
+---
 
 TDI2's testing approach focuses on simplicity: choose the right pattern for your test, use simple mocks, and test behavior rather than implementation details.

@@ -30,11 +30,13 @@ Transform your enterprise React application from props hell to service-oriented 
 - **Testing complexity** from mocking component props
 
 ### Current Pain Points TDI2 Solves
-- **Props explosion** - Components with excessive props
-- **Merge conflicts** - Teams stepping on each other's components  
-- **Testing hell** - Mocking dozens of props for each test
-- **Inconsistent patterns** - Each team invents own state management
-- **Refactoring paralysis** - Moving components breaks prop chains
+- **Props explosion** - Components with excessive props → **Service injection**
+- **Merge conflicts** - Teams stepping on each other's components → **Service boundaries**
+- **Testing hell** - Mocking dozens of props for each test → **@DiTest/@MockBean**
+- **Inconsistent patterns** - Each team invents own state management → **Standardized @Service pattern**
+- **Refactoring paralysis** - Moving components breaks prop chains → **Loose coupling via interfaces**
+- **Environment configuration** - Scattered config logic → **@Profile management**
+- **Manual lifecycle** - Component lifecycle complexity → **@PostConstruct/@PreDestroy**
 
 ---
 
@@ -43,11 +45,11 @@ Transform your enterprise React application from props hell to service-oriented 
 ### Phase 1: Foundation (Weeks 1-2)
 **Goal**: Establish TDI2 infrastructure without disrupting development
 
-#### Week 1: Setup and Architecture
+#### Week 1: Complete Infrastructure Setup
 
 ```bash
-# Install TDI2 toolchain
-npm install @tdi2/di-core @tdi2/vite-plugin-di valtio
+# Install complete TDI2 toolchain (all features production-ready)
+npm install @tdi2/di-core @tdi2/vite-plugin-di @tdi2/di-testing valtio
 ```
 
 ```typescript
@@ -61,6 +63,10 @@ export default defineConfig({
     diEnhancedPlugin({
       enableInterfaceResolution: true,
       enableFunctionalDI: true,
+      enableLifecycleHooks: true,
+      enableProfileSupport: true,
+      enableConfigurationSupport: true,
+      enableTestingSupport: true,
       verbose: true,
       generateDebugFiles: process.env.NODE_ENV === 'development'
     }),
@@ -76,11 +82,13 @@ src/
 ├── services/
 │   ├── interfaces/       # Service contracts (team boundaries)
 │   ├── implementations/  # Service implementations
-│   └── __tests__/       # Service unit tests
+│   ├── configurations/   # @Configuration classes
+│   └── __tests__/       # Service unit tests with @DiTest
 ├── repositories/
 │   ├── interfaces/       # Data access contracts
-│   └── implementations/  # API/Mock implementations
+│   └── implementations/  # API/Mock implementations with @Profile
 ├── components/          # Pure presentation components
+├── testing/             # @MockBean and test utilities
 └── types/               # Shared TypeScript types
 ```
 

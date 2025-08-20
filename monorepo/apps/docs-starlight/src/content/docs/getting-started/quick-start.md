@@ -44,6 +44,9 @@ export default defineConfig({
       enableFunctionalDI: true,
       enableInterfaceResolution: true,
       enableLifecycleHooks: true,
+      enableProfileSupport: true,
+      enableConfigurationSupport: true,
+      enableTestingSupport: true,
       verbose: true, // See transformation logs
     })
   ],
@@ -104,10 +107,11 @@ export interface ProductServiceInterface {
 
 ```typescript
 // services/implementations/ProductService.ts
-import { Service, Inject } from '@tdi2/di-core';
+import { Service, Inject, Profile, PostConstruct, PreDestroy } from '@tdi2/di-core';
 import type { ProductServiceInterface, Product } from '../interfaces/ProductServiceInterface';
 
 @Service()
+@Profile("development", "production") // Available in both environments
 export class ProductService implements ProductServiceInterface {
   state = {
     products: [] as Product[],
@@ -121,6 +125,20 @@ export class ProductService implements ProductServiceInterface {
     @Inject() private productRepository: ProductRepository,
     @Inject() private notificationService: NotificationService
   ) {}
+
+  @PostConstruct
+  async initialize(): Promise<void> {
+    // Called after dependency injection is complete
+    console.log('ProductService initialized');
+    // Could pre-load critical data here
+  }
+
+  @PreDestroy
+  async cleanup(): Promise<void> {
+    // Called before service destruction
+    console.log('ProductService cleaning up');
+    // Clean up any resources, subscriptions, etc.
+  }
 
   async loadProducts(): Promise<void> {
     if (this.state.products.length > 0) return; // Smart caching
@@ -183,9 +201,10 @@ export interface ProductRepository {
 
 ```typescript
 // repositories/implementations/ApiProductRepository.ts
-import { Service } from '@tdi2/di-core';
+import { Service, Profile } from '@tdi2/di-core';
 
 @Service()
+@Profile("production", "staging")
 export class ApiProductRepository implements ProductRepository {
   private readonly baseUrl = '/api/products';
 
@@ -212,6 +231,7 @@ export class ApiProductRepository implements ProductRepository {
 ```typescript
 // services/implementations/NotificationService.ts
 @Service()
+@Profile("development", "production") // Available in both environments
 export class NotificationService {
   showSuccess(message: string): void {
     // Integration with your notification system
@@ -418,6 +438,48 @@ You should see:
 
 ---
 
+## Advanced Features You Can Now Use
+
+### Environment-Specific Services
+```typescript
+// Development-only mock service
+@Service()
+@Profile("development")
+export class MockEmailService implements EmailServiceInterface {
+  sendEmail(to: string, subject: string): Promise<void> {
+    console.log(`Mock email to ${to}: ${subject}`);
+    return Promise.resolve();
+  }
+}
+
+// Production SMTP service
+@Service()
+@Profile("production")
+export class SmtpEmailService implements EmailServiceInterface {
+  sendEmail(to: string, subject: string): Promise<void> {
+    return this.smtpClient.send({ to, subject });
+  }
+}
+```
+
+### Configuration Classes
+```typescript
+@Configuration()
+export class DatabaseConfiguration {
+  @Bean()
+  @Profile("development")
+  createDevDatabase(): DatabaseConnection {
+    return new SqliteConnection('dev.db');
+  }
+  
+  @Bean()
+  @Profile("production")
+  createProdDatabase(): DatabaseConnection {
+    return new PostgresConnection(process.env.DATABASE_URL);
+  }
+}
+```
+
 ## Benefits You Just Gained
 
 | Traditional React | Your New TDI2 App |
@@ -427,6 +489,8 @@ You should see:
 | Complex component testing | Simple service unit tests |
 | Tight coupling between components | Loose coupling via interfaces |
 | Performance optimization required | Automatic surgical re-renders |
+| Environment configuration scattered | Centralized @Profile management |
+| Manual lifecycle management | Automatic @PostConstruct/@PreDestroy |
 
 ---
 
@@ -435,11 +499,13 @@ You should see:
 ### Essential Reading
 - **[Service Patterns](../patterns/service-patterns/)** - Design robust, scalable services
 - **[Component Guide](../guides/component-transformation/)** - Transform existing components
-- **[Testing Guide](../packages/di-core/testing/)** - Test services and components
+- **[Testing Guide](../packages/di-testing/overview/)** - Complete testing framework
 
 ### Advanced Topics  
 - **[Package Documentation](../packages/di-core/overview/)** - Complete feature reference
-- **[Testing Guide](../packages/di-core/testing/)** - Test services and components
+- **[Configuration Management](../guides/advanced/features-roadmap/#configuration-features-production-ready)** - @Configuration and @Bean patterns
+- **[Profile Management](../guides/advanced/features-roadmap/#profile-implementation)** - Environment-based service activation
+- **[Lifecycle Hooks](../guides/advanced/features-roadmap/#lifecycle-features-production-ready)** - @PostConstruct and @PreDestroy patterns
 
 ### Examples
 - **[Complete E-Commerce App](https://github.com/7frank/tdi2/tree/main/examples/ecommerce-app)** - Working implementation
@@ -466,6 +532,7 @@ You should see:
 - Ensure `@Service()` decorator on your service class
 - Verify `Inject<InterfaceName>` type annotation on component props
 - Check that interface name matches service class name pattern
+- For environment-specific services, verify `@Profile()` matches current environment
 
 **State not updating?**
 - Confirm Valtio is installed: `bun add valtio`
@@ -474,7 +541,9 @@ You should see:
 
 **Missing dependencies?**
 - Ensure all `@Inject()` dependencies have corresponding `@Service()` implementations
-- Check the browser network tab for failed service registrations
+- Check that profile-specific services are active in current environment
+- Verify @Configuration classes are properly registered
+- Check the browser console for DI container errors
 
 ### Getting Help
 

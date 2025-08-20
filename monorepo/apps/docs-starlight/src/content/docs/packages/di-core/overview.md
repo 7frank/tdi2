@@ -11,10 +11,13 @@ The core TDI2 framework that transforms React development through dependency inj
 <div class="feature-highlight">
   <h3>🎯 Core Features</h3>
   <ul>
-    <li><strong>Service Decorators</strong> - @Service() and @Inject() for clean DI</li>
+    <li><strong>Service Decorators</strong> - @Service(), @Inject(), @Configuration, @Bean</li>
+    <li><strong>Environment Management</strong> - @Profile() for environment-specific services</li>
+    <li><strong>Lifecycle Hooks</strong> - @PostConstruct, @PreDestroy, onMount, onUnmount</li>
     <li><strong>Reactive State</strong> - Valtio-powered automatic reactivity</li>
     <li><strong>Interface Resolution</strong> - Automatic service discovery</li>
     <li><strong>Container Management</strong> - Service lifecycle and scoping</li>
+    <li><strong>Testing Support</strong> - Full testing framework integration</li>
   </ul>
 </div>
 
@@ -40,7 +43,7 @@ pnpm add @tdi2/di-core valtio
 ### Service Decorators
 
 ```typescript
-import { Service, Inject } from '@tdi2/di-core';
+import { Service, Inject, Profile, PostConstruct, PreDestroy } from '@tdi2/di-core';
 
 // Define service interface
 interface ProductServiceInterface {
@@ -53,6 +56,7 @@ interface ProductServiceInterface {
 
 // Implement with @Service decorator
 @Service()
+@Profile("development", "production")
 export class ProductService implements ProductServiceInterface {
   state = {
     products: [] as Product[],
@@ -63,6 +67,18 @@ export class ProductService implements ProductServiceInterface {
     @Inject() private productRepository: ProductRepository,
     @Inject() private notificationService: NotificationService
   ) {}
+
+  @PostConstruct
+  async initialize(): Promise<void> {
+    console.log('ProductService initialized');
+    // Pre-load any critical data
+  }
+
+  @PreDestroy
+  async cleanup(): Promise<void> {
+    console.log('ProductService cleaning up');
+    // Clean up resources
+  }
 
   async loadProducts(): Promise<void> {
     this.state.loading = true;
@@ -125,29 +141,53 @@ function ProductList({ productService }: ProductListProps) {
 
 ### Lifecycle Hooks
 
+#### Spring Boot Style Lifecycle
 ```typescript
 @Service()
-export class CartService implements OnMount, OnUnmount {
+export class CartService {
   state = {
     items: [] as CartItem[],
     total: 0
   };
 
-  onMount(): void {
-    // Called when service is first created
-    this.loadPersistedCart();
+  @PostConstruct
+  async initialize(): Promise<void> {
+    // Called after dependency injection is complete
+    await this.loadPersistedCart();
     this.setupAutoSave();
+    console.log('CartService initialized');
   }
 
-  onUnmount(): void {
-    // Called when service is destroyed
-    this.saveCartToStorage();
+  @PreDestroy
+  async cleanup(): Promise<void> {
+    // Called before service destruction
+    await this.saveCartToStorage();
     this.cleanupTimers();
+    console.log('CartService cleaned up');
   }
 
   private setupAutoSave(): void {
-    // Auto-save cart every 30 seconds
     setInterval(() => this.saveCartToStorage(), 30000);
+  }
+}
+```
+
+#### React Component Lifecycle
+```typescript
+@Service()
+export class ComponentBoundService implements OnMount, OnUnmount {
+  state = {
+    componentData: [] as any[]
+  };
+
+  onMount(): void {
+    // Called when component mounts
+    this.startRealTimeUpdates();
+  }
+
+  onUnmount(): void {
+    // Called when component unmounts
+    this.stopRealTimeUpdates();
   }
 }
 ```
@@ -157,15 +197,87 @@ export class CartService implements OnMount, OnUnmount {
 ```typescript
 // Singleton (default) - one instance per container
 @Service()
+@Scope("singleton")
 export class UserService {}
 
 // Transient - new instance each time
-@Service({ scope: 'transient' })
+@Service()
+@Scope("transient")
 export class ApiClient {}
 
 // Scoped - one instance per scope
-@Service({ scope: 'request' })
+@Service()
+@Scope("scoped")
 export class RequestLogger {}
+```
+
+---
+
+## Environment Management
+
+### Profile-Based Service Activation
+
+```typescript
+// Development-only service
+@Service()
+@Profile("development")
+export class MockEmailService implements EmailServiceInterface {
+  async sendEmail(to: string, subject: string): Promise<void> {
+    console.log(`Mock email to ${to}: ${subject}`);
+  }
+}
+
+// Production service
+@Service()
+@Profile("production")
+export class SmtpEmailService implements EmailServiceInterface {
+  constructor(
+    @Inject() private smtpConfig: SmtpConfigurationInterface
+  ) {}
+
+  async sendEmail(to: string, subject: string): Promise<void> {
+    return this.smtpClient.send({ to, subject });
+  }
+}
+
+// Multi-environment service
+@Service()
+@Profile("staging", "production")
+export class RedisCache implements CacheServiceInterface {
+  // Only active in staging or production
+}
+```
+
+### Configuration Classes
+
+```typescript
+@Configuration()
+export class DatabaseConfiguration {
+  @Bean()
+  @Profile("development")
+  createDevDatabase(): DatabaseConnection {
+    return new SqliteConnection('dev.db');
+  }
+  
+  @Bean()
+  @Profile("production")
+  createProdDatabase(
+    @Inject() config: EnvironmentConfig
+  ): DatabaseConnection {
+    return new PostgresConnection({
+      host: config.DB_HOST,
+      port: config.DB_PORT,
+      database: config.DB_NAME
+    });
+  }
+  
+  @Bean()
+  createConnectionPool(
+    @Inject() database: DatabaseConnection
+  ): ConnectionPool {
+    return new ConnectionPool(database, { maxConnections: 20 });
+  }
+}
 ```
 
 ---
@@ -364,11 +476,13 @@ Design service dependencies as a directed acyclic graph.
 
 ```
 @tdi2/di-core/
-├── decorators/          # @Service, @Inject decorators
+├── decorators/          # @Service, @Inject, @Profile, @Configuration, @Bean
 ├── container/          # DI container implementation
 ├── context/            # React context providers
 ├── hooks/              # React hooks for service access
-├── lifecycle/          # Service lifecycle management
+├── lifecycle/          # Service lifecycle management (@PostConstruct/@PreDestroy)
+├── configuration/      # Configuration class and bean processing
+├── profiles/           # Environment profile management
 ├── testing/            # Testing utilities and mocks
 └── types/              # TypeScript type definitions
 ```
@@ -378,12 +492,14 @@ Design service dependencies as a directed acyclic graph.
 ## Next Steps
 
 ### Essential Reading
-- **[Testing Guide](./testing/)** - Test services and components
+- **[Testing Guide](../di-testing/overview/)** - Complete testing framework
 - **[Service Patterns](../../patterns/service-patterns/)** - Design robust services
+- **[Features Roadmap](../../guides/advanced/features-roadmap/)** - All implemented features
 
 ### Configuration
 - **[Vite Plugin](../vite-plugin-di/overview/)** - Build-time transformation
 - **[Quick Start](../../getting-started/quick-start/)** - Complete setup tutorial
+- **[Enterprise Guide](../../guides/enterprise/implementation/)** - Large-scale deployment
 
 ### Examples
 - **[Complete E-Commerce App](https://github.com/7frank/tdi2/tree/main/examples/ecommerce-app)** - Working implementation

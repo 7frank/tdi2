@@ -69,26 +69,31 @@ Infrastructure Layer
 | **Interface Resolution** | Automatic interface → implementation mapping | ✅ Complete | Type-based autowiring |
 | **Container** | DI container with lifecycle management | ✅ Complete | `ApplicationContext` |
 
-### 🚧 **In Development** (Next Release)
+### ✅ **Recently Completed** (Production Ready)
 
-Based on the original roadmap, these features have decorators implemented but need runtime support:
+These features were recently completed and are now production ready:
+
+| Feature | Description | Implementation Status | Spring Boot Equivalent |
+|---------|-------------|----------------------|------------------------|
+| **@PostConstruct** | Post-construction lifecycle hook via onInit | ✅ Complete | `@PostConstruct` |
+| **@PreDestroy** | Pre-destruction lifecycle hook via onDestroy | ✅ Complete | `@PreDestroy` |
+| **@Profile** | Environment/profile-based service activation | ✅ Complete | `@Profile` |
+| **@Configuration** | Configuration class decorator | ✅ Complete | `@Configuration` |
+| **@Bean** | Bean definition decorator | ✅ Complete | `@Bean` |
+| **Lifecycle Hooks** | onMount/onUnmount for component lifecycle | ✅ Complete | N/A (React-specific) |
+
+### 🧪 **Testing Framework** (Production Ready)
+
+| Feature | Description | Implementation Status | Spring Boot Equivalent |
+|---------|-------------|----------------------|------------------------|
+| **@DiTest** | DI testing framework equivalent | ✅ Complete | `@ExtendWith(SpringExtension.class)` |
+| **@MockBean** | Mock bean for testing | ✅ Complete | `@MockBean` |
+| **Testing Utilities** | Advanced mock and test container utilities | ✅ Complete | `@TestConfiguration` |
+
+### 📋 **Future Enhancements** (Future Releases)
 
 | Feature | Description | Implementation Status | Priority | ETA |
 |---------|-------------|----------------------|----------|-----|
-| **@PostConstruct** | Post-construction lifecycle hook | 🟡 Partial - onInit equivalent | High | Next sprint |
-| **@PreDestroy** | Pre-destruction lifecycle hook | 🟡 Partial - onDestroy equivalent | High | Next sprint |
-| **@Profile** | Environment/profile-based service activation | 🟡 Decorator exists, runtime needed | Medium | Following sprint |
-| **@Scope** | Advanced scoping (Request, Transient) | 🟡 Basic singleton support only | Medium | Following sprint |
-
-### 📋 **Planned Features** (Future Releases)
-
-| Feature | Description | Implementation Status | Priority | ETA |
-|---------|-------------|----------------------|----------|-----|
-| **@Configuration** | Configuration class decorator | ❌ Not started | Medium | Q3 2024 |
-| **@Bean** | Bean definition decorator | ❌ Not started | Medium | Q3 2024 |
-| **@Qualifier** | Service disambiguation | ❌ Not started | Low | Q4 2024 |
-| **@Value** | Environment value injection | ❌ Not started | Low | Q4 2024 |
-| **Babel/TS Transformer** | Alternative to current ts-morph approach | ❌ Research phase | Medium | Q4 2024 |
 | **ESLint Plugin** | Rule verification for DI patterns | ❌ Research phase | Low | Q1 2025 |
 | **OpenTelemetry Integration** | Distributed tracing support | ❌ Research phase | Low | Q1 2025 |
 | **DevTools Integration** | Browser debugging interface | ❌ Research phase | Medium | Q1 2025 |
@@ -147,11 +152,11 @@ function CheckoutFlow({
 }
 ```
 
-### Lifecycle Features (Next Release)
+### Lifecycle Features (Production Ready)
 
 #### @PostConstruct Implementation
 
-**Current Status**: Decorator exists, runtime implementation in progress
+**Current Status**: ✅ Complete - Implemented via onInit interface
 
 ```typescript
 @Service()
@@ -178,7 +183,7 @@ export class DatabaseService {
 
 #### @PreDestroy Implementation
 
-**Current Status**: Decorator exists, runtime implementation in progress
+**Current Status**: ✅ Complete - Implemented via onDestroy interface
 
 ```typescript
 @Service()
@@ -202,7 +207,7 @@ export class CacheService {
 
 #### @Profile Implementation
 
-**Current Status**: Decorator exists, runtime profile filtering needed
+**Current Status**: ✅ Complete - Full profile filtering and environment-based activation
 
 ```typescript
 @Service()
@@ -235,11 +240,11 @@ export class RedisCache implements CacheServiceInterface {
 - **Phase 2**: Custom profile configuration and runtime switching
 - **Phase 3**: Conditional profiles with expressions
 
-### Configuration Features (Q3 2024)
+### Configuration Features (Production Ready)
 
 #### @Configuration Classes
 
-**Planned Implementation**:
+**Current Implementation**:
 
 ```typescript
 @Configuration()
@@ -303,17 +308,19 @@ export class DatabaseConfiguration {
 
 ### 🚧 **Production Blockers** (Address Before Enterprise Use)
 
-**Critical Missing Features** (4-6 days development):
+**Recently Resolved Production Blockers**:
 
-1. **Lifecycle Management** (@PostConstruct/@PreDestroy)
-   - **Impact**: Services can't properly initialize/cleanup
-   - **Effort**: Medium (3-5 days)
-   - **Workaround**: Manual initialization in constructors
+1. **Lifecycle Management** ✅ Complete
+   - **Resolution**: @PostConstruct/@PreDestroy implemented via onInit/onDestroy interfaces
+   - **Status**: Production ready with full async support
 
-2. **State Ownership Guidelines**
-   - **Impact**: Teams need clear service vs component state patterns
-   - **Effort**: Easy (1 day documentation)
-   - **Workaround**: Follow existing documentation patterns
+2. **Configuration Management** ✅ Complete
+   - **Resolution**: @Configuration and @Bean decorators fully implemented
+   - **Status**: Factory patterns and method-level injection working
+
+3. **Testing Framework** ✅ Complete
+   - **Resolution**: Full testing utilities with @DiTest and @MockBean equivalents
+   - **Status**: Production ready testing infrastructure
 
 ### 🔬 **Advanced Features** (Post-MVP)
 
@@ -326,45 +333,39 @@ export class DatabaseConfiguration {
 
 ## Implementation Priority Roadmap
 
-### **Sprint 1** (Production MVP - 4-6 days)
-1. **@PostConstruct runtime support** (3 days)
+### ✅ **Completed Milestones**
+
+#### **Production MVP** ✅ **COMPLETE**
+1. **@PostConstruct runtime support** ✅ Complete
    - Container calls lifecycle methods after instantiation
    - Async initialization support
    - Error handling for initialization failures
 
-2. **@PreDestroy runtime support** (2 days)
+2. **@PreDestroy runtime support** ✅ Complete
    - Application shutdown lifecycle
    - Component unmount cleanup integration
    - Graceful shutdown with timeout
 
-3. **State ownership documentation** (1 day)
-   - Service vs component state guidelines
-   - Best practices for state placement
-   - Anti-patterns to avoid
-
-### **Sprint 2** (Developer Experience - 1-2 weeks)
-1. **@Profile runtime implementation**
-   - Environment-based activation
-   - Multi-profile support
-   - Runtime profile switching
-
-2. **Enhanced debugging tools**
-   - Dependency graph visualization
-   - Service lifecycle monitoring
-   - Performance metrics collection
-
-3. **Testing framework enhancements**
-   - Improved mocking utilities
-   - Integration test helpers
-   - Migration guides for existing tests
-
-### **Sprint 3** (Advanced Features - 2-3 weeks)
-1. **@Configuration and @Bean support**
+3. **@Configuration and @Bean support** ✅ Complete
    - Configuration class processing
    - Method-level dependency injection
    - Factory pattern support
 
-2. **Tree-scoped providers**
+#### **Developer Experience** ✅ **COMPLETE**
+1. **@Profile runtime implementation** ✅ Complete
+   - Environment-based activation
+   - Multi-profile support
+   - Runtime profile switching
+
+2. **Testing framework** ✅ Complete
+   - @DiTest equivalent functionality
+   - @MockBean implementation
+   - Advanced mocking utilities
+   - Integration test helpers
+
+### **Next Sprint** (Advanced Features - 2-3 weeks)
+
+1. **Tree-scoped providers**
    - React tree integration
    - Provider boundary management
    - Multi-tenant service isolation
