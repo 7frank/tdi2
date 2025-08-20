@@ -79,8 +79,10 @@ describe('ProductList - Component Behavior Tests', () => {
     // Act
     render(
       <ProductList 
-        productService={mockProductService}
-        cartService={mockCartService}
+        services={{ 
+          productService: mockProductService, 
+          cartService: mockCartService 
+        }} 
       />
     );
 
@@ -98,8 +100,10 @@ describe('ProductList - Component Behavior Tests', () => {
     // Act
     render(
       <ProductList 
-        productService={mockProductService}
-        cartService={mockCartService}
+        services={{ 
+          productService: mockProductService, 
+          cartService: mockCartService 
+        }} 
       />
     );
 
@@ -114,8 +118,10 @@ describe('ProductList - Component Behavior Tests', () => {
     // Act
     render(
       <ProductList 
-        productService={mockProductService}
-        cartService={mockCartService}
+        services={{ 
+          productService: mockProductService, 
+          cartService: mockCartService 
+        }} 
       />
     );
 
@@ -127,8 +133,10 @@ describe('ProductList - Component Behavior Tests', () => {
     // Act
     render(
       <ProductList 
-        productService={mockProductService}
-        cartService={mockCartService}
+        services={{ 
+          productService: mockProductService, 
+          cartService: mockCartService 
+        }} 
       />
     );
 
@@ -146,8 +154,10 @@ describe('ProductList - Component Behavior Tests', () => {
 
     render(
       <ProductList 
-        productService={mockProductService}
-        cartService={mockCartService}
+        services={{ 
+          productService: mockProductService, 
+          cartService: mockCartService 
+        }} 
       />
     );
 
@@ -166,8 +176,10 @@ describe('ProductList - Component Behavior Tests', () => {
     // Act
     render(
       <ProductList 
-        productService={mockProductService}
-        cartService={mockCartService}
+        services={{ 
+          productService: mockProductService, 
+          cartService: mockCartService 
+        }} 
       />
     );
 

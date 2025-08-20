@@ -1,4 +1,4 @@
-import { Service, Inject } from '@tdi2/di-core';
+import { Service, Inject } from '@tdi2/di-core/decorators';
 import { Product } from '../types/Product';
 import { CartItem, Discount } from '../types/Cart';
 import { InventoryServiceInterface } from './InventoryService';

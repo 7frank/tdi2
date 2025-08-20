@@ -1,4 +1,4 @@
-import { Service, Inject } from '@tdi2/di-core';
+import { Service, Inject } from '@tdi2/di-core/decorators';
 import { User, UserProfile, Address } from '../types/User';
 import { UserRepositoryInterface } from '../repositories/UserRepository';
 
