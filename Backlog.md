@@ -4,23 +4,30 @@
 
 ### [❌] ecommerce example
 
+- now create an exommerce example which the documentation is talking about similarly to examples/tdi2-basic-example
+ in the same parent folder
+
 > our documentation should reference snippets of the actual implementation similar to enterprise example
 
 - links to ecommerce example from documentation
 - links from documentation to "storybook" ladle (maybe a bit too much)
 
-### [❌] the USP early and let people experience the benefit first hand
+### [❌] show the USP unique selling point early and let people experience the benefit first hand
 
 - [❌] is there a clear "roter faden" the user should be able to follow that
 
 - [❌] we are trying to solve a problem
   - therefore the docuemtation should reflect that
-- [❌]we need the teaser to be up front, degit and run or tldr or teaser.md should be upfront and should communicate our USP in seconds
+
+- also communicate our USP in seconds
   - [❌] our usp is decoupling IMO
+- [❌]we need the basic example up front
+  /home/frank/Projects/7frank/tdi2/examples/tdi2-basic-example/README.md
+  simply degit and run experience the working di stuff is i think valuable
 
 ### clean up talks/RFP for what value it still has
 
-- maybe we simply delete it
+- maybe we simply delete itl
 
 ### research claude code subscription schedulers
 
