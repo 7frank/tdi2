@@ -3,19 +3,19 @@
 ## Speaker Information
 
 ### Professional Bio
-**7Frank** is a Senior React Architect with 8+ years of experience building large-scale applications for Fortune 500 companies. As a contributor to the open-source React ecosystem and advocate for clean architecture patterns, they have pioneered the development of React Service Injection (RSI) - a revolutionary approach to dependency injection in React applications.
+**7Frank** is a Senior Architect with 8+ years of experience building large-scale applications for Fortune 500 companies. As a contributor to the open-source React ecosystem and advocate for clean architecture patterns, they have pioneered the development of React Service Injection (RSI) - a revolutionary approach to dependency injection in React applications.
 
 ### Speaking Experience
 
-- **Local React Meetups**: Monthly speaker on advanced React topics
-- **Company Tech Talks**: Regular presenter on architecture and best practices
+- **Local React Meetups**: Infrequent speaker on advanced topics
+- **Company Tech Talks**: Regular presenter on state-of-the-art topics
 
 ### Technical Expertise
-- **Languages**: TypeScript, JavaScript, Python, Go
+- **Languages**: TypeScript, Python, Cpp, Java
 - **Frontend**: React, Vue, Angular, Next.js, Vite
 - **Architecture**: DDD, SOLID principles, Microservices, Event-driven design
 - **Testing**: Jest, Vitest, Testing Library, Playwright, Cypress
-- **Tools**: Docker, Kubernetes, AWS, Terraform
+- **Tools**: Docker, Kubernetes, AWS, GCP, Azure Cloud,  Terraform
 
 ### Open Source Contributions
 - **TDI2/RSI Framework**: Core contributor and architecture lead
