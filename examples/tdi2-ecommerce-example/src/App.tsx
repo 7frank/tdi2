@@ -1,26 +1,13 @@
 import { useState } from "react";
-import type { Inject } from "@tdi2/di-core/markers";
 import { Header } from "./components/Header";
 import { ProductList } from "./components/ProductList";
 import { ProductSearch } from "./components/ProductSearch";
 import { ShoppingCart } from "./components/ShoppingCart";
 import { UserProfile } from "./components/UserProfile";
-import { ProductServiceInterface } from "./services/ProductService";
-import { CartServiceInterface } from "./services/CartService";
-import { UserServiceInterface } from "./services/UserService";
 
 type ViewType = "products" | "cart" | "profile";
 
-// App Component - TDI2 will auto-inject services
-interface AppProps {
-  services: {
-    productService: Inject<ProductServiceInterface>;
-    cartService: Inject<CartServiceInterface>;
-    userService: Inject<UserServiceInterface>;
-  };
-}
-
-export default function App(props: AppProps) {
+export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>("products");
 
   const renderView = () => {
