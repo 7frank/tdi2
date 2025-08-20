@@ -1,19 +1,15 @@
-import React from 'react';
 import { Inject } from '@tdi2/di-core';
 import { CartServiceInterface } from '../services/CartService';
 import { UserServiceInterface } from '../services/UserService';
 
 interface HeaderProps {
-  services: {
-    cartService: Inject<CartServiceInterface>;
-    userService: Inject<UserServiceInterface>;
-  };
+  cartService: Inject<CartServiceInterface>;
+  userService: Inject<UserServiceInterface>;
   onNavigate: (view: 'products' | 'cart' | 'profile') => void;
   currentView: string;
 }
 
-export function Header({ services, onNavigate, currentView }: HeaderProps) {
-  const { cartService, userService } = services;
+export function Header({ cartService, userService, onNavigate, currentView }: HeaderProps) {
   const { totalItems } = cartService.state;
   const { isAuthenticated, currentUser } = userService.state;
 

@@ -1,32 +1,37 @@
-import React, { useState } from 'react';
-import { DIProvider } from '@tdi2/di-core';
+import { useState } from 'react';
+import { DIProvider, Inject } from '@tdi2/di-core';
 import { container } from './container';
-import { useServices } from './hooks/useServices';
 import { Header } from './components/Header';
 import { ProductList } from './components/ProductList';
 import { ProductSearch } from './components/ProductSearch';
 import { ShoppingCart } from './components/ShoppingCart';
 import { UserProfile } from './components/UserProfile';
+import { ProductServiceInterface } from './services/ProductService';
+import { CartServiceInterface } from './services/CartService';
+import { UserServiceInterface } from './services/UserService';
 
 type ViewType = 'products' | 'cart' | 'profile';
 
-function AppContent() {
+interface AppContentProps {
+  productService: Inject<ProductServiceInterface>;
+  cartService: Inject<CartServiceInterface>;
+  userService: Inject<UserServiceInterface>;
+}
+
+function AppContent({ productService, cartService, userService }: AppContentProps) {
   const [currentView, setCurrentView] = useState<ViewType>('products');
-  
-  // Services are injected through the useServices hook
-  const services = useServices();
 
   const renderView = () => {
     switch (currentView) {
       case 'cart':
-        return <ShoppingCart services={services} />;
+        return <ShoppingCart cartService={cartService} />;
       case 'profile':
-        return <UserProfile services={services} />;
+        return <UserProfile userService={userService} />;
       default:
         return (
           <div>
-            <ProductSearch services={services} />
-            <ProductList services={services} />
+            <ProductSearch productService={productService} />
+            <ProductList productService={productService} cartService={cartService} />
           </div>
         );
     }
@@ -35,7 +40,8 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header
-        services={services}
+        cartService={cartService}
+        userService={userService}
         onNavigate={setCurrentView}
         currentView={currentView}
       />
@@ -61,9 +67,18 @@ function AppContent() {
 }
 
 function App() {
+  // Resolve services from container
+  const productService = container.resolve<ProductServiceInterface>('ProductServiceInterface');
+  const cartService = container.resolve<CartServiceInterface>('CartServiceInterface'); 
+  const userService = container.resolve<UserServiceInterface>('UserServiceInterface');
+
   return (
     <DIProvider container={container}>
-      <AppContent />
+      <AppContent 
+        productService={productService}
+        cartService={cartService}
+        userService={userService}
+      />
     </DIProvider>
   );
 }

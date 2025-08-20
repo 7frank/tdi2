@@ -1,15 +1,11 @@
-import React from 'react';
 import { Inject } from '@tdi2/di-core';
 import { ProductServiceInterface } from '../services/ProductService';
 
 interface ProductSearchProps {
-  services: {
-    productService: Inject<ProductServiceInterface>;
-  };
+  productService: Inject<ProductServiceInterface>;
 }
 
-export function ProductSearch({ services }: ProductSearchProps) {
-  const { productService } = services;
+export function ProductSearch({ productService }: ProductSearchProps) {
   const { searchQuery, filters } = productService.state;
   const categories = productService.categories;
   const allTags = productService.allTags;

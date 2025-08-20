@@ -83,15 +83,13 @@ export class ProductService {
 ### 3. Component Service Injection
 ```typescript
 interface ProductListProps {
-  services: {
-    productService: Inject<ProductServiceInterface>;
-    cartService: Inject<CartServiceInterface>;
-  };
+  productService: Inject<ProductServiceInterface>;
+  cartService: Inject<CartServiceInterface>;
 }
 
-export function ProductList({ services }: ProductListProps) {
+export function ProductList({ productService, cartService }: ProductListProps) {
   // No useState, no useEffect - everything from services!
-  const { products, loading } = services.productService.state;
+  const { products, loading } = productService.state;
   
   return (
     <div>
@@ -99,7 +97,7 @@ export function ProductList({ services }: ProductListProps) {
         <ProductCard 
           key={product.id}
           product={product}
-          onAddToCart={() => services.cartService.addItem(product)}
+          onAddToCart={() => cartService.addItem(product)}
         />
       ))}
     </div>
@@ -134,7 +132,7 @@ expect(cartService.state.items).toHaveLength(1);
 ```typescript
 // Test how components interact with services
 const mockCartService = { addItem: vi.fn() };
-render(<ProductCard product={product} cartService={mockCartService} />);
+render(<ProductList productService={mockProductService} cartService={mockCartService} />);
 fireEvent.click(screen.getByText('Add to Cart'));
 expect(mockCartService.addItem).toHaveBeenCalledWith(product);
 ```

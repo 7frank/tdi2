@@ -1,16 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Inject } from '@tdi2/di-core';
 import { CartServiceInterface } from '../services/CartService';
 import { CartItem } from '../types/Cart';
 
 interface ShoppingCartProps {
-  services: {
-    cartService: Inject<CartServiceInterface>;
-  };
+  cartService: Inject<CartServiceInterface>;
 }
 
-export function ShoppingCart({ services }: ShoppingCartProps) {
-  const { cartService } = services;
+export function ShoppingCart({ cartService }: ShoppingCartProps) {
   const { 
     items, 
     totalItems, 

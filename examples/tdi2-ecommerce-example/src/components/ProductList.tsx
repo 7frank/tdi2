@@ -1,18 +1,14 @@
-import React from 'react';
 import { Inject } from '@tdi2/di-core';
 import { ProductServiceInterface } from '../services/ProductService';
 import { CartServiceInterface } from '../services/CartService';
 import { Product } from '../types/Product';
 
 interface ProductListProps {
-  services: {
-    productService: Inject<ProductServiceInterface>;
-    cartService: Inject<CartServiceInterface>;
-  };
+  productService: Inject<ProductServiceInterface>;
+  cartService: Inject<CartServiceInterface>;
 }
 
-export function ProductList({ services }: ProductListProps) {
-  const { productService, cartService } = services;
+export function ProductList({ productService, cartService }: ProductListProps) {
   const { loading, error } = productService.state;
   const products = productService.filteredProducts;
 

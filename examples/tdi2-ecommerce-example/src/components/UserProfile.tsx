@@ -1,16 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Inject } from '@tdi2/di-core';
 import { UserServiceInterface } from '../services/UserService';
 import { Address } from '../types/User';
 
 interface UserProfileProps {
-  services: {
-    userService: Inject<UserServiceInterface>;
-  };
+  userService: Inject<UserServiceInterface>;
 }
 
-export function UserProfile({ services }: UserProfileProps) {
-  const { userService } = services;
+export function UserProfile({ userService }: UserProfileProps) {
   const { currentUser, isAuthenticated, profile, loading, error } = userService.state;
 
   if (!isAuthenticated) {
