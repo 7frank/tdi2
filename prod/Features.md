@@ -15,24 +15,6 @@ We believe that feature wise a production ready system can be achieved with the 
 | @Scope             | Scope management               | ✅                    | Spring Boot style: `@Service @Scope("singleton\|transient")`. Separate decorators follow separation of concerns                                           |
 | @Value             | Value injection                | ✅                    | Currently not planned. Instead for env variables better create ApplicationConfig interface and import where necessary                                     |
 
-### @Scope Usage Examples (Spring Boot Convention)
-
-```typescript
-// Singleton service (default)
-@Service()
-class DatabaseConnection {}
-
-// Explicit singleton
-@Service()
-@Scope("singleton")
-class ConfigService {}
-
-// Transient service (new instance each time)
-@Service()
-@Scope("transient")
-class RequestLogger {}
-```
-
 ## Configuration
 
 | Feature        | Description                   | Implementation Status | Note |
@@ -44,7 +26,7 @@ class RequestLogger {}
 
 | Feature  | Description              | Implementation Status | Note                            |
 | -------- | ------------------------ | --------------------- | ------------------------------- |
-| @Profile | Profile-based activation | ❌                    | e.g. dev, prod,test,integration |
+| @Profile | Profile-based activation | ✅                    | e.g. dev, prod,test,integration. Set via ACTIVE_PROFILES flag | 
 
 ## Lifecycle Management
 
@@ -66,30 +48,6 @@ class RequestLogger {}
 
 ##
 
-Based on my analysis of the Features.md file and the existing codebase, here's my categorization of the unimplemented features
-from a TypeScript perspective:
-
-
-🟡 Medium Complexity
-
-6. @Profile ✅ Already implemented in decorators but needs runtime support
-
-- Why medium: Decorator exists but needs environment-aware container logic
-- Implementation: Runtime profile filtering during service registration
-- TypeScript complexity: Moderate - environment configuration and service filtering
-
-> @Profile(string|string[]) (KISS)
-
-> 5. Complete @Profile runtime support
-
-(out of scope) Advanced features (if needed): 6. Advanced scoping scenarios 7. Complex profile conditions
-
-🔧 Technical Implementation Notes
-
-- Most decorators already have basic metadata collection
-- Main work is in container.ts to respect the metadata
-- Interface resolution system is already sophisticated
-- Vite plugin transformation pipeline can handle the compile-time aspects
 
 The architecture is well-positioned for these additions since the metadata collection and transformation pipeline
 infrastructure already exists.
