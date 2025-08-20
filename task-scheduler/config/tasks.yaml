@@ -1,0 +1,46 @@
+meta:
+  version: "1.0"
+  last_updated: "2025-01-20T10:00:00Z"
+
+tasks:
+  - id: "task-001"
+    title: "Create hello world function"
+    description: "Create a simple hello world function in Python that prints a greeting message"
+    prompt_template: "default"
+    status: "pending"
+    created_at: "2025-01-20T10:00:00Z"
+    started_at: null
+    completed_at: null
+    attempts: 0
+    max_attempts: 3
+    last_error: null
+    session_id: null
+    workspace_path: null
+
+  - id: "task-002"
+    title: "Add input validation"
+    description: "Add comprehensive input validation for a user registration form with email, password, and name fields"
+    prompt_template: "validation_implementation"
+    status: "pending"
+    created_at: "2025-01-20T10:05:00Z"
+    started_at: null
+    completed_at: null
+    attempts: 0
+    max_attempts: 3
+    last_error: null
+    session_id: null
+    workspace_path: null
+
+  - id: "task-003"
+    title: "Create REST API endpoint"
+    description: "Create a REST API endpoint for user authentication with login and logout functionality"
+    prompt_template: "api_implementation"
+    status: "pending"
+    created_at: "2025-01-20T10:10:00Z"
+    started_at: null
+    completed_at: null
+    attempts: 0
+    max_attempts: 3
+    last_error: null
+    session_id: null
+    workspace_path: null
