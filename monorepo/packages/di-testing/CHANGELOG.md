@@ -1,5 +1,14 @@
 # @tdi2/di-testing
 
+## 3.1.1
+
+### Patch Changes
+
+- rebuilt packages
+
+- Updated dependencies []:
+  - @tdi2/di-core@3.1.1
+
 ## 3.1.0
 
 ### Minor Changes

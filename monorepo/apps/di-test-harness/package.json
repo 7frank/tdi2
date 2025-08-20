@@ -1,5 +1,6 @@
 {
   "name": "di-test-harness",
+  "private": true,
   "version": "1.0.2",
   "description": "Test harness for DI code generator using Ladle",
   "type": "module",

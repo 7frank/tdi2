@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/di-core",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "TypeScript Dependency Injection 2 - Core DI framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -53,7 +53,7 @@
     "test:io": "bash -c 'select f in $(find . -type f -name \"*.test.ts\" ); do [ -n \"$f\" ] && exec bun test \"$f\"; done'",
     "build": "tsup  && tsc -p tsconfig.dts.json || true",
     "test": "bun test",
-    "test:update":"UPDATE_SNAPSHOTS=1 bun test --updateSnapshots",
+    "test:update": "UPDATE_SNAPSHOTS=1 bun test --updateSnapshots",
     "lint": "echo 'No linting configured yet'",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",
