@@ -2,6 +2,11 @@
 
 ## ordered log
 
+### [❌] add di-testing example
+- ecommerce
+- leave basic example out of it, keep the basic example well basic 
+
+
 ### fix ai system prompt
 - we have the documentation and degit
 - we also should have a basic system prompt, so that we or any user could simply copy & paste that to claude code,  as baseline then add our requirements (styling / business logic /test quantity)
@@ -17,7 +22,8 @@
 
 - maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
 
-### [❌] add di-testing to basic example
+
+
 
 ### [❌] @Configration "bean"
 
