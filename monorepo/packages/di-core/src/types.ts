@@ -71,6 +71,7 @@ export interface BeanMetadata {
   primary: boolean;
   qualifier?: string;
   autoResolve: boolean;
+  profiles?: string[]; // Profiles specific to this bean method
 }
 
 // Bean method parameter metadata
@@ -108,6 +109,7 @@ export interface DIMap {
     isBean?: boolean; // True if this service comes from @Bean method
     beanMethodName?: string; // Method name if this is a bean
     configurationClass?: string; // Configuration class name if this is a bean
+    profiles?: string[]; // Profiles required for this service
   };
 }
 

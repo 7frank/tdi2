@@ -2,28 +2,13 @@
 
 ## ordered log
 
-
-### [❌] @Configration "bean"
-
-> for things we don't own
-
-@Configuration
-public class AppConfig {
-
-    @Bean
-    public PaymentService paymentService() {
-        return new PaymentService();
-    }
-
-}
-
 ### [❌] add di-testing example
 
 - ecommerce, fix failing tests
 - leave basic example out of it, keep the basic example well basic
-- di-testing seems to be published with workspace:*
+- di-testing seems to be published with workspace:\*
 
-### [❌] fix ai system prompt
+### [✅] fix ai system prompt 
 
 - we have the documentation and degit
 - we also should have a basic system prompt, so that we or any user could simply copy & paste that to claude code, as baseline then add our requirements (styling / business logic /test quantity)
@@ -43,7 +28,6 @@ public class AppConfig {
 - https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
 
 - maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
-
 
 ### handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
 
@@ -257,8 +241,6 @@ https://github.com/MartenBE/mkslides
 
 ### [❌] FIXME could not fast refrest useDi export incompatible
 
-### [❌] Profile decorator and marker
-
 ### [❌] Lazy decorator and marker
 
 ### [❌] cli
@@ -425,6 +407,22 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] @Configration "bean"
+
+> for things we don't own
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public PaymentService paymentService() {
+        return new PaymentService();
+    }
+
+}
+
+### [✅] Profile decorator and marker
 
 ### [✅] ecommerce example
 
