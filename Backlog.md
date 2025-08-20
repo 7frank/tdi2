@@ -28,6 +28,7 @@
 
 - maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
 
+
 ### [❌] add di-testing to basic example
 
 ### [❌] @Configration "bean"
@@ -425,6 +426,7 @@ https://github.com/aleclarson/valtio-kit
 
 ## Done
 
+
 ### [✅] improve documentation
 
 - [✅] adr section
@@ -445,6 +447,7 @@ https://github.com/aleclarson/valtio-kit
 - [✅] search for missing info from original files we are about to delete and check if we should add them somewhere in the new docs
 
 - [✅] search for redunancies
+
 
 ### [✅] lifecycle
 
