@@ -2,34 +2,31 @@
 
 ## ordered log
 
-### [❌] ecommerce example
+### [❌] add di-testing example
 
-> our documentation should reference snippets of the actual implementation similar to enterprise example
+- ecommerce, fix failing tests
+- leave basic example out of it, keep the basic example well basic
 
-- links to ecommerce example from documentation
-- links from documentation to "storybook" ladle (maybe a bit too much)
+### [❌] fix ai system prompt
 
-### [❌] the USP early and let people experience the benefit first hand
+- we have the documentation and degit
+- we also should have a basic system prompt, so that we or any user could simply copy & paste that to claude code, as baseline then add our requirements (styling / business logic /test quantity)
+- our base prompt would handle that the actually generataed code is using the di approach properly
 
-- [❌] is there a clear "roter faden" the user should be able to follow that
+### [❌] fix gh-pages actions for
 
-- [❌] we are trying to solve a problem
-  - therefore the docuemtation should reflect that
-- [❌]we need the teaser to be up front, degit and run or tldr or teaser.md should be upfront and should communicate our USP in seconds
-  - [❌] our usp is decoupling IMO
+- test harness
+- documentation
 
-### clean up talks/RFP for what value it still has
+### [❌] clean up talks/RFP for what value it still has
 
 - maybe we simply delete it
 
-### research claude code subscription schedulers
+### [❌] research claude code subscription schedulers
 
 - https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
 
 - maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
-
-
-### [❌] add di-testing to basic example
 
 ### [❌] @Configration "bean"
 
@@ -426,6 +423,28 @@ https://github.com/aleclarson/valtio-kit
 
 ## Done
 
+### [✅] ecommerce example
+
+- now create an exommerce example which the documentation is talking about similarly to examples/tdi2-basic-example
+  in the same parent folder
+
+> our documentation should reference snippets of the actual implementation similar to enterprise example
+
+- links to ecommerce example from documentation
+- links from documentation to "storybook" ladle (maybe a bit too much)
+
+### [✅] show the USP unique selling point early and let people experience the benefit first hand
+
+- [✅] is there a clear "roter faden" the user should be able to follow that
+
+- [✅] we are trying to solve a problem
+  - therefore the docuemtation should reflect that
+
+- also communicate our USP in seconds
+  - [✅] our usp is decoupling IMO
+- [✅]we need the basic example up front
+  /home/frank/Projects/7frank/tdi2/examples/tdi2-basic-example/README.md
+  simply degit and run experience the working di stuff is i think valuable
 
 ### [✅] improve documentation
 
@@ -447,7 +466,6 @@ https://github.com/aleclarson/valtio-kit
 - [✅] search for missing info from original files we are about to delete and check if we should add them somewhere in the new docs
 
 - [✅] search for redunancies
-
 
 ### [✅] lifecycle
 
