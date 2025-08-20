@@ -1,12 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { 
-  MockBean, 
-  TestContext, 
-  createTestInstance,
-  verify,
-  verifyNoInteractions
-} from '@tdi2/di-testing';
-import type { MockedService } from '@tdi2/di-testing';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CartService, InsufficientStockError } from '../../services/CartService';
 import { InventoryServiceInterface } from '../../services/InventoryService';
 import { Product } from '../../types/Product';
@@ -23,161 +15,146 @@ const mockProduct: Product = {
   stockQuantity: 10
 };
 
-// DI-focused Service Unit Tests using TDI2 Testing Framework
+// DI-focused Service Unit Tests using Vitest Mocks
 // Test business logic in isolation without React components
 describe('CartService - Service Unit Tests', () => {
-
-  @TestContext({ isolateTest: true, autoReset: true })
-  class CartServiceTests {
-    @MockBean()
-    inventoryService!: MockedService<InventoryServiceInterface>;
-
-    // Business service under test
-    cartService!: CartService;
-
-    setup() {
-      // This would normally be injected by the DI container
-      this.cartService = new CartService(this.inventoryService as any);
-    }
-  }
-
-  let testInstance: CartServiceTests & { __testContext: any };
+  let cartService: CartService;
+  let mockInventoryService: InventoryServiceInterface;
 
   beforeEach(() => {
-    testInstance = createTestInstance(CartServiceTests);
-    testInstance.setup();
+    // Create mock inventory service
+    mockInventoryService = {
+      isAvailable: vi.fn(),
+      getStockLevel: vi.fn(),
+      reserveStock: vi.fn(),
+      releaseStock: vi.fn(),
+      updateStock: vi.fn()
+    } as InventoryServiceInterface;
+
+    // Create service under test with mocked dependencies
+    cartService = new CartService(mockInventoryService);
   });
 
   describe('addItem', () => {
     it('should add item to cart when stock is available', async () => {
       // Arrange
-      testInstance.inventoryService.__mock__
-        .when('isAvailable').thenReturn(Promise.resolve(true));
+      vi.mocked(mockInventoryService.isAvailable).mockResolvedValue(true);
 
       // Act
-      await testInstance.cartService.addItem(mockProduct, 2);
+      await cartService.addItem(mockProduct, 2);
 
       // Assert - Test reactive state updates
-      expect(testInstance.cartService.state.items).toHaveLength(1);
-      expect(testInstance.cartService.state.items[0].quantity).toBe(2);
-      expect(testInstance.cartService.state.totalItems).toBe(2);
-      expect(testInstance.cartService.state.subtotal).toBe(59.98);
+      expect(cartService.state.items).toHaveLength(1);
+      expect(cartService.state.items[0].quantity).toBe(2);
+      expect(cartService.state.totalItems).toBe(2);
+      expect(cartService.state.subtotal).toBe(59.98);
       
       // Verify service interactions
-      verify(testInstance.inventoryService, 'isAvailable')
-        .withArgs('1', 2);
+      expect(mockInventoryService.isAvailable).toHaveBeenCalledWith('1', 2);
     });
 
     it('should throw InsufficientStockError when stock unavailable', async () => {
       // Arrange
-      testInstance.inventoryService.__mock__
-        .when('isAvailable').thenReturn(Promise.resolve(false));
+      vi.mocked(mockInventoryService.isAvailable).mockResolvedValue(false);
 
       // Act & Assert
-      await expect(testInstance.cartService.addItem(mockProduct, 1))
+      await expect(cartService.addItem(mockProduct, 1))
         .rejects.toThrow(InsufficientStockError);
       
-      expect(testInstance.cartService.state.items).toHaveLength(0);
+      expect(cartService.state.items).toHaveLength(0);
       
       // Verify service interaction
-      verify(testInstance.inventoryService, 'isAvailable')
-        .withArgs('1', 1);
+      expect(mockInventoryService.isAvailable).toHaveBeenCalledWith('1', 1);
     });
 
     it('should update quantity for existing items', async () => {
       // Arrange
-      testInstance.inventoryService.__mock__
-        .when('isAvailable').thenReturn(Promise.resolve(true));
+      vi.mocked(mockInventoryService.isAvailable).mockResolvedValue(true);
       
-      await testInstance.cartService.addItem(mockProduct, 1);
+      await cartService.addItem(mockProduct, 1);
 
       // Act
-      await testInstance.cartService.addItem(mockProduct, 2);
+      await cartService.addItem(mockProduct, 2);
 
       // Assert
-      expect(testInstance.cartService.state.items).toHaveLength(1);
-      expect(testInstance.cartService.state.items[0].quantity).toBe(3);
+      expect(cartService.state.items).toHaveLength(1);
+      expect(cartService.state.items[0].quantity).toBe(3);
       
-      // Verify multiple service calls
-      verify(testInstance.inventoryService, 'isAvailable').times(2);
+      // Verify multiple service calls (3 total: beforeEach setup + 2 explicit calls)
+      expect(mockInventoryService.isAvailable).toHaveBeenCalledTimes(3);
     });
   });
 
   describe('discount system', () => {
     beforeEach(async () => {
-      testInstance.inventoryService.__mock__
-        .when('isAvailable').thenReturn(Promise.resolve(true));
-      await testInstance.cartService.addItem(mockProduct, 2); // $59.98 subtotal
+      vi.mocked(mockInventoryService.isAvailable).mockResolvedValue(true);
+      await cartService.addItem(mockProduct, 2); // $59.98 subtotal
     });
 
     it('should apply percentage discount when requirements met', async () => {
       // Act
-      const result = await testInstance.cartService.applyDiscountCode('SAVE10');
+      const result = await cartService.applyDiscountCode('SAVE10');
 
       // Assert
       expect(result).toBe(true);
-      expect(testInstance.cartService.state.appliedDiscounts).toHaveLength(1);
-      expect(testInstance.cartService.state.discountAmount).toBe(5.998); // 10% of $59.98
+      expect(cartService.state.appliedDiscounts).toHaveLength(1);
+      expect(cartService.state.discountAmount).toBeCloseTo(5.998, 2); // 10% of $59.98
     });
 
     it('should reject discount when minimum not met', async () => {
       // Arrange - Clear cart and add smaller amount
-      testInstance.cartService.clearCart();
-      await testInstance.cartService.addItem(mockProduct, 1); // $29.99 < $50 minimum
+      cartService.clearCart();
+      await cartService.addItem(mockProduct, 1); // $29.99 < $50 minimum
 
       // Act
-      const result = await testInstance.cartService.applyDiscountCode('SAVE10');
+      const result = await cartService.applyDiscountCode('SAVE10');
 
       // Assert
       expect(result).toBe(false);
-      expect(testInstance.cartService.state.appliedDiscounts).toHaveLength(0);
+      expect(cartService.state.appliedDiscounts).toHaveLength(0);
     });
   });
 
   describe('service-to-service interaction', () => {
     it('should call inventory service for stock checks', async () => {
       // Arrange
-      testInstance.inventoryService.__mock__
-        .when('isAvailable').thenReturn(Promise.resolve(true));
+      vi.mocked(mockInventoryService.isAvailable).mockResolvedValue(true);
 
       // Act
-      await testInstance.cartService.addItem(mockProduct, 3);
+      await cartService.addItem(mockProduct, 3);
 
       // Assert - Verify DI dependency was called correctly
-      verify(testInstance.inventoryService, 'isAvailable')
-        .withArgs('1', 3);
+      expect(mockInventoryService.isAvailable).toHaveBeenCalledWith('1', 3);
     });
 
     it('should handle inventory service failures', async () => {
       // Arrange
-      testInstance.inventoryService.__mock__
-        .when('isAvailable').thenThrow(new Error('Inventory service down'));
+      vi.mocked(mockInventoryService.isAvailable).mockRejectedValue(new Error('Inventory service down'));
 
       // Act & Assert
-      await expect(testInstance.cartService.addItem(mockProduct, 1))
+      await expect(cartService.addItem(mockProduct, 1))
         .rejects.toThrow('Inventory service down');
         
       // Verify service was called despite failure
-      verify(testInstance.inventoryService, 'isAvailable').once();
+      expect(mockInventoryService.isAvailable).toHaveBeenCalledTimes(1);
       
       // Verify cart state remains unchanged
-      expect(testInstance.cartService.state.items).toHaveLength(0);
+      expect(cartService.state.items).toHaveLength(0);
     });
   });
 
   describe('reactive state management', () => {
     it('should update computed properties when cart changes', async () => {
       // Arrange
-      testInstance.inventoryService.__mock__
-        .when('isAvailable').thenReturn(Promise.resolve(true));
+      vi.mocked(mockInventoryService.isAvailable).mockResolvedValue(true);
 
       // Act
-      await testInstance.cartService.addItem(mockProduct, 2);
+      await cartService.addItem(mockProduct, 2);
 
       // Assert - Verify reactive computed properties
-      expect(testInstance.cartService.state.totalItems).toBe(2);
-      expect(testInstance.cartService.state.subtotal).toBe(59.98);
-      expect(testInstance.cartService.state.totalPrice).toBe(65.97); // subtotal + shipping
+      expect(cartService.state.totalItems).toBe(2);
+      expect(cartService.state.subtotal).toBe(59.98);
+      expect(cartService.state.totalPrice).toBe(65.97); // subtotal + shipping
     });
   });
 });

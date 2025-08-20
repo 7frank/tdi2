@@ -20,7 +20,6 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@tdi2/di-testing": "latest",
     "@tdi2/vite-plugin-di": "latest",
     "@testing-library/jest-dom": "^6.7.0",
     "@testing-library/react": "^16.3.0",
