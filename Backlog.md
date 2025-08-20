@@ -8,7 +8,7 @@
 - leave basic example out of it, keep the basic example well basic
 - di-testing seems to be published with workspace:\*
 
-### [❌✅] fix ai system prompt (partially fixed on testing branch)
+### [✅] fix ai system prompt 
 
 - we have the documentation and degit
 - we also should have a basic system prompt, so that we or any user could simply copy & paste that to claude code, as baseline then add our requirements (styling / business logic /test quantity)
