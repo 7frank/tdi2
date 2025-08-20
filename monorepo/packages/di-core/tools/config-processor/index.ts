@@ -167,6 +167,7 @@ export class ConfigurationProcessor {
       primary: decoratorMetadata.primary || false,
       qualifier: decoratorMetadata.qualifier,
       autoResolve: true, // Always true for beans
+      profiles: decoratorMetadata.profiles,
     };
 
     if (this.options.verbose) {
@@ -230,12 +231,13 @@ export class ConfigurationProcessor {
   }
 
   /**
-   * Extract decorator metadata (@Primary, @Scope, @Qualifier) from method
+   * Extract decorator metadata (@Primary, @Scope, @Qualifier, @Profile) from method
    */
   private extractDecoratorMetadata(method: MethodDeclaration): {
     scope?: "singleton" | "transient" | "scoped";
     primary?: boolean;
     qualifier?: string;
+    profiles?: string[];
   } {
     const decorators = method.getDecorators();
     const metadata: any = {};
@@ -256,6 +258,12 @@ export class ConfigurationProcessor {
     const qualifierDecorator = decorators.find(d => d.getName() === 'Qualifier');
     if (qualifierDecorator) {
       metadata.qualifier = this.extractQualifierValue(qualifierDecorator);
+    }
+
+    // Check for @Profile decorator
+    const profileDecorator = decorators.find(d => d.getName() === 'Profile');
+    if (profileDecorator) {
+      metadata.profiles = this.extractProfileValues(profileDecorator);
     }
 
     return metadata;
@@ -282,5 +290,26 @@ export class ConfigurationProcessor {
       return args[0].getText().replace(/['"]/g, '');
     }
     return undefined;
+  }
+
+  /**
+   * Extract profile values from @Profile decorator
+   */
+  private extractProfileValues(decorator: Decorator): string[] | undefined {
+    const args = decorator.getArguments();
+    if (args.length === 0) {
+      return undefined;
+    }
+
+    // Handle multiple profile arguments: @Profile("dev", "test")
+    const profiles: string[] = [];
+    for (const arg of args) {
+      const profileValue = arg.getText().replace(/['"]/g, '');
+      if (profileValue && profileValue.trim()) {
+        profiles.push(profileValue.trim());
+      }
+    }
+
+    return profiles.length > 0 ? profiles : undefined;
   }
 }

@@ -76,6 +76,9 @@ export class BeanFactoryGenerator {
     // Generate the factory function code
     const factoryCode = this.generateFactoryCode(bean, config);
 
+    // Determine effective profiles (bean profiles override config profiles)
+    const effectiveProfiles = this.getEffectiveProfiles(bean, config);
+
     return {
       factory: factoryCode,
       scope: bean.scope,
@@ -87,6 +90,7 @@ export class BeanFactoryGenerator {
       isBean: true,
       beanMethodName: String(bean.methodName),
       configurationClass: config.className,
+      profiles: effectiveProfiles,
     };
   }
 
@@ -193,5 +197,18 @@ export class BeanFactoryGenerator {
     // This is a simplified version - in reality, this would need to handle
     // relative path resolution, file extensions, etc.
     return filePath.replace(/\.ts$/, '');
+  }
+
+  /**
+   * Get effective profiles for a bean (bean profiles override configuration profiles)
+   */
+  private getEffectiveProfiles(bean: BeanMetadata, config: ConfigurationMetadata): string[] | undefined {
+    // Bean-specific profiles take precedence over configuration profiles
+    if (bean.profiles && bean.profiles.length > 0) {
+      return bean.profiles;
+    }
+
+    // If bean has no specific profiles, inherit from configuration
+    return config.profiles?.length ? config.profiles : undefined;
   }
 }

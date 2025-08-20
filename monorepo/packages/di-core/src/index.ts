@@ -15,4 +15,7 @@ export type {
 } from './types.js';
 
 // Export container with configuration support
-export { CompileTimeDIContainer } from './container.js';
+export { CompileTimeDIContainer, type DIContainerOptions } from './container.js';
+
+// Export profile management
+export { ProfileManager } from './profile-manager.js';
