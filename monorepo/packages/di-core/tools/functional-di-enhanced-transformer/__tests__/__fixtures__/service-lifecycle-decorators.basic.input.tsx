@@ -1,19 +1,18 @@
-// Test fixture for service lifecycle decorators
-import { Service, PostConstruct, PreDestroy, OnMount, OnUnmount, Scope } from "@tdi2/di-core/decorators";
+// Test fixture for service lifecycle interfaces
+import { Service, Scope } from "@tdi2/di-core/decorators";
+import type { OnInit, OnDestroy, OnMount, OnUnmount } from "@tdi2/di-core/types";
 
-// Service with lifecycle decorators
+// Service with lifecycle interfaces
 @Service()
-export class UserService {
+export class UserService implements OnInit, OnDestroy {
   private data: any = null;
   
-  @PostConstruct
-  async initialize() {
+  async onInit() {
     console.log('UserService initializing...');
     this.data = await this.loadInitialData();
   }
   
-  @PreDestroy
-  cleanup() {
+  onDestroy() {
     console.log('UserService cleanup...');
     this.data = null;
   }
@@ -30,23 +29,23 @@ export class UserService {
 // Component-scoped service with mount/unmount hooks
 @Service()
 @Scope("transient")
-export class TimerService {
-  private timerId: number | null = null;
+export class TimerService implements OnMount, OnUnmount {
+  private timerId: NodeJS.Timeout | null = null;
   
-  @OnMount
-  startTimer({ signal }: { signal: AbortSignal }) {
+  onMount({ signal }: { signal?: AbortSignal } = {}) {
     console.log('Timer starting...');
     this.timerId = setInterval(() => {
       console.log('Timer tick');
     }, 1000);
     
-    signal.addEventListener('abort', () => {
-      this.stopTimer();
-    });
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        this.onUnmount();
+      });
+    }
   }
   
-  @OnUnmount
-  stopTimer() {
+  onUnmount() {
     console.log('Timer stopping...');
     if (this.timerId) {
       clearInterval(this.timerId);
