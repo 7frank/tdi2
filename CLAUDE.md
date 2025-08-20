@@ -12,7 +12,7 @@ This is a monorepo with the following structure:
 
 - **`/monorepo/`** - Main monorepo containing packages and apps
 - **`/examples/`** - Example applications demonstrating TDI2 usage
-- **`/docs/`** - Comprehensive documentation and analysis
+- **`/monorepo/apps/docs-starlight/`** - Comprehensive documentation and analysis
 - **`/github-issue-sync/`** - Issue synchronization tooling
 
 ## Common Commands
