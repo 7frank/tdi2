@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@tdi2/di-core": "latest",
-     "@tdi2/di-testing": "3.1.0",
+     "@tdi2/di-testing": "3.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

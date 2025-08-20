@@ -1,5 +1,11 @@
 # @tdi2/di-core
 
+## 3.1.2
+
+### Patch Changes
+
+- built again
+
 ## 3.1.1
 
 ### Patch Changes

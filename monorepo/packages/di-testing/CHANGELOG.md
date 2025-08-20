@@ -1,5 +1,14 @@
 # @tdi2/di-testing
 
+## 3.1.2
+
+### Patch Changes
+
+- built again
+
+- Updated dependencies []:
+  - @tdi2/di-core@3.1.2
+
 ## 3.1.1
 
 ### Patch Changes
