@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/di-testing",
-  "version": "3.1.0",
+  "version": "3.1.2",
   "description": "Testing utilities for TDI2 dependency injection framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -64,7 +64,7 @@
   "author": "TDI2 Team",
   "license": "MIT",
   "dependencies": {
-    "@tdi2/di-core": "workspace:*",
+    "@tdi2/di-core": "3.1.2",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1"
   },

@@ -1,5 +1,6 @@
 {
   "name": "@tdi2/docs-starlight",
+  "private": true,
   "type": "module",
   "version": "0.0.1",
   "description": "TDI2 Documentation - TypeScript Dependency Injection for React",

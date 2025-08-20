@@ -124,6 +124,137 @@ export class MockPaymentService implements PaymentServiceInterface {}
 export class StripePaymentService implements PaymentServiceInterface {}
 ```
 
+**Environment Activation:**
+```typescript
+// Via environment variables
+// TDI2_PROFILES=production,logging
+// ACTIVE_PROFILES=dev,test
+
+// Via container options
+const container = new CompileTimeDIContainer(undefined, {
+  activeProfiles: ['development', 'external-services']
+});
+
+// Programmatically
+container.setActiveProfiles(['production', 'monitoring']);
+```
+
+**Profile Negation:**
+```typescript
+@Service()
+@Profile('!production') // Load everywhere except production
+export class DebugService {}
+```
+
+### @Configuration()
+
+Marks a class as a configuration provider that contains @Bean methods for external library integration.
+
+```typescript
+import { Configuration, Bean, Profile } from '@tdi2/di-core';
+
+@Configuration
+export class ExternalLibraryConfig {
+  // Configuration methods with @Bean decorators
+}
+
+@Configuration
+@Profile('external-services') // Only load when profile is active
+export class ExternalServicesConfig {
+  // External service configurations
+}
+```
+
+**Options:**
+```typescript
+interface ConfigurationOptions {
+  profiles?: string[];  // Environment profiles for this configuration
+  priority?: number;    // Loading priority (higher loads first)
+}
+```
+
+### @Bean()
+
+Marks methods within @Configuration classes as factory functions for external services. Bean methods automatically integrate with the DI system and support all existing decorators.
+
+```typescript
+import { Configuration, Bean, Primary, Scope, Qualifier } from '@tdi2/di-core';
+
+@Configuration
+export class DatabaseConfig {
+  @Bean
+  @Primary
+  database(): DatabaseInterface {
+    return new PostgresDatabase({
+      host: 'localhost',
+      port: 5432
+    });
+  }
+
+  @Bean
+  @Qualifier('readOnlyDatabase')
+  @Scope('singleton')
+  readOnlyDatabase(): DatabaseInterface {
+    return new PostgresDatabase({
+      host: 'localhost',
+      port: 5432,
+      readOnly: true
+    });
+  }
+
+  @Bean
+  @Profile('production')
+  prodDatabase(@Inject httpClient: HttpClientInterface): DatabaseInterface {
+    // Dependencies are automatically injected into @Bean methods
+    return new CloudDatabase({
+      client: httpClient,
+      region: 'us-east-1'
+    });
+  }
+}
+```
+
+**Key Features:**
+- **Automatic Interface Resolution**: Return type determines the service interface
+- **Dependency Injection**: Parameters are automatically injected using @Inject
+- **Decorator Support**: Works with @Primary, @Scope, @Qualifier, @Profile
+- **Profile Inheritance**: Inherits configuration profiles unless overridden
+- **Clean Architecture**: No string tokens needed, uses existing decorator system
+
+**Usage with Qualifiers:**
+```typescript
+@Configuration
+export class LoggingConfig {
+  @Bean
+  @Primary
+  consoleLogger(): LoggerInterface {
+    return new ConsoleLogger();
+  }
+
+  @Bean
+  @Qualifier('fileLogger')
+  fileLogger(): LoggerInterface {
+    return new FileLogger('/var/log/app.log');
+  }
+
+  @Bean
+  @Qualifier('remoteLogger')
+  @Profile('production')
+  remoteLogger(@Inject emailService: EmailServiceInterface): LoggerInterface {
+    return new RemoteLogger({ emailService });
+  }
+}
+
+// In services, inject specific implementations
+@Service()
+export class UserService {
+  constructor(
+    @Inject logger: LoggerInterface, // Gets primary (console)
+    @Inject @Qualifier('fileLogger') fileLogger: LoggerInterface // Gets file logger
+  ) {}
+}
+```
+
 ### @Optional()
 
 Marks an injection as optional (won't throw if dependency is missing).
@@ -163,7 +294,14 @@ The main dependency injection container that manages service registration and re
 ```typescript
 import { CompileTimeDIContainer } from '@tdi2/di-core';
 
+// Basic container
 const container = new CompileTimeDIContainer();
+
+// Container with options
+const container = new CompileTimeDIContainer(undefined, {
+  verbose: true,
+  activeProfiles: ['development', 'external-services']
+});
 ```
 
 #### Methods
@@ -222,6 +360,58 @@ Loads service configuration from DI configuration object.
 import { DI_CONFIG } from './di-config';
 
 container.loadConfiguration(DI_CONFIG);
+```
+
+**loadContainerConfiguration(config)**
+
+Loads full container configuration including profiles and configuration classes.
+
+```typescript
+const config = {
+  diMap: DI_CONFIG,
+  interfaceMapping: INTERFACE_MAPPING,
+  configurations: CONFIGURATION_CLASSES,
+  profiles: ['production', 'external-services']
+};
+
+container.loadContainerConfiguration(config);
+```
+
+**setActiveProfiles(profiles)**
+
+Sets the active profiles for the container.
+
+```typescript
+container.setActiveProfiles(['development', 'testing']);
+// Only services with matching profiles will be loaded
+```
+
+**addActiveProfiles(profiles)**
+
+Adds additional profiles to the active set.
+
+```typescript
+container.addActiveProfiles(['debugging']);
+// Adds to existing active profiles
+```
+
+**getActiveProfiles()**
+
+Gets the currently active profiles.
+
+```typescript
+const profiles = container.getActiveProfiles();
+console.log('Active profiles:', profiles);
+```
+
+**isProfileActive(profile)**
+
+Checks if a specific profile is active.
+
+```typescript
+if (container.isProfileActive('production')) {
+  // Production-specific logic
+}
 ```
 
 ## React Integration
@@ -329,10 +519,21 @@ type ServiceFactory<T> = (container: DIContainer) => T;
 // DI container interface
 interface DIContainer {
   register<T>(token: string | symbol, implementation: any, scope?: string): void;
-  get<T>(token: string | symbol): T;
+  resolve<T>(token: string | symbol): T;
   has(token: string | symbol): boolean;
   createScope(): DIContainer;
-  loadConfiguration(config: DIConfiguration): void;
+  loadConfiguration(config: DIMap): void;
+  loadContainerConfiguration(config: ContainerConfiguration): void;
+  setActiveProfiles(profiles: string[]): void;
+  addActiveProfiles(profiles: string[]): void;
+  getActiveProfiles(): string[];
+  isProfileActive(profile: string): boolean;
+}
+
+// Container options
+interface DIContainerOptions {
+  verbose?: boolean;
+  activeProfiles?: string[];
 }
 
 // Service options for @Service decorator
@@ -340,17 +541,52 @@ interface ServiceOptions {
   token?: string | symbol;
   scope?: 'singleton' | 'transient' | 'scoped';
   profiles?: string[];
+  primary?: boolean;
+  qualifier?: string;
 }
 
-// DI configuration object
-interface DIConfiguration {
-  services: ServiceRegistration[];
+// Configuration options for @Configuration decorator
+interface ConfigurationOptions {
+  profiles?: string[];
+  priority?: number;
 }
 
-interface ServiceRegistration {
-  token: string | symbol;
-  implementation: any;
-  scope?: 'singleton' | 'transient' | 'scoped';
+// Full container configuration
+interface ContainerConfiguration {
+  diMap: DIMap;
+  interfaceMapping: InterfaceMapping;
+  configurations: ConfigurationMetadata[];
+  profiles?: string[];
+  environment?: string;
+}
+
+// Configuration class metadata
+interface ConfigurationMetadata {
+  className: string;
+  filePath: string;
+  profiles: string[];
+  priority: number;
+  beans: BeanMetadata[];
+}
+
+// Bean method metadata
+interface BeanMetadata {
+  methodName: string | symbol;
+  returnType: string;
+  parameters: BeanParameterMetadata[];
+  scope: 'singleton' | 'transient' | 'scoped';
+  primary: boolean;
+  qualifier?: string;
+  autoResolve: boolean;
+  profiles?: string[];
+}
+
+// Bean parameter metadata
+interface BeanParameterMetadata {
+  parameterName: string;
+  parameterType: string;
+  isOptional: boolean;
+  qualifier?: string;
 }
 ```
 
@@ -375,6 +611,52 @@ function ShoppingCart({ productService, cartService }: ServicesProps) {
 ```
 
 ## Advanced Usage
+
+### Configuration-Based External Libraries
+
+Use @Configuration and @Bean to wrap external libraries:
+
+```typescript
+@Configuration
+@Profile('external-services')
+export class ExternalLibraryConfig {
+  @Bean
+  @Primary
+  httpClient(): HttpClientInterface {
+    return new AxiosHttpClient({
+      timeout: 5000,
+      retries: 3
+    });
+  }
+
+  @Bean
+  @Qualifier('fileLogger')
+  @Profile('production')
+  prodLogger(): LoggerInterface {
+    return new WinstonLogger({
+      level: 'error',
+      filename: '/var/log/app.log'
+    });
+  }
+
+  @Bean
+  redisCache(@Inject config: ConfigServiceInterface): CacheInterface {
+    return new RedisCache({
+      host: config.redis.host,
+      port: config.redis.port
+    });
+  }
+}
+
+// Usage in services
+@Service()
+export class UserService {
+  constructor(
+    @Inject private httpClient: HttpClientInterface, // Gets AxiosHttpClient
+    @Inject @Qualifier('fileLogger') private logger: LoggerInterface // Gets WinstonLogger in prod
+  ) {}
+}
+```
 
 ### Custom Service Factories
 
@@ -498,6 +780,60 @@ export class MockEmailService implements EmailServiceInterface {
 export class SMTPEmailService implements EmailServiceInterface {
   async sendEmail(): Promise<void> {
     // Real SMTP implementation
+  }
+}
+```
+
+### 5. Configuration Classes for External Libraries
+```typescript
+// Good: Clean separation of external library configuration
+@Configuration
+@Profile('external-services')
+export class ExternalLibConfig {
+  @Bean
+  @Primary
+  httpClient(): HttpClientInterface {
+    return new AxiosHttpClient({ timeout: 5000 });
+  }
+
+  @Bean
+  @Qualifier('authClient')
+  authHttpClient(@Inject config: AuthConfigInterface): HttpClientInterface {
+    return new AxiosHttpClient({
+      baseURL: config.authUrl,
+      headers: { 'Authorization': `Bearer ${config.token}` }
+    });
+  }
+}
+
+// Usage: Clean dependency injection
+@Service()
+export class UserService {
+  constructor(
+    @Inject private httpClient: HttpClientInterface,
+    @Inject @Qualifier('authClient') private authClient: HttpClientInterface
+  ) {}
+}
+```
+
+### 6. Environment-Aware Services
+```typescript
+// Good: Environment-specific implementations
+@Configuration
+export class DatabaseConfig {
+  @Bean
+  @Profile('development', 'test')
+  devDatabase(): DatabaseInterface {
+    return new SQLiteDatabase(':memory:');
+  }
+
+  @Bean
+  @Profile('production')
+  prodDatabase(@Inject config: ConfigServiceInterface): DatabaseInterface {
+    return new PostgresDatabase({
+      host: config.database.host,
+      credentials: config.database.credentials
+    });
   }
 }
 ```

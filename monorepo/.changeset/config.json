@@ -14,10 +14,10 @@
   "updateInternalDependencies": "patch",
   "ignore": [
     "legacy",
-    "docs",
-    "web",
     "@repo/eslint-config",
     "@repo/typescript-config",
-    "@repo/ui"
+    "@repo/ui",
+    "di-test-harness",
+    "@tdi2/docs-starlight"
   ]
 }

@@ -2,17 +2,11 @@
 
 ## ordered log
 
-### [❌] add di-testing example
+### [❌] research claude code subscription schedulers
 
-- ecommerce, fix failing tests
-- leave basic example out of it, keep the basic example well basic
-- di-testing seems to be published with workspace:\*
+- https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
 
-### [✅] fix ai system prompt 
-
-- we have the documentation and degit
-- we also should have a basic system prompt, so that we or any user could simply copy & paste that to claude code, as baseline then add our requirements (styling / business logic /test quantity)
-- our base prompt would handle that the actually generataed code is using the di approach properly
+- maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
 
 ### [❌] fix gh-pages actions for
 
@@ -23,13 +17,7 @@
 
 - maybe we simply delete it
 
-### [❌] research claude code subscription schedulers
-
-- https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
-
-- maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
-
-### handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
+### [❌] handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
 
 > test with local instead of npm ?
 > maybe by setting these otions
@@ -408,6 +396,11 @@ https://github.com/aleclarson/valtio-kit
 
 ## Done
 
+### [✅] add di-testing example
+
+- ecommerce, fix failing tests
+- leave basic example out of it, keep the basic example well basic
+
 ### [✅] @Configration "bean"
 
 > for things we don't own
@@ -422,7 +415,13 @@ public class AppConfig {
 
 }
 
-### [✅] Profile decorator and marker
+### [✅] fix ai system prompt
+
+- we have the documentation and degit
+- we also should have a basic system prompt, so that we or any user could simply copy & paste that to claude code, as baseline then add our requirements (styling / business logic /test quantity)
+- our base prompt would handle that the actually generataed code is using the di approach properlly
+
+### [✅] update docs for profile, scope, configuration, bean
 
 ### [✅] ecommerce example
 
