@@ -2,34 +2,16 @@
 
 ## ordered log
 
-### [❌] ecommerce example
+### fix ai system prompt
+- we have the documentation and degit
+- we also should have a basic system prompt, so that we or any user could simply copy & paste that to claude code,  as baseline then add our requirements (styling / business logic /test quantity)
+- our base prompt would handle that the actually generataed code is using the di approach properly 
 
-- now create an exommerce example which the documentation is talking about similarly to examples/tdi2-basic-example
- in the same parent folder
+### [❌] clean up talks/RFP for what value it still has
 
-> our documentation should reference snippets of the actual implementation similar to enterprise example
+- maybe we simply delete it
 
-- links to ecommerce example from documentation
-- links from documentation to "storybook" ladle (maybe a bit too much)
-
-### [❌] show the USP unique selling point early and let people experience the benefit first hand
-
-- [❌] is there a clear "roter faden" the user should be able to follow that
-
-- [❌] we are trying to solve a problem
-  - therefore the docuemtation should reflect that
-
-- also communicate our USP in seconds
-  - [❌] our usp is decoupling IMO
-- [❌]we need the basic example up front
-  /home/frank/Projects/7frank/tdi2/examples/tdi2-basic-example/README.md
-  simply degit and run experience the working di stuff is i think valuable
-
-### clean up talks/RFP for what value it still has
-
-- maybe we simply delete itl
-
-### research claude code subscription schedulers
+### [❌] research claude code subscription schedulers
 
 - https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
 
@@ -431,6 +413,29 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] ecommerce example
+
+- now create an exommerce example which the documentation is talking about similarly to examples/tdi2-basic-example
+  in the same parent folder
+
+> our documentation should reference snippets of the actual implementation similar to enterprise example
+
+- links to ecommerce example from documentation
+- links from documentation to "storybook" ladle (maybe a bit too much)
+
+### [✅] show the USP unique selling point early and let people experience the benefit first hand
+
+- [✅] is there a clear "roter faden" the user should be able to follow that
+
+- [✅] we are trying to solve a problem
+  - therefore the docuemtation should reflect that
+
+- also communicate our USP in seconds
+  - [✅] our usp is decoupling IMO
+- [✅]we need the basic example up front
+  /home/frank/Projects/7frank/tdi2/examples/tdi2-basic-example/README.md
+  simply degit and run experience the working di stuff is i think valuable
 
 ### [✅] improve documentation
 
