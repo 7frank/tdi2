@@ -2,23 +2,15 @@
 
 ## ordered log
 
-### [✅] fix gh-pages actions for
+### [❌] create plan from prod/PotentialProblems.md
 
-- test harness
-- documentation
+- update easy wins if any
 
 ### [❌] research claude code subscription schedulers
 
 - https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
 
-
 - maybe we can combine prefect with **telegram** to have something that allows us to use more of the subscriptin via mobile too
-
-
-
-### [✅] clean up talks/RFP for what value it still has
-
-- maybe we simply delete it
 
 ### [❌] handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
 
@@ -44,8 +36,8 @@
   - working DI (This might be still ahrd because 2 different packages)
 
 ### [❌] transformed not writing to file system
-see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned
 
+see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned
 
 ### [❌] DI bugs & side effects (part 1)
 
@@ -402,6 +394,15 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] fix gh-pages actions for
+
+- test harness
+- documentation
+
+### [✅] clean up talks/RFP for what value it still has
+
+- maybe we simply delete it
 
 ### [✅] add di-testing example
 
