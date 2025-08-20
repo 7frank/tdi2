@@ -1,0 +1,82 @@
+[
+  {
+    "id": "1",
+    "name": "Wireless Bluetooth Headphones",
+    "description": "Premium noise-cancelling wireless headphones with 30-hour battery life",
+    "price": 199.99,
+    "category": "Electronics",
+    "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop",
+    "stockQuantity": 25,
+    "tags": ["wireless", "audio", "noise-cancelling"]
+  },
+  {
+    "id": "2",
+    "name": "Organic Cotton T-Shirt",
+    "description": "Comfortable organic cotton t-shirt in various colors",
+    "price": 29.99,
+    "category": "Clothing",
+    "imageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=300&fit=crop",
+    "stockQuantity": 50,
+    "tags": ["organic", "cotton", "casual"]
+  },
+  {
+    "id": "3",
+    "name": "Smart Fitness Watch",
+    "description": "Advanced fitness tracking with heart rate monitoring and GPS",
+    "price": 349.99,
+    "category": "Electronics",
+    "imageUrl": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop",
+    "stockQuantity": 15,
+    "tags": ["fitness", "smart", "wearable"]
+  },
+  {
+    "id": "4",
+    "name": "Artisan Coffee Beans",
+    "description": "Single-origin specialty coffee beans, roasted to perfection",
+    "price": 24.99,
+    "category": "Food & Beverage",
+    "imageUrl": "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=300&h=300&fit=crop",
+    "stockQuantity": 100,
+    "tags": ["coffee", "artisan", "single-origin"]
+  },
+  {
+    "id": "5",
+    "name": "Yoga Mat Pro",
+    "description": "Professional-grade yoga mat with superior grip and cushioning",
+    "price": 79.99,
+    "category": "Sports & Fitness",
+    "imageUrl": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300&h=300&fit=crop",
+    "stockQuantity": 30,
+    "tags": ["yoga", "fitness", "exercise"]
+  },
+  {
+    "id": "6",
+    "name": "Leather Wallet",
+    "description": "Handcrafted genuine leather wallet with RFID protection",
+    "price": 89.99,
+    "category": "Accessories",
+    "imageUrl": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=300&fit=crop",
+    "stockQuantity": 40,
+    "tags": ["leather", "wallet", "accessories"]
+  },
+  {
+    "id": "7",
+    "name": "Indoor Plant Collection",
+    "description": "Set of 3 air-purifying indoor plants in decorative pots",
+    "price": 45.99,
+    "category": "Home & Garden",
+    "imageUrl": "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=300&h=300&fit=crop",
+    "stockQuantity": 20,
+    "tags": ["plants", "home-decor", "air-purifying"]
+  },
+  {
+    "id": "8",
+    "name": "Bamboo Cutting Board",
+    "description": "Eco-friendly bamboo cutting board with antimicrobial properties",
+    "price": 34.99,
+    "category": "Kitchen",
+    "imageUrl": "https://images.unsplash.com/photo-1594736797933-d0401ba2a4db?w=300&h=300&fit=crop",
+    "stockQuantity": 35,
+    "tags": ["bamboo", "kitchen", "eco-friendly"]
+  }
+]
