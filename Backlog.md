@@ -2,16 +2,19 @@
 
 ## ordered log
 
-### [❌] research claude code subscription schedulers
-
-- https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
-
-- maybe we can combine prefect with telegram to have something that allows us to use more of the subscriptin via mobile too
-
 ### [❌] fix gh-pages actions for
 
 - test harness
 - documentation
+
+### [❌] research claude code subscription schedulers
+
+- https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
+
+
+- maybe we can combine prefect with **telegram** to have something that allows us to use more of the subscriptin via mobile too
+
+
 
 ### [❌] clean up talks/RFP for what value it still has
 
@@ -39,6 +42,10 @@
 - both should provide similar experience
   - side by side comparision of source and generated
   - working DI (This might be still ahrd because 2 different packages)
+
+### [❌] transformed not writing to file system
+see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned
+
 
 ### [❌] DI bugs & side effects (part 1)
 
