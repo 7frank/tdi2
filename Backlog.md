@@ -2,11 +2,6 @@
 
 ## ordered log
 
-### [❌] add di-testing example
-
-- ecommerce, fix failing tests
-- leave basic example out of it, keep the basic example well basic
-
 ### [❌] research claude code subscription schedulers
 
 - https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
@@ -22,7 +17,7 @@
 
 - maybe we simply delete it
 
-### handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
+### [❌] handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
 
 > test with local instead of npm ?
 > maybe by setting these otions
@@ -402,6 +397,11 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] add di-testing example
+
+- ecommerce, fix failing tests
+- leave basic example out of it, keep the basic example well basic
 
 ### [✅] @Configration "bean"
 
