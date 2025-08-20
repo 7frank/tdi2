@@ -3,7 +3,7 @@
 ## ordered log
 
 ### [❌] add di-testing example
-- ecommerce
+- ecommerce, fix failing tests
 - leave basic example out of it, keep the basic example well basic 
 
 
