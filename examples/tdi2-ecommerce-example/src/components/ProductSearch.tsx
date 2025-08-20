@@ -1,11 +1,14 @@
-import { Inject } from '@tdi2/di-core';
+import type { Inject } from '@tdi2/di-core/markers';
 import { ProductServiceInterface } from '../services/ProductService';
 
 interface ProductSearchProps {
-  productService: Inject<ProductServiceInterface>;
+  services: {
+    productService: Inject<ProductServiceInterface>;
+  };
 }
 
-export function ProductSearch({ productService }: ProductSearchProps) {
+export function ProductSearch(props: ProductSearchProps) {
+  const { services: { productService } } = props;
   const { searchQuery, filters } = productService.state;
   const categories = productService.categories;
   const allTags = productService.allTags;

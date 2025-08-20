@@ -1,14 +1,17 @@
-import { Inject } from '@tdi2/di-core';
+import type { Inject } from '@tdi2/di-core/markers';
 import { ProductServiceInterface } from '../services/ProductService';
 import { CartServiceInterface } from '../services/CartService';
 import { Product } from '../types/Product';
 
 interface ProductListProps {
-  productService: Inject<ProductServiceInterface>;
-  cartService: Inject<CartServiceInterface>;
+  services: {
+    productService: Inject<ProductServiceInterface>;
+    cartService: Inject<CartServiceInterface>;
+  };
 }
 
-export function ProductList({ productService, cartService }: ProductListProps) {
+export function ProductList(props: ProductListProps) {
+  const { services: { productService, cartService } } = props;
   const { loading, error } = productService.state;
   const products = productService.filteredProducts;
 

@@ -22,7 +22,9 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173` → **Working e-commerce app with zero prop drilling!**
+Open `http://localhost:5173` → **Working e-commerce app with ZERO props needed!**
+
+**The Magic**: TDI2's Vite plugin automatically transforms your components at build time, injecting services where you declare them in interfaces!
 
 ## Architecture Overview
 
@@ -80,14 +82,18 @@ export class ProductService {
 }
 ```
 
-### 3. Component Service Injection
+### 3. TDI2 Auto-Injection Magic
 ```typescript
+// You write this:
 interface ProductListProps {
-  productService: Inject<ProductServiceInterface>;
-  cartService: Inject<CartServiceInterface>;
+  services: {
+    productService: Inject<ProductServiceInterface>;
+    cartService: Inject<CartServiceInterface>;
+  };
 }
 
-export function ProductList({ productService, cartService }: ProductListProps) {
+export function ProductList(props: ProductListProps) {
+  const { services: { productService, cartService } } = props;
   // No useState, no useEffect - everything from services!
   const { products, loading } = productService.state;
   
@@ -103,6 +109,13 @@ export function ProductList({ productService, cartService }: ProductListProps) {
     </div>
   );
 }
+
+// TDI2 transforms it to this at build time:
+// export function ProductList() {
+//   const productService = useService('ProductServiceInterface');  
+//   const cartService = useService('CartServiceInterface');
+//   // ... rest stays the same
+// }
 ```
 
 ## Debug DI System
