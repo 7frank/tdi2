@@ -99,6 +99,9 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
     const analysis = analytics.analyzeConfiguration(diConfig);
     const dependencyGraph = analysis.graph; // Use the graph from analysis
     const validation = analysis.validation; // Use validation from analysis
+    
+    // Get additional validation details for enhanced issue reporting
+    const fullValidation = analytics.validate(diConfig, 'all');
 
     // Build enhanced graph with interfaces, classes, and dependencies
     const nodes: GraphNode[] = [];
@@ -106,13 +109,16 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
     const processedNodes = new Set<string>();
 
     // Helper function to determine node color based on issues
-    function getNodeColor(nodeId: string, issues: any[]): string {
-      const nodeIssues = issues.filter(issue => 
-        issue.location?.service === nodeId || issue.message?.includes(nodeId)
+    function getNodeColor(nodeId: string, allIssues: any[]): string {
+      const nodeIssues = allIssues.filter(issue => 
+        issue.location?.service === nodeId || 
+        issue.token === nodeId ||
+        issue.message?.includes(nodeId) ||
+        issue.relatedTokens?.includes(nodeId)
       );
       
-      if (nodeIssues.some(issue => issue.type === 'error')) return '#ff4d4d'; // Red for errors
-      if (nodeIssues.some(issue => issue.type === 'warning')) return '#ffa500'; // Orange for warnings
+      if (nodeIssues.some(issue => issue.severity === 'error' || issue.type === 'error')) return '#F44336'; // Red for errors
+      if (nodeIssues.some(issue => issue.severity === 'warning' || issue.type === 'warning')) return '#FF9800'; // Orange for warnings
       return '#4CAF50'; // Green for healthy
     }
 
@@ -129,7 +135,12 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
       if (processedNodes.has(serviceId)) return;
       
       const service = dependencyGraph.nodes.get(serviceId);
-      const allIssues = [...(validation.issues.errors || []), ...(validation.issues.warnings || [])];
+      const allIssues = [
+        ...(validation.issues.errors || []), 
+        ...(validation.issues.warnings || []),
+        ...(fullValidation.issues.errors || []),
+        ...(fullValidation.issues.warnings || [])
+      ];
       
       // Determine node type based on naming patterns and metadata
       let nodeType: GraphNode['type'] = 'service';
@@ -151,8 +162,16 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
           dependencies: dependencyGraph.dependencies.get(serviceId) || [],
           dependents: dependencyGraph.dependents.get(serviceId) || [],
           issues: allIssues.filter(issue => 
-            issue.location?.service === serviceId || issue.message?.includes(serviceId)
-          ),
+            issue.location?.service === serviceId || 
+            issue.token === serviceId ||
+            issue.message?.includes(serviceId) ||
+            issue.relatedTokens?.includes(serviceId)
+          ).map(issue => ({
+            type: issue.severity || issue.type || 'info',
+            code: issue.code || 'UNKNOWN',
+            message: issue.message || issue.toString(),
+            suggestion: issue.suggestion
+          })),
           scope: service?.scope || 'singleton',
           filePath: service?.filePath,
           lifecycle: service?.lifecycle || []

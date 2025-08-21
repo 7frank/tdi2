@@ -5,13 +5,12 @@
 ### [❌] fix some more di issues & have more debugging support
 
 - [✅] tsup for cli and bin/cli.js support
-- [❌] publish cli to be available in the minor 
-- [❌] test cli commands properly that they work with
+- [❌] publish cli to be available in the minor
+- [✅] test cli commands properly that they work with
   - ecommerce example
-- [❌] Extend existing dependency viewer with analytics features
-  [❌] Update api-reference.md with new analytics features or better create separate debugging section (maybe import Debug-md directly)
+
 - [❌] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
-- serve 
+- serve
 
 #### CacheInterface_any in legacy
 
@@ -79,6 +78,17 @@ Resolution Steps:
 
 - we might be able to determine the "closest" implementation
 - or check if there is a generic that is close to our naming and in which case tell that there is a compatible but not fully configured service
+
+### [❌] separate packages if code base grows
+
+> this would be beneficial for ppl using only the core features with other languages that react
+
+- di-core
+- di-shared
+- di-react
+- di-debug (serve,(analytics),cli)
+
+### [❌] di-debug cli and serve autodetect di-config
 
 ### [❌] sundown "legacy" app take whats there still valuable e.g. dependency viewer maybe (which we should move into di-debug package already)
 
@@ -262,14 +272,6 @@ maybe normalization could help
   - then splitting Controller Logic and Business Logic into separate Classes/interfaces (This would be Clean)
 
 !!! there is a gradient of what works best
-
-### [❌] separate packages if code base grows
-
-> this would be benefitial for ppl using only the core features with other languages that react
-
-- di-core
-- di-shared
-- di-react
 
 ### [❌] use crossnote cli to render to pdf
 
