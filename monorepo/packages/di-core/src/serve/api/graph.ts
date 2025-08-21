@@ -212,61 +212,100 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
       });
     });
 
-    // Add interface-implementation relationships
-    // Look for services that implement interfaces based on naming patterns and metadata
-    nodes.forEach(node => {
-      if (node.type === 'class' || node.type === 'service') {
-        // Check if this service implements any interfaces
-        const serviceId = node.id;
-        const service = dependencyGraph.nodes.get(serviceId);
-        
-        // Try to find corresponding interface
-        let interfaceName = null;
-        
-        // Method 1: Direct metadata (if available)
-        if (service?.metadata?.interfaces && Array.isArray(service.metadata.interfaces)) {
-          service.metadata.interfaces.forEach(intfName => {
-            const interfaceNode = nodes.find(n => n.id === intfName && n.type === 'interface');
-            if (interfaceNode) {
-              edges.push({
-                source: serviceId,
-                target: intfName,
-                type: 'implementation',
-                optional: false,
-                metadata: { strength: 2 }
-              });
-            }
-          });
-        }
-        
-        // Method 2: Naming convention (ServiceName -> ServiceInterface)
-        if (serviceId.endsWith('Service')) {
-          const baseName = serviceId.replace('Service', '');
-          interfaceName = `${baseName}Interface`;
-        } else if (serviceId.includes('Service')) {
-          // Handle cases like ExampleApiService -> ExampleApiInterface
-          interfaceName = serviceId.replace('Service', 'Interface');
-        }
-        
-        // Method 3: Check for LoggerService pattern (interface defined in same file)
-        if (serviceId === 'ConsoleLoggerService') {
-          interfaceName = 'LoggerService';
-        }
-        
-        if (interfaceName) {
-          const interfaceNode = nodes.find(n => n.id === interfaceName && n.type === 'interface');
-          if (interfaceNode && !edges.some(e => e.source === serviceId && e.target === interfaceName && e.type === 'implementation')) {
-            edges.push({
-              source: serviceId,
-              target: interfaceName,
-              type: 'implementation',
-              optional: false,
-              metadata: { strength: 2 }
-            });
-          }
+    // Add interface-implementation relationships using the existing GraphVisualizer logic
+    const interfaceNodes = new Set<string>();
+    const classNodes = new Set<string>();
+
+    // Collect interfaces and classes based on metadata
+    for (const [token, node] of dependencyGraph.nodes.entries()) {
+      if (node.metadata?.isInterface) interfaceNodes.add(token);
+      else if (node.metadata?.isClass || (!node.metadata?.isInheritanceBased && !node.metadata?.isStateBased && !node.metadata?.isInterface)) {
+        classNodes.add(token);
+      }
+    }
+
+    // Build mapping: interface -> implementations using the same logic as GraphVisualizer
+    const implsByInterface = new Map<string, Set<string>>();
+    for (const intf of interfaceNodes) implsByInterface.set(intf, new Set<string>());
+
+    // Method 1: Explicit metadata - class node lists interfaces it implements
+    for (const [token, node] of dependencyGraph.nodes.entries()) {
+      if (!(node.metadata?.isClass)) continue;
+      const interfaces = Array.isArray(node.metadata?.interfaces) ? node.metadata.interfaces : [];
+      for (const intfName of interfaces) {
+        if (interfaceNodes.has(intfName)) {
+          implsByInterface.get(intfName)!.add(token);
         }
       }
-    });
+    }
+
+    // Method 2: Explicit metadata - interface node lists implementations
+    for (const [token, node] of dependencyGraph.nodes.entries()) {
+      if (!(node.metadata?.isInterface)) continue;
+      const implementations = Array.isArray(node.metadata?.implementations) ? node.metadata.implementations : [];
+      for (const impl of implementations) {
+        if (dependencyGraph.nodes.has(impl) && dependencyGraph.nodes.get(impl)?.metadata?.isClass) {
+          implsByInterface.get(token)!.add(impl);
+        }
+      }
+    }
+
+    // Method 3: Conventional - interface.implementationClass points to a class token
+    for (const intf of interfaceNodes) {
+      const iNode = dependencyGraph.nodes.get(intf);
+      const impl = iNode?.implementationClass;
+      if (impl && impl !== intf && dependencyGraph.nodes.get(impl)?.metadata?.isClass) {
+        implsByInterface.get(intf)!.add(impl);
+      }
+    }
+
+    // Method 4: Enhanced heuristic fallback using better pattern matching
+    for (const intf of interfaceNodes) {
+      if (implsByInterface.get(intf)!.size > 0) continue; // Skip if we already have implementations
+      
+      const interfaceBaseName = intf.replace(/Interface$/,'');
+      
+      // Look for exact matches and common patterns
+      for (const className of classNodes) {
+        const implementsInterface = (
+          // Exact base match: LoggerInterface -> ConsoleLogger, MemoryLogger, etc.
+          className.includes(interfaceBaseName) ||
+          // Service pattern: ExampleApiInterface -> ExampleApiService, ExampleApiServiceImpl
+          className === `${interfaceBaseName}Service` ||
+          className === `${interfaceBaseName}ServiceImpl` ||
+          className === `${interfaceBaseName}Impl` ||
+          // Specific known mappings
+          (intf === 'LoggerInterface' && (className === 'ConsoleLogger' || className === 'ConsoleLoggerService')) ||
+          (intf === 'LoggerService' && (className === 'ConsoleLogger' || className === 'ConsoleLoggerService')) ||
+          (intf === 'CacheInterface' && className === 'MemoryCache') ||
+          (intf === 'ExampleApiInterface' && (className === 'ExampleApiService' || className === 'UserApiServiceImpl' || className === 'MockUserApiService'))
+        );
+        
+        if (implementsInterface) {
+          implsByInterface.get(intf)!.add(className);
+        }
+      }
+    }
+
+    // Create implementation edges
+    for (const [interfaceName, implementations] of implsByInterface.entries()) {
+      for (const implName of implementations) {
+        // Ensure both nodes exist in our filtered graph
+        const interfaceNode = nodes.find(n => n.id === interfaceName);
+        const implNode = nodes.find(n => n.id === implName);
+        
+        if (interfaceNode && implNode && 
+            !edges.some(e => e.source === implName && e.target === interfaceName && e.type === 'implementation')) {
+          edges.push({
+            source: implName,
+            target: interfaceName,
+            type: 'implementation',
+            optional: false,
+            metadata: { strength: 2 }
+          });
+        }
+      }
+    }
 
     // Generate layouts using existing GraphVisualizer
     const mermaidDiagram = analytics.visualizeGraph({
