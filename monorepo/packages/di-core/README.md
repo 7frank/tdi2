@@ -31,3 +31,7 @@ run `bun .cli.ts`
 - work on individual test in test suite e.g.
   - `                   bun test --test-name-pattern "should transform destructured keys and types in parameters"`
   - `UPDATE_SNAPSHOTS=1 bun test --test-name-pattern "should transform destructured keys and types in parameters"`
+
+
+## Debug
+- see [Debug.md](Debug.md)

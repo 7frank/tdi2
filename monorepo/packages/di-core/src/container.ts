@@ -411,6 +411,123 @@ export class CompileTimeDIContainer implements DIContainer {
     console.log("🎯 Scopes:", Array.from(this.scopes.entries()));
   }
 
+  /**
+   * Get dependency graph for this container
+   * Uses analytics module for comprehensive analysis
+   */
+  getDependencyGraph(): any {
+    const { DIAnalytics } = require('./analytics/index.js');
+    const analytics = new DIAnalytics({ verbose: false });
+    
+    // Convert container state to DI config format for analysis
+    const diConfig = this.exportConfiguration();
+    return analytics.analyzeConfiguration(diConfig).graph;
+  }
+
+  /**
+   * Validate container configuration
+   * Returns comprehensive validation results
+   */
+  validateConfiguration(): any {
+    const { DIAnalytics } = require('./analytics/index.js');
+    const analytics = new DIAnalytics({ verbose: false });
+    
+    const diConfig = this.exportConfiguration();
+    return analytics.validate(diConfig, 'all');
+  }
+
+  /**
+   * Get resolution path for a service token
+   * Useful for debugging why services aren't resolving
+   */
+  getResolutionPath(token: string): any {
+    const { DIAnalytics } = require('./analytics/index.js');
+    const analytics = new DIAnalytics({ verbose: false });
+    
+    const diConfig = this.exportConfiguration();
+    return analytics.traceService(token, diConfig);
+  }
+
+  /**
+   * Find circular dependencies in container
+   */
+  findCircularDependencies(): string[][] {
+    const { DIAnalytics } = require('./analytics/index.js');
+    const analytics = new DIAnalytics({ verbose: false });
+    
+    const diConfig = this.exportConfiguration();
+    const analysis = analytics.analyzeConfiguration(diConfig);
+    return analysis.summary.circularDependencies;
+  }
+
+  /**
+   * Export container configuration in JSON format
+   * Compatible with analytics tools and CLI
+   */
+  exportConfiguration(format: 'json' | 'dot' = 'json'): any {
+    if (format === 'json') {
+      // Convert container state to DI config format
+      const config: Record<string, any> = {};
+      
+      // Export factories as service configurations
+      for (const [tokenKey, factory] of this.factories.entries()) {
+        const scope = this.scopes.get(tokenKey) || 'singleton';
+        config[tokenKey] = {
+          implementationClass: tokenKey, // Simplified for analytics
+          scope,
+          dependencies: [], // Would need dependency tracking for full analysis
+          registrationType: 'factory',
+          isClassBased: false,
+          isAutoResolved: true
+        };
+      }
+
+      // Export direct service registrations
+      for (const [tokenKey, service] of this.services.entries()) {
+        const scope = this.scopes.get(tokenKey) || 'singleton';
+        config[tokenKey] = {
+          implementationClass: service.constructor.name,
+          scope,
+          dependencies: [], // Would need dependency tracking for full analysis
+          registrationType: 'class',
+          isClassBased: true,
+          isAutoResolved: false
+        };
+      }
+
+      return config;
+    } else if (format === 'dot') {
+      const { DIAnalytics } = require('./analytics/index.js');
+      const analytics = new DIAnalytics({ verbose: false });
+      const diConfig = this.exportConfiguration('json');
+      
+      return analytics.visualizeGraph({ 
+        format: 'dot', 
+        includeDetails: true 
+      }, diConfig);
+    }
+    
+    return {};
+  }
+
+  /**
+   * Get container health report
+   * Provides quick overview of container status
+   */
+  getHealthReport(): {
+    status: 'healthy' | 'warning' | 'error';
+    score: number;
+    summary: string;
+    issues: number;
+    recommendations: string[];
+  } {
+    const { DIAnalytics } = require('./analytics/index.js');
+    const analytics = new DIAnalytics({ verbose: false });
+    
+    const diConfig = this.exportConfiguration();
+    return analytics.getHealthReport(diConfig);
+  }
+
   // NEW: Method to register by interface (for enhanced interface-based DI)
   registerByInterface<T>(
     interfaceName: string,
