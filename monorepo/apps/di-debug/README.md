@@ -387,8 +387,9 @@ updateHealthMetrics(analysis.summary);
 
 ## Local Development
 
-- `br cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
-- `br cli.ts analyze --src ../../apps/legacy/src/`
+- `br src/cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
+- `br src/cli.ts analyze --src ../legacy/src/`
+- `br src/cli.ts serve --src ../legacy/src/` 
 
 ## Troubleshooting
 
