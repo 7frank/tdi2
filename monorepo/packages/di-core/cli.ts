@@ -399,9 +399,13 @@ const serveCommand = command({
     dev: flag({
       long: "dev",
       description: "Development mode with detailed error messages"
+    }),
+    showPotentialRelations: flag({
+      long: "show-potential",
+      description: "Show potential/missing relationships with dotted lines (default: true)"
     })
   },
-  handler: async ({ src, port, host, verbose, open, watch, dev }) => {
+  handler: async ({ src, port, host, verbose, open, watch, dev, showPotentialRelations }) => {
     try {
       console.log("🚀 Starting TDI2 web dashboard...");
       

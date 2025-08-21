@@ -307,6 +307,65 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
       }
     }
 
+    // Add potential/missing dependency relationships using existing analytics
+    if (options.showPotentialRelations !== false) {
+      const problems = analytics.findProblematicServices(diConfig);
+      const validation = analytics.validate(diConfig, 'all');
+      
+      // Get missing dependency issues  
+      const missingIssues = validation.issues?.errors?.filter(issue => 
+        issue.type === 'missing-service'
+      ) || [];
+      
+      for (const issue of missingIssues) {
+        // Use the existing relatedTokens if available, or extract from message
+        const sourceService = issue.relatedTokens?.[0] || extractServiceFromMessage(issue.message || '');
+        const missingToken = issue.token;
+        
+        if (sourceService && missingToken) {
+          const sourceNode = nodes.find(n => n.id === sourceService);
+          
+          // Use existing analytics suggestion logic
+          const suggestion = issue.suggestion || '';
+          const suggestedTokens = extractSuggestedTokens(suggestion);
+          
+          for (const suggestedToken of suggestedTokens) {
+            const targetNode = nodes.find(n => n.id === suggestedToken);
+            
+            if (sourceNode && targetNode && !edges.some(e => 
+              e.source === sourceService && e.target === suggestedToken
+            )) {
+              edges.push({
+                source: sourceService,
+                target: suggestedToken,
+                type: 'potential',
+                optional: true,
+                metadata: { 
+                  strength: 0.3,
+                  reason: `Potential match for missing '${missingToken}'`,
+                  suggestion: suggestion || `Consider connecting ${sourceService} to ${suggestedToken}`
+                }
+              });
+            }
+          }
+        }
+      }
+    }
+
+    function extractServiceFromMessage(message: string): string | null {
+      const match = message?.match(/required by '([^']+)'/);
+      return match ? match[1] : null;
+    }
+
+    function extractSuggestedTokens(suggestion: string): string[] {
+      // Extract suggested tokens from suggestions like "💡 Did you mean: CacheInterface_T, MemoryCache?"
+      const match = suggestion.match(/Did you mean:\s*([^?]+)/);
+      if (match) {
+        return match[1].split(',').map(s => s.trim()).filter(Boolean);
+      }
+      return [];
+    }
+
     // Generate layouts using existing GraphVisualizer
     const mermaidDiagram = analytics.visualizeGraph({
       format: 'mermaid',

@@ -8,6 +8,7 @@ export interface ServerOptions {
   open?: boolean;
   watch?: boolean;
   dev?: boolean;
+  showPotentialRelations?: boolean;
 }
 
 export interface GraphNode {
@@ -30,11 +31,13 @@ export interface GraphNode {
 export interface GraphEdge {
   source: string;
   target: string;
-  type: 'dependency' | 'inheritance' | 'implementation' | 'injection';
+  type: 'dependency' | 'inheritance' | 'implementation' | 'injection' | 'potential';
   optional?: boolean;
   metadata?: {
     property?: string;
     strength?: number;
+    reason?: string;
+    suggestion?: string;
   };
 }
 
