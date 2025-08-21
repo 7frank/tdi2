@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Node.js wrapper for TDI2 CLI
+// Node.js wrapper for TDI2 Debug CLI
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 

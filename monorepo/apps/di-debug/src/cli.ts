@@ -13,9 +13,9 @@ import {
 } from "cmd-ts";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join, resolve } from "path";
-import { DIAnalytics } from "./src/analytics/index.js";
-import type { GraphVisualizationOptions } from "./src/analytics/types.js";
-import { TDI2Server } from "./src/serve/index.js";
+import { DIAnalytics } from "./analytics/index.js";
+import type { GraphVisualizationOptions } from "./analytics/types.js";
+import { TDI2Server } from "./serve/index.js";
 import path from "node:path";
 
 // CLI metadata

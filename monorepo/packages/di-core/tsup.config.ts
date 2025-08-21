@@ -55,27 +55,4 @@ export default defineConfig([
     clean: false,
     sourcemap: true
   },
-  {
-    entry: ["src/serve/index.ts"],
-    format: ["esm"],
-    dts: true,
-    outDir: "dist/serve",
-    clean: false,
-    sourcemap: true,
-    external: ["express", "ws", "chokidar", "open"]
-  },
-  {
-    entry: ["cli.ts"],
-    format: ["esm"],
-    dts: true,
-    outDir: "dist",
-    clean: false,
-    sourcemap: true,
-    banner: {
-      js: "#!/usr/bin/env node"
-    },
-    esbuildOptions(options) {
-      options.platform = "node";
-    }
-  },
 ]);
