@@ -416,7 +416,8 @@ const serveCommand = command({
         verbose,
         open,
         watch,
-        dev
+        dev,
+        showPotentialRelations: showPotentialRelations ?? true
       });
 
       // Graceful shutdown handling

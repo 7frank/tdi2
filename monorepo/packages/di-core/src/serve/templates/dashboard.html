@@ -295,6 +295,10 @@
     .legend-edge.implementation { background: #4CAF50; }
     .legend-edge.injection { background: #2196F3; }
     .legend-edge.inheritance { background: #FF9800; }
+    .legend-edge.potential { 
+      background: #FFC107; 
+      background-image: repeating-linear-gradient(90deg, #FFC107, #FFC107 3px, transparent 3px, transparent 6px);
+    }
     .legend-edge.dependency { background: #666; }
 
     .legend-edge::after {
@@ -312,6 +316,7 @@
     .legend-edge.implementation::after { border-left-color: #4CAF50; }
     .legend-edge.injection::after { border-left-color: #2196F3; }
     .legend-edge.inheritance::after { border-left-color: #FF9800; }
+    .legend-edge.potential::after { border-left-color: #FFC107; }
     .legend-edge.dependency::after { border-left-color: #666; }
 
     .controls-panel {
@@ -537,6 +542,7 @@
             <div class="legend-item"><div class="legend-edge implementation"></div> Implements Interface</div>
             <div class="legend-item"><div class="legend-edge injection"></div> Depends On</div>
             <div class="legend-item"><div class="legend-edge inheritance"></div> Extends Class</div>
+            <div class="legend-item"><div class="legend-edge potential"></div> Potential Match</div>
             <div class="legend-item"><div class="legend-edge dependency"></div> General Dependency</div>
           </div>
         </div>
@@ -838,7 +844,7 @@
 
         // Add arrow markers
         this.svg.append('defs').selectAll('marker')
-          .data(['dependency', 'implementation', 'injection', 'inheritance', 'error'])
+          .data(['dependency', 'implementation', 'injection', 'inheritance', 'potential', 'error'])
           .join('marker')
           .attr('id', d => `arrow-${d}`)
           .attr('viewBox', '0 -5 10 10')
@@ -854,6 +860,7 @@
               case 'implementation': return 'M0,-5L10,0L0,5L3,0Z'; // Filled triangle
               case 'injection': return 'M0,-5L10,0L0,5'; // Open arrow
               case 'inheritance': return 'M0,-5L10,0L0,5L2,0Z'; // Filled diamond-like
+              case 'potential': return 'M0,-3L7,0L0,3'; // Smaller open arrow
               default: return 'M0,-5L10,0L0,5';
             }
           })
@@ -930,9 +937,9 @@
           .attr('class', 'link')
           .attr('stroke', d => this.getEdgeColor(d))
           .attr('stroke-width', d => this.getEdgeWidth(d))
-          .attr('stroke-dasharray', d => d.optional ? '5,5' : null)
+          .attr('stroke-dasharray', d => this.getEdgeDashArray(d))
           .attr('marker-end', d => `url(#arrow-${this.getEdgeMarkerType(d)})`)
-          .style('opacity', 0.7)
+          .style('opacity', d => d.type === 'potential' ? 0.5 : 0.7)
           .on('mouseover', (event, d) => this.showEdgeTooltip(event, d))
           .on('mouseout', () => this.hideTooltip());
 
@@ -1108,6 +1115,7 @@
           case 'implementation': return '#4CAF50'; // Green for implements
           case 'injection': return '#2196F3';      // Blue for depends on
           case 'inheritance': return '#FF9800';    // Orange for extends
+          case 'potential': return '#FFC107';      // Amber for potential relationships
           case 'dependency': return '#666';        // Gray for general dependency
           default: return '#999';
         }
@@ -1121,11 +1129,19 @@
         return edge.type || 'dependency';
       }
 
+      getEdgeDashArray(edge) {
+        // Dotted lines for optional or potential relationships
+        if (edge.type === 'potential') return '3,3';
+        if (edge.optional) return '5,5';
+        return null;
+      }
+
       getMarkerColor(type) {
         switch (type) {
           case 'implementation': return '#4CAF50';
           case 'injection': return '#2196F3';
           case 'inheritance': return '#FF9800';
+          case 'potential': return '#FFC107';
           case 'error': return '#F44336';
           default: return '#666';
         }
@@ -1222,6 +1238,18 @@
             <span>Optional:</span>
             <span style="margin-left: 8px; font-weight: bold;">${edge.optional ? 'Yes' : 'No'}</span>
           </div>
+          ${edge.metadata?.reason ? `
+            <div style="margin-bottom: 4px;">
+              <span style="color: #FFC107;">Reason:</span>
+              <div style="margin-top: 2px; font-size: 10px; color: #fff;">${edge.metadata.reason}</div>
+            </div>
+          ` : ''}
+          ${edge.metadata?.suggestion ? `
+            <div style="margin-bottom: 4px;">
+              <span style="color: #4CAF50;">💡 Suggestion:</span>
+              <div style="margin-top: 2px; font-size: 10px; color: #fff;">${edge.metadata.suggestion}</div>
+            </div>
+          ` : ''}
         `;
 
         this.tooltip
