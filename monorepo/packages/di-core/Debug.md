@@ -36,6 +36,7 @@ tdi2 analyze --src ./src --profiles production,logging
 ```
 
 **Example Output:**
+
 ```
 📊 DI Configuration Analysis Report
 ════════════════════════════════════════════════
@@ -72,6 +73,7 @@ tdi2 validate --src ./src --type orphaned
 ```
 
 **Example Output:**
+
 ```
 📋 Validation Summary
 ════════════════════════════════════
@@ -106,6 +108,7 @@ tdi2 trace TodoServiceType --src ./src --format json
 ```
 
 **Example Output:**
+
 ```
 🔍 Resolution Trace: TodoServiceType
 ══════════════════════════════════════════════════════════
@@ -148,6 +151,7 @@ tdi2 graph --src ./src --max-depth 3
 ```
 
 **ASCII Example:**
+
 ```
 🔌 UserService → UserService (singleton)
 ├── 🔌 DatabaseService → DatabaseService (singleton)
@@ -157,6 +161,7 @@ tdi2 graph --src ./src --max-depth 3
 ```
 
 **JSON Example** (for web viewer):
+
 ```json
 {
   "meta": {
@@ -174,7 +179,7 @@ tdi2 graph --src ./src --max-depth 3
   ],
   "edges": [
     {
-      "from": "UserService", 
+      "from": "UserService",
       "to": "DatabaseService",
       "type": "dependency"
     }
@@ -189,6 +194,7 @@ tdi2 graph --src ./src --max-depth 3
 **Problem**: `Service not registered: TodoServiceType`
 
 **Debug Steps**:
+
 ```bash
 # 1. Check if service is in DI config
 tdi2 analyze --src ./src --format json | grep -i todoservice
@@ -201,6 +207,7 @@ tdi2 trace --missing --src ./src
 ```
 
 **Common Causes**:
+
 - Service class missing `@Service()` decorator
 - Service file not being scanned (wrong directory/pattern)
 - Interface name mismatch
@@ -211,6 +218,7 @@ tdi2 trace --missing --src ./src
 **Problem**: `Circular dependency detected: A → B → A`
 
 **Debug Steps**:
+
 ```bash
 # 1. Find all circular dependencies
 tdi2 trace --circular --src ./src
@@ -223,6 +231,7 @@ tdi2 validate --src ./src --type circular
 ```
 
 **Common Solutions**:
+
 - Use lazy loading with factory functions
 - Extract shared logic into separate service
 - Use event-driven communication instead of direct dependency
@@ -232,6 +241,7 @@ tdi2 validate --src ./src --type circular
 **Problem**: Multiple services implement same interface
 
 **Debug Steps**:
+
 ```bash
 # 1. Check for duplicate implementations
 tdi2 validate --src ./src --type all
@@ -244,6 +254,7 @@ tdi2 graph --src ./src --types interface --format json
 ```
 
 **Solutions**:
+
 - Use `@Primary` decorator on main implementation
 - Use `@Qualifier` for specific implementations
 - Check profile configurations
@@ -253,6 +264,7 @@ tdi2 graph --src ./src --types interface --format json
 **Problem**: Singleton depends on transient service
 
 **Debug Steps**:
+
 ```bash
 # 1. Check scope issues
 tdi2 validate --src ./src --type scopes
@@ -265,6 +277,7 @@ tdi2 graph --src ./src --highlight UserService
 ```
 
 **Solutions**:
+
 - Make dependency singleton if stateless
 - Use factory pattern for dynamic dependencies
 - Reconsider service lifecycle requirements
@@ -274,14 +287,14 @@ tdi2 graph --src ./src --highlight UserService
 You can also use analytics directly in your code:
 
 ```typescript
-import { DIAnalytics, CompileTimeDIContainer } from '@tdi2/di-core';
+import { DIAnalytics, CompileTimeDIContainer } from "@tdi2/di-core";
 
 // Basic analytics
 const analytics = new DIAnalytics({ verbose: true });
 const analysis = analytics.analyzeConfiguration(DI_CONFIG);
 
 if (!analysis.validation.isValid) {
-  console.error('DI Configuration has issues:', analysis.validation.issues);
+  console.error("DI Configuration has issues:", analysis.validation.issues);
 }
 
 // Enhanced container with analytics
@@ -289,13 +302,13 @@ const container = new CompileTimeDIContainer();
 
 // Get health report
 const health = container.getHealthReport();
-if (health.status !== 'healthy') {
+if (health.status !== "healthy") {
   console.warn(`Container issues: ${health.summary}`);
-  health.recommendations.forEach(rec => console.log(`💡 ${rec}`));
+  health.recommendations.forEach((rec) => console.log(`💡 ${rec}`));
 }
 
 // Debug specific service
-const trace = container.getResolutionPath('TodoServiceType');
+const trace = container.getResolutionPath("TodoServiceType");
 if (!trace.success) {
   console.error(`Failed to resolve TodoServiceType: ${trace.error}`);
 }
@@ -303,12 +316,12 @@ if (!trace.success) {
 // Find circular dependencies
 const circular = container.findCircularDependencies();
 if (circular.length > 0) {
-  console.warn('Circular dependencies:', circular);
+  console.warn("Circular dependencies:", circular);
 }
 
 // Export for external tools
-const config = container.exportConfiguration('json');
-const dotGraph = container.exportConfiguration('dot');
+const config = container.exportConfiguration("json");
+const dotGraph = container.exportConfiguration("dot");
 ```
 
 ## CI/CD Integration
@@ -320,14 +333,14 @@ Use TDI2 analytics in your build pipeline:
 - name: Validate DI Configuration
   run: |
     tdi2 validate --src ./src --format json --output validation.json
-    
+
     # Exit with error code if validation fails
     if [ $? -ne 0 ]; then
       echo "❌ DI validation failed"
       cat validation.json
       exit 1
     fi
-    
+
     echo "✅ DI configuration is valid"
 
 - name: Generate Dependency Graph
@@ -351,7 +364,7 @@ The CLI JSON output is designed for web consumption:
 
 ```typescript
 // Load analysis data in web app
-const response = await fetch('/api/di-analysis');
+const response = await fetch("/api/di-analysis");
 const analysis = await response.json();
 
 // Render dependency graph
@@ -372,9 +385,15 @@ updateHealthMetrics(analysis.summary);
 4. **Filter by types** to focus on specific issues (`--types interface`)
 5. **Use profiles** to analyze environment-specific configurations
 
+## Local testing
+
+- `br cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
+- `br cli.ts analyze --src ../../apps/legacy/src/`
+
 ## Troubleshooting
 
 ### CLI Not Found
+
 ```bash
 # Make sure you're in the right directory
 cd /path/to/your/project
@@ -387,6 +406,7 @@ npx tdi2 analyze --src ./src
 ```
 
 ### No DI Configuration Found
+
 ```bash
 # Check expected locations
 ls -la src/.tdi2/
@@ -400,6 +420,7 @@ tdi2 analyze --src ./custom/src/path
 ```
 
 ### Performance Issues
+
 ```bash
 # Use JSON format for large outputs
 tdi2 analyze --src ./src --format json > analysis.json
@@ -419,34 +440,39 @@ Create custom analysis scripts using the analytics API:
 
 ```typescript
 // custom-analysis.ts
-import { DIAnalytics } from '@tdi2/di-core';
-import { readFileSync } from 'fs';
+import { DIAnalytics } from "@tdi2/di-core";
+import { readFileSync } from "fs";
 
-const analytics = new DIAnalytics({ 
+const analytics = new DIAnalytics({
   verbose: true,
-  includePerformance: true 
+  includePerformance: true,
 });
 
 // Load your DI config
-const diConfig = JSON.parse(readFileSync('./src/.tdi2/di-config.json', 'utf8'));
+const diConfig = JSON.parse(readFileSync("./src/.tdi2/di-config.json", "utf8"));
 
 // Custom analysis
 const analysis = analytics.analyzeConfiguration(diConfig);
 
 // Generate custom report
-console.log('🏗️ Architecture Report');
+console.log("🏗️ Architecture Report");
 console.log(`Total Services: ${analysis.graph.nodes.size}`);
-console.log(`Coupling Score: ${analysis.summary.couplingAnalysis.couplingScore}`);
+console.log(
+  `Coupling Score: ${analysis.summary.couplingAnalysis.couplingScore}`
+);
 
 // Find problematic patterns
 const problems = analytics.findProblematicServices(diConfig);
 if (problems.circular.length > 0) {
-  console.log('⚠️ Circular Dependencies Need Attention');
+  console.log("⚠️ Circular Dependencies Need Attention");
 }
 
 // Export for visualization tools
-const mermaidDiagram = analytics.visualizeGraph({ format: 'mermaid' }, diConfig);
-writeFileSync('./docs/dependency-diagram.mmd', mermaidDiagram);
+const mermaidDiagram = analytics.visualizeGraph(
+  { format: "mermaid" },
+  diConfig
+);
+writeFileSync("./docs/dependency-diagram.mmd", mermaidDiagram);
 ```
 
 ### Integration with IDEs
@@ -460,7 +486,7 @@ Use CLI output in VS Code or other editors:
   "tasks": [
     {
       "label": "Analyze DI Configuration",
-      "type": "shell", 
+      "type": "shell",
       "command": "tdi2",
       "args": ["analyze", "--src", "./src"],
       "group": "test",
