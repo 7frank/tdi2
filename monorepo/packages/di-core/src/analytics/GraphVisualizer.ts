@@ -7,7 +7,7 @@ import type {
 } from './types';
 
 export class GraphVisualizer {
-  
+   private static _class="klass"
   /**
    * Generate visualization in the specified format
    */
@@ -260,7 +260,7 @@ export class GraphVisualizer {
     // Add class definitions
     lines.push('');
     lines.push('  classDef interface fill:#e1f5fe;');
-    lines.push('  classDef class fill:#f3e5f5;');
+    lines.push(`  classDef ${GraphVisualizer._class} fill:#f3e5f5;`);
     lines.push('  classDef inheritance fill:#e8f5e8;');
     lines.push('  classDef state fill:#fff3e0;');
     lines.push('  classDef highlighted fill:#ffebee,stroke:#d32f2f,stroke-width:2px;');
@@ -363,7 +363,7 @@ export class GraphVisualizer {
     if (node.metadata.isInterface) return 'interface';
     if (node.metadata.isInheritanceBased) return 'inheritance';
     if (node.metadata.isStateBased) return 'state';
-    return 'class';
+    return GraphVisualizer._class;
   }
   
   private sanitizeMermaidId(token: string): string {
