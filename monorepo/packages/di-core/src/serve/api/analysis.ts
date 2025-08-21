@@ -14,39 +14,76 @@ export function createAnalysisHandler(analytics: DIAnalytics, options: ServerOpt
   
   const CACHE_TTL = 30000; // 30 seconds
 
-  async function loadDIConfig(srcPath: string = options.srcPath): Promise<any> {
-    // Reuse the config loading logic from CLI
-    // This should be the same as the loadDIConfig function in cli.ts
+  // Reuse the exact same config loading logic from CLI
+  async function loadDIConfig(srcPath: string = options.srcPath): Promise<Record<string, any>> {
+    const { join, resolve } = await import('path');
     const { existsSync } = await import('fs');
-    const { join } = await import('path');
     
     const configPaths = [
-      join(srcPath, '.tdi2', 'di-config.mjs'),
-      join(srcPath, '.tdi2', 'di-config.cjs'), 
-      join(srcPath, '.tdi2', 'di-config.js'),
-      join(srcPath, '.tdi2', 'di-config.ts'),
-      join(srcPath, 'di-config.mjs'),
-      join(srcPath, 'di-config.cjs'),
-      join(srcPath, 'di-config.js'),
-      join(srcPath, 'di-config.ts')
+      join(srcPath, ".tdi2", "di-config.mjs"),
+      join(srcPath, ".tdi2", "di-config.cjs"),
+      join(srcPath, ".tdi2", "di-config.js"),
+      join(srcPath, ".tdi2", "di-config.ts"),
+      join(srcPath, "di-config.mjs"),
+      join(srcPath, "di-config.cjs"),
+      join(srcPath, "di-config.js"),
+      join(srcPath, "di-config.ts"),
     ];
 
+    const { pathToFileURL } = await import("node:url");
+
     for (const configPath of configPaths) {
-      if (existsSync(configPath)) {
+      const fullPath = resolve(configPath);
+      if (!existsSync(fullPath)) continue;
+
+      const isTS = fullPath.endsWith(".ts");
+      if (isTS) {
         try {
-          // Clear require cache to ensure fresh load
-          if (require.cache[configPath]) {
-            delete require.cache[configPath];
-          }
-          const config = await import(configPath);
-          return config.default || config;
-        } catch (error) {
-          console.warn(`⚠️ Failed to load config from ${configPath}:`, error);
+          // Registers ts-node only if available; no hard dependency
+          await import("ts-node/register/transpile-only");
+        } catch {
+          console.warn(
+            `⚠️  TypeScript config detected but 'ts-node' is not available: ${configPath}`
+          );
+          console.warn(
+            "   Install 'ts-node' to load TypeScript configs, or provide a JS config."
+          );
+          continue;
         }
+      }
+
+      try {
+        const mod = await import(pathToFileURL(fullPath).href);
+
+        const di =
+          mod?.DI_CONFIG ?? mod?.default ?? mod?.diConfig ?? mod?.config ?? null;
+
+        if (di && typeof di === "object") {
+          if (options.verbose) {
+            console.log(`📄 Loaded DI config from ${configPath}`);
+          }
+          return di as Record<string, any>;
+        } else {
+          console.warn(
+            `⚠️  No DI config export found in ${configPath}. Expected 'DI_CONFIG' or default export.`
+          );
+          continue;
+        }
+      } catch (err: any) {
+        console.warn(
+          `⚠️  Failed to import DI config at ${configPath}: ${err?.message || err}`
+        );
+        continue;
       }
     }
 
-    return {}; // Empty configuration
+    console.warn("⚠️  No DI configuration found. Using empty configuration.");
+    if (options.verbose) {
+      console.warn("   BasePath: ", resolve(srcPath));
+      console.warn("   Expected locations:");
+      configPaths.forEach((p) => console.warn(`   • ${p}`));
+    }
+    return {};
   }
 
   async function getCachedAnalysis(forceReload: boolean = false): Promise<any> {

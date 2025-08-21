@@ -239,7 +239,7 @@ export class TDI2Server {
   }
 
   public async start(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((promiseResolve, reject) => {
       this.server.listen(this.options.port, this.options.host || 'localhost', () => {
         const address = `http://${this.options.host || 'localhost'}:${this.options.port}`;
         
@@ -265,7 +265,7 @@ export class TDI2Server {
         console.log(`   • WebSocket: ws://${this.options.host || 'localhost'}:${this.options.port}/ws`);
         console.log('\n🛑 Press Ctrl+C to stop the server');
 
-        resolve();
+        promiseResolve();
       });
 
       this.server.on('error', (error) => {

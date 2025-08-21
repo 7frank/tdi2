@@ -14,33 +14,74 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
   
   const CACHE_TTL = 30000; // 30 seconds
 
-  async function loadDIConfig(srcPath: string = options.srcPath): Promise<any> {
+  // Reuse the exact same config loading logic from CLI
+  async function loadDIConfig(srcPath: string = options.srcPath): Promise<Record<string, any>> {
+    const { join, resolve } = await import('path');
     const { existsSync } = await import('fs');
-    const { join } = await import('path');
     
     const configPaths = [
-      join(srcPath, '.tdi2', 'di-config.mjs'),
-      join(srcPath, '.tdi2', 'di-config.cjs'), 
-      join(srcPath, '.tdi2', 'di-config.js'),
-      join(srcPath, '.tdi2', 'di-config.ts'),
-      join(srcPath, 'di-config.mjs'),
-      join(srcPath, 'di-config.cjs'),
-      join(srcPath, 'di-config.js'),
-      join(srcPath, 'di-config.ts')
+      join(srcPath, ".tdi2", "di-config.mjs"),
+      join(srcPath, ".tdi2", "di-config.cjs"),
+      join(srcPath, ".tdi2", "di-config.js"),
+      join(srcPath, ".tdi2", "di-config.ts"),
+      join(srcPath, "di-config.mjs"),
+      join(srcPath, "di-config.cjs"),
+      join(srcPath, "di-config.js"),
+      join(srcPath, "di-config.ts"),
     ];
 
+    const { pathToFileURL } = await import("node:url");
+
     for (const configPath of configPaths) {
-      if (existsSync(configPath)) {
+      const fullPath = resolve(configPath);
+      if (!existsSync(fullPath)) continue;
+
+      const isTS = fullPath.endsWith(".ts");
+      if (isTS) {
         try {
-          if (require.cache[configPath]) {
-            delete require.cache[configPath];
-          }
-          const config = await import(configPath);
-          return config.default || config;
-        } catch (error) {
-          console.warn(`⚠️ Failed to load config from ${configPath}:`, error);
+          // Registers ts-node only if available; no hard dependency
+          await import("ts-node/register/transpile-only");
+        } catch {
+          console.warn(
+            `⚠️  TypeScript config detected but 'ts-node' is not available: ${configPath}`
+          );
+          console.warn(
+            "   Install 'ts-node' to load TypeScript configs, or provide a JS config."
+          );
+          continue;
         }
       }
+
+      try {
+        const mod = await import(pathToFileURL(fullPath).href);
+
+        const di =
+          mod?.DI_CONFIG ?? mod?.default ?? mod?.diConfig ?? mod?.config ?? null;
+
+        if (di && typeof di === "object") {
+          if (options.verbose) {
+            console.log(`📄 Loaded DI config from ${configPath}`);
+          }
+          return di as Record<string, any>;
+        } else {
+          console.warn(
+            `⚠️  No DI config export found in ${configPath}. Expected 'DI_CONFIG' or default export.`
+          );
+          continue;
+        }
+      } catch (err: any) {
+        console.warn(
+          `⚠️  Failed to import DI config at ${configPath}: ${err?.message || err}`
+        );
+        continue;
+      }
+    }
+
+    console.warn("⚠️  No DI configuration found. Using empty configuration.");
+    if (options.verbose) {
+      console.warn("   BasePath: ", resolve(srcPath));
+      console.warn("   Expected locations:");
+      configPaths.forEach((p) => console.warn(`   • ${p}`));
     }
     return {};
   }
@@ -56,8 +97,8 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
 
     // Get analysis data for issue detection
     const analysis = analytics.analyzeConfiguration(diConfig);
-    const dependencyGraph = analytics.getDependencyGraph(diConfig);
-    const validation = analytics.validate(diConfig);
+    const dependencyGraph = analysis.graph; // Use the graph from analysis
+    const validation = analysis.validation; // Use validation from analysis
 
     // Build enhanced graph with interfaces, classes, and dependencies
     const nodes: GraphNode[] = [];
@@ -77,16 +118,17 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
 
     // Helper function to get node size based on connection count
     function getNodeSize(nodeId: string): number {
-      const connections = (dependencyGraph.dependencies[nodeId]?.length || 0) + 
-                         (dependencyGraph.dependents[nodeId]?.length || 0);
+      const dependencies = dependencyGraph.dependencies.get(nodeId) || [];
+      const dependents = dependencyGraph.dependents.get(nodeId) || [];
+      const connections = dependencies.length + dependents.length;
       return Math.max(20, Math.min(60, 20 + connections * 3));
     }
 
     // Process all services from the dependency graph
-    Object.keys(dependencyGraph.nodes).forEach(serviceId => {
+    Array.from(dependencyGraph.nodes.keys()).forEach(serviceId => {
       if (processedNodes.has(serviceId)) return;
       
-      const service = dependencyGraph.nodes[serviceId];
+      const service = dependencyGraph.nodes.get(serviceId);
       const allIssues = [...(validation.issues.errors || []), ...(validation.issues.warnings || [])];
       
       // Determine node type based on naming patterns and metadata
@@ -97,7 +139,7 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
         nodeType = 'component';
       } else if (serviceId.includes('Service') || serviceId.endsWith('Service')) {
         nodeType = 'service';
-      } else if (service?.type === 'class') {
+      } else if (service?.metadata?.isClass) {
         nodeType = 'class';
       }
 
@@ -106,8 +148,8 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
         label: serviceId.replace(/Interface$/, '').replace(/Service$/, ''),
         type: nodeType,
         metadata: {
-          dependencies: dependencyGraph.dependencies[serviceId] || [],
-          dependents: dependencyGraph.dependents[serviceId] || [],
+          dependencies: dependencyGraph.dependencies.get(serviceId) || [],
+          dependents: dependencyGraph.dependents.get(serviceId) || [],
           issues: allIssues.filter(issue => 
             issue.location?.service === serviceId || issue.message?.includes(serviceId)
           ),
@@ -124,8 +166,8 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
     });
 
     // Create edges for dependencies
-    Object.entries(dependencyGraph.dependencies).forEach(([sourceId, deps]) => {
-      (deps as string[]).forEach(targetId => {
+    Array.from(dependencyGraph.dependencies.entries()).forEach(([sourceId, deps]) => {
+      deps.forEach(targetId => {
         const sourceNode = nodes.find(n => n.id === sourceId);
         const targetNode = nodes.find(n => n.id === targetId);
         
