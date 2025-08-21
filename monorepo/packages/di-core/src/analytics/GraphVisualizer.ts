@@ -217,58 +217,198 @@ export class GraphVisualizer {
     return lines.join('\n');
   }
   
-  /**
-   * Generate Mermaid diagram
-   */
-  private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizationOptions): string {
-    const { highlight = [], nodeTypes } = options;
-    const lines: string[] = [];
-    
-    lines.push('graph TD');
-    lines.push('');
-    
-    // Add nodes with definitions
-    for (const [token, node] of graph.nodes.entries()) {
-      if (!this.shouldIncludeNode(node, nodeTypes)) continue;
-      
-      const isHighlighted = highlight.includes(token);
-      const nodeId = this.sanitizeMermaidId(token);
-      const nodeClass = this.getMermaidNodeClass(node, isHighlighted);
-      const label = `${token}\\n${node.implementationClass}`;
-      
-      lines.push(`  ${nodeId}["${label}"]:::${nodeClass}`);
+/**
+ * Mermaid diagram grouped by interface with its implementing classes.
+ * - One subgraph per interface: implementations stacked above the interface (direction BT).
+ * - Classes without an interface go to an “Ungrouped Classes” column.
+ * - Grouping uses explicit metadata first, then interface.implementationClass, then name heuristics.
+ * - Left→Right columns to avoid horizontal sprawl.
+ */
+private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizationOptions): string {
+  const { highlight = [], nodeTypes } = options;
+
+  type Key = string; // interface token
+
+  // Collect interfaces and classes (based on metadata)
+  const interfaces = new Set<Key>();
+  const classes = new Set<string>();
+
+  for (const [token, node] of graph.nodes.entries()) {
+    if (!this.shouldIncludeNode(node, nodeTypes)) continue;
+    if (node.metadata?.isInterface) interfaces.add(token);
+    else if (node.metadata?.isClass || (!node.metadata?.isInheritanceBased && !node.metadata?.isStateBased && !node.metadata?.isInterface)) {
+      classes.add(token);
     }
-    
-    lines.push('');
-    
-    // Add dependencies
-    for (const [from, dependencies] of graph.dependencies.entries()) {
-      if (!this.shouldIncludeNode(graph.nodes.get(from), nodeTypes)) continue;
-      
-      const fromId = this.sanitizeMermaidId(from);
-      for (const to of dependencies) {
-        if (!this.shouldIncludeNode(graph.nodes.get(to), nodeTypes)) continue;
-        
-        const toId = this.sanitizeMermaidId(to);
-        const toNode = graph.nodes.get(to);
-        const arrow = toNode ? '-->' : '-.->'; // Dashed arrow for missing dependencies
-        
-        lines.push(`  ${fromId} ${arrow} ${toId}`);
+  }
+
+  // Build mapping: interface -> implementations
+  const implsByInterface = new Map<Key, Set<string>>();
+  for (const intf of interfaces) implsByInterface.set(intf, new Set<string>());
+
+  // 1) Explicit: class node lists interfaces it implements
+  for (const [token, node] of graph.nodes.entries()) {
+    if (!this.shouldIncludeNode(node, nodeTypes)) continue;
+    if (!(node.metadata?.isClass)) continue;
+    const list: string[] = Array.isArray(node.metadata?.interfaces) ? node.metadata.interfaces : [];
+    for (const i of list) {
+      if (interfaces.has(i)) implsByInterface.get(i)!.add(token);
+    }
+  }
+
+  // 2) Explicit: interface node lists implementations
+  for (const [token, node] of graph.nodes.entries()) {
+    if (!this.shouldIncludeNode(node, nodeTypes)) continue;
+    if (!(node.metadata?.isInterface)) continue;
+    const list: string[] = Array.isArray(node.metadata?.implementations) ? node.metadata.implementations : [];
+    for (const impl of list) {
+      if (graph.nodes.has(impl) && (graph.nodes.get(impl)!.metadata?.isClass)) {
+        implsByInterface.get(token)!.add(impl);
       }
     }
-    
-    // Add class definitions
-    lines.push('');
-    lines.push('  classDef interface fill:#e1f5fe;');
-    lines.push(`  classDef ${GraphVisualizer._class} fill:#f3e5f5;`);
-    lines.push('  classDef inheritance fill:#e8f5e8;');
-    lines.push('  classDef state fill:#fff3e0;');
-    lines.push('  classDef highlighted fill:#ffebee,stroke:#d32f2f,stroke-width:2px;');
-    lines.push('  classDef missing fill:#ffebee,stroke:#d32f2f,stroke-dasharray: 5 5;');
-    
-    return lines.join('\n');
   }
-  
+
+  // 3) Conventional: interface.implementationClass points to a class token
+  for (const intf of interfaces) {
+    const iNode = graph.nodes.get(intf)!;
+    const impl = iNode.implementationClass;
+    if (impl && impl !== intf && graph.nodes.get(impl)?.metadata?.isClass) {
+      implsByInterface.get(intf)!.add(impl);
+    }
+  }
+
+  // 4) Heuristic fallback by name (only supplements if nothing explicit for that interface)
+  for (const intf of interfaces) {
+    if (implsByInterface.get(intf)!.size) continue;
+    const base = intf.replace(/Interface$/,'');
+    for (const c of classes) {
+      if (c === base || c === `${base}Impl` || c === `${base}Service`) {
+        implsByInterface.get(intf)!.add(c);
+      }
+    }
+  }
+
+  // Assign each class to a single interface group (tie-breaker: alphabetical interface name)
+  const assignedClassToInterface = new Map<string, string>();
+  for (const [intf, impls] of implsByInterface.entries()) {
+    for (const c of impls) {
+      if (!assignedClassToInterface.has(c)) {
+        assignedClassToInterface.set(c, intf);
+      } else {
+        const current = assignedClassToInterface.get(c)!;
+        const chosen = [current, intf].sort((a, b) => a.localeCompare(b))[0];
+        assignedClassToInterface.set(c, chosen);
+      }
+    }
+  }
+
+  // Ungrouped classes = those not assigned to any interface
+  const ungrouped: string[] = [];
+  for (const c of classes) if (!assignedClassToInterface.has(c)) ungrouped.push(c);
+
+  // Helpers
+  const mkLabel = (token: string, impl: string) =>
+    `${token.replace(/"/g, '&quot;')}<br/>${impl.replace(/"/g, '&quot;')}`;
+
+  const lines: string[] = [];
+  let linkIndex = 0; // global link index for linkStyle
+
+  // Init + direction
+  lines.push('%%{init: { "flowchart": { "ranker": "tight-tree", "nodeSpacing": 22, "rankSpacing": 70 } }}%%');
+  lines.push('flowchart LR');
+  lines.push('');
+
+  // Styles
+  lines.push('  classDef interface fill:#e1f5fe;');
+  lines.push(`  classDef ${GraphVisualizer._class} fill:#f3e5f5;`);
+  lines.push('  classDef inheritance fill:#e8f5e8;');
+  lines.push('  classDef state fill:#fff3e0;');
+  lines.push('  classDef highlighted fill:#ffebee,stroke:#d32f2f,stroke-width:2px;');
+  lines.push('  classDef missing fill:#ffebee,stroke:#d32f2f,stroke-dasharray: 5 5;');
+  lines.push('  classDef invisible stroke-width:0px,fill-opacity:0,stroke-opacity:0;');
+  lines.push('');
+
+  // Emit all nodes once with labels and classes
+  for (const [token, node] of graph.nodes.entries()) {
+    if (!this.shouldIncludeNode(node, nodeTypes)) continue;
+    const nodeId = this.sanitizeMermaidId(token);
+    const isHighlighted = highlight.includes(token);
+    const nodeClass = this.getMermaidNodeClass(node, isHighlighted);
+    const label = mkLabel(token, node.implementationClass);
+    lines.push(`  ${nodeId}["${label}"]:::${nodeClass}`);
+  }
+  lines.push('');
+
+  // Build columns: one per interface group (implementations stacked above interface with BT)
+  const anchorIds: string[] = [];
+  const sortedInterfaces = Array.from(interfaces).sort((a, b) => a.localeCompare(b));
+
+  for (const intf of sortedInterfaces) {
+    if (!this.shouldIncludeNode(graph.nodes.get(intf), nodeTypes)) continue;
+
+    const colId = `col_${this.sanitizeMermaidId(intf)}`;
+    const anchorId = `${colId}_anchor`;
+    anchorIds.push(anchorId);
+
+    lines.push(`  subgraph ${colId}["${intf} · group"]`);
+    lines.push('    direction BT');
+    lines.push(`    ${anchorId}[" "]:::invisible`);
+
+    // Place interface first so with BT it ends up at the bottom
+    const intfId = this.sanitizeMermaidId(intf);
+    lines.push(`    ${intfId}`);
+
+    const impls = Array.from(implsByInterface.get(intf) ?? [])
+      .filter(c => assignedClassToInterface.get(c) === intf)
+      .sort((a, b) => a.localeCompare(b));
+
+    for (const c of impls) lines.push(`    ${this.sanitizeMermaidId(c)}`);
+
+    lines.push('  end');
+    lines.push('');
+  }
+
+  // Ungrouped column (if any)
+  if (ungrouped.length > 0) {
+    const colId = 'col_ungrouped';
+    const anchorId = `${colId}_anchor`;
+    anchorIds.push(anchorId);
+
+    lines.push(`  subgraph ${colId}["Ungrouped Classes"]`);
+    lines.push('    direction BT');
+    lines.push(`    ${anchorId}[" "]:::invisible`);
+    ungrouped.sort((a, b) => a.localeCompare(b));
+    for (const c of ungrouped) lines.push(`    ${this.sanitizeMermaidId(c)}`);
+    lines.push('  end');
+    lines.push('');
+  }
+
+  // Anchor chain to enforce left→right ordering; then hide the anchor links
+  for (let i = 0; i < anchorIds.length - 1; i++) {
+    lines.push(`  ${anchorIds[i]} --- ${anchorIds[i + 1]}`);
+    lines.push(`  linkStyle ${linkIndex} stroke-width:0px,opacity:0`);
+    linkIndex++;
+  }
+  lines.push('');
+
+  // Real dependency edges
+  for (const [from, deps] of graph.dependencies.entries()) {
+    if (!this.shouldIncludeNode(graph.nodes.get(from), nodeTypes)) continue;
+    const fromId = this.sanitizeMermaidId(from);
+    for (const to of deps) {
+      if (!this.shouldIncludeNode(graph.nodes.get(to), nodeTypes)) continue;
+      const toId = this.sanitizeMermaidId(to);
+      const toNode = graph.nodes.get(to);
+      const arrow = toNode ? '-->' : '-.->'; // dashed for missing
+      lines.push(`  ${fromId} ${arrow} ${toId}`);
+      linkIndex++; // track global index even if we don’t style these
+    }
+  }
+
+  return lines.join('\n');
+}
+
+
+
   /**
    * Generate graph statistics
    */
