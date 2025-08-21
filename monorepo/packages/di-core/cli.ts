@@ -15,6 +15,7 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join, resolve } from "path";
 import { DIAnalytics } from "./src/analytics/index.js";
 import type { GraphVisualizationOptions } from "./src/analytics/types.js";
+import path from "node:path";
 
 // CLI metadata
 const CLI_VERSION = "3.1.2";
@@ -440,6 +441,7 @@ async function loadDIConfig(srcDir: string): Promise<Record<string, any>> {
 
     try {
       const mod = await import(pathToFileURL(fullPath).href);
+
       const di =
         mod?.DI_CONFIG ?? mod?.default ?? mod?.diConfig ?? mod?.config ?? null;
 
@@ -461,6 +463,7 @@ async function loadDIConfig(srcDir: string): Promise<Record<string, any>> {
   }
 
   console.warn("⚠️  No DI configuration found. Using empty configuration.");
+  console.warn("   BasePath: ", path.resolve(srcDir));
   console.warn("   Expected locations:");
   configPaths.forEach((p) => console.warn(`   • ${p}`));
   return {};
