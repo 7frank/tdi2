@@ -515,6 +515,7 @@
           
           <div class="filter-group">
             <label><input type="checkbox" id="issues-only" onchange="updateFilters()"> Issues Only</label>
+            <label><input type="checkbox" id="show-potential" checked onchange="updateFilters()"> Show Potential</label>
           </div>
           
           <button onclick="resetGraphView()" title="Reset view">🔄 Reset</button>
@@ -756,8 +757,9 @@
       if (document.getElementById('filter-component').checked) nodeTypes.add('component');
       
       const showIssuesOnly = document.getElementById('issues-only').checked;
+      const showPotential = document.getElementById('show-potential').checked;
       
-      graphVisualization.setFilters(nodeTypes, showIssuesOnly);
+      graphVisualization.setFilters(nodeTypes, showIssuesOnly, showPotential);
     }
 
     function resetGraphView() {
@@ -795,6 +797,7 @@
         this.selectedNodes = new Set();
         this.filteredNodeTypes = new Set(['interface', 'class', 'service', 'component']);
         this.showIssuesOnly = false;
+        this.showPotential = true;
         this.simulation = null;
         
         this.initialize();
@@ -887,9 +890,10 @@
         this.render();
       }
 
-      setFilters(nodeTypes, showIssuesOnly) {
+      setFilters(nodeTypes, showIssuesOnly, showPotential = true) {
         this.filteredNodeTypes = nodeTypes;
         this.showIssuesOnly = showIssuesOnly;
+        this.showPotential = showPotential;
         this.render();
       }
 
@@ -905,7 +909,15 @@
         let edges = this.data.edges.filter(edge => {
           const sourceId = typeof edge.source === 'string' ? edge.source : edge.source.id;
           const targetId = typeof edge.target === 'string' ? edge.target : edge.target.id;
-          return nodeIds.has(sourceId) && nodeIds.has(targetId);
+          const isValidConnection = nodeIds.has(sourceId) && nodeIds.has(targetId);
+          const isPotentialEdge = edge.type === 'potential';
+          
+          // Filter out potential edges if showPotential is false
+          if (isPotentialEdge && !this.showPotential) {
+            return false;
+          }
+          
+          return isValidConnection;
         });
 
         return { nodes, edges };

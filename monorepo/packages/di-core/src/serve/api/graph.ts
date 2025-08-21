@@ -86,7 +86,7 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
     return {};
   }
 
-  async function generateEnhancedGraph(diConfig: any, forceReload: boolean = false): Promise<GraphResponse> {
+  async function generateEnhancedGraph(diConfig: any, forceReload: boolean = false, serverOptions: ServerOptions = options): Promise<GraphResponse> {
     const now = Date.now();
     
     if (!forceReload && graphCache && 
@@ -308,14 +308,24 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
     }
 
     // Add potential/missing dependency relationships using existing analytics
-    if (options.showPotentialRelations !== false) {
+    // Always generate potential relationships - UI will control visibility
       const problems = analytics.findProblematicServices(diConfig);
-      const validation = analytics.validate(diConfig, 'all');
       
-      // Get missing dependency issues  
-      const missingIssues = validation.issues?.errors?.filter(issue => 
+      // Get missing dependency issues from analysis validation (already computed above)
+      const missingIssues = [
+        ...(validation.issues?.errors || []),
+        ...(validation.issues?.warnings || [])
+      ].filter(issue => 
         issue.type === 'missing-service'
-      ) || [];
+      );
+      
+      // Debug logging
+      if (serverOptions.verbose) {
+        console.log(`🔍 Found ${missingIssues.length} missing service issues for potential relationships`);
+        missingIssues.forEach(issue => {
+          console.log(`  - ${issue.token} (${issue.message})`);
+        });
+      }
       
       for (const issue of missingIssues) {
         // Use the existing relatedTokens if available, or extract from message
@@ -350,7 +360,6 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
           }
         }
       }
-    }
 
     function extractServiceFromMessage(message: string): string | null {
       const match = message?.match(/required by '([^']+)'/);
@@ -500,7 +509,7 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
       try {
         const forceReload = req.query.reload === 'true';
         const diConfig = await loadDIConfig();
-        const graph = await generateEnhancedGraph(diConfig, forceReload);
+        const graph = await generateEnhancedGraph(diConfig, forceReload, options);
         
         res.json(graph);
       } catch (error) {
@@ -515,7 +524,7 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
     async getNodes(req: Request, res: Response): Promise<void> {
       try {
         const diConfig = await loadDIConfig();
-        const graph = await generateEnhancedGraph(diConfig);
+        const graph = await generateEnhancedGraph(diConfig, false, options);
         res.json(graph.nodes);
       } catch (error) {
         res.status(500).json({
@@ -528,7 +537,7 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
     async getEdges(req: Request, res: Response): Promise<void> {
       try {
         const diConfig = await loadDIConfig();
-        const graph = await generateEnhancedGraph(diConfig);
+        const graph = await generateEnhancedGraph(diConfig, false, options);
         res.json(graph.edges);
       } catch (error) {
         res.status(500).json({
@@ -542,7 +551,7 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
       try {
         const filters: FilterOptions = req.body;
         const diConfig = await loadDIConfig();
-        const fullGraph = await generateEnhancedGraph(diConfig);
+        const fullGraph = await generateEnhancedGraph(diConfig, false, options);
         
         // Apply filters
         let filteredNodes = fullGraph.nodes;
@@ -602,7 +611,7 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
       try {
         const { type } = req.params;
         const diConfig = await loadDIConfig();
-        const graph = await generateEnhancedGraph(diConfig);
+        const graph = await generateEnhancedGraph(diConfig, false, options);
         
         const layout = graph.layouts[type as keyof typeof graph.layouts];
         if (!layout) {

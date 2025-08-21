@@ -8,7 +8,7 @@ export interface ServerOptions {
   open?: boolean;
   watch?: boolean;
   dev?: boolean;
-  showPotentialRelations?: boolean;
+  showPotentialRelations: boolean;
 }
 
 export interface GraphNode {

@@ -399,13 +399,9 @@ const serveCommand = command({
     dev: flag({
       long: "dev",
       description: "Development mode with detailed error messages"
-    }),
-    showPotentialRelations: flag({
-      long: "show-potential",
-      description: "Show potential/missing relationships with dotted lines (default: true)"
     })
   },
-  handler: async ({ src, port, host, verbose, open, watch, dev, showPotentialRelations }) => {
+  handler: async ({ src, port, host, verbose, open, watch, dev }) => {
     try {
       console.log("🚀 Starting TDI2 web dashboard...");
       
@@ -417,7 +413,7 @@ const serveCommand = command({
         open,
         watch,
         dev,
-        showPotentialRelations: showPotentialRelations ?? true
+        showPotentialRelations: true
       });
 
       // Graceful shutdown handling

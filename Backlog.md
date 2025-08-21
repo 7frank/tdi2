@@ -16,7 +16,7 @@ relations missing service => class => interfaces
 
 
 
-#### CacheInterface_any in legacy
+### [❌] CacheInterface_any in legacy
 
 - `br cli.ts analyze --src ../../apps/legacy/src/ --format table`
 
