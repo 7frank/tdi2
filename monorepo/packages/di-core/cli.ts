@@ -15,6 +15,7 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join, resolve } from "path";
 import { DIAnalytics } from "./src/analytics/index.js";
 import type { GraphVisualizationOptions } from "./src/analytics/types.js";
+import { TDI2Server } from "./src/serve/index.js";
 import path from "node:path";
 
 // CLI metadata
@@ -174,9 +175,9 @@ const traceCommand = command({
     "Trace service resolution path to debug missing or problematic services",
   args: {
     token: positional({
-      type: string,
+      type: optional(string),
       displayName: "service-token",
-      description: "Service token to trace",
+      description: "Service token to trace (optional when using --missing)",
     }),
     src: srcDirOption,
     format: formatOption,
@@ -250,6 +251,14 @@ const traceCommand = command({
           }
         }
         return;
+      }
+
+      if (!token) {
+        console.error('❌ Service token is required when not using --missing or --circular flags');
+        console.log('   Use --missing to find all unresolved services');
+        console.log('   Use --circular to find circular dependencies');
+        console.log('   Or provide a service token to trace: tdi2 trace <service-token>');
+        process.exit(1);
       }
 
       console.log(`🔍 Tracing resolution path for '${token}'...`);
@@ -363,7 +372,7 @@ const graphCommand = command({
 // Serve command - launch web dashboard
 const serveCommand = command({
   name: "serve",
-  description: "Launch web dashboard for interactive DI analysis (coming soon)",
+  description: "Launch web dashboard for interactive DI analysis",
   args: {
     src: srcDirOption,
     port: option({
@@ -373,18 +382,80 @@ const serveCommand = command({
       description: "Port to serve on",
       defaultValue: () => "3001",
     }),
+    host: option({
+      type: optional(string),
+      long: "host",
+      description: "Host to bind to (default: localhost)"
+    }),
     verbose: verboseFlag,
+    open: flag({
+      long: "open",
+      description: "Open browser automatically"
+    }),
+    watch: flag({
+      long: "watch",
+      description: "Watch files for changes and auto-reload"
+    }),
+    dev: flag({
+      long: "dev",
+      description: "Development mode with detailed error messages"
+    })
   },
-  handler: async ({ src, port }) => {
-    console.log("🌐 Web dashboard is coming soon!");
-    console.log(
-      `   It will serve interactive DI analysis on http://localhost:${port}`
-    );
-    console.log(`   Source: ${src}`);
-    console.log("\nFor now, use the other commands:");
-    console.log("  • tdi2 analyze --format json > analysis.json");
-    console.log("  • tdi2 graph --format json > graph.json");
-    console.log("  • Open files in existing web dependency viewer");
+  handler: async ({ src, port, host, verbose, open, watch, dev }) => {
+    try {
+      console.log("🚀 Starting TDI2 web dashboard...");
+      
+      const server = new TDI2Server({
+        srcPath: src,
+        port: parseInt(port),
+        host,
+        verbose,
+        open,
+        watch,
+        dev
+      });
+
+      // Graceful shutdown handling
+      const shutdown = async (signal: string) => {
+        console.log(`\n📨 Received ${signal}, shutting down gracefully...`);
+        try {
+          await server.stop();
+          process.exit(0);
+        } catch (error) {
+          console.error('Error during shutdown:', error);
+          process.exit(1);
+        }
+      };
+
+      process.on('SIGINT', () => shutdown('SIGINT'));
+      process.on('SIGTERM', () => shutdown('SIGTERM'));
+      
+      // Start the server
+      await server.start();
+      
+      // Keep the process alive
+      await new Promise(() => {}); // This will keep running until interrupted
+      
+    } catch (error: unknown) {
+      console.error("❌ Failed to start TDI2 server:");
+      if (error instanceof Error) {
+        console.error(`   ${error.message}`);
+        if (dev) {
+          console.error('\n📋 Stack trace:');
+          console.error(error.stack);
+        }
+      } else {
+        console.error(`   ${String(error)}`);
+      }
+      
+      console.log("\n💡 Troubleshooting tips:");
+      console.log(`   • Check if port ${port} is available`);
+      console.log(`   • Verify source path exists: ${src}`);
+      console.log(`   • Try with --dev flag for detailed error info`);
+      console.log(`   • Use --verbose for more debugging information`);
+      
+      process.exit(1);
+    }
   },
 });
 

@@ -4,13 +4,14 @@
 
 ### [❌] fix some more di issues & have more debugging support
 
-- tsup for cli and bin/cli.js support
-- test cli commands properly that they work with
+- [✅] tsup for cli and bin/cli.js support
+- [❌] publish cli to be available in the minor 
+- [❌] test cli commands properly that they work with
   - ecommerce example
-  - ☐ Extend existing dependency viewer with analytics features
-    ☐ Update api-reference.md with new analytics features
-    (maybe import Debug-md directly)
-- move ./analytics and cli and dependency view into separate @tdi2/di-debug package
+- [❌] Extend existing dependency viewer with analytics features
+  [❌] Update api-reference.md with new analytics features or better create separate debugging section (maybe import Debug-md directly)
+- [❌] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
+- serve 
 
 #### CacheInterface_any in legacy
 
@@ -31,10 +32,10 @@ Issues: 1 errors, 0 warnings
 ```
 
 - file where the reference is: monorepo/apps/legacy/src/services/UserApiServiceImpl.ts
-- file where the 
+- file where the
 
 ```
-br cli.ts trace CacheInterface_T --src ../../apps/legacy/src/ 
+br cli.ts trace CacheInterface_T --src ../../apps/legacy/src/
 📄 Loaded DI config from ../../apps/legacy/src/.tdi2/di-config.ts
 🔍 Tracing resolution path for 'CacheInterface_T'...
 
@@ -48,9 +49,8 @@ Resolution Steps:
    → MemoryCache (/src/memorycache.ts)
 ```
 
+The problem
 
-
-The problem 
 ```
 @Service()
 export class MemoryCache<T> implements CacheInterface<T> {
@@ -59,11 +59,10 @@ export class MemoryCache<T> implements CacheInterface<T> {
 itself is generic and cannot be respolved directly
 it would have to be necessary to be used via configuration / bean
 
-
 - therefore we might want to have a more meaningful error message than simply saing missing
-  
+
 ```
- br cli.ts trace CacheInterface_any --src ../../apps/legacy/src/ 
+ br cli.ts trace CacheInterface_any --src ../../apps/legacy/src/
 📄 Loaded DI config from ../../apps/legacy/src/.tdi2/di-config.ts
 🔍 Tracing resolution path for 'CacheInterface_any'...
 
