@@ -5,6 +5,9 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "tdi2": "./bin/cli.js"
+  },
   "exports": {
     "./examples/*": {
       "import": "./dist/examples/*.js",
@@ -46,7 +49,8 @@
   "files": [
     "dist/",
     "tools/functional-di-enhanced-transformer/__tests__/__fixtures__/",
-    "*.d.ts"
+    "*.d.ts",
+    "bin/"
   ],
   "scripts": {
     "dev": "tsup --watch",

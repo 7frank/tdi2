@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // TDI2 CLI - Professional command-line interface for DI analysis and debugging
 
 import { command, run, string, option, flag, subcommands, positional, oneOf } from 'cmd-ts';

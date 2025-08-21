@@ -55,4 +55,18 @@ export default defineConfig([
     clean: false,
     sourcemap: true
   },
+  {
+    entry: ["cli.ts"],
+    format: ["esm"],
+    dts: true,
+    outDir: "dist",
+    clean: false,
+    sourcemap: true,
+    banner: {
+      js: "#!/usr/bin/env node"
+    },
+    esbuildOptions(options) {
+      options.platform = "node";
+    }
+  },
 ]);
