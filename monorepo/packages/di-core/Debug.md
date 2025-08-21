@@ -385,7 +385,7 @@ updateHealthMetrics(analysis.summary);
 4. **Filter by types** to focus on specific issues (`--types interface`)
 5. **Use profiles** to analyze environment-specific configurations
 
-## Local testing
+## Local Development
 
 - `br cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
 - `br cli.ts analyze --src ../../apps/legacy/src/`
@@ -411,9 +411,6 @@ npx tdi2 analyze --src ./src
 # Check expected locations
 ls -la src/.tdi2/
 ls -la src/di-config.*
-
-# Generate DI config first
-npm run di:enhanced  # or your build command
 
 # Specify custom location
 tdi2 analyze --src ./custom/src/path

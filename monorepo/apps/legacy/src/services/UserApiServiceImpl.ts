@@ -32,7 +32,7 @@ export class ConsoleLogger implements LoggerInterface {
   }
 }
 
-// Cache implementation
+// Generic Cache implementation requires a @Confituration & @Bean to be resolvable
 @Service()
 export class MemoryCache<T> implements CacheInterface<T> {
   private cache = new Map<string, { value: T; expires?: number }>();
