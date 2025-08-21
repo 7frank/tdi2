@@ -506,6 +506,14 @@
           updateConfigTab(currentData.config);
         }
 
+        // Load issues from analysis
+        if (currentData.analysis && currentData.analysis.issues) {
+          updateIssuesTab(currentData.analysis.issues);
+        }
+
+        // Update analysis tab
+        updateAnalysisTab(currentData.analysis);
+
         updateLastUpdateTime();
 
       } catch (error) {
@@ -626,9 +634,204 @@
       showNotification('Export functionality coming soon', 'info');
     }
 
+    // Update Issues tab
+    function updateIssuesTab(issues) {
+      const issuesList = document.getElementById('issues-list');
+      
+      if (!issues || issues.length === 0) {
+        issuesList.innerHTML = `
+          <div style="padding: 40px; text-align: center; color: #28a745;">
+            <h3>🎉 No Issues Found!</h3>
+            <p>Your DI configuration is healthy.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let issuesHTML = '';
+      issues.forEach(issue => {
+        const iconClass = `issue-${issue.type}`;
+        const icon = issue.type === 'error' ? '❌' : issue.type === 'warning' ? '⚠️' : 'ℹ️';
+        
+        issuesHTML += `
+          <div class="issue-item">
+            <div class="issue-icon ${iconClass}">${icon}</div>
+            <div>
+              <div style="font-weight: 500; margin-bottom: 5px;">${issue.message}</div>
+              ${issue.suggestion ? `<div style="color: #666; font-size: 0.9rem;">💡 ${issue.suggestion}</div>` : ''}
+              ${issue.location ? `<div style="color: #999; font-size: 0.8rem; margin-top: 5px;">📍 ${issue.location.file || issue.location.service || 'Unknown location'}</div>` : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      issuesList.innerHTML = issuesHTML;
+    }
+
+    // Update Analysis tab
+    function updateAnalysisTab(analysis) {
+      const analysisTab = document.getElementById('analysis');
+      
+      if (!analysis) {
+        analysisTab.innerHTML = `
+          <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading analysis data...</p>
+          </div>
+        `;
+        return;
+      }
+
+      const analysisHTML = `
+        <div>
+          <h3>📊 Detailed Analysis Report</h3>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>📈 Summary Statistics</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+              <div>
+                <strong>Total Services:</strong> ${analysis.summary?.totalServices || 0}
+              </div>
+              <div>
+                <strong>Missing Services:</strong> ${analysis.summary?.missingServices || 0}
+              </div>
+              <div>
+                <strong>Circular Dependencies:</strong> ${analysis.summary?.circularDependencies || 0}
+              </div>
+              <div>
+                <strong>Health Score:</strong> ${analysis.summary?.healthScore || 0}/100
+              </div>
+            </div>
+          </div>
+
+          ${analysis.summary?.missingDependencies?.length > 0 ? `
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 10px; margin: 20px 0;">
+              <h4>⚠️ Missing Dependencies</h4>
+              <ul style="margin-top: 10px;">
+                ${analysis.summary.missingDependencies.slice(0, 10).map(dep => `<li>${dep}</li>`).join('')}
+                ${analysis.summary.missingDependencies.length > 10 ? `<li><em>... and ${analysis.summary.missingDependencies.length - 10} more</em></li>` : ''}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${analysis.performance ? `
+            <div style="background: #e8f5e8; border: 1px solid #c8e6c9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+              <h4>⚡ Performance Metrics</h4>
+              <div style="margin-top: 10px;">
+                <div><strong>Analysis Time:</strong> ${analysis.performance.analysisTime}ms</div>
+                ${analysis.performance.memoryUsage ? `<div><strong>Memory Usage:</strong> ${Math.round(analysis.performance.memoryUsage / 1024 / 1024)}MB</div>` : ''}
+              </div>
+            </div>
+          ` : ''}
+
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>🔄 Actions</h4>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+              <button class="btn" onclick="reloadAnalysis()">🔄 Reload Analysis</button>
+              <button class="btn" onclick="exportAnalysis()">📥 Export Report</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      analysisTab.innerHTML = analysisHTML;
+    }
+
+    // Update Config tab
     function updateConfigTab(config) {
-      console.log('Config loaded:', config);
-      // TODO: Implement config display
+      const configTab = document.getElementById('config');
+      
+      if (!config) {
+        configTab.innerHTML = `
+          <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading configuration...</p>
+          </div>
+        `;
+        return;
+      }
+
+      const configHTML = `
+        <div>
+          <h3>⚙️ TDI2 Server Configuration</h3>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>📁 Source Configuration</h4>
+            <div style="margin-top: 15px;">
+              <div style="margin-bottom: 10px;"><strong>Source Path:</strong> <code>${config.srcPath || 'Not specified'}</code></div>
+              <div style="margin-bottom: 10px;"><strong>Port:</strong> ${config.port || 'Not specified'}</div>
+              <div style="margin-bottom: 10px;"><strong>Verbose Mode:</strong> ${config.verbose ? '✅ Enabled' : '❌ Disabled'}</div>
+              <div style="margin-bottom: 10px;"><strong>File Watching:</strong> ${config.watch ? '✅ Enabled' : '❌ Disabled'}</div>
+            </div>
+          </div>
+
+          <div style="background: #e3f2fd; border: 1px solid #90caf9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>🕐 Runtime Information</h4>
+            <div style="margin-top: 15px;">
+              <div style="margin-bottom: 10px;"><strong>Server Started:</strong> ${config.timestamp || 'Unknown'}</div>
+              <div style="margin-bottom: 10px;"><strong>Configuration Loaded:</strong> ${new Date().toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>🔧 Actions</h4>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+              <button class="btn" onclick="reloadConfig()">🔄 Reload Config</button>
+              <button class="btn" onclick="viewConfigFiles()">📄 View Config Files</button>
+            </div>
+          </div>
+
+          <div style="background: #fff3e0; border: 1px solid #ffcc02; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>💡 Expected Config Locations</h4>
+            <p style="margin-bottom: 10px;">TDI2 looks for configuration files in these locations:</p>
+            <ul style="font-family: monospace; font-size: 0.9rem;">
+              <li>${config.srcPath}/.tdi2/di-config.ts</li>
+              <li>${config.srcPath}/.tdi2/di-config.js</li>
+              <li>${config.srcPath}/di-config.ts</li>
+              <li>${config.srcPath}/di-config.js</li>
+            </ul>
+          </div>
+        </div>
+      `;
+
+      configTab.innerHTML = configHTML;
+    }
+
+    // Additional helper functions
+    function exportAnalysis() {
+      if (currentData.analysis) {
+        const dataStr = JSON.stringify(currentData.analysis, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = `tdi2-analysis-${new Date().toISOString().split('T')[0]}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        
+        showNotification('Analysis report exported successfully', 'success');
+      }
+    }
+
+    function reloadConfig() {
+      fetch('/api/analysis/reload', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showNotification('Configuration reloaded successfully', 'success');
+            loadInitialData(); // Reload all data
+          } else {
+            showNotification('Failed to reload configuration', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Config reload error:', error);
+          showNotification('Failed to reload configuration', 'error');
+        });
+    }
+
+    function viewConfigFiles() {
+      showNotification('Config file viewer coming soon', 'info');
     }
   </script>
 </body>
