@@ -390,6 +390,8 @@ updateHealthMetrics(analysis.summary);
 - `br src/cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
 - `br src/cli.ts analyze --src ../legacy/src/`
 - `br src/cli.ts serve --src ../legacy/src/` 
+- `bunx tdi2 serve --src ../legacy/src/`
+
 
 ## Troubleshooting
 
