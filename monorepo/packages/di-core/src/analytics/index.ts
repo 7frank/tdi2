@@ -171,7 +171,7 @@ export class DIAnalytics {
       throw new Error('No dependency graph available - call analyzeConfiguration() first or provide diConfig');
     }
     
-    return this.graphVisualizer.visualize(graph, options);
+    return this.graphVisualizer.visualize(graph, options, diConfig);
   }
   
   /**

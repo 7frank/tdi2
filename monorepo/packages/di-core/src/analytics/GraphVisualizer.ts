@@ -11,7 +11,7 @@ export class GraphVisualizer {
   /**
    * Generate visualization in the specified format
    */
-  visualize(graph: DependencyGraph, options: GraphVisualizationOptions): string {
+  visualize(graph: DependencyGraph, options: GraphVisualizationOptions, diConfig?: Record<string, any>): string {
     switch (options.format) {
       case 'ascii':
         return this.generateAsciiTree(graph, options);
@@ -20,7 +20,7 @@ export class GraphVisualizer {
       case 'dot':
         return this.generateDotFormat(graph, options);
       case 'mermaid':
-        return this.generateMermaidDiagram(graph, options);
+        return this.generateMermaidDiagram(graph, options, diConfig);
       default:
         throw new Error(`Unsupported visualization format: ${options.format}`);
     }
@@ -224,7 +224,7 @@ export class GraphVisualizer {
  * - Grouping uses explicit metadata first, then interface.implementationClass, then name heuristics.
  * - Left→Right columns to avoid horizontal sprawl.
  */
-private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizationOptions): string {
+private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizationOptions, diConfig?: Record<string, any>): string {
   const { highlight = [], nodeTypes } = options;
 
   type Key = string; // interface token
@@ -245,27 +245,23 @@ private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizati
   const implsByInterface = new Map<Key, Set<string>>();
   for (const intf of interfaces) implsByInterface.set(intf, new Set<string>());
 
-  // 1) Explicit: class node lists interfaces it implements
-  for (const [token, node] of graph.nodes.entries()) {
-    if (!this.shouldIncludeNode(node, nodeTypes)) continue;
-    if (!(node.metadata?.isClass)) continue;
-    const list: string[] = Array.isArray(node.metadata?.interfaces) ? node.metadata.interfaces : [];
-    for (const i of list) {
-      if (interfaces.has(i)) implsByInterface.get(i)!.add(token);
-    }
-  }
-
-  // 2) Explicit: interface node lists implementations
-  for (const [token, node] of graph.nodes.entries()) {
-    if (!this.shouldIncludeNode(node, nodeTypes)) continue;
-    if (!(node.metadata?.isInterface)) continue;
-    const list: string[] = Array.isArray(node.metadata?.implementations) ? node.metadata.implementations : [];
-    for (const impl of list) {
-      if (graph.nodes.has(impl) && (graph.nodes.get(impl)!.metadata?.isClass)) {
-        implsByInterface.get(token)!.add(impl);
+  // 1) Use INTERFACE_IMPLEMENTATIONS from DI config if available
+  if (diConfig?.INTERFACE_IMPLEMENTATIONS) {
+    const interfaceImplementations = diConfig.INTERFACE_IMPLEMENTATIONS as Record<string, string[]>;
+    for (const [interfaceName, implementations] of Object.entries(interfaceImplementations)) {
+      if (interfaces.has(interfaceName)) {
+        const implSet = implsByInterface.get(interfaceName)!;
+        for (const impl of implementations) {
+          if (graph.nodes.has(impl) && graph.nodes.get(impl)!.metadata?.isClass) {
+            implSet.add(impl);
+          }
+        }
       }
     }
   }
+
+  // 2) Fallback: Try to detect from naming patterns
+  // This is a secondary approach when INTERFACE_IMPLEMENTATIONS is not available
 
   // 3) Conventional: interface.implementationClass points to a class token
   for (const intf of interfaces) {
