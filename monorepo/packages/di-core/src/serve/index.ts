@@ -60,6 +60,7 @@ export async function serve(
     srcPath,
     port,
     verbose: false,
+    showPotentialRelations: true,
     ...options
   };
   

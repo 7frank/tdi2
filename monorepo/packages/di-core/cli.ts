@@ -102,7 +102,7 @@ const analyzeCommand = command({
           console.log(`\n📄 Detailed analysis also saved to ${output}`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Analysis failed:", error.message);
       process.exit(1);
     }
@@ -161,7 +161,7 @@ const validateCommand = command({
       } else if (!result.isValid) {
         process.exit(1);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Validation failed:", error.message);
       process.exit(1);
     }
@@ -254,10 +254,14 @@ const traceCommand = command({
       }
 
       if (!token) {
-        console.error('❌ Service token is required when not using --missing or --circular flags');
-        console.log('   Use --missing to find all unresolved services');
-        console.log('   Use --circular to find circular dependencies');
-        console.log('   Or provide a service token to trace: tdi2 trace <service-token>');
+        console.error(
+          "❌ Service token is required when not using --missing or --circular flags"
+        );
+        console.log("   Use --missing to find all unresolved services");
+        console.log("   Use --circular to find circular dependencies");
+        console.log(
+          "   Or provide a service token to trace: tdi2 trace <service-token>"
+        );
         process.exit(1);
       }
 
@@ -282,7 +286,7 @@ const traceCommand = command({
       }
 
       if (!trace.success) process.exit(1);
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Trace failed:", error.message);
       process.exit(1);
     }
@@ -362,7 +366,7 @@ const graphCommand = command({
       } else {
         console.log(graph);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Graph generation failed:", error.message);
       process.exit(1);
     }
@@ -385,26 +389,26 @@ const serveCommand = command({
     host: option({
       type: optional(string),
       long: "host",
-      description: "Host to bind to (default: localhost)"
+      description: "Host to bind to (default: localhost)",
     }),
     verbose: verboseFlag,
     open: flag({
       long: "open",
-      description: "Open browser automatically"
+      description: "Open browser automatically",
     }),
     watch: flag({
       long: "watch",
-      description: "Watch files for changes and auto-reload"
+      description: "Watch files for changes and auto-reload",
     }),
     dev: flag({
       long: "dev",
-      description: "Development mode with detailed error messages"
-    })
+      description: "Development mode with detailed error messages",
+    }),
   },
   handler: async ({ src, port, host, verbose, open, watch, dev }) => {
     try {
       console.log("🚀 Starting TDI2 web dashboard...");
-      
+
       const server = new TDI2Server({
         srcPath: src,
         port: parseInt(port),
@@ -413,7 +417,7 @@ const serveCommand = command({
         open,
         watch,
         dev,
-        showPotentialRelations: true
+        showPotentialRelations: true,
       });
 
       // Graceful shutdown handling
@@ -423,38 +427,37 @@ const serveCommand = command({
           await server.stop();
           process.exit(0);
         } catch (error) {
-          console.error('Error during shutdown:', error);
+          console.error("Error during shutdown:", error);
           process.exit(1);
         }
       };
 
-      process.on('SIGINT', () => shutdown('SIGINT'));
-      process.on('SIGTERM', () => shutdown('SIGTERM'));
-      
+      process.on("SIGINT", () => shutdown("SIGINT"));
+      process.on("SIGTERM", () => shutdown("SIGTERM"));
+
       // Start the server
       await server.start();
-      
+
       // Keep the process alive
       await new Promise(() => {}); // This will keep running until interrupted
-      
     } catch (error: unknown) {
       console.error("❌ Failed to start TDI2 server:");
       if (error instanceof Error) {
         console.error(`   ${error.message}`);
         if (dev) {
-          console.error('\n📋 Stack trace:');
+          console.error("\n📋 Stack trace:");
           console.error(error.stack);
         }
       } else {
         console.error(`   ${String(error)}`);
       }
-      
+
       console.log("\n💡 Troubleshooting tips:");
       console.log(`   • Check if port ${port} is available`);
       console.log(`   • Verify source path exists: ${src}`);
       console.log(`   • Try with --dev flag for detailed error info`);
       console.log(`   • Use --verbose for more debugging information`);
-      
+
       process.exit(1);
     }
   },
@@ -499,6 +502,7 @@ async function loadDIConfig(srcDir: string): Promise<Record<string, any>> {
     if (isTS) {
       try {
         // Registers ts-node only if available; no hard dependency
+        // @ts-ignore
         await import("ts-node/register/transpile-only");
       } catch {
         console.warn(

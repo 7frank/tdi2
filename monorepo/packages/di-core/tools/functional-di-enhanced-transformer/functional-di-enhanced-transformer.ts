@@ -255,7 +255,7 @@ export class FunctionalDIEnhancedTransformer {
 
         // Add bean entries to the service registry
         for (const [token, config] of Object.entries(beanDIMap)) {
-          if (config.interfaceName) {
+          if (config?.interfaceName) {
             // Register the bean as an implementation of its interface
             this.serviceRegistry.registerBeanImplementation(token, config.interfaceName, config);
           }

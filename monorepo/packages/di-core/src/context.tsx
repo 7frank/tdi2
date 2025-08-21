@@ -35,7 +35,7 @@ export function useService(token: string | symbol) {
   const container = useDI();
   const [service] = React.useState(() => {
     const instance = container.resolve(token);
-    if (instance === undefined) {
+    if (instance === undefined || instance === null) {
       throw new Error(`Service not found: ${String(token)}`);
     }
     return proxy(instance);

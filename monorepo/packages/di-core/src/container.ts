@@ -472,7 +472,7 @@ export class CompileTimeDIContainer implements DIContainer {
       // Export factories as service configurations
       for (const [tokenKey, factory] of this.factories.entries()) {
         const scope = this.scopes.get(tokenKey) || 'singleton';
-        config[tokenKey] = {
+        config[tokenKey.toString()] = {
           implementationClass: tokenKey, // Simplified for analytics
           scope,
           dependencies: [], // Would need dependency tracking for full analysis
@@ -485,7 +485,7 @@ export class CompileTimeDIContainer implements DIContainer {
       // Export direct service registrations
       for (const [tokenKey, service] of this.services.entries()) {
         const scope = this.scopes.get(tokenKey) || 'singleton';
-        config[tokenKey] = {
+        config[tokenKey.toString()] = {
           implementationClass: service.constructor.name,
           scope,
           dependencies: [], // Would need dependency tracking for full analysis
