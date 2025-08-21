@@ -231,6 +231,89 @@
       margin-right: 4px;
     }
 
+    .graph-legend {
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      font-size: 12px;
+      max-width: 200px;
+      z-index: 100;
+    }
+
+    .graph-legend h4 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .graph-legend h5 {
+      margin: 10px 0 5px 0;
+      font-size: 11px;
+      color: #666;
+      font-weight: bold;
+    }
+
+    .legend-section {
+      margin-bottom: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 11px;
+    }
+
+    .legend-node {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      border: 1px solid #fff;
+    }
+
+    .legend-node.interface { background: #2196F3; }
+    .legend-node.class { background: #9C27B0; }
+    .legend-node.service { background: #4CAF50; }
+    .legend-node.component { background: #FF5722; }
+    .legend-node.error { background: #F44336; border: 2px solid #333; }
+    .legend-node.warning { background: #FF9800; border: 2px solid #333; }
+    .legend-node.healthy { background: #4CAF50; }
+
+    .legend-edge {
+      width: 20px;
+      height: 2px;
+      margin-right: 8px;
+      position: relative;
+    }
+
+    .legend-edge.implementation { background: #4CAF50; }
+    .legend-edge.injection { background: #2196F3; }
+    .legend-edge.inheritance { background: #FF9800; }
+    .legend-edge.dependency { background: #666; }
+
+    .legend-edge::after {
+      content: '';
+      position: absolute;
+      right: -3px;
+      top: -2px;
+      width: 0;
+      height: 0;
+      border-left: 4px solid;
+      border-top: 3px solid transparent;
+      border-bottom: 3px solid transparent;
+    }
+
+    .legend-edge.implementation::after { border-left-color: #4CAF50; }
+    .legend-edge.injection::after { border-left-color: #2196F3; }
+    .legend-edge.inheritance::after { border-left-color: #FF9800; }
+    .legend-edge.dependency::after { border-left-color: #666; }
+
     .controls-panel {
       display: flex;
       flex-wrap: wrap;
@@ -431,6 +514,31 @@
           
           <button onclick="resetGraphView()" title="Reset view">🔄 Reset</button>
           <button onclick="reloadGraph()" title="Reload graph">↻ Reload</button>
+          <button onclick="toggleLegend()" title="Show/hide legend">📋 Legend</button>
+        </div>
+        
+        <div id="graph-legend" class="graph-legend" style="display: none;">
+          <h4>Graph Legend</h4>
+          <div class="legend-section">
+            <h5>Node Types:</h5>
+            <div class="legend-item"><div class="legend-node interface"></div> Interface</div>
+            <div class="legend-item"><div class="legend-node class"></div> Class</div>
+            <div class="legend-item"><div class="legend-node service"></div> Service</div>
+            <div class="legend-item"><div class="legend-node component"></div> Component</div>
+          </div>
+          <div class="legend-section">
+            <h5>Node Status:</h5>
+            <div class="legend-item"><div class="legend-node error"></div> Has Errors</div>
+            <div class="legend-item"><div class="legend-node warning"></div> Has Warnings</div>
+            <div class="legend-item"><div class="legend-node healthy"></div> Healthy</div>
+          </div>
+          <div class="legend-section">
+            <h5>Relationships:</h5>
+            <div class="legend-item"><div class="legend-edge implementation"></div> Implements Interface</div>
+            <div class="legend-item"><div class="legend-edge injection"></div> Depends On</div>
+            <div class="legend-item"><div class="legend-edge inheritance"></div> Extends Class</div>
+            <div class="legend-item"><div class="legend-edge dependency"></div> General Dependency</div>
+          </div>
         </div>
         
         <div class="graph-container">
@@ -666,6 +774,11 @@
       }
     }
 
+    function toggleLegend() {
+      const legend = document.getElementById('graph-legend');
+      legend.style.display = legend.style.display === 'none' ? 'block' : 'none';
+    }
+
     // D3.js Graph Visualization Class (adapted for browser)
     class GraphVisualization {
       constructor(containerId) {
@@ -735,7 +848,15 @@
           .attr('markerHeight', 6)
           .attr('orient', 'auto')
           .append('path')
-          .attr('d', 'M0,-5L10,0L0,5')
+          .attr('d', d => {
+            // Different arrow shapes for different relationship types
+            switch (d) {
+              case 'implementation': return 'M0,-5L10,0L0,5L3,0Z'; // Filled triangle
+              case 'injection': return 'M0,-5L10,0L0,5'; // Open arrow
+              case 'inheritance': return 'M0,-5L10,0L0,5L2,0Z'; // Filled diamond-like
+              default: return 'M0,-5L10,0L0,5';
+            }
+          })
           .attr('fill', d => this.getMarkerColor(d));
 
         this.updateDimensions();
@@ -984,10 +1105,11 @@
 
       getEdgeColor(edge) {
         switch (edge.type) {
-          case 'implementation': return '#4CAF50';
-          case 'injection': return '#2196F3';
-          case 'inheritance': return '#FF9800';
-          default: return '#666';
+          case 'implementation': return '#4CAF50'; // Green for implements
+          case 'injection': return '#2196F3';      // Blue for depends on
+          case 'inheritance': return '#FF9800';    // Orange for extends
+          case 'dependency': return '#666';        // Gray for general dependency
+          default: return '#999';
         }
       }
 

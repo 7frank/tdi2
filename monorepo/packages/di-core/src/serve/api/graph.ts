@@ -173,7 +173,7 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
             suggestion: issue.suggestion
           })),
           scope: service?.scope || 'singleton',
-          filePath: service?.filePath,
+          filePath: service?.filePath || `${serviceId}.ts`,
           lifecycle: service?.lifecycle || []
         },
         color: getNodeColor(serviceId, allIssues),
@@ -193,10 +193,8 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
         if (sourceNode && targetNode) {
           // Determine edge type based on node types
           let edgeType: GraphEdge['type'] = 'dependency';
-          if (sourceNode.type === 'class' && targetNode.type === 'interface') {
-            edgeType = 'implementation';
-          } else if (targetNode.type === 'interface') {
-            edgeType = 'injection';
+          if (targetNode.type === 'interface') {
+            edgeType = 'injection'; // Service depends on interface
           } else if (sourceNode.type === 'class' && targetNode.type === 'class') {
             edgeType = 'inheritance';
           }
@@ -212,6 +210,62 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
           });
         }
       });
+    });
+
+    // Add interface-implementation relationships
+    // Look for services that implement interfaces based on naming patterns and metadata
+    nodes.forEach(node => {
+      if (node.type === 'class' || node.type === 'service') {
+        // Check if this service implements any interfaces
+        const serviceId = node.id;
+        const service = dependencyGraph.nodes.get(serviceId);
+        
+        // Try to find corresponding interface
+        let interfaceName = null;
+        
+        // Method 1: Direct metadata (if available)
+        if (service?.metadata?.interfaces && Array.isArray(service.metadata.interfaces)) {
+          service.metadata.interfaces.forEach(intfName => {
+            const interfaceNode = nodes.find(n => n.id === intfName && n.type === 'interface');
+            if (interfaceNode) {
+              edges.push({
+                source: serviceId,
+                target: intfName,
+                type: 'implementation',
+                optional: false,
+                metadata: { strength: 2 }
+              });
+            }
+          });
+        }
+        
+        // Method 2: Naming convention (ServiceName -> ServiceInterface)
+        if (serviceId.endsWith('Service')) {
+          const baseName = serviceId.replace('Service', '');
+          interfaceName = `${baseName}Interface`;
+        } else if (serviceId.includes('Service')) {
+          // Handle cases like ExampleApiService -> ExampleApiInterface
+          interfaceName = serviceId.replace('Service', 'Interface');
+        }
+        
+        // Method 3: Check for LoggerService pattern (interface defined in same file)
+        if (serviceId === 'ConsoleLoggerService') {
+          interfaceName = 'LoggerService';
+        }
+        
+        if (interfaceName) {
+          const interfaceNode = nodes.find(n => n.id === interfaceName && n.type === 'interface');
+          if (interfaceNode && !edges.some(e => e.source === serviceId && e.target === interfaceName && e.type === 'implementation')) {
+            edges.push({
+              source: serviceId,
+              target: interfaceName,
+              type: 'implementation',
+              optional: false,
+              metadata: { strength: 2 }
+            });
+          }
+        }
+      }
     });
 
     // Generate layouts using existing GraphVisualizer
