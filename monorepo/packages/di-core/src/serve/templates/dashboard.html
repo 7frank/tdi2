@@ -1183,9 +1183,9 @@
             <span style="margin-left: 8px; font-weight: bold;">${node.metadata.dependents.length}</span>
           </div>
           ${node.metadata.filePath ? `
-            <div style="margin-bottom: 4px; display: flex; justify-content: space-between;">
-              <span>File:</span>
-              <span style="margin-left: 8px; font-weight: bold; font-size: 10px;">${node.metadata.filePath}</span>
+            <div style="margin-bottom: 4px;">
+              <span style="color: #ccc;">File:</span>
+              <div style="margin-top: 2px; font-size: 10px; color: #fff; word-break: break-all;">${node.metadata.filePath}</div>
             </div>
           ` : ''}
           ${node.metadata.issues.map(issue => `

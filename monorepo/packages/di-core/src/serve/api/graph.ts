@@ -173,7 +173,7 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
             suggestion: issue.suggestion
           })),
           scope: service?.scope || 'singleton',
-          filePath: service?.filePath || `${serviceId}.ts`,
+          filePath: service?.filePath || undefined,
           lifecycle: service?.lifecycle || []
         },
         color: getNodeColor(serviceId, allIssues),
