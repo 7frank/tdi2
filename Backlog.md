@@ -2,11 +2,19 @@
 
 ## ordered log
 
-### [❌] fix some mor edi issues & have more debugging support
-- tsup for cli and bin/cli.js support
--
+### [❌] fix some more di issues & have more debugging support
 
-### [❌] create plan
+- tsup for cli and bin/cli.js support
+- test cli commands properly that they work with
+  - ecommerce example
+  - ☐ Extend existing dependency viewer with analytics features
+    ☐ Update api-reference.md with new analytics features
+    (maybe import Debug-md directly)
+- move ./analytics and cli and dependency view into separate @tdi2/di-debug package
+
+### [❌] sundown "legacy" app take whats there still valuable e.g. dependency viewer maybe (which we should move into di-debug package already)
+
+### [❌] create plan for "prod"
 
 from prod/PotentialProblems.md
 and prod/PostProductionRoadmap.md
@@ -17,7 +25,11 @@ and prod/PostProductionRoadmap.md
 
 - https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
 
-- maybe we can combine prefect with **telegram** to have something that allows us to use more of the subscriptin via mobile too
+- maybe we can combine prefect with **telegram** to have something that allows us to use more of the subscription via mobile too
+
+- use cases
+  - fully automated tasks that are isolated
+  - semi interactive tasks via telegram feedback channel
 
 ### [❌] handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
 

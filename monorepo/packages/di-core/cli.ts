@@ -1,6 +1,6 @@
 // TDI2 CLI - Professional command-line interface for DI analysis and debugging
 
-import { command, run, string, option, flag, subcommands, positional, oneOf } from 'cmd-ts';
+import { command, run, string, option, flag, subcommands, positional, oneOf, optional } from 'cmd-ts';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, resolve } from 'path';
 import { DIAnalytics } from './src/analytics/index.js';
@@ -20,10 +20,10 @@ const srcDirOption = option({
 });
 
 const outputOption = option({
-  type: string,
+  type: optional(string),
   long: 'output',
   short: 'o',
-  description: 'Output file path'
+  description: 'Output file path (optional - outputs to console if not specified)'
 });
 
 const formatOption = option({
@@ -262,12 +262,12 @@ const graphCommand = command({
     output: outputOption,
     verbose: verboseFlag,
     highlight: option({
-      type: string,
+      type: optional(string),
       long: 'highlight',
       description: 'Services to highlight (comma-separated)'
     }),
     types: option({
-      type: string,
+      type: optional(string),
       long: 'types',
       description: 'Node types to include: interface,class,inheritance,state (comma-separated)'
     }),
