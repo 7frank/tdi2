@@ -38,7 +38,7 @@ import { DiInjectMarkers } from './di-inject-markers';
 // Import configuration processing capabilities
 import { ConfigurationProcessor } from '../config-processor/index';
 import { BeanFactoryGenerator } from '../config-processor/bean-factory-generator';
-import type { ConfigurationMetadata } from '../../src/types';
+import type { ConfigurationMetadata } from '../../core/types.js';
 
 interface TransformerOptions {
   srcDir?: string;
