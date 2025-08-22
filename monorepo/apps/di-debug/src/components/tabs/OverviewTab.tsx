@@ -24,7 +24,7 @@ export function OverviewTab({ analyticsService }: OverviewTabProps) {
   }
 
   return (
-    <div id="overview" className="tab-content active">
+    <div className="tab-content">
       <div className="metrics-grid">
         <MetricCard
           value={metrics.totalServices}

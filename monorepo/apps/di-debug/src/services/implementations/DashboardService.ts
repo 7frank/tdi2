@@ -11,9 +11,7 @@ export class DashboardService implements DashboardServiceInterface {
   };
 
   switchTab(tab: 'overview' | 'graph' | 'analysis' | 'issues' | 'config'): void {
-    console.log('[DashboardService] Switching to tab:', tab);
     this.state.currentTab = tab;
-    console.log('[DashboardService] Current tab is now:', this.state.currentTab);
   }
 
   async reload(): Promise<void> {

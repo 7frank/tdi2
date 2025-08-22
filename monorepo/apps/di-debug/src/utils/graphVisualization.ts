@@ -22,9 +22,7 @@ export class GraphVisualizationEngine {
 
   constructor(containerId: string) {
     this.containerId = containerId;
-    console.log('[GraphViz] Initializing with container:', containerId);
     this.container = d3.select(`#${containerId}`);
-    console.log('[GraphViz] Container selected:', this.container.size());
     this.initialize();
   }
 
@@ -107,9 +105,6 @@ export class GraphVisualizationEngine {
   }
 
   setData(data: GraphData) {
-    console.log('[GraphViz] Setting data:', data);
-    console.log('[GraphViz] Nodes count:', data?.nodes?.length);
-    console.log('[GraphViz] Edges count:', data?.edges?.length);
     this.data = data;
     this.render();
   }
@@ -129,14 +124,11 @@ export class GraphVisualizationEngine {
   }
 
   private render() {
-    console.log('[GraphViz] Render called, data:', this.data);
     if (!this.data) {
-      console.log('[GraphViz] No data, skipping render');
       return;
     }
 
     const { nodes, edges } = this.data;
-    console.log('[GraphViz] Rendering with nodes:', nodes.length, 'edges:', edges.length);
 
     // Stop existing simulation
     if (this.simulation) {

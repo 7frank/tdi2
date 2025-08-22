@@ -16,7 +16,7 @@ export function GraphTab({ graphService }: GraphTabProps) {
   }, []);
 
   return (
-    <div id="graph" className="tab-content active">
+    <div className="tab-content">
       <GraphControls />
       
       {isLoading ? (

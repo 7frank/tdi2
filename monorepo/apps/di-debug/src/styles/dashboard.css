@@ -109,11 +109,8 @@ body {
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
+/* Tab content visibility handled by React conditional rendering */
 .tab-content {
-  display: none;
-}
-
-.tab-content.active {
   display: block;
 }
 
