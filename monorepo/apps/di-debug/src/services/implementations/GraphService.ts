@@ -30,8 +30,13 @@ export class GraphService implements GraphServiceInterface {
   ) {}
 
   async loadGraph(): Promise<void> {
-    if (this.state.graphData.nodes.length > 0) return; // Already loaded
+    console.log('[GraphService] loadGraph called, current nodes:', this.state.graphData.nodes.length);
+    if (this.state.graphData.nodes.length > 0) {
+      console.log('[GraphService] Already loaded, skipping');
+      return; // Already loaded
+    }
 
+    console.log('[GraphService] Starting graph load...');
     this.state.isLoading = true;
     this.state.error = null;
 
@@ -42,8 +47,11 @@ export class GraphService implements GraphServiceInterface {
       }
 
       const graphData = await response.json();
+      console.log('[GraphService] Received data:', graphData);
+      console.log('[GraphService] Nodes count:', graphData.nodes?.length);
       this.state.graphData = graphData;
       this.applyFilters();
+      console.log('[GraphService] Applied filters, filteredData:', this.state.filteredData);
     } catch (error) {
       this.state.error = error.message;
       this.notificationService.showError('Failed to load dependency graph');

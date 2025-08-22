@@ -4,14 +4,16 @@ import type { DashboardServiceInterface } from '../interfaces/DashboardServiceIn
 @Service()
 export class DashboardService implements DashboardServiceInterface {
   state = {
-    currentTab: 'overview' as const,
-    connectionStatus: 'connecting' as const,
+    currentTab: 'overview' as 'overview' | 'graph' | 'analysis' | 'issues' | 'config',
+    connectionStatus: 'connecting' as 'connecting' | 'connected' | 'disconnected' | 'error',
     lastUpdate: null as Date | null,
     isLoading: false,
   };
 
   switchTab(tab: 'overview' | 'graph' | 'analysis' | 'issues' | 'config'): void {
+    console.log('[DashboardService] Switching to tab:', tab);
     this.state.currentTab = tab;
+    console.log('[DashboardService] Current tab is now:', this.state.currentTab);
   }
 
   async reload(): Promise<void> {
