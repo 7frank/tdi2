@@ -19,24 +19,40 @@
       "types": "./dist/index.d.ts"
     },
     "./decorators": {
-      "import": "./dist/decorators.js",
-      "types": "./dist/decorators.d.ts"
+      "import": "./dist/core/decorators.js",
+      "types": "./dist/core/decorators.d.ts"
     },
     "./types": {
-      "import": "./dist/types.js",
-      "types": "./dist/types.d.ts"
+      "import": "./dist/core/types.js",
+      "types": "./dist/core/types.d.ts"
     },
     "./markers": {
-      "import": "./dist/markers.js",
-      "types": "./dist/markers.d.ts"
+      "import": "./dist/core/markers.js",
+      "types": "./dist/core/markers.d.ts"
     },
     "./container": {
-      "import": "./dist/container.js",
-      "types": "./dist/container.d.ts"
+      "import": "./dist/core/container.js",
+      "types": "./dist/core/container.d.ts"
     },
     "./context": {
-      "import": "./dist/context.js",
-      "types": "./dist/context.d.ts"
+      "import": "./dist/react/context.js",
+      "types": "./dist/react/context.d.ts"
+    },
+    "./core": {
+      "import": "./dist/core/index.js",
+      "types": "./dist/core/index.d.ts"
+    },
+    "./react": {
+      "import": "./dist/react/index.js",
+      "types": "./dist/react/index.d.ts"
+    },
+    "./shared": {
+      "import": "./dist/shared/index.js",
+      "types": "./dist/shared/index.d.ts"
+    },
+    "./build-tools": {
+      "import": "./dist/build-tools/index.js",
+      "types": "./dist/build-tools/index.d.ts"
     },
     "./tools": {
       "import": "./dist/tools/index.js",

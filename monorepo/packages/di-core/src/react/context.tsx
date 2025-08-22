@@ -1,8 +1,8 @@
 // src/di/context.tsx - Enhanced with functional DI support
 import * as React from "react";
 import { createContext, useContext, type ReactNode } from "react";
-import { type DIContainer } from "./types";
-import { CompileTimeDIContainer } from "./container";
+import { type DIContainer } from "../core/types.js";
+import { CompileTimeDIContainer } from "../core/container.js";
 import { proxy, useSnapshot } from "valtio";
 
 const DIContext = createContext<DIContainer | null>(null);

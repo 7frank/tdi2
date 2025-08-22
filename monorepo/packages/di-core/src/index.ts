@@ -2,22 +2,14 @@
 
 export const TDI2_VERSION = "0.1.0";
 
-// Export decorators (including new @Configuration and @Bean)
-export * from './decorators.js';
+// Core DI exports (main public API)
+export * from './core/index.js';
 
-// Export types for configuration
-export type { 
-  ConfigurationOptions, 
-  ConfigurationMetadata, 
-  BeanMetadata, 
-  BeanParameterMetadata,
-  ContainerConfiguration
-} from './types.js';
+// React integration exports  
+export * from './react/index.js';
 
-// Export container with configuration support
-export { CompileTimeDIContainer, type DIContainerOptions } from './container.js';
-
-// Export profile management
-export { ProfileManager } from './profile-manager.js';
+// NOTE: Shared utilities and build tools are available via specific imports
+// e.g. import { IntegratedInterfaceResolver } from '@tdi2/di-core/shared/interface-resolver'
+// or via the backward-compatible /tools export
 
 // Analytics module moved to @tdi2/di-debug package
