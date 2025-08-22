@@ -58,10 +58,29 @@ export class TDI2Server {
     this.app.use(express.urlencoded({ extended: true }));
 
     // Serve React dashboard build files
-    const dashboardPath = join(__dirname, '..', 'dashboard');
-    if (existsSync(dashboardPath)) {
+    // Try multiple possible dashboard locations
+    const possibleDashboardPaths = [
+      join(__dirname, '..', 'dashboard'),           // Built CLI: dist/serve/../dashboard = dist/dashboard
+      join(__dirname, '..', '..', 'dist', 'dashboard'), // Source: src/serve/../../dist/dashboard
+    ];
+    
+    let dashboardPath: string | null = null;
+    for (const path of possibleDashboardPaths) {
+      if (existsSync(path)) {
+        dashboardPath = path;
+        break;
+      }
+    }
+    
+    if (dashboardPath) {
+      if (this.options.verbose) {
+        console.log(`📱 Serving React dashboard from: ${dashboardPath}`);
+      }
       this.app.use(express.static(dashboardPath));
     } else {
+      if (this.options.verbose) {
+        console.log('⚠️  No React dashboard found, using fallback template');
+      }
       // Fallback to legacy template directory for development
       const frontendPath = join(__dirname, 'frontend');
       this.app.use(express.static(frontendPath));

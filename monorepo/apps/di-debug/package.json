@@ -24,10 +24,9 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && tsup && npm run copy-templates",
-    "build:cli": "tsup && npm run copy-templates",
-    "build:dashboard": "tsc && vite build",
-    "copy-templates": "mkdir -p dist/serve/templates && cp src/serve/templates/* dist/serve/templates/",
+    "build": "vite build && tsup",
+    "build:cli": "tsup",
+    "build:dashboard": "vite build",
     "preview": "vite preview",
     "test": "echo 'No tests configured yet'",
     "lint": "echo 'No linting configured yet'",
