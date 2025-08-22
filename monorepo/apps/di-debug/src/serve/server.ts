@@ -5,7 +5,7 @@ import { createServer, Server as HttpServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { watch, FSWatcher } from "chokidar";
 import { join, resolve, dirname } from "path";
-import { existsSync, readFileSync } from "fs";
+import { existsSync } from "fs";
 import { fileURLToPath } from "url";
 import open from "open";
 
@@ -99,19 +99,9 @@ export class TDI2Server {
       });
     });
 
-    // Main dashboard route (original working version)
-    this.app.get("/", (req, res) => {
-      const htmlPath = join(__dirname, "../..", "index.html");
-      if (existsSync(htmlPath)) {
-        const html = readFileSync(htmlPath, "utf-8");
-        res.send(html);
-      } else {
-        res.status(404).send("Dashboard HTML template not found:" + htmlPath);
-      }
-    });
 
     // Error handling
-    this.app.use((error: Error, req: Request, res: Response, next: any) => {
+    this.app.use((error: Error, _req: Request, res: Response, _next: any) => {
       console.error("Server error:", error);
       res.status(500).json({
         error: "Internal server error",
