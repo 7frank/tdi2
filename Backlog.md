@@ -9,7 +9,7 @@
 - [✅] test cli commands properly that they work with
   - ecommerce example
 
-- [❌] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
+- [✅] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
 - serve
 
 relations missing service => class => interfaces
@@ -18,11 +18,11 @@ relations missing service => class => interfaces
 
 ### [❌] CacheInterface_any in legacy
 
-- `br cli.ts analyze --src ../../apps/legacy/src/ --format table`
+- `br src/cli.ts analyze --src ../legacy/src/ --format table`
 
 ```
-📄 Loaded DI config from ../../apps/legacy/src/.tdi2/di-config.ts
-🔍 Analyzing DI configuration in ../../apps/legacy/src/...
+📄 Loaded DI config from ..//legacy/src/.tdi2/di-config.ts
+🔍 Analyzing DI configuration in ../legacy/src/...
 
 📊 DI Configuration Analysis Report
 ══════════════════════════════════════════════════

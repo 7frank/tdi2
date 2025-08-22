@@ -21,7 +21,7 @@ export default defineConfig([
     sourcemap: true,
     external: ["@tdi2/di-core"]
   },
-  // Serve functionality
+  // Serve functionality (backend only - React dashboard built separately)
   {
     entry: ["src/serve/index.ts"],
     format: ["esm"],
@@ -29,7 +29,7 @@ export default defineConfig([
     outDir: "dist/serve",
     clean: false,
     sourcemap: true,
-    external: ["express", "ws", "chokidar", "open", "@tdi2/di-core"]
+    external: ["express", "ws", "chokidar", "open", "@tdi2/di-core", "react", "react-dom", "d3"]
   },
   // CLI executable
   {

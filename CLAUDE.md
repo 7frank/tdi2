@@ -12,7 +12,8 @@ This is a monorepo with the following structure:
 
 - **`/monorepo/`** - Main monorepo containing packages and apps
 - **`/examples/`** - Example applications demonstrating TDI2 usage
-- **`/monorepo/apps/docs-starlight/`** - Comprehensive documentation and analysis
+- **`/monorepo/apps/docs-starlight/`** - Comprehensive Starlight-based documentation site
+- **`/monorepo/apps/di-debug/`** - React-based debug tools with DI analytics CLI and web dashboard
 - **`/github-issue-sync/`** - Issue synchronization tooling
 
 ## Common Commands
@@ -44,6 +45,12 @@ bun run build         # Build the plugin
 cd examples/tdi2-basic-example
 npm run dev           # Start example app
 npm run build         # Build example
+
+# DI Debug Tools
+cd monorepo/apps/di-debug
+bun run dev           # Start React dashboard development
+bun run build         # Build React dashboard
+bun run tdi2          # Run CLI commands (analyze, serve, etc.)
 ```
 
 ### Testing Commands
