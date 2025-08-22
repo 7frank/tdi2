@@ -77,36 +77,14 @@ export class TDI2Server {
       });
     });
 
-    // Main dashboard route - serve React app
+    // Main dashboard route (original working version)
     this.app.get('/', (req, res) => {
-      const reactIndexPath = join(__dirname, '..', 'dashboard', 'index.html');
-      if (existsSync(reactIndexPath)) {
-        // Serve React app
-        res.sendFile(reactIndexPath);
+      const htmlPath = join(__dirname, 'templates', 'dashboard.html');
+      if (existsSync(htmlPath)) {
+        const html = readFileSync(htmlPath, 'utf-8');
+        res.send(html);
       } else {
-        // Fallback to legacy HTML template
-        const htmlPath = join(__dirname, 'templates', 'dashboard.html');
-        if (existsSync(htmlPath)) {
-          const html = readFileSync(htmlPath, 'utf-8');
-          res.send(html);
-        } else {
-          res.send(this.getDefaultDashboardHTML());
-        }
-      }
-    });
-
-    // Fallback route for React Router (SPA support)
-    this.app.get('*', (req, res) => {
-      // Don't handle API routes
-      if (req.path.startsWith('/api') || req.path.startsWith('/ws')) {
-        return;
-      }
-      
-      const reactIndexPath = join(__dirname, '..', 'dashboard', 'index.html');
-      if (existsSync(reactIndexPath)) {
-        res.sendFile(reactIndexPath);
-      } else {
-        res.status(404).send('Dashboard not found');
+        res.send(this.getDefaultDashboardHTML());
       }
     });
 
