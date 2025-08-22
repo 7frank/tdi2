@@ -57,9 +57,15 @@ export class TDI2Server {
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true }));
 
-    // Static files from frontend directory
-    const frontendPath = join(__dirname, 'frontend');
-    this.app.use(express.static(frontendPath));
+    // Serve React dashboard build files
+    const dashboardPath = join(__dirname, '..', 'dashboard');
+    if (existsSync(dashboardPath)) {
+      this.app.use(express.static(dashboardPath));
+    } else {
+      // Fallback to legacy template directory for development
+      const frontendPath = join(__dirname, 'frontend');
+      this.app.use(express.static(frontendPath));
+    }
 
     // Health check endpoint
     this.app.get('/health', (req, res) => {
@@ -71,14 +77,36 @@ export class TDI2Server {
       });
     });
 
-    // Main dashboard route
+    // Main dashboard route - serve React app
     this.app.get('/', (req, res) => {
-      const htmlPath = join(__dirname, 'templates', 'dashboard.html');
-      if (existsSync(htmlPath)) {
-        const html = readFileSync(htmlPath, 'utf-8');
-        res.send(html);
+      const reactIndexPath = join(__dirname, '..', 'dashboard', 'index.html');
+      if (existsSync(reactIndexPath)) {
+        // Serve React app
+        res.sendFile(reactIndexPath);
       } else {
-        res.send(this.getDefaultDashboardHTML());
+        // Fallback to legacy HTML template
+        const htmlPath = join(__dirname, 'templates', 'dashboard.html');
+        if (existsSync(htmlPath)) {
+          const html = readFileSync(htmlPath, 'utf-8');
+          res.send(html);
+        } else {
+          res.send(this.getDefaultDashboardHTML());
+        }
+      }
+    });
+
+    // Fallback route for React Router (SPA support)
+    this.app.get('*', (req, res) => {
+      // Don't handle API routes
+      if (req.path.startsWith('/api') || req.path.startsWith('/ws')) {
+        return;
+      }
+      
+      const reactIndexPath = join(__dirname, '..', 'dashboard', 'index.html');
+      if (existsSync(reactIndexPath)) {
+        res.sendFile(reactIndexPath);
+      } else {
+        res.status(404).send('Dashboard not found');
       }
     });
 
