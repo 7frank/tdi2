@@ -9,7 +9,7 @@
 - [✅] test cli commands properly that they work with
   - ecommerce example
 
-- [❌] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
+- [✅] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
 - serve
 
 relations missing service => class => interfaces
