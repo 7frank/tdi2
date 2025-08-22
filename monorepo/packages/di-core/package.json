@@ -70,8 +70,6 @@
   "author": "TDI2 Team",
   "license": "MIT",
   "dependencies": {
-    "@types/diff": "^8.0.0",
-    "diff": "^8.0.2",
     "ts-morph": "^21.0.1",
     "valtio": "^2.1.2"
   },

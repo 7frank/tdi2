@@ -19,3 +19,5 @@ export { CompileTimeDIContainer, type DIContainerOptions } from './container.js'
 
 // Export profile management
 export { ProfileManager } from './profile-manager.js';
+
+// Analytics module moved to @tdi2/di-debug package

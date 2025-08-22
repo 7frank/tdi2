@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TDI2 Dashboard - Interactive Dependency Analysis</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .dashboard-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 1.2rem;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #4CAF50;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .tabs {
+      display: flex;
+      background: white;
+      border-radius: 10px 10px 0 0;
+      margin-bottom: 0;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 15px 20px;
+      background: #f8f9fa;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab:hover {
+      background: #e9ecef;
+    }
+
+    .tab.active {
+      background: white;
+      border-bottom: 3px solid #667eea;
+      color: #667eea;
+    }
+
+    .content-area {
+      background: white;
+      min-height: 500px;
+      border-radius: 0 0 10px 10px;
+      padding: 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .loading-spinner {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .metric-card {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .metric-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .metric-label {
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+
+    .graph-container {
+      width: 100%;
+      margin: 20px 0;
+    }
+
+    .graph-placeholder {
+      text-align: center;
+      color: #666;
+    }
+
+    .graph-visualization {
+      width: 100%;
+      height: 600px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: white;
+    }
+
+    .graph-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .graph-controls select,
+    .graph-controls button {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .graph-controls button:hover {
+      background: #f0f0f0;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .filter-group label {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .node-filter {
+      display: flex;
+      gap: 8px;
+    }
+
+    .node-filter input[type="checkbox"] {
+      margin-right: 4px;
+    }
+
+    .graph-legend {
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      font-size: 12px;
+      max-width: 200px;
+      z-index: 100;
+    }
+
+    .graph-legend h4 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .graph-legend h5 {
+      margin: 10px 0 5px 0;
+      font-size: 11px;
+      color: #666;
+      font-weight: bold;
+    }
+
+    .legend-section {
+      margin-bottom: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 11px;
+    }
+
+    .legend-node {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      border: 1px solid #fff;
+    }
+
+    .legend-node.interface { background: #2196F3; }
+    .legend-node.class { background: #9C27B0; }
+    .legend-node.service { background: #4CAF50; }
+    .legend-node.component { background: #FF5722; }
+    .legend-node.error { background: #F44336; border: 2px solid #333; }
+    .legend-node.warning { background: #FF9800; border: 2px solid #333; }
+    .legend-node.healthy { background: #4CAF50; }
+
+    .legend-edge {
+      width: 20px;
+      height: 2px;
+      margin-right: 8px;
+      position: relative;
+    }
+
+    .legend-edge.implementation { background: #4CAF50; }
+    .legend-edge.injection { background: #2196F3; }
+    .legend-edge.inheritance { background: #FF9800; }
+    .legend-edge.potential { 
+      background: #FFC107; 
+      background-image: repeating-linear-gradient(90deg, #FFC107, #FFC107 3px, transparent 3px, transparent 6px);
+    }
+    .legend-edge.dependency { background: #666; }
+
+    .legend-edge::after {
+      content: '';
+      position: absolute;
+      right: -3px;
+      top: -2px;
+      width: 0;
+      height: 0;
+      border-left: 4px solid;
+      border-top: 3px solid transparent;
+      border-bottom: 3px solid transparent;
+    }
+
+    .legend-edge.implementation::after { border-left-color: #4CAF50; }
+    .legend-edge.injection::after { border-left-color: #2196F3; }
+    .legend-edge.inheritance::after { border-left-color: #FF9800; }
+    .legend-edge.potential::after { border-left-color: #FFC107; }
+    .legend-edge.dependency::after { border-left-color: #666; }
+
+    .controls-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .control-group label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .control-group select,
+    .control-group input {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #5a6fd8;
+    }
+
+    .issues-list {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+    }
+
+    .issue-item {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .issue-item:last-child {
+      border-bottom: none;
+    }
+
+    .issue-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .issue-error { background: #dc3545; }
+    .issue-warning { background: #ffc107; }
+    .issue-info { background: #17a2b8; }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <div class="header">
+      <h1>🌐 TDI2 Dashboard</h1>
+      <p>Interactive Dependency Injection Analysis & Debugging</p>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span id="connection-status">Connected to TDI2 Server</span>
+      </div>
+      <div>
+        <span id="last-update">Last update: Loading...</span>
+      </div>
+      <div>
+        <button class="btn" onclick="reloadAnalysis()">🔄 Reload</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('overview')">📊 Overview</button>
+      <button class="tab" onclick="showTab('graph')">🕸️ Dependency Graph</button>
+      <button class="tab" onclick="showTab('analysis')">🔍 Analysis</button>
+      <button class="tab" onclick="showTab('issues')">⚠️ Issues</button>
+      <button class="tab" onclick="showTab('config')">⚙️ Configuration</button>
+    </div>
+
+    <div class="content-area">
+      <!-- Overview Tab -->
+      <div id="overview" class="tab-content active">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-value" id="total-services">-</div>
+            <div class="metric-label">Total Services</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value" id="health-score">-</div>
+            <div class="metric-label">Health Score</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value" id="total-issues">-</div>
+            <div class="metric-label">Total Issues</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value" id="circular-deps">-</div>
+            <div class="metric-label">Circular Dependencies</div>
+          </div>
+        </div>
+        
+        <div class="loading-spinner" id="overview-loading">
+          <div class="spinner"></div>
+          <p>Loading analysis data...</p>
+        </div>
+      </div>
+
+      <!-- Graph Tab -->
+      <div id="graph" class="tab-content">
+        <div class="controls-panel">
+          <div class="control-group">
+            <label>Layout:</label>
+            <select id="layout-select" onchange="updateGraphLayout()">
+              <option value="force">Force-Directed</option>
+              <option value="hierarchical">Hierarchical</option>
+              <option value="circular">Circular</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Filter by Type:</label>
+            <select id="type-filter" onchange="filterGraph()">
+              <option value="all">All Types</option>
+              <option value="interface">Interfaces</option>
+              <option value="service">Services</option>
+              <option value="component">Components</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Search:</label>
+            <input type="text" id="search-input" placeholder="Search services..." onkeyup="searchGraph()">
+          </div>
+          <div class="control-group">
+            <label></label>
+            <button class="btn" onclick="exportGraph()">📥 Export</button>
+          </div>
+        </div>
+        
+        <div class="graph-controls">
+          <div class="filter-group">
+            <label>Layout:</label>
+            <select id="layout-select" onchange="changeLayout()">
+              <option value="force">Force-Directed</option>
+              <option value="hierarchical">Hierarchical</option>
+              <option value="circular">Circular</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label>Show:</label>
+            <div class="node-filter">
+              <label><input type="checkbox" id="filter-interface" checked onchange="updateFilters()"> Interfaces</label>
+              <label><input type="checkbox" id="filter-class" checked onchange="updateFilters()"> Classes</label>
+              <label><input type="checkbox" id="filter-service" checked onchange="updateFilters()"> Services</label>
+              <label><input type="checkbox" id="filter-component" checked onchange="updateFilters()"> Components</label>
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <label><input type="checkbox" id="issues-only" onchange="updateFilters()"> Issues Only</label>
+            <label><input type="checkbox" id="show-potential" checked onchange="updateFilters()"> Show Potential</label>
+          </div>
+          
+          <button onclick="resetGraphView()" title="Reset view">🔄 Reset</button>
+          <button onclick="reloadGraph()" title="Reload graph">↻ Reload</button>
+          <button onclick="toggleLegend()" title="Show/hide legend">📋 Legend</button>
+        </div>
+        
+        <div id="graph-legend" class="graph-legend" style="display: none;">
+          <h4>Graph Legend</h4>
+          <div class="legend-section">
+            <h5>Node Types:</h5>
+            <div class="legend-item"><div class="legend-node interface"></div> Interface</div>
+            <div class="legend-item"><div class="legend-node class"></div> Class</div>
+            <div class="legend-item"><div class="legend-node service"></div> Service</div>
+            <div class="legend-item"><div class="legend-node component"></div> Component</div>
+          </div>
+          <div class="legend-section">
+            <h5>Node Status:</h5>
+            <div class="legend-item"><div class="legend-node error"></div> Has Errors</div>
+            <div class="legend-item"><div class="legend-node warning"></div> Has Warnings</div>
+            <div class="legend-item"><div class="legend-node healthy"></div> Healthy</div>
+          </div>
+          <div class="legend-section">
+            <h5>Relationships:</h5>
+            <div class="legend-item"><div class="legend-edge implementation"></div> Implements Interface</div>
+            <div class="legend-item"><div class="legend-edge injection"></div> Depends On</div>
+            <div class="legend-item"><div class="legend-edge inheritance"></div> Extends Class</div>
+            <div class="legend-item"><div class="legend-edge potential"></div> Potential Match</div>
+            <div class="legend-item"><div class="legend-edge dependency"></div> General Dependency</div>
+          </div>
+        </div>
+        
+        <div class="graph-container">
+          <div id="graph-visualization" class="graph-visualization"></div>
+          
+          <div class="graph-placeholder" id="graph-placeholder" style="display: none;">
+            <h3>📊 Dependency Graph</h3>
+            <p>Loading graph visualization...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analysis Tab -->
+      <div id="analysis" class="tab-content">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Loading detailed analysis...</p>
+        </div>
+      </div>
+
+      <!-- Issues Tab -->
+      <div id="issues" class="tab-content">
+        <div class="issues-list" id="issues-list">
+          <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading issues...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configuration Tab -->
+      <div id="config" class="tab-content">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Loading configuration...</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>🚀 TDI2 Dashboard - Powered by TypeScript Dependency Injection</p>
+      <p style="font-size: 0.9rem; margin-top: 5px;">
+        Real-time analysis • Interactive graphs • Issue tracking
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Global state
+    let ws = null;
+    let currentData = {
+      analysis: null,
+      graph: null,
+      config: null
+    };
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeWebSocket();
+      loadInitialData();
+    });
+
+    // WebSocket connection
+    function initializeWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      ws = new WebSocket(wsUrl);
+      
+      ws.onopen = function() {
+        updateConnectionStatus('Connected', true);
+        console.log('🔌 Connected to TDI2 server');
+      };
+      
+      ws.onmessage = function(event) {
+        const message = JSON.parse(event.data);
+        handleWebSocketMessage(message);
+      };
+      
+      ws.onclose = function() {
+        updateConnectionStatus('Disconnected', false);
+        console.log('❌ Disconnected from TDI2 server');
+        // Attempt to reconnect after 3 seconds
+        setTimeout(initializeWebSocket, 3000);
+      };
+      
+      ws.onerror = function(error) {
+        updateConnectionStatus('Connection Error', false);
+        console.error('WebSocket error:', error);
+      };
+    }
+
+    // Handle WebSocket messages
+    function handleWebSocketMessage(message) {
+      console.log('📨 WebSocket message:', message);
+      
+      switch(message.type) {
+        case 'analysis_update':
+          if (message.data && message.data.connected) {
+            reloadAnalysis();
+          }
+          break;
+        case 'config_reload':
+          showNotification('Configuration updated - reloading...', 'info');
+          setTimeout(reloadAnalysis, 1000);
+          break;
+        case 'error':
+          showNotification(message.data.message || 'An error occurred', 'error');
+          break;
+      }
+    }
+
+    // Update connection status
+    function updateConnectionStatus(status, connected) {
+      const statusElement = document.getElementById('connection-status');
+      const statusDot = document.querySelector('.status-dot');
+      
+      statusElement.textContent = status;
+      statusDot.style.background = connected ? '#4CAF50' : '#dc3545';
+    }
+
+    // Load initial data
+    async function loadInitialData() {
+      try {
+        // Load analysis data
+        const analysisResponse = await fetch('/api/analysis');
+        if (analysisResponse.ok) {
+          currentData.analysis = await analysisResponse.json();
+          updateOverviewMetrics(currentData.analysis);
+        }
+
+        // Load graph data  
+        const graphResponse = await fetch('/api/graph');
+        if (graphResponse.ok) {
+          currentData.graph = await graphResponse.json();
+          initializeGraph(currentData.graph);
+        }
+
+        // Load config data
+        const configResponse = await fetch('/api/config');
+        if (configResponse.ok) {
+          currentData.config = await configResponse.json();
+          updateConfigTab(currentData.config);
+        }
+
+        // Load issues from analysis
+        if (currentData.analysis && currentData.analysis.issues) {
+          updateIssuesTab(currentData.analysis.issues);
+        }
+
+        // Update analysis tab
+        updateAnalysisTab(currentData.analysis);
+
+        updateLastUpdateTime();
+
+      } catch (error) {
+        console.error('Failed to load initial data:', error);
+        showNotification('Failed to load data from server', 'error');
+      }
+    }
+
+    // Update overview metrics
+    function updateOverviewMetrics(analysis) {
+      document.getElementById('total-services').textContent = analysis.summary.totalServices || 0;
+      document.getElementById('health-score').textContent = analysis.summary.healthScore || 0;
+      document.getElementById('total-issues').textContent = analysis.summary.totalIssues || 0;
+      document.getElementById('circular-deps').textContent = analysis.summary.circularDependencies || 0;
+      
+      // Hide loading spinner
+      document.getElementById('overview-loading').style.display = 'none';
+    }
+
+    // Graph visualization instance
+    let graphVisualization = null;
+
+    // Initialize D3.js interactive graph visualization
+    function initializeGraph(graphData) {
+      console.log('📊 Graph data loaded:', graphData);
+      
+      // Hide placeholder, show visualization
+      document.getElementById('graph-placeholder').style.display = 'none';
+      document.getElementById('graph-visualization').style.display = 'block';
+      
+      // Create graph visualization
+      if (graphVisualization) {
+        graphVisualization.destroy();
+      }
+      
+      graphVisualization = new GraphVisualization('graph-visualization');
+      graphVisualization.setData(graphData);
+      
+      console.log('✅ D3.js graph visualization initialized');
+    }
+
+    // Graph control functions
+    function changeLayout() {
+      if (!graphVisualization) return;
+      const layout = document.getElementById('layout-select').value;
+      graphVisualization.setLayout(layout);
+    }
+
+    function updateFilters() {
+      if (!graphVisualization) return;
+      
+      const nodeTypes = new Set();
+      if (document.getElementById('filter-interface').checked) nodeTypes.add('interface');
+      if (document.getElementById('filter-class').checked) nodeTypes.add('class');
+      if (document.getElementById('filter-service').checked) nodeTypes.add('service');
+      if (document.getElementById('filter-component').checked) nodeTypes.add('component');
+      
+      const showIssuesOnly = document.getElementById('issues-only').checked;
+      const showPotential = document.getElementById('show-potential').checked;
+      
+      graphVisualization.setFilters(nodeTypes, showIssuesOnly, showPotential);
+    }
+
+    function resetGraphView() {
+      if (!graphVisualization) return;
+      graphVisualization.resetView();
+    }
+
+    async function reloadGraph() {
+      try {
+        const response = await fetch('/api/graph?reload=true');
+        if (response.ok) {
+          const graphData = await response.json();
+          currentData.graph = graphData;
+          initializeGraph(graphData);
+          showNotification('Graph reloaded successfully', 'success');
+        }
+      } catch (error) {
+        console.error('Failed to reload graph:', error);
+        showNotification('Failed to reload graph', 'error');
+      }
+    }
+
+    function toggleLegend() {
+      const legend = document.getElementById('graph-legend');
+      legend.style.display = legend.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // D3.js Graph Visualization Class (adapted for browser)
+    class GraphVisualization {
+      constructor(containerId) {
+        this.containerId = containerId;
+        this.container = d3.select(`#${containerId}`);
+        this.data = null;
+        this.currentLayout = 'force';
+        this.selectedNodes = new Set();
+        this.filteredNodeTypes = new Set(['interface', 'class', 'service', 'component']);
+        this.showIssuesOnly = false;
+        this.showPotential = true;
+        this.simulation = null;
+        
+        this.initialize();
+      }
+
+      initialize() {
+        // Clear container
+        this.container.selectAll('*').remove();
+        
+        // Create SVG
+        this.svg = this.container
+          .append('svg')
+          .attr('class', 'dependency-graph')
+          .style('width', '100%')
+          .style('height', '600px')
+          .style('border', '1px solid #ddd')
+          .style('border-radius', '8px')
+          .style('background', 'white');
+        
+        // Create main group for zoom/pan
+        this.g = this.svg.append('g');
+        
+        // Add zoom behavior
+        const zoom = d3.zoom()
+          .scaleExtent([0.1, 5])
+          .on('zoom', (event) => {
+            this.g.attr('transform', event.transform);
+          });
+        
+        this.svg.call(zoom);
+        
+        // Create tooltip
+        this.tooltip = d3.select('body')
+          .append('div')
+          .attr('class', 'graph-tooltip')
+          .style('position', 'absolute')
+          .style('visibility', 'hidden')
+          .style('background', 'rgba(0, 0, 0, 0.9)')
+          .style('color', 'white')
+          .style('border-radius', '8px')
+          .style('padding', '12px')
+          .style('font-size', '12px')
+          .style('max-width', '300px')
+          .style('box-shadow', '0 4px 12px rgba(0,0,0,0.3)')
+          .style('z-index', '1000')
+          .style('pointer-events', 'none');
+
+        // Add arrow markers
+        this.svg.append('defs').selectAll('marker')
+          .data(['dependency', 'implementation', 'injection', 'inheritance', 'potential', 'error'])
+          .join('marker')
+          .attr('id', d => `arrow-${d}`)
+          .attr('viewBox', '0 -5 10 10')
+          .attr('refX', 15)
+          .attr('refY', 0)
+          .attr('markerWidth', 6)
+          .attr('markerHeight', 6)
+          .attr('orient', 'auto')
+          .append('path')
+          .attr('d', d => {
+            // Different arrow shapes for different relationship types
+            switch (d) {
+              case 'implementation': return 'M0,-5L10,0L0,5L3,0Z'; // Filled triangle
+              case 'injection': return 'M0,-5L10,0L0,5'; // Open arrow
+              case 'inheritance': return 'M0,-5L10,0L0,5L2,0Z'; // Filled diamond-like
+              case 'potential': return 'M0,-3L7,0L0,3'; // Smaller open arrow
+              default: return 'M0,-5L10,0L0,5';
+            }
+          })
+          .attr('fill', d => this.getMarkerColor(d));
+
+        this.updateDimensions();
+        window.addEventListener('resize', () => this.updateDimensions());
+      }
+
+      updateDimensions() {
+        const rect = this.container.node().getBoundingClientRect();
+        this.width = rect.width;
+        this.height = Math.max(600, rect.height);
+        this.svg.attr('width', this.width).attr('height', this.height);
+      }
+
+      setData(data) {
+        this.data = data;
+        this.render();
+      }
+
+      setLayout(layout) {
+        this.currentLayout = layout;
+        this.render();
+      }
+
+      setFilters(nodeTypes, showIssuesOnly, showPotential = true) {
+        this.filteredNodeTypes = nodeTypes;
+        this.showIssuesOnly = showIssuesOnly;
+        this.showPotential = showPotential;
+        this.render();
+      }
+
+      getFilteredData() {
+        if (!this.data) return { nodes: [], edges: [] };
+
+        let nodes = this.data.nodes.filter(node => 
+          this.filteredNodeTypes.has(node.type) &&
+          (!this.showIssuesOnly || node.metadata.issues.length > 0)
+        );
+
+        const nodeIds = new Set(nodes.map(n => n.id));
+        let edges = this.data.edges.filter(edge => {
+          const sourceId = typeof edge.source === 'string' ? edge.source : edge.source.id;
+          const targetId = typeof edge.target === 'string' ? edge.target : edge.target.id;
+          const isValidConnection = nodeIds.has(sourceId) && nodeIds.has(targetId);
+          const isPotentialEdge = edge.type === 'potential';
+          
+          // Filter out potential edges if showPotential is false
+          if (isPotentialEdge && !this.showPotential) {
+            return false;
+          }
+          
+          return isValidConnection;
+        });
+
+        return { nodes, edges };
+      }
+
+      render() {
+        if (!this.data) return;
+
+        const { nodes, edges } = this.getFilteredData();
+
+        // Stop existing simulation
+        if (this.simulation) {
+          this.simulation.stop();
+        }
+
+        // Clear existing elements
+        this.g.selectAll('*').remove();
+
+        // Create groups
+        const linkGroup = this.g.append('g').attr('class', 'links');
+        const nodeGroup = this.g.append('g').attr('class', 'nodes');
+        const labelGroup = this.g.append('g').attr('class', 'labels');
+
+        // Create links
+        this.linkElements = linkGroup
+          .selectAll('line')
+          .data(edges)
+          .join('line')
+          .attr('class', 'link')
+          .attr('stroke', d => this.getEdgeColor(d))
+          .attr('stroke-width', d => this.getEdgeWidth(d))
+          .attr('stroke-dasharray', d => this.getEdgeDashArray(d))
+          .attr('marker-end', d => `url(#arrow-${this.getEdgeMarkerType(d)})`)
+          .style('opacity', d => d.type === 'potential' ? 0.5 : 0.7)
+          .on('mouseover', (event, d) => this.showEdgeTooltip(event, d))
+          .on('mouseout', () => this.hideTooltip());
+
+        // Create nodes
+        this.nodeElements = nodeGroup
+          .selectAll('circle')
+          .data(nodes)
+          .join('circle')
+          .attr('class', 'node')
+          .attr('r', d => this.getNodeRadius(d))
+          .attr('fill', d => this.getNodeColor(d))
+          .attr('stroke', d => this.getNodeStroke(d))
+          .attr('stroke-width', d => this.getNodeStrokeWidth(d))
+          .style('cursor', 'pointer')
+          .on('mouseover', (event, d) => this.showNodeTooltip(event, d))
+          .on('mouseout', () => this.hideTooltip())
+          .on('click', (event, d) => this.handleNodeClick(event, d))
+          .call(this.createDragBehavior());
+
+        // Create labels
+        this.labelElements = labelGroup
+          .selectAll('text')
+          .data(nodes)
+          .join('text')
+          .attr('class', 'label')
+          .text(d => d.label)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .attr('font-size', '11px')
+          .attr('font-weight', 'bold')
+          .attr('fill', '#333')
+          .style('pointer-events', 'none')
+          .style('user-select', 'none');
+
+        // Apply layout
+        this.applyLayout(nodes, edges);
+      }
+
+      applyLayout(nodes, edges) {
+        switch (this.currentLayout) {
+          case 'force':
+            this.applyForceLayout(nodes, edges);
+            break;
+          case 'hierarchical':
+            this.applyHierarchicalLayout(nodes, edges);
+            break;
+          case 'circular':
+            this.applyCircularLayout(nodes);
+            break;
+        }
+      }
+
+      applyForceLayout(nodes, edges) {
+        this.simulation = d3.forceSimulation(nodes)
+          .force('link', d3.forceLink(edges)
+            .id(d => d.id)
+            .distance(80)
+            .strength(0.5))
+          .force('charge', d3.forceManyBody().strength(-300))
+          .force('center', d3.forceCenter(this.width / 2, this.height / 2))
+          .force('collision', d3.forceCollide().radius(d => this.getNodeRadius(d) + 5));
+
+        this.simulation.on('tick', () => this.updatePositions());
+      }
+
+      applyHierarchicalLayout(nodes, edges) {
+        // Simple hierarchical layout
+        const levels = {};
+        const visited = new Set();
+        
+        const assignLevel = (node, level) => {
+          if (visited.has(node.id)) return;
+          visited.add(node.id);
+          
+          if (!levels[level]) levels[level] = [];
+          levels[level].push(node);
+          
+          edges.filter(e => e.source.id === node.id).forEach(edge => {
+            const targetNode = nodes.find(n => n.id === edge.target.id);
+            if (targetNode) assignLevel(targetNode, level + 1);
+          });
+        };
+
+        // Start with interfaces
+        nodes.filter(n => n.type === 'interface').forEach(node => assignLevel(node, 0));
+        nodes.filter(n => n.type !== 'interface' && !visited.has(n.id))
+          .forEach(node => assignLevel(node, 1));
+
+        // Position nodes
+        Object.entries(levels).forEach(([level, levelNodes]) => {
+          const levelHeight = parseInt(level) * 120 + 100;
+          const nodeWidth = this.width / (levelNodes.length + 1);
+          
+          levelNodes.forEach((node, index) => {
+            node.fx = (index + 1) * nodeWidth;
+            node.fy = levelHeight;
+          });
+        });
+
+        this.updatePositions();
+      }
+
+      applyCircularLayout(nodes) {
+        const radius = Math.min(this.width, this.height) / 3;
+        const centerX = this.width / 2;
+        const centerY = this.height / 2;
+
+        nodes.forEach((node, index) => {
+          const angle = (index / nodes.length) * 2 * Math.PI;
+          node.fx = centerX + radius * Math.cos(angle);
+          node.fy = centerY + radius * Math.sin(angle);
+        });
+
+        this.updatePositions();
+      }
+
+      updatePositions() {
+        if (!this.linkElements || !this.nodeElements || !this.labelElements) return;
+
+        this.linkElements
+          .attr('x1', d => (typeof d.source === 'object' ? d.source.x : 0) || 0)
+          .attr('y1', d => (typeof d.source === 'object' ? d.source.y : 0) || 0)
+          .attr('x2', d => (typeof d.target === 'object' ? d.target.x : 0) || 0)
+          .attr('y2', d => (typeof d.target === 'object' ? d.target.y : 0) || 0);
+
+        this.nodeElements
+          .attr('cx', d => d.x || 0)
+          .attr('cy', d => d.y || 0);
+
+        this.labelElements
+          .attr('x', d => d.x || 0)
+          .attr('y', d => (d.y || 0) + this.getNodeRadius(d) + 15);
+      }
+
+      // Visual properties
+      getNodeRadius(node) {
+        const baseSize = node.size || 20;
+        const issueMultiplier = node.metadata.issues.length > 0 ? 1.2 : 1;
+        return Math.max(8, Math.min(30, baseSize * issueMultiplier));
+      }
+
+      getNodeColor(node) {
+        if (node.metadata.issues.some(issue => issue.type === 'error')) {
+          return '#F44336'; // Red for errors
+        }
+        if (node.metadata.issues.some(issue => issue.type === 'warning')) {
+          return '#FF9800'; // Orange for warnings
+        }
+        
+        switch (node.type) {
+          case 'interface': return '#2196F3';
+          case 'class': return '#9C27B0';
+          case 'service': return '#4CAF50';
+          case 'component': return '#FF5722';
+          default: return '#607D8B';
+        }
+      }
+
+      getNodeStroke(node) {
+        if (this.selectedNodes.has(node.id)) return '#FFD700';
+        if (node.metadata.issues.length > 0) return '#333';
+        return '#fff';
+      }
+
+      getNodeStrokeWidth(node) {
+        if (this.selectedNodes.has(node.id)) return 3;
+        if (node.metadata.issues.length > 0) return 2;
+        return 1;
+      }
+
+      getEdgeColor(edge) {
+        switch (edge.type) {
+          case 'implementation': return '#4CAF50'; // Green for implements
+          case 'injection': return '#2196F3';      // Blue for depends on
+          case 'inheritance': return '#FF9800';    // Orange for extends
+          case 'potential': return '#FFC107';      // Amber for potential relationships
+          case 'dependency': return '#666';        // Gray for general dependency
+          default: return '#999';
+        }
+      }
+
+      getEdgeWidth(edge) {
+        return Math.max(1, Math.min(4, (edge.metadata.strength || 1) * 2));
+      }
+
+      getEdgeMarkerType(edge) {
+        return edge.type || 'dependency';
+      }
+
+      getEdgeDashArray(edge) {
+        // Dotted lines for optional or potential relationships
+        if (edge.type === 'potential') return '3,3';
+        if (edge.optional) return '5,5';
+        return null;
+      }
+
+      getMarkerColor(type) {
+        switch (type) {
+          case 'implementation': return '#4CAF50';
+          case 'injection': return '#2196F3';
+          case 'inheritance': return '#FF9800';
+          case 'potential': return '#FFC107';
+          case 'error': return '#F44336';
+          default: return '#666';
+        }
+      }
+
+      // Event handlers
+      handleNodeClick(event, node) {
+        event.stopPropagation();
+        
+        if (this.selectedNodes.has(node.id)) {
+          this.selectedNodes.delete(node.id);
+        } else {
+          this.selectedNodes.add(node.id);
+        }
+        
+        this.highlightConnected(node.id);
+        this.render();
+      }
+
+      highlightConnected(nodeId) {
+        if (!this.data) return;
+        
+        const connected = new Set([nodeId]);
+        
+        this.data.edges.forEach(edge => {
+          const sourceId = typeof edge.source === 'string' ? edge.source : edge.source.id;
+          const targetId = typeof edge.target === 'string' ? edge.target : edge.target.id;
+          
+          if (sourceId === nodeId) connected.add(targetId);
+          if (targetId === nodeId) connected.add(sourceId);
+        });
+        
+        this.nodeElements?.style('opacity', d => connected.has(d.id) ? 1.0 : 0.3);
+        this.linkElements?.style('opacity', d => {
+          const sourceId = typeof d.source === 'string' ? d.source : d.source.id;
+          const targetId = typeof d.target === 'string' ? d.target : d.target.id;
+          return (sourceId === nodeId || targetId === nodeId) ? 1.0 : 0.1;
+        });
+      }
+
+      showNodeTooltip(event, node) {
+        const html = `
+          <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">
+            ${node.label}
+          </div>
+          <div style="font-size: 11px; color: #ccc; margin-bottom: 8px;">
+            ${node.type} • ${node.metadata.scope}
+          </div>
+          <div style="margin-bottom: 4px; display: flex; justify-content: space-between;">
+            <span>Dependencies:</span>
+            <span style="margin-left: 8px; font-weight: bold;">${node.metadata.dependencies.length}</span>
+          </div>
+          <div style="margin-bottom: 4px; display: flex; justify-content: space-between;">
+            <span>Dependents:</span>
+            <span style="margin-left: 8px; font-weight: bold;">${node.metadata.dependents.length}</span>
+          </div>
+          ${node.metadata.filePath ? `
+            <div style="margin-bottom: 4px;">
+              <span style="color: #ccc;">File:</span>
+              <div style="margin-top: 2px; font-size: 10px; color: #fff; word-break: break-all;">${node.metadata.filePath}</div>
+            </div>
+          ` : ''}
+          ${node.metadata.issues.map(issue => `
+            <div style="margin-bottom: 4px; display: flex; justify-content: space-between;">
+              <span style="color: ${issue.type === 'error' ? '#F44336' : '#FF9800'}">${issue.type.toUpperCase()}:</span>
+              <span style="margin-left: 8px; font-weight: bold; font-size: 10px;">${issue.message}</span>
+            </div>
+          `).join('')}
+        `;
+
+        this.tooltip
+          .html(html)
+          .style('visibility', 'visible')
+          .style('left', `${event.pageX + 10}px`)
+          .style('top', `${event.pageY - 10}px`);
+      }
+
+      showEdgeTooltip(event, edge) {
+        const sourceId = typeof edge.source === 'string' ? edge.source : edge.source.id;
+        const targetId = typeof edge.target === 'string' ? edge.target : edge.target.id;
+        
+        const html = `
+          <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">
+            ${sourceId} → ${targetId}
+          </div>
+          <div style="font-size: 11px; color: #ccc; margin-bottom: 8px;">
+            ${edge.type} relationship
+          </div>
+          <div style="margin-bottom: 4px; display: flex; justify-content: space-between;">
+            <span>Type:</span>
+            <span style="margin-left: 8px; font-weight: bold;">${edge.type}</span>
+          </div>
+          <div style="margin-bottom: 4px; display: flex; justify-content: space-between;">
+            <span>Optional:</span>
+            <span style="margin-left: 8px; font-weight: bold;">${edge.optional ? 'Yes' : 'No'}</span>
+          </div>
+          ${edge.metadata?.reason ? `
+            <div style="margin-bottom: 4px;">
+              <span style="color: #FFC107;">Reason:</span>
+              <div style="margin-top: 2px; font-size: 10px; color: #fff;">${edge.metadata.reason}</div>
+            </div>
+          ` : ''}
+          ${edge.metadata?.suggestion ? `
+            <div style="margin-bottom: 4px;">
+              <span style="color: #4CAF50;">💡 Suggestion:</span>
+              <div style="margin-top: 2px; font-size: 10px; color: #fff;">${edge.metadata.suggestion}</div>
+            </div>
+          ` : ''}
+        `;
+
+        this.tooltip
+          .html(html)
+          .style('visibility', 'visible')
+          .style('left', `${event.pageX + 10}px`)
+          .style('top', `${event.pageY - 10}px`);
+      }
+
+      hideTooltip() {
+        this.tooltip.style('visibility', 'hidden');
+      }
+
+      createDragBehavior() {
+        return d3.drag()
+          .on('start', (event, d) => {
+            if (!event.active && this.simulation) {
+              this.simulation.alphaTarget(0.3).restart();
+            }
+            d.fx = d.x;
+            d.fy = d.y;
+          })
+          .on('drag', (event, d) => {
+            d.fx = event.x;
+            d.fy = event.y;
+          })
+          .on('end', (event, d) => {
+            if (!event.active && this.simulation) {
+              this.simulation.alphaTarget(0);
+            }
+            d.fx = null;
+            d.fy = null;
+          });
+      }
+
+      resetView() {
+        this.selectedNodes.clear();
+        this.nodeElements?.style('opacity', 1.0);
+        this.linkElements?.style('opacity', 0.7);
+        
+        // Reset zoom
+        this.svg.transition()
+          .duration(750)
+          .call(d3.zoom().transform, d3.zoomIdentity);
+      }
+
+      destroy() {
+        if (this.simulation) {
+          this.simulation.stop();
+        }
+        if (this.tooltip) {
+          this.tooltip.remove();
+        }
+        window.removeEventListener('resize', () => this.updateDimensions());
+      }
+    }
+
+    // Tab switching
+    function showTab(tabName) {
+      // Hide all tab contents
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(tab => tab.classList.remove('active'));
+      
+      // Remove active class from all tabs
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tab => tab.classList.remove('active'));
+      
+      // Show selected tab content
+      document.getElementById(tabName).classList.add('active');
+      
+      // Add active class to selected tab
+      event.target.classList.add('active');
+    }
+
+    // Reload analysis
+    async function reloadAnalysis() {
+      try {
+        const response = await fetch('/api/analysis?reload=true');
+        if (response.ok) {
+          currentData.analysis = await response.json();
+          updateOverviewMetrics(currentData.analysis);
+          updateLastUpdateTime();
+          showNotification('Analysis reloaded successfully', 'success');
+        }
+      } catch (error) {
+        console.error('Failed to reload analysis:', error);
+        showNotification('Failed to reload analysis', 'error');
+      }
+    }
+
+    // Show notification (simple implementation)
+    function showNotification(message, type = 'info') {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'};
+        color: white;
+        border-radius: 5px;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      `;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+
+    // Update last update time
+    function updateLastUpdateTime() {
+      const now = new Date();
+      document.getElementById('last-update').textContent = 
+        `Last update: ${now.toLocaleTimeString()}`;
+    }
+
+    // Placeholder functions for graph controls
+    function updateGraphLayout() {
+      console.log('Layout changed to:', document.getElementById('layout-select').value);
+      // TODO: Implement layout change
+    }
+
+    function filterGraph() {
+      console.log('Filter changed to:', document.getElementById('type-filter').value);
+      // TODO: Implement filtering
+    }
+
+    function searchGraph() {
+      console.log('Search query:', document.getElementById('search-input').value);
+      // TODO: Implement search
+    }
+
+    function exportGraph() {
+      console.log('Export graph requested');
+      // TODO: Implement export
+      showNotification('Export functionality coming soon', 'info');
+    }
+
+    // Update Issues tab
+    function updateIssuesTab(issues) {
+      const issuesList = document.getElementById('issues-list');
+      
+      if (!issues || issues.length === 0) {
+        issuesList.innerHTML = `
+          <div style="padding: 40px; text-align: center; color: #28a745;">
+            <h3>🎉 No Issues Found!</h3>
+            <p>Your DI configuration is healthy.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let issuesHTML = '';
+      issues.forEach(issue => {
+        const iconClass = `issue-${issue.type}`;
+        const icon = issue.type === 'error' ? '❌' : issue.type === 'warning' ? '⚠️' : 'ℹ️';
+        
+        issuesHTML += `
+          <div class="issue-item">
+            <div class="issue-icon ${iconClass}">${icon}</div>
+            <div>
+              <div style="font-weight: 500; margin-bottom: 5px;">${issue.message}</div>
+              ${issue.suggestion ? `<div style="color: #666; font-size: 0.9rem;">💡 ${issue.suggestion}</div>` : ''}
+              ${issue.location ? `<div style="color: #999; font-size: 0.8rem; margin-top: 5px;">📍 ${issue.location.file || issue.location.service || 'Unknown location'}</div>` : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      issuesList.innerHTML = issuesHTML;
+    }
+
+    // Update Analysis tab
+    function updateAnalysisTab(analysis) {
+      const analysisTab = document.getElementById('analysis');
+      
+      if (!analysis) {
+        analysisTab.innerHTML = `
+          <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading analysis data...</p>
+          </div>
+        `;
+        return;
+      }
+
+      const analysisHTML = `
+        <div>
+          <h3>📊 Detailed Analysis Report</h3>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>📈 Summary Statistics</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+              <div>
+                <strong>Total Services:</strong> ${analysis.summary?.totalServices || 0}
+              </div>
+              <div>
+                <strong>Missing Services:</strong> ${analysis.summary?.missingServices || 0}
+              </div>
+              <div>
+                <strong>Circular Dependencies:</strong> ${analysis.summary?.circularDependencies || 0}
+              </div>
+              <div>
+                <strong>Health Score:</strong> ${analysis.summary?.healthScore || 0}/100
+              </div>
+            </div>
+          </div>
+
+          ${analysis.summary?.missingDependencies?.length > 0 ? `
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 10px; margin: 20px 0;">
+              <h4>⚠️ Missing Dependencies</h4>
+              <ul style="margin-top: 10px;">
+                ${analysis.summary.missingDependencies.slice(0, 10).map(dep => `<li>${dep}</li>`).join('')}
+                ${analysis.summary.missingDependencies.length > 10 ? `<li><em>... and ${analysis.summary.missingDependencies.length - 10} more</em></li>` : ''}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${analysis.performance ? `
+            <div style="background: #e8f5e8; border: 1px solid #c8e6c9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+              <h4>⚡ Performance Metrics</h4>
+              <div style="margin-top: 10px;">
+                <div><strong>Analysis Time:</strong> ${analysis.performance.analysisTime}ms</div>
+                ${analysis.performance.memoryUsage ? `<div><strong>Memory Usage:</strong> ${Math.round(analysis.performance.memoryUsage / 1024 / 1024)}MB</div>` : ''}
+              </div>
+            </div>
+          ` : ''}
+
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>🔄 Actions</h4>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+              <button class="btn" onclick="reloadAnalysis()">🔄 Reload Analysis</button>
+              <button class="btn" onclick="exportAnalysis()">📥 Export Report</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      analysisTab.innerHTML = analysisHTML;
+    }
+
+    // Update Config tab
+    function updateConfigTab(config) {
+      const configTab = document.getElementById('config');
+      
+      if (!config) {
+        configTab.innerHTML = `
+          <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading configuration...</p>
+          </div>
+        `;
+        return;
+      }
+
+      const configHTML = `
+        <div>
+          <h3>⚙️ TDI2 Server Configuration</h3>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>📁 Source Configuration</h4>
+            <div style="margin-top: 15px;">
+              <div style="margin-bottom: 10px;"><strong>Source Path:</strong> <code>${config.srcPath || 'Not specified'}</code></div>
+              <div style="margin-bottom: 10px;"><strong>Port:</strong> ${config.port || 'Not specified'}</div>
+              <div style="margin-bottom: 10px;"><strong>Verbose Mode:</strong> ${config.verbose ? '✅ Enabled' : '❌ Disabled'}</div>
+              <div style="margin-bottom: 10px;"><strong>File Watching:</strong> ${config.watch ? '✅ Enabled' : '❌ Disabled'}</div>
+            </div>
+          </div>
+
+          <div style="background: #e3f2fd; border: 1px solid #90caf9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>🕐 Runtime Information</h4>
+            <div style="margin-top: 15px;">
+              <div style="margin-bottom: 10px;"><strong>Server Started:</strong> ${config.timestamp || 'Unknown'}</div>
+              <div style="margin-bottom: 10px;"><strong>Configuration Loaded:</strong> ${new Date().toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>🔧 Actions</h4>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+              <button class="btn" onclick="reloadConfig()">🔄 Reload Config</button>
+              <button class="btn" onclick="viewConfigFiles()">📄 View Config Files</button>
+            </div>
+          </div>
+
+          <div style="background: #fff3e0; border: 1px solid #ffcc02; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4>💡 Expected Config Locations</h4>
+            <p style="margin-bottom: 10px;">TDI2 looks for configuration files in these locations:</p>
+            <ul style="font-family: monospace; font-size: 0.9rem;">
+              <li>${config.srcPath}/.tdi2/di-config.ts</li>
+              <li>${config.srcPath}/.tdi2/di-config.js</li>
+              <li>${config.srcPath}/di-config.ts</li>
+              <li>${config.srcPath}/di-config.js</li>
+            </ul>
+          </div>
+        </div>
+      `;
+
+      configTab.innerHTML = configHTML;
+    }
+
+    // Additional helper functions
+    function exportAnalysis() {
+      if (currentData.analysis) {
+        const dataStr = JSON.stringify(currentData.analysis, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = `tdi2-analysis-${new Date().toISOString().split('T')[0]}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        
+        showNotification('Analysis report exported successfully', 'success');
+      }
+    }
+
+    function reloadConfig() {
+      fetch('/api/analysis/reload', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showNotification('Configuration reloaded successfully', 'success');
+            loadInitialData(); // Reload all data
+          } else {
+            showNotification('Failed to reload configuration', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Config reload error:', error);
+          showNotification('Failed to reload configuration', 'error');
+        });
+    }
+
+    function viewConfigFiles() {
+      showNotification('Config file viewer coming soon', 'info');
+    }
+  </script>
+</body>
+</html>

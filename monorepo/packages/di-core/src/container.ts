@@ -411,6 +411,53 @@ export class CompileTimeDIContainer implements DIContainer {
     console.log("🎯 Scopes:", Array.from(this.scopes.entries()));
   }
 
+  // Analytics methods moved to @tdi2/di-debug package
+  // Use container-analytics utilities from di-debug for:
+  // - getDependencyGraph()
+  // - validateConfiguration() 
+  // - getResolutionPath()
+  // - findCircularDependencies()
+
+  /**
+   * Export container configuration in JSON format
+   * Compatible with analytics tools and CLI
+   */
+  exportConfiguration(): any {
+    // Convert container state to DI config format
+    const config: Record<string, any> = {};
+    
+    // Export factories as service configurations
+    for (const [tokenKey, factory] of this.factories.entries()) {
+      const scope = this.scopes.get(tokenKey) || 'singleton';
+      config[tokenKey.toString()] = {
+        implementationClass: tokenKey, // Simplified for analytics
+        scope,
+        dependencies: [], // Would need dependency tracking for full analysis
+        registrationType: 'factory',
+        isClassBased: false,
+        isAutoResolved: true
+      };
+    }
+
+    // Export direct service registrations
+    for (const [tokenKey, service] of this.services.entries()) {
+      const scope = this.scopes.get(tokenKey) || 'singleton';
+      config[tokenKey.toString()] = {
+        implementationClass: service.constructor.name,
+        scope,
+        dependencies: [], // Would need dependency tracking for full analysis
+        registrationType: 'class',
+        isClassBased: true,
+        isAutoResolved: false
+      };
+    }
+
+    return config;
+  }
+
+  // getHealthReport() moved to @tdi2/di-debug package
+  // Use container-analytics utilities from di-debug
+
   // NEW: Method to register by interface (for enhanced interface-based DI)
   registerByInterface<T>(
     interfaceName: string,

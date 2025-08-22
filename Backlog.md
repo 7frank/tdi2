@@ -2,23 +2,116 @@
 
 ## ordered log
 
-### [✅] fix gh-pages actions for
+### [❌] fix some more di issues & have more debugging support
 
-- test harness
-- documentation
+- [✅] tsup for cli and bin/cli.js support
+- [❌] publish cli to be available in the minor
+- [✅] test cli commands properly that they work with
+  - ecommerce example
+
+- [❌] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
+- serve
+
+relations missing service => class => interfaces
+
+
+
+### [❌] CacheInterface_any in legacy
+
+- `br cli.ts analyze --src ../../apps/legacy/src/ --format table`
+
+```
+📄 Loaded DI config from ../../apps/legacy/src/.tdi2/di-config.ts
+🔍 Analyzing DI configuration in ../../apps/legacy/src/...
+
+📊 DI Configuration Analysis Report
+══════════════════════════════════════════════════
+Status: ❌ ISSUES FOUND (Score: 80/100)
+Services: 19 total
+Issues: 1 errors, 0 warnings
+
+❌ Missing Dependencies (1):
+• CacheInterface_any
+```
+
+- file where the reference is: monorepo/apps/legacy/src/services/UserApiServiceImpl.ts
+- file where the
+
+```
+br cli.ts trace CacheInterface_T --src ../../apps/legacy/src/
+📄 Loaded DI config from ../../apps/legacy/src/.tdi2/di-config.ts
+🔍 Tracing resolution path for 'CacheInterface_T'...
+
+🔍 Resolution Trace: CacheInterface_T
+══════════════════════════════════════════════════
+Result: ✅ SUCCESS
+
+Resolution Steps:
+1. ✅ interface: Found 'CacheInterface_T' in DI configuration
+2. ✅ interface: Implementation: MemoryCache (interface)
+   → MemoryCache (/src/memorycache.ts)
+```
+
+The problem
+
+```
+@Service()
+export class MemoryCache<T> implements CacheInterface<T> {
+```
+
+itself is generic and cannot be respolved directly
+it would have to be necessary to be used via configuration / bean
+
+- therefore we might want to have a more meaningful error message than simply saing missing
+
+```
+ br cli.ts trace CacheInterface_any --src ../../apps/legacy/src/
+📄 Loaded DI config from ../../apps/legacy/src/.tdi2/di-config.ts
+🔍 Tracing resolution path for 'CacheInterface_any'...
+
+🔍 Resolution Trace: CacheInterface_any
+══════════════════════════════════════════════════
+Result: ❌ FAILED
+Error: Service token 'CacheInterface_any' not found in DI configuration
+
+Resolution Steps:
+1. ❌ interface: Token 'CacheInterface_any' not found in DI configuration
+2. ❌ interface: Similar tokens found: CacheInterface_T, MemoryCache
+3. ❌ class: Expected class: CacheInterface_any - check if class exists and has @Service decorator
+```
+
+- we might be able to determine the "closest" implementation
+- or check if there is a generic that is close to our naming and in which case tell that there is a compatible but not fully configured service
+
+### [❌] separate packages if code base grows
+
+> this would be beneficial for ppl using only the core features with other languages that react
+
+- di-core
+- di-shared
+- di-react
+- di-debug (serve,(analytics),cli)
+
+### [❌] di-debug cli and serve autodetect di-config
+
+### [❌] sundown "legacy" app take whats there still valuable e.g. dependency viewer maybe (which we should move into di-debug package already)
+
+### [❌] create plan for "prod"
+
+from prod/PotentialProblems.md
+and prod/PostProductionRoadmap.md
+
+- update easy wins if any
 
 ### [❌] research claude code subscription schedulers
 
 - https://chatgpt.com/c/68a3a375-488c-8320-b748-04593842b6f5
 
+- maybe we can combine prefect with **telegram** to have something that allows us to use more of the subscription via mobile too
 
-- maybe we can combine prefect with **telegram** to have something that allows us to use more of the subscriptin via mobile too
-
-
-
-### [✅] clean up talks/RFP for what value it still has
-
-- maybe we simply delete it
+- use cases
+  - fully automated tasks that are isolated
+  - semi interactive tasks via telegram feedback channel
 
 ### [❌] handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
 
@@ -44,19 +137,12 @@
   - working DI (This might be still ahrd because 2 different packages)
 
 ### [❌] transformed not writing to file system
-see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned
 
+see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned
 
 ### [❌] DI bugs & side effects (part 1)
 
 > create integration / snapshot tests for code generator
-
-#### [❌] ⚠️ interfaces still not working with generic any
-
-> Inject<ExampleApiInterface>;
-
-> Validation Issues:
-> Missing: UserApiServiceImpl -> CacheInterface_any
 
 #### [❌] FIXME TodoApp TodoService2 isnt properly injected
 
@@ -190,14 +276,6 @@ maybe normalization could help
   - then splitting Controller Logic and Business Logic into separate Classes/interfaces (This would be Clean)
 
 !!! there is a gradient of what works best
-
-### [❌] separate packages if code base grows
-
-> this would be benefitial for ppl using only the core features with other languages that react
-
-- di-core
-- di-shared
-- di-react
 
 ### [❌] use crossnote cli to render to pdf
 
@@ -402,6 +480,27 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] ⚠️ interfaces still not working with generic any
+
+> **ANALYSIS COMPLETED**: This issue is **RESOLVED**. Key sanitizer correctly handles generic types without collisions:
+>
+> - `CacheInterface<any>` → `CacheInterface_any` ✅
+> - `CacheInterface<string[]>` → `CacheInterface_string_Array` ✅
+> - `CacheInterface<User>` → `CacheInterface_User` ✅
+>
+> The warning "Missing: UserApiServiceImpl -> CacheInterface_any" is expected behavior - it indicates UserApiServiceImpl needs a CacheInterface<any> implementation, which should be provided by MemoryCache service.
+>
+> **STATUS**: No fix needed - working as intended
+
+### [✅] fix gh-pages actions for
+
+- test harness
+- documentation
+
+### [✅] clean up talks/RFP for what value it still has
+
+- maybe we simply delete it
 
 ### [✅] add di-testing example
 

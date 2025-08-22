@@ -37,6 +37,11 @@ export interface DIContainer {
   getFactory(token: string | symbol): any;
   hasService(token: string | symbol): boolean;
   getService(token: string | symbol): any;
+
+  // Lifecycle methods
+  hasLifecycleHooks(instance: any): { onMount: boolean; onUnmount: boolean; onInit: boolean; onDestroy: boolean };
+  executeOnMountLifecycle<T>(instance: T, options?: { signal?: AbortSignal }): Promise<void>;
+  executeOnUnmountLifecycle<T>(instance: T): Promise<void>;
 }
 
 // Service decorator options - now supports interface resolution
