@@ -640,9 +640,18 @@ export class IntegratedInterfaceResolver {
 
       for (const depKey of dependency.interfaceDependencies) {
         for (const [key, implementation] of this.interfaces) {
+          // Handle both location-based and standard key matching
           if (implementation.sanitizedKey === depKey) {
+            // Exact match (backward compatibility)
             resolved.push(implementation.implementationClass);
             break;
+          } else if (this.keySanitizer.isLocationBasedKey(implementation.sanitizedKey)) {
+            // For location-based keys, check if they start with the dependency key
+            const interfaceName = this.keySanitizer.extractInterfaceNameFromLocationKey(implementation.sanitizedKey);
+            if (interfaceName === depKey) {
+              resolved.push(implementation.implementationClass);
+              break;
+            }
           }
         }
       }
