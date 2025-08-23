@@ -1,22 +1,121 @@
 # Backlog
 
-## ordered log
-
-### [❌] fix some more di issues & have more debugging support
-
-- [✅] tsup for cli and bin/cli.js support
-- [❌] publish cli to be available in the minor
-- [✅] test cli commands properly that they work with
-  - ecommerce example
-
-- [✅] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
-- serve
-
-relations missing service => class => interfaces
+## ordered log (for production)
 
 
+### [❌] transformed not writing to file system
+
+see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned
+
+### [❌] DI bugs & side effects (part 1)
+
+> create integration / snapshot tests for code generator
+
+#### [✅] FIXME TodoApp TodoService2 isnt properly injected
+
+- [❌] there is a missing interface in a test that does nothing currently we can savely remove it
+  - monorepo/apps/legacy/src/di.integration.test.tsx
+  - import type { TodoServiceType } from "../src/todo/interfaces/TodoInterfaces";
+
+- it was not properly injected in case there where two or more interface (in different files ) with the same name e.g. "TodoServiceInterface" and @Services that impplement them
+- Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
+
+#### [✅] FIXME having two different classes of the same name will one not be resolved properly
+
+e.g.:
+
+1 TodoService implements TodoServiceInterface
+2 TodoService implements TodoServiceType
+
+#### [✅] is DI scope using import path
+
+- potential duplicate
+- if say we have two "implements UserRepoInterface"
+
+
+#### [❌] FIXME duplicated keys, see generated list of services
+
+- potential duplicate
+
+
+
+#### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
+
+evaluate scenarios
+
+- to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
+- or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
+
+#### [❌] Fixme: example which his generating invalid code
+
+```typescript
+export function DemographicsForm(props: DemographicsFormProps) {
+  const { services, onComplete } = props;
+
+  const { demographicsForm } = services;
+}
+```
+
+#### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
+
+```typescript
+interface AppProps {
+  services: {
+    todoService: Inject<TodoServiceInterface>;
+    appState: Inject<AppStateServiceInterface>;
+    notifications: Inject<NotificationServiceInterface>;
+  };
+}
+
+export function TodoApp2({
+  services: { todoService, appState, notifications },
+}: AppProps) {}
+```
+
+
+### [❌] create plan whats missing for "prod"
+
+from prod/PotentialProblems.md
+and prod/PostProductionRoadmap.md
+
+- update easy wins if any
+
+### [❌] handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
+
+> test with local instead of npm ?
+> maybe by setting these otions
+
+```
+"compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@tdi2/di-core/*": ["./src/*"]
+    },
+```
+
+### [❌] separate packages
+
+> this would be beneficial for ppl using only the core features with other languages that react
+
+- [❌] di-core
+- [❌] di-react
+- [❌] di-debug (serve,(analytics),cli)
+
+## ordered log (for post-production)
+
+### [❌] in di-debug serve graph
+
+> improve debugging capabilities
+
+- relations missing service => class => interfaces
 
 ### [❌] CacheInterface_any in legacy
+
+> we have to decide how we want to handle this, spring boot would use java type erasure and use it as nongeneric
+> we on the other hand could
+>
+> - trigger an error/warning that this needs a config bean or service not working without implementation
+>   or handle it like spring boot would
 
 - `br src/cli.ts analyze --src ../legacy/src/ --format table`
 
@@ -83,25 +182,7 @@ Resolution Steps:
 - we might be able to determine the "closest" implementation
 - or check if there is a generic that is close to our naming and in which case tell that there is a compatible but not fully configured service
 
-### [❌] separate packages if code base grows
-
-> this would be beneficial for ppl using only the core features with other languages that react
-
-- di-core
-- di-shared
-- di-react
-- di-debug (serve,(analytics),cli)
-
-### [❌] di-debug cli and serve autodetect di-config
-
 ### [❌] sundown "legacy" app take whats there still valuable e.g. dependency viewer maybe (which we should move into di-debug package already)
-
-### [❌] create plan for "prod"
-
-from prod/PotentialProblems.md
-and prod/PostProductionRoadmap.md
-
-- update easy wins if any
 
 ### [❌] research claude code subscription schedulers
 
@@ -113,19 +194,6 @@ and prod/PostProductionRoadmap.md
   - fully automated tasks that are isolated
   - semi interactive tasks via telegram feedback channel
 
-### [❌] handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
-
-> test with local instead of npm ?
-> maybe by setting these otions
-
-```
-"compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@tdi2/di-core/*": ["./src/*"]
-    },
-```
-
 ### [❌] focus on meaningful test cases and create snapshot tests for failing scenarios that we want to support
 
 > focus debugging, how can we easily provide info to developer with ladle or snapshot tests, to find out why things fail and what they can do
@@ -135,72 +203,6 @@ and prod/PostProductionRoadmap.md
 - both should provide similar experience
   - side by side comparision of source and generated
   - working DI (This might be still ahrd because 2 different packages)
-
-### [❌] transformed not writing to file system
-
-see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned
-
-### [❌] DI bugs & side effects (part 1)
-
-> create integration / snapshot tests for code generator
-
-#### [✅] FIXME TodoApp TodoService2 isnt properly injected
-
-- [❌] there is a missing interface in a test that does nothing currently we can savely remove it
-  - monorepo/apps/legacy/src/di.integration.test.tsx
-  - import type { TodoServiceType } from "../src/todo/interfaces/TodoInterfaces";
-
-- it was not properly injected in case there where two or more interface (in different files ) with the same name e.g. "TodoServiceInterface" and @Services that impplement them
-- Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
-
-#### [✅] FIXME having two different classes of the same name will one not be resolved properly
-
-e.g.:
-
-1 TodoService implements TodoServiceInterface
-2 TodoService implements TodoServiceType
-
-#### [❌] FIXME duplicated keys, see generated list of services
-
-- potential duplicate
-
-#### [✅] is DI scope using import path
-
-- potential duplicate
-- if say we have two "implements UserRepoInterface"
-
-#### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
-
-evaluate scenarios
-
-- to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
-- or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
-
-#### [❌] Fixme: example which his generating invalid code
-
-```typescript
-export function DemographicsForm(props: DemographicsFormProps) {
-  const { services, onComplete } = props;
-
-  const { demographicsForm } = services;
-}
-```
-
-#### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
-
-```typescript
-interface AppProps {
-  services: {
-    todoService: Inject<TodoServiceInterface>;
-    appState: Inject<AppStateServiceInterface>;
-    notifications: Inject<NotificationServiceInterface>;
-  };
-}
-
-export function TodoApp2({
-  services: { todoService, appState, notifications },
-}: AppProps) {}
-```
 
 ### [❌] potential use case, "contracts"
 
@@ -484,6 +486,18 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] fix some more di issues & have more debugging support
+
+- [✅] tsup for cli and bin/cli.js support
+- [❌] publish cli to be available in the minor
+- [✅] test cli commands properly that they work with
+  - ecommerce example
+
+- [✅] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
+- serve
+
+### [✅] di-debug cli and serve autodetect di-config
 
 ### [✅] ⚠️ interfaces still not working with generic any
 
