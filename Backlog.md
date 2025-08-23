@@ -1,43 +1,12 @@
 # Backlog
 
-## ordered log (for production)
-
-
-### [❌] transformed not writing to file system
-
-see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned
+## ordered log (for production release)
 
 ### [❌] DI bugs & side effects (part 1)
-
-> create integration / snapshot tests for code generator
-
-#### [✅] FIXME TodoApp TodoService2 isnt properly injected
-
-- [❌] there is a missing interface in a test that does nothing currently we can savely remove it
-  - monorepo/apps/legacy/src/di.integration.test.tsx
-  - import type { TodoServiceType } from "../src/todo/interfaces/TodoInterfaces";
-
-- it was not properly injected in case there where two or more interface (in different files ) with the same name e.g. "TodoServiceInterface" and @Services that impplement them
-- Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
-
-#### [✅] FIXME having two different classes of the same name will one not be resolved properly
-
-e.g.:
-
-1 TodoService implements TodoServiceInterface
-2 TodoService implements TodoServiceType
-
-#### [✅] is DI scope using import path
-
-- potential duplicate
-- if say we have two "implements UserRepoInterface"
-
 
 #### [❌] FIXME duplicated keys, see generated list of services
 
 - potential duplicate
-
-
 
 #### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
 
@@ -72,7 +41,6 @@ export function TodoApp2({
 }: AppProps) {}
 ```
 
-
 ### [❌] create plan whats missing for "prod"
 
 from prod/PotentialProblems.md
@@ -93,9 +61,17 @@ and prod/PostProductionRoadmap.md
     },
 ```
 
+### [❌] transformed not writing to file system
+
+> easier to check if something went wrong
+> also easier to add to di-debug
+
+see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned for debugging this
+
 ### [❌] separate packages
 
-> this would be beneficial for ppl using only the core features with other languages that react
+> important for prod for less disruptions in post-prod releases
+> this would be beneficial for ppl using only the core features with other languages than react
 
 - [❌] di-core
 - [❌] di-react
@@ -486,6 +462,27 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+#### [✅] FIXME TodoApp TodoService2 isnt properly injected
+
+- [✅] there is a missing interface in a test that does nothing currently we can savely remove it
+  - monorepo/apps/legacy/src/di.integration.test.tsx
+  - import type { TodoServiceType } from "../src/todo/interfaces/TodoInterfaces";
+
+- it was not properly injected in case there where two or more interface (in different files ) with the same name e.g. "TodoServiceInterface" and @Services that impplement them
+- Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
+
+#### [✅] FIXME having two different classes of the same name will one not be resolved properly
+
+e.g.:
+
+1 TodoService implements TodoServiceInterface
+2 TodoService implements TodoServiceType
+
+#### [✅] is DI scope using import path
+
+- potential duplicate
+- if say we have two "implements UserRepoInterface"
 
 ### [✅] fix some more di issues & have more debugging support
 

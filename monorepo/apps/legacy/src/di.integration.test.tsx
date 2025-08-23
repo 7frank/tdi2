@@ -3,7 +3,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { CompileTimeDIContainer } from "@tdi2/di-core/container";
 import { DI_CONFIG } from "../src/.tdi2/di-config";
-import type { TodoServiceType } from "../src/todo/interfaces/TodoInterfaces";
 import type { TodoServiceInterface } from "../src/todo2/types";
 
 describe("DI Container Service Resolution", () => {
@@ -82,7 +81,7 @@ describe("DI Container Service Resolution", () => {
       expect(container.has("TodoServiceType")).toBe(true);
 
       // Verify resolution
-      const service = container.resolve<TodoServiceType>("TodoServiceType");
+      const service = container.resolve("TodoServiceType");
       expect(service).toBeDefined();
       expect(service.constructor.name).toBe("TodoService");
 
@@ -90,7 +89,7 @@ describe("DI Container Service Resolution", () => {
     });
 
     it("should have correct initial state", () => {
-      const service = container.resolve<TodoServiceType>("TodoServiceType");
+      const service = container.resolve("TodoServiceType");
 
       const state = service.getCurrentData();
       expect(state?.todos || []).toEqual([]);
@@ -101,7 +100,7 @@ describe("DI Container Service Resolution", () => {
     });
 
     it("should handle AsyncState operations", async () => {
-      const service = container.resolve<TodoServiceType>("TodoServiceType");
+      const service = container.resolve("TodoServiceType");
 
       // Load todos first
       await service.loadTodos();
@@ -130,7 +129,7 @@ describe("DI Container Service Resolution", () => {
       const todoService2 = container.resolve<TodoServiceInterface>(
         "TodoServiceInterface"
       );
-      const todoService = container.resolve<TodoServiceType>("TodoServiceType");
+      const todoService = container.resolve("TodoServiceType");
 
       expect(todoService2.constructor.name).toBe("TodoService2");
       expect(todoService.constructor.name).toBe("TodoService");
