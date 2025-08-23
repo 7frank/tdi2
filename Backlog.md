@@ -4,12 +4,17 @@
 
 ### [❌] DI bugs & side effects (part 1)
 
-#### [✅] normalizing destructured function arguments is only applied to "Inject"ed not all variables
+#### [❌] Fixme: example which his generating invalid code
 
-see :
+> secondary destructurings fails
 
-- destructured-services-params.basic.input.tsx
-- destructured-services-params.basic.transformed.snap.tsx
+```typescript
+export function DemographicsForm(props: DemographicsFormProps) {
+  const { services, onComplete } = props;
+
+  const { demographicsForm } = services;
+}
+```
 
 #### [❌] FIXME duplicated keys, see generated list of services
 
@@ -21,32 +26,6 @@ evaluate scenarios
 
 - to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
 - or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
-
-#### [❌] Fixme: example which his generating invalid code
-
-```typescript
-export function DemographicsForm(props: DemographicsFormProps) {
-  const { services, onComplete } = props;
-
-  const { demographicsForm } = services;
-}
-```
-
-#### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
-
-```typescript
-interface AppProps {
-  services: {
-    todoService: Inject<TodoServiceInterface>;
-    appState: Inject<AppStateServiceInterface>;
-    notifications: Inject<NotificationServiceInterface>;
-  };
-}
-
-export function TodoApp2({
-  services: { todoService, appState, notifications },
-}: AppProps) {}
-```
 
 ### [❌] add tsc type check to fixture tests
 
@@ -478,6 +457,29 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+#### [✅] normalizing destructured function arguments is only applied to "Inject"ed not all variables
+
+see :
+
+- destructured-services-params.basic.input.tsx
+- destructured-services-params.basic.transformed.snap.tsx
+
+#### [✅] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
+
+```typescript
+interface AppProps {
+  services: {
+    todoService: Inject<TodoServiceInterface>;
+    appState: Inject<AppStateServiceInterface>;
+    notifications: Inject<NotificationServiceInterface>;
+  };
+}
+
+export function TodoApp2({
+  services: { todoService, appState, notifications },
+}: AppProps) {}
+```
 
 #### [✅] FIXME TodoApp TodoService2 isnt properly injected
 

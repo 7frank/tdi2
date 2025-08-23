@@ -83,6 +83,10 @@ describe("Functional DI Transformation Tests", () => {
       "should handle more nested destucturing values",
       defineTransformationTest("destructured-services-params", FIXTURES_DIR)
     );
+    it(
+      "should handle secondary destructuring from services",
+      defineTransformationTest("secondary-destructuring", FIXTURES_DIR)
+    );
   });
 
   // Custom test with detailed verification
