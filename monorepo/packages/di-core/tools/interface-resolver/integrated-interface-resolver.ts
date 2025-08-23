@@ -166,8 +166,8 @@ export class IntegratedInterfaceResolver {
       }
 
       // Enhanced interface extraction using AST methods
-      const implementedInterfaces = this.interfaceExtractor.getImplementedInterfaces(classDecl);
-      const extendedClasses = this.interfaceExtractor.getExtendedClasses(classDecl);
+      const implementedInterfaces = this.interfaceExtractor.getImplementedInterfaces(classDecl, sourceFile);
+      const extendedClasses = this.interfaceExtractor.getExtendedClasses(classDecl, sourceFile);
       const allHeritage = [...implementedInterfaces, ...extendedClasses];
 
       // Enhanced inheritance analysis
@@ -227,7 +227,12 @@ export class IntegratedInterfaceResolver {
     className: string,
     sourceFile: SourceFile
   ): Promise<void> {
-    const sanitizedKey = this.keySanitizer.sanitizeKey(interfaceInfo.fullType);
+    // Use location-based key generation to prevent interface name collisions
+    const sanitizedKey = this.keySanitizer.createLocationBasedKey(
+      interfaceInfo.fullType,
+      interfaceInfo.sourceFilePath,
+      interfaceInfo.lineNumber
+    );
 
     // Extract scope from @Service decorator
     const classDecl = sourceFile.getClass(className);
@@ -427,22 +432,59 @@ export class IntegratedInterfaceResolver {
     console.log(`  📋 Total: ${this.interfaces.size}\n`);
   }
 
-  // FIXED: Enhanced resolution with comprehensive generic matching
+  // ENHANCED: Resolution with location-based key support and interface name collision handling
   resolveImplementation(interfaceType: string): InterfaceImplementation | undefined {
-    const sanitizedKey = this.keySanitizer.sanitizeKey(interfaceType);
+    // Check if this is a location-based key request
+    const isLocationBasedRequest = this.keySanitizer.isLocationBasedKey(interfaceType);
+    let sanitizedKey: string;
+    
+    if (isLocationBasedRequest) {
+      // Use the location-based key directly
+      sanitizedKey = interfaceType;
+    } else {
+      // Create standard sanitized key for fallback
+      sanitizedKey = this.keySanitizer.sanitizeKey(interfaceType);
+    }
     
     if (this.options.verbose) {
-      console.log(`🔍 Enhanced resolution: ${interfaceType} -> key: ${sanitizedKey}`);
+      console.log(`🔍 Enhanced resolution: ${interfaceType} -> key: ${sanitizedKey} (location-based: ${isLocationBasedRequest})`);
     }
 
-    // 1. Exact sanitized key match (highest priority)
-    for (const [key, implementation] of this.interfaces) {
-      if (implementation.sanitizedKey === sanitizedKey) {
+    // 1. Exact key match (highest priority) - handles both location-based and standard keys  
+    for (const [storedKey, implementation] of this.interfaces) {
+      // Check for exact stored key match
+      if (storedKey === sanitizedKey || storedKey === interfaceType) {
         if (this.options.verbose) {
-          console.log(`✅ Exact match: ${implementation.implementationClass} (${this.getRegistrationType(implementation)})`);
+          console.log(`✅ Exact stored key match: ${implementation.implementationClass} (${this.getRegistrationType(implementation)})`);
         }
         return implementation;
       }
+      
+      // For location-based keys, check if the stored key starts with the requested location-based key
+      if (isLocationBasedRequest && storedKey.startsWith(sanitizedKey + '_')) {
+        if (this.options.verbose) {
+          console.log(`✅ Location-based key prefix match: ${implementation.implementationClass} (${this.getRegistrationType(implementation)})`);
+        }
+        return implementation;
+      }
+      
+      // Check sanitizedKey match (for backward compatibility)
+      if (implementation.sanitizedKey === sanitizedKey || implementation.sanitizedKey === interfaceType) {
+        if (this.options.verbose) {
+          console.log(`✅ Sanitized key match: ${implementation.implementationClass} (${this.getRegistrationType(implementation)})`);
+        }
+        return implementation;
+      }
+    }
+    
+    // 1b. If this was a location-based request but no exact match, extract interface name and try interface matching
+    if (isLocationBasedRequest) {
+      const extractedInterfaceName = this.keySanitizer.extractInterfaceNameFromLocationKey(interfaceType);
+      if (this.options.verbose) {
+        console.log(`🔄 Location-based key failed, trying interface name: ${extractedInterfaceName}`);
+      }
+      // Recursively try with just the interface name
+      return this.resolveImplementation(extractedInterfaceName);
     }
 
     // 2. FIXED: Generic interface matching - handle type parameter substitution
@@ -598,9 +640,18 @@ export class IntegratedInterfaceResolver {
 
       for (const depKey of dependency.interfaceDependencies) {
         for (const [key, implementation] of this.interfaces) {
+          // Handle both location-based and standard key matching
           if (implementation.sanitizedKey === depKey) {
+            // Exact match (backward compatibility)
             resolved.push(implementation.implementationClass);
             break;
+          } else if (this.keySanitizer.isLocationBasedKey(implementation.sanitizedKey)) {
+            // For location-based keys, check if they start with the dependency key
+            const interfaceName = this.keySanitizer.extractInterfaceNameFromLocationKey(implementation.sanitizedKey);
+            if (interfaceName === depKey) {
+              resolved.push(implementation.implementationClass);
+              break;
+            }
           }
         }
       }

@@ -317,8 +317,16 @@ export class EnhancedServiceValidator {
         let found = false;
         for (const [key, implementation] of interfaces) {
           if (implementation.sanitizedKey === depKey) {
+            // Exact match (backward compatibility)
             found = true;
             break;
+          } else {
+            // For location-based keys, check interface name match
+            const interfaceName = this.extractInterfaceNameFromKey(implementation.sanitizedKey);
+            if (interfaceName === depKey) {
+              found = true;
+              break;
+            }
           }
         }
         if (!found) {
@@ -372,7 +380,18 @@ export class EnhancedServiceValidator {
         for (const depKey of dependency.interfaceDependencies) {
           // Find implementation for this dependency
           for (const [key, implementation] of interfaces) {
+            let matches = false;
             if (implementation.sanitizedKey === depKey) {
+              matches = true;
+            } else {
+              // For location-based keys, check interface name match
+              const interfaceName = this.extractInterfaceNameFromKey(implementation.sanitizedKey);
+              if (interfaceName === depKey) {
+                matches = true;
+              }
+            }
+            
+            if (matches) {
               if (
                 hasCycle(implementation.implementationClass, [...path, node])
               ) {
@@ -682,5 +701,17 @@ export class EnhancedServiceValidator {
     }
 
     return false;
+  }
+
+  /**
+   * Extract interface name from a key (handles both standard and location-based keys)
+   */
+  private extractInterfaceNameFromKey(sanitizedKey: string): string {
+    // Check if it's a location-based key
+    if (sanitizedKey.includes('__') && sanitizedKey.includes('_line_')) {
+      return sanitizedKey.split('__')[0];
+    }
+    // Otherwise return the key as-is (standard key)
+    return sanitizedKey;
   }
 }
