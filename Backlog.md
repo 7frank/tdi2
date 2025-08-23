@@ -146,15 +146,14 @@ see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the othe
 
 #### [✅] FIXME TodoApp TodoService2 isnt properly injected
 
-- ❌ 3 test failnig 
-- ❌ there is a missing interface in a test that does nothing currently we can savely remove it
+- [❌] there is a missing interface in a test that does nothing currently we can savely remove it
   - monorepo/apps/legacy/src/di.integration.test.tsx
   - import type { TodoServiceType } from "../src/todo/interfaces/TodoInterfaces";
 
 - it was not properly injected in case there where two or more interface (in different files ) with the same name e.g. "TodoServiceInterface" and @Services that impplement them
 - Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
 
-#### [❌] FIXME having two different classes of the same name will one not be resolved properly
+#### [✅] FIXME having two different classes of the same name will one not be resolved properly
 
 e.g.:
 
@@ -165,7 +164,7 @@ e.g.:
 
 - potential duplicate
 
-#### [❌] is DI scope using import path
+#### [✅] is DI scope using import path
 
 - potential duplicate
 - if say we have two "implements UserRepoInterface"
