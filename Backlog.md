@@ -4,6 +4,13 @@
 
 ### [❌] DI bugs & side effects (part 1)
 
+#### [❌] normalizing destructured fucntion arguments is only applied to "Inject"ed not all variables
+
+see :
+
+- destructured-services-params.basic.input.tsx
+- destructured-services-params.basic.transformed.snap.tsx
+
 #### [❌] FIXME duplicated keys, see generated list of services
 
 - potential duplicate
@@ -40,6 +47,15 @@ export function TodoApp2({
   services: { todoService, appState, notifications },
 }: AppProps) {}
 ```
+
+### [❌] add tsc type check to fixture tests
+
+> this way the test will show more meaningful errors and at least warn about them
+
+### [❌] reason about InjectOptional and remove it if not enough use cases speak for it
+
+- there seem to be some good reasons for
+  - doḱument them, write ADR
 
 ### [❌] create plan whats missing for "prod"
 
