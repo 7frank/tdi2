@@ -4,7 +4,7 @@
 
 ### [❌] DI bugs & side effects (part 1)
 
-#### [❌] normalizing destructured fucntion arguments is only applied to "Inject"ed not all variables
+#### [✅] normalizing destructured function arguments is only applied to "Inject"ed not all variables
 
 see :
 

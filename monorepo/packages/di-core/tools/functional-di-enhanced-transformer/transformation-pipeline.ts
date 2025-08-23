@@ -88,25 +88,31 @@ export class TransformationPipeline {
       console.log(`🚀 Starting FIXED transformation pipeline`);
     }
 
-    // Step 0: Enhance dependencies with resolved implementations
+    // Step 0: Extract ALL parameter variables BEFORE any normalization
+    const parameterVariables = this.extractAllParameterVariables(func);
+
+    // Step 1: Enhance dependencies with resolved implementations
     const enhancedDependencies = this.enhanceDependenciesWithResolution(dependencies);
 
-    // Step 1: Normalize parameters (remove destructuring from function signature)
+    // Step 2: Normalize parameters (remove destructuring from function signature)
     this.normalizeParameters(func);
 
-    // Step 2: FIXED - Generate DI hook calls with proper optional chaining AND preserve non-DI destructuring
+    // Step 3: FIXED - Generate DI hook calls with proper optional chaining AND preserve non-DI destructuring
     this.generateDIHookCallsAndPreserveDestructuring(func, enhancedDependencies);
 
-    // Step 3: Update property access expressions to use new variables
+    // Step 4: Update property access expressions to use new variables
     this.propertyUpdater.updatePropertyAccessAdvanced(func, enhancedDependencies);
 
-    // Step 4: FIXED - Only remove DI-related destructuring, preserve other destructuring
+    // Step 5: Normalize ALL parameter variable references to props.* access
+    this.normalizeParameterVariableReferences(func, parameterVariables);
+
+    // Step 6: FIXED - Only remove DI-related destructuring, preserve other destructuring
     this.removeOnlyDIDestructuring(func, enhancedDependencies);
 
-    // Step 5: Lifecycle hooks are now handled automatically in useService() hooks
+    // Step 7: Lifecycle hooks are now handled automatically in useService() hooks
     // No code generation needed - lifecycle management is built into the DI system
 
-    // Step 6: Validate the transformation
+    // Step 8: Validate the transformation
     if (this.options.verbose) {
       const validation = this.propertyUpdater.validateUpdates(func, enhancedDependencies);
       if (!validation.isValid) {
@@ -682,6 +688,178 @@ export class TransformationPipeline {
 
     if (this.options.verbose) {
       console.log(`🔄 Updated references from '${oldName}' to '${newName}'`);
+    }
+  }
+
+  /**
+   * Extract ALL parameter variables with their original destructuring paths
+   */
+  private extractAllParameterVariables(func: FunctionDeclaration | ArrowFunction): Map<string, string> {
+    const parameterVariables = new Map<string, string>();
+    const parameters = func.getParameters();
+    
+    if (parameters.length === 0) return parameterVariables;
+
+    const firstParam = parameters[0];
+    const nameNode = firstParam.getNameNode();
+
+    // If the parameter is destructured, extract all variables with their paths
+    if (Node.isObjectBindingPattern(nameNode)) {
+      this.extractVariablesFromDestructuring(nameNode, [], parameterVariables);
+    }
+
+    if (this.options.verbose) {
+      console.log(`🔍 Extracted ${parameterVariables.size} parameter variables:`, 
+        Array.from(parameterVariables.entries()));
+    }
+
+    return parameterVariables;
+  }
+
+  /**
+   * Recursively extract variables from destructuring patterns with their paths
+   */
+  private extractVariablesFromDestructuring(
+    pattern: any, 
+    currentPath: string[], 
+    result: Map<string, string>
+  ): void {
+    const elements = pattern.getElements();
+
+    for (const element of elements) {
+      if (Node.isBindingElement(element)) {
+        const nameNode = element.getNameNode();
+        const propertyNameNode = element.getPropertyNameNode();
+
+        if (Node.isIdentifier(nameNode)) {
+          // Simple case: { todo } or { propertyName: localName }
+          let propertyName: string;
+          let localName: string;
+
+          if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
+            // { propertyName: localName } pattern
+            propertyName = propertyNameNode.getText();
+            localName = nameNode.getText();
+          } else {
+            // { localName } shorthand pattern
+            propertyName = nameNode.getText();
+            localName = nameNode.getText();
+          }
+
+          // Build the props access path
+          const fullPath = [...currentPath, propertyName];
+          const propsAccess = fullPath.length > 0 ? 
+            `props.${fullPath.join('?.')}` : 
+            `props.${propertyName}`;
+          
+          result.set(localName, propsAccess);
+          
+          if (this.options.verbose) {
+            console.log(`📝 Variable mapping: ${localName} -> ${propsAccess}`);
+          }
+
+        } else if (Node.isObjectBindingPattern(nameNode)) {
+          // Nested destructuring: { services: { api } }
+          let propertyName: string;
+          
+          if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
+            propertyName = propertyNameNode.getText();
+          } else {
+            continue; // Skip complex patterns we can't parse
+          }
+          
+          // Recurse into nested destructuring
+          this.extractVariablesFromDestructuring(nameNode, [...currentPath, propertyName], result);
+        }
+      }
+    }
+  }
+
+  /**
+   * Normalize parameter variable references to use props.* access
+   */
+  private normalizeParameterVariableReferences(
+    func: FunctionDeclaration | ArrowFunction,
+    parameterVariables: Map<string, string>
+  ): void {
+    if (parameterVariables.size === 0) {
+      if (this.options.verbose) {
+        console.log(`📝 No parameter variables to normalize - skipping`);
+      }
+      return;
+    }
+
+    const body = this.getFunctionBody(func);
+    if (!body) return;
+
+    if (this.options.verbose) {
+      console.log(`🔄 Normalizing ${parameterVariables.size} parameter variable references`);
+    }
+
+    // Get all identifiers in the function body
+    const identifiers = body.getDescendantsOfKind(SyntaxKind.Identifier);
+    
+    // Set of known local variables (DI services and other local declarations)
+    const knownLocalVariables = new Set<string>();
+    
+    // Add DI service variables that were injected
+    const existingStatements = body.getStatements();
+    for (const statement of existingStatements) {
+      const statementText = statement.getText();
+      if (statementText.includes('useService') || statementText.includes('useOptionalService')) {
+        // Extract variable name from "const variableName = ..."
+        const match = statementText.match(/^\s*const\s+(\w+)\s*=/);
+        if (match) {
+          knownLocalVariables.add(match[1]);
+        }
+      }
+    }
+    
+    // Add other local variables (like 'data' in function body)
+    for (const statement of existingStatements) {
+      const statementText = statement.getText();
+      const localVarMatch = statementText.match(/^\s*const\s+(\w+)\s*=/);
+      if (localVarMatch && !statementText.includes('useService')) {
+        knownLocalVariables.add(localVarMatch[1]);
+      }
+    }
+
+    if (this.options.verbose) {
+      console.log(`🔍 Known local variables:`, Array.from(knownLocalVariables));
+    }
+    
+    // Normalize only parameter variables
+    for (const identifier of identifiers) {
+      const varName = identifier.getText();
+      const parent = identifier.getParent();
+      
+      // Only normalize if this is a parameter variable
+      if (!parameterVariables.has(varName)) {
+        continue;
+      }
+
+      // Skip if this is a known local variable (already declared in function)
+      if (knownLocalVariables.has(varName)) {
+        continue;
+      }
+      
+      // Skip if this identifier is already part of a property access (like props.something)
+      if (Node.isPropertyAccessExpression(parent) && parent.getExpression() === identifier) {
+        continue;
+      }
+      
+      // Skip if this is a property name (like in obj.propertyName)
+      if (Node.isPropertyAccessExpression(parent) && parent.getName() === varName) {
+        continue;
+      }
+      
+      // Convert to props.* access using the original path
+      const propsAccess = parameterVariables.get(varName)!;
+      identifier.replaceWithText(propsAccess);
+      
+      if (this.options.verbose) {
+        console.log(`🔄 Normalized parameter variable: ${varName} -> ${propsAccess}`);
+      }
     }
   }
 
