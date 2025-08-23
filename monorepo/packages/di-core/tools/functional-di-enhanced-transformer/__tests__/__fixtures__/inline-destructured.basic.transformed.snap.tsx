@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineValueProps
-// Generated: 2025-08-17T07:17:00.885Z
+// Generated: 2025-08-23T23:14:12.723Z
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface, TestStateInterface } from "./shared-types";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -10,6 +10,7 @@ export function InlineValueProps(props: {
   };
 }) {
     const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
+  const { services } = props;
   return <div>{api.getData()}Mixed dependencies component</div>;
 }
 
@@ -19,6 +20,7 @@ export function InlineValueFoo(props: {
   };
 }) {
     const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
+  const { services } = props;
   return <div>{api.getData()}Mixed dependencies component</div>;
 }
 
@@ -75,12 +77,22 @@ interface TodoCardProps {
 export function TodoCard(props: TodoCardProps) {
     const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
     const { todo } = props;
+  const {
+    todo,
+    services: { api },
+  } = props;
+
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
 
 export function TodoCard2(props: TodoCardProps) {
     const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
     const { todo } = props;
+  const {
+    todo,
+    services: {},
+  } = props;
+
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
 
