@@ -144,9 +144,9 @@ see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the othe
 
 > create integration / snapshot tests for code generator
 
-#### [❌] FIXME TodoApp TodoService2 isnt properly injected
+#### [✅] FIXME TodoApp TodoService2 isnt properly injected
 
-- it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them
+- it was not properly injected in case there where two or more interface (in different files ) with the same name e.g. "TodoServiceInterface" and @Services that impplement them
 - Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
 
 #### [❌] FIXME having two different classes of the same name will one not be resolved properly

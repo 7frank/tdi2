@@ -46,7 +46,7 @@ export class EnhancedInterfaceExtractor {
   /**
    * Extract all implemented interfaces using AST methods
    */
-  getImplementedInterfaces(classDecl: ClassDeclaration): InterfaceInfo[] {
+  getImplementedInterfaces(classDecl: ClassDeclaration, sourceFile?: SourceFile): InterfaceInfo[] {
     const interfaces: InterfaceInfo[] = [];
 
     try {
@@ -60,7 +60,7 @@ export class EnhancedInterfaceExtractor {
           const typeNodes = heritage.getTypeNodes();
           
           for (const typeNode of typeNodes) {
-            const interfaceInfo = this.extractInterfaceFromTypeNode(typeNode);
+            const interfaceInfo = this.extractInterfaceFromTypeNode(typeNode, sourceFile);
             if (interfaceInfo) {
               interfaces.push(interfaceInfo);
               
@@ -86,7 +86,7 @@ export class EnhancedInterfaceExtractor {
   /**
    * Extract all extended classes using AST methods
    */
-  getExtendedClasses(classDecl: ClassDeclaration): InterfaceInfo[] {
+  getExtendedClasses(classDecl: ClassDeclaration, sourceFile?: SourceFile): InterfaceInfo[] {
     const extendedClasses: InterfaceInfo[] = [];
 
     try {
@@ -98,7 +98,7 @@ export class EnhancedInterfaceExtractor {
           const typeNodes = heritage.getTypeNodes();
           
           for (const typeNode of typeNodes) {
-            const classInfo = this.extractInterfaceFromTypeNode(typeNode);
+            const classInfo = this.extractInterfaceFromTypeNode(typeNode, sourceFile);
             if (classInfo) {
               extendedClasses.push(classInfo);
               
@@ -124,7 +124,7 @@ export class EnhancedInterfaceExtractor {
   /**
    * Extract interface information from a type node using AST
    */
-  private extractInterfaceFromTypeNode(typeNode: any): InterfaceInfo | null {
+  private extractInterfaceFromTypeNode(typeNode: any, sourceFile?: SourceFile): InterfaceInfo | null {
     try {
       // Get the full text representation
       const fullType = typeNode.getText();
@@ -166,11 +166,33 @@ export class EnhancedInterfaceExtractor {
         }
       }
 
+      // Extract location information
+      let sourceFilePath: string | undefined;
+      let lineNumber: number | undefined;
+
+      if (sourceFile && typeNode) {
+        try {
+          sourceFilePath = sourceFile.getFilePath();
+          
+          // Get line number from the type node's start position
+          const startPos = typeNode.getStart();
+          if (startPos !== undefined) {
+            lineNumber = sourceFile.getLineAndColumnAtPos(startPos).line;
+          }
+        } catch (error) {
+          if (this.verbose) {
+            console.warn(`⚠️  Could not extract location info for ${fullType}:`, error);
+          }
+        }
+      }
+
       return {
         name,
         fullType,
         isGeneric,
-        typeParameters
+        typeParameters,
+        sourceFilePath,
+        lineNumber
       };
     } catch (error) {
       if (this.verbose) {
