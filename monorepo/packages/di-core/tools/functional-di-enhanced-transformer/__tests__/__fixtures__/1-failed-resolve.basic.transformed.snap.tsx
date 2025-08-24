@@ -1,8 +1,9 @@
 // Auto-generated transformation snapshot for GenericProcessor
-// Generated: 2025-08-23T23:14:11.998Z
+// Generated: 2025-08-18T18:56:37.473Z
 import { useEffect } from "react";
 import { Inject } from "@tdi2/di-core/markers";
 import { Service } from "@tdi2/di-core/decorators";
+import { useService, useOptionalService } from "@tdi2/di-core/context";
 
 @Service()
 class Foo implements GenericServiceInterface<string> {
@@ -25,24 +26,24 @@ export function GenericProcessor<T = any>(props: {
     processor: Inject<GenericServiceInterface<T>>;
   };
 }) {
-  const { data, services } = props;
-
+    const processor = props.services?.processor ?? (useService('GenericServiceInterface_T') as unknown as GenericServiceInterface<T>);
+    const { data } = props;
   useEffect(() => {
-    services.processor.process(data);
+    processor.process(data);
   }, [data]);
 
   return (
     <>
       <h4>Generic Processor (Interface DI)</h4>
 
-      {services.processor.processed && (
+      {processor.processed && (
         <div>
           <strong>Result:</strong>{" "}
-          {JSON.stringify(services.processor.processed)}
+          {JSON.stringify(processor.processed)}
         </div>
       )}
 
-      <div>{services.processor?.constructor.name || "Not resolved"}</div>
+      <div>{processor.constructor.name || "Not resolved"}</div>
     </>
   );
 }

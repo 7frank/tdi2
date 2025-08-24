@@ -88,11 +88,11 @@ export class TransformationPipeline {
       console.log(`🚀 Starting FIXED transformation pipeline`);
     }
 
-    // Step 0: Enhance dependencies with resolved implementations
-    const enhancedDependencies = this.enhanceDependenciesWithResolution(dependencies);
-
-    // Step 1: Extract ALL parameter variables BEFORE any transformation
+    // Step 0: Extract ALL parameter variables BEFORE any normalization
     const parameterVariables = this.extractAllParameterVariables(func);
+
+    // Step 1: Enhance dependencies with resolved implementations
+    const enhancedDependencies = this.enhanceDependenciesWithResolution(dependencies);
 
     // Step 2: Normalize parameters (remove destructuring from function signature)
     this.normalizeParameters(func);
@@ -105,9 +105,6 @@ export class TransformationPipeline {
 
     // Step 5: Normalize ALL parameter variable references to props.* access
     this.normalizeParameterVariableReferences(func, parameterVariables);
-
-    // Step 5.5: Remove ALL parameter-derived destructuring statements
-    this.removeParameterDerivedDestructuring(func, parameterVariables);
 
     // Step 6: FIXED - Only remove DI-related destructuring, preserve other destructuring
     this.removeOnlyDIDestructuring(func, enhancedDependencies);
@@ -706,21 +703,13 @@ export class TransformationPipeline {
     const firstParam = parameters[0];
     const nameNode = firstParam.getNameNode();
 
-    // If the parameter is destructured in signature, extract all variables with their paths
+    // If the parameter is destructured, extract all variables with their paths
     if (Node.isObjectBindingPattern(nameNode)) {
       this.extractVariablesFromDestructuring(nameNode, [], parameterVariables);
-    } else if (Node.isIdentifier(nameNode)) {
-      // FIXED: Handle case where parameter is not destructured in signature (e.g., props: PropsType)
-      // But destructuring happens in function body: const { ... } = props;
-      const paramName = nameNode.getText();
-      this.extractDirectPropsDestructuring(func, paramName, parameterVariables);
     }
 
-    // ENHANCED: Also extract parameter-derived variables from function body
-    this.extractParameterDerivedVariables(func, parameterVariables);
-
     if (this.options.verbose) {
-      console.log(`🔍 Extracted ${parameterVariables.size} parameter variables (including derived):`, 
+      console.log(`🔍 Extracted ${parameterVariables.size} parameter variables:`, 
         Array.from(parameterVariables.entries()));
     }
 
@@ -871,223 +860,6 @@ export class TransformationPipeline {
       if (this.options.verbose) {
         console.log(`🔄 Normalized parameter variable: ${varName} -> ${propsAccess}`);
       }
-    }
-  }
-
-  /**
-   * Extract variables from direct props destructuring in function body
-   * e.g., const { services, onComplete } = props;
-   */
-  private extractDirectPropsDestructuring(
-    func: FunctionDeclaration | ArrowFunction,
-    propsParamName: string,
-    result: Map<string, string>
-  ): void {
-    const body = this.getFunctionBody(func);
-    if (!body || !Node.isBlock(body)) return;
-
-    const statements = body.getStatements();
-
-    for (const statement of statements) {
-      if (Node.isVariableStatement(statement)) {
-        const declarations = statement.getDeclarationList().getDeclarations();
-        
-        for (const declaration of declarations) {
-          const nameNode = declaration.getNameNode();
-          const initializer = declaration.getInitializer();
-          
-          // Look for: const { ... } = props
-          if (Node.isObjectBindingPattern(nameNode) && 
-              initializer && 
-              Node.isIdentifier(initializer) && 
-              initializer.getText() === propsParamName) {
-            
-            // Extract variables from this destructuring
-            this.extractVariablesFromDestructuring(nameNode, [], result);
-            
-            if (this.options.verbose) {
-              console.log(`📝 Found direct props destructuring: const { ... } = ${propsParamName}`);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Extract parameter-derived variables from destructuring in function body
-   */
-  private extractParameterDerivedVariables(
-    func: FunctionDeclaration | ArrowFunction,
-    knownParameterVars: Map<string, string>
-  ): void {
-    const body = this.getFunctionBody(func);
-    if (!body || !Node.isBlock(body)) return;
-
-    const statements = body.getStatements();
-    let foundNewVars = true;
-
-    // Keep scanning until no new parameter-derived variables are found
-    while (foundNewVars) {
-      foundNewVars = false;
-      
-      for (const statement of statements) {
-        if (Node.isVariableStatement(statement)) {
-          const declarations = statement.getDeclarationList().getDeclarations();
-          
-          for (const declaration of declarations) {
-            const nameNode = declaration.getNameNode();
-            const initializer = declaration.getInitializer();
-            
-            // Check for destructuring assignment: const { ... } = someVar
-            if (Node.isObjectBindingPattern(nameNode) && initializer && Node.isIdentifier(initializer)) {
-              const sourceVarName = initializer.getText();
-              
-              // If source variable is parameter-derived, extract its destructured variables
-              if (knownParameterVars.has(sourceVarName)) {
-                const sourcePath = knownParameterVars.get(sourceVarName)!;
-                const newVars = this.extractDestructuredVariablesWithSource(nameNode, sourcePath);
-                
-                // Add newly found variables
-                for (const [varName, varPath] of newVars.entries()) {
-                  if (!knownParameterVars.has(varName)) {
-                    knownParameterVars.set(varName, varPath);
-                    foundNewVars = true;
-                    
-                    if (this.options.verbose) {
-                      console.log(`📝 Found parameter-derived variable: ${varName} -> ${varPath}`);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Extract destructured variables with their full source path
-   */
-  private extractDestructuredVariablesWithSource(
-    pattern: any,
-    sourcePath: string
-  ): Map<string, string> {
-    const result = new Map<string, string>();
-    const elements = pattern.getElements();
-
-    for (const element of elements) {
-      if (Node.isBindingElement(element)) {
-        const nameNode = element.getNameNode();
-        const propertyNameNode = element.getPropertyNameNode();
-
-        if (Node.isIdentifier(nameNode)) {
-          let propertyName: string;
-          let localName: string;
-
-          if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
-            // { propertyName: localName } pattern
-            propertyName = propertyNameNode.getText();
-            localName = nameNode.getText();
-          } else {
-            // { localName } shorthand pattern
-            propertyName = nameNode.getText();
-            localName = nameNode.getText();
-          }
-
-          // Build full path: sourcePath.propertyName
-          const fullPath = sourcePath.includes('?.') || sourcePath.includes('.') ? 
-            `${sourcePath}?.${propertyName}` : 
-            `${sourcePath}.${propertyName}`;
-          
-          result.set(localName, fullPath);
-
-        } else if (Node.isObjectBindingPattern(nameNode)) {
-          // Nested destructuring: { services: { api } }
-          let propertyName: string;
-          
-          if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
-            propertyName = propertyNameNode.getText();
-          } else {
-            continue;
-          }
-          
-          const nestedPath = sourcePath.includes('?.') || sourcePath.includes('.') ? 
-            `${sourcePath}?.${propertyName}` : 
-            `${sourcePath}.${propertyName}`;
-          
-          // Recurse into nested destructuring
-          const nestedVars = this.extractDestructuredVariablesWithSource(nameNode, nestedPath);
-          for (const [varName, varPath] of nestedVars.entries()) {
-            result.set(varName, varPath);
-          }
-        }
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * Remove ALL destructuring statements that reference parameter-derived variables
-   */
-  private removeParameterDerivedDestructuring(
-    func: FunctionDeclaration | ArrowFunction,
-    parameterVariables: Map<string, string>
-  ): void {
-    const body = this.getFunctionBody(func);
-    if (!body || !Node.isBlock(body)) return;
-
-    const statements = body.getStatements();
-    const statementsToRemove: any[] = [];
-
-    if (this.options.verbose) {
-      console.log(`🗑️  Scanning for parameter-derived destructuring to remove...`);
-    }
-
-    for (const statement of statements) {
-      if (Node.isVariableStatement(statement)) {
-        const declarations = statement.getDeclarationList().getDeclarations();
-        let shouldRemoveStatement = false;
-        
-        for (const declaration of declarations) {
-          const nameNode = declaration.getNameNode();
-          const initializer = declaration.getInitializer();
-          
-          // Check for destructuring assignment: const { ... } = someVar
-          if (Node.isObjectBindingPattern(nameNode) && initializer && Node.isIdentifier(initializer)) {
-            const sourceVarName = initializer.getText();
-            
-            // If source variable is parameter-derived, mark statement for removal
-            if (parameterVariables.has(sourceVarName)) {
-              shouldRemoveStatement = true;
-              
-              if (this.options.verbose) {
-                console.log(`🗑️  Marked for removal - destructuring from parameter-derived variable: ${sourceVarName}`);
-              }
-              break;
-            }
-          }
-        }
-
-        if (shouldRemoveStatement) {
-          statementsToRemove.push(statement);
-        }
-      }
-    }
-
-    // Remove the identified statements
-    for (const statement of statementsToRemove) {
-      statement.remove();
-      
-      if (this.options.verbose) {
-        console.log(`🗑️  Removed parameter-derived destructuring statement`);
-      }
-    }
-
-    if (this.options.verbose) {
-      console.log(`🗑️  Removed ${statementsToRemove.length} parameter-derived destructuring statements`);
     }
   }
 

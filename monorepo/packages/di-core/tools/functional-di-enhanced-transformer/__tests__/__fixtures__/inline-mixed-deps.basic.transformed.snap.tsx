@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineMixedDeps
-// Generated: 2025-08-23T23:14:13.756Z
+// Generated: 2025-08-17T08:21:24.614Z
 import React from "react";
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import {
@@ -8,6 +8,7 @@ import {
   CacheInterface,
   UserServiceInterface,
 } from "./shared-types";
+import { useService, useOptionalService } from "@tdi2/di-core/context";
 
 export function InlineMixedDeps(props: {
   config: any;
@@ -18,12 +19,10 @@ export function InlineMixedDeps(props: {
     user: Inject<UserServiceInterface>;
   };
 }) {
-  const {
-    config,
-    services: { logger, user, cache },
-    api,
-  } = props;
-
+    const api = props.api ?? (useService('ApiInterface') as unknown as ApiInterface);
+    const cache = props.services?.cache ?? (useOptionalService('CacheInterface_any') as unknown as CacheInterface<any>);
+    const user = props.services?.user ?? (useService('UserServiceInterface') as unknown as UserServiceInterface);
+    const { config } = props;
   api.getData();
   logger.log("");
   user.processData([]);
