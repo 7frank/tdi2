@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for TodoApp2
-// Generated: 2025-08-23T22:46:10.616Z
+// Generated: 2025-08-24T07:49:25.040Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface, LoggerInterface, CacheInterface } from "./shared-types";
@@ -80,13 +80,14 @@ interface ComplexProps {
 export function ComplexDestructuredApp(props: ComplexProps) {
     const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
     const logger = props.services?.logger ?? (useOptionalService('LoggerInterface') as unknown as LoggerInterface);
+    const { config: { theme, apiUrl }, metadata: { version } } = props;
   const data = api.getUserData('123');
-  logger?.log(`Loaded user data for version ${props.metadata?.version}`);
+  logger?.log(`Loaded user data for version ${version}`);
   
   return (
-    <div data-theme={props.config?.theme}>
-      <p>API: {props.config?.apiUrl}</p>
-      <p>Version: {props.metadata?.version}</p>
+    <div data-theme={theme}>
+      <p>API: {apiUrl}</p>
+      <p>Version: {version}</p>
       <p>User loaded</p>
     </div>
   );
