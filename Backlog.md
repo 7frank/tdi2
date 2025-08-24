@@ -32,6 +32,15 @@
 20: "TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14"
 21: "TodoService2"
 
+### [❌] transformed code not written to file system
+
+> useInMemoryFileSystem
+
+> easier to check if something went wrong
+> also easier to add to di-debug
+
+see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned for debugging this
+
 #### [❌] improper handling of rest parameters
 
 - functional-di-enhanced-transformer/**tests**/**fixtures**/complex-props-spreading.basic.
@@ -54,13 +63,6 @@ evaluate scenarios
 
 - to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
 - or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
-
-### [❌] transformed code not written to file system
-
-> easier to check if something went wrong
-> also easier to add to di-debug
-
-see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned for debugging this
 
 ### [❌] separate packages
 
