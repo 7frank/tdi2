@@ -12,12 +12,14 @@ export interface ProfileManagerOptions {
 export class ProfileManager {
   private activeProfiles: Set<string> = new Set();
   private options: ProfileManagerOptions;
-  private static readonly DEFAULT_PROFILE = 'default';
+  private static readonly DEFAULT_PROFILE = "default";
 
   constructor(options: ProfileManagerOptions = {}) {
     this.options = {
       verbose: options.verbose || false,
-      defaultProfiles: options.defaultProfiles || [ProfileManager.DEFAULT_PROFILE]
+      defaultProfiles: options.defaultProfiles || [
+        ProfileManager.DEFAULT_PROFILE,
+      ],
     };
 
     // Initialize with environment profiles if available
@@ -29,7 +31,7 @@ export class ProfileManager {
    */
   setActiveProfiles(profiles: string[]): void {
     this.activeProfiles.clear();
-    
+
     for (const profile of profiles) {
       if (profile && profile.trim()) {
         this.activeProfiles.add(profile.trim());
@@ -37,7 +39,9 @@ export class ProfileManager {
     }
 
     if (this.options.verbose) {
-      console.log(`🎯 Active profiles set: [${Array.from(this.activeProfiles).join(', ')}]`);
+      console.log(
+        `🎯 Active profiles set: [${Array.from(this.activeProfiles).join(", ")}]`
+      );
     }
   }
 
@@ -52,7 +56,9 @@ export class ProfileManager {
     }
 
     if (this.options.verbose) {
-      console.log(`🎯 Added profiles: [${profiles.join(', ')}]. Active: [${Array.from(this.activeProfiles).join(', ')}]`);
+      console.log(
+        `🎯 Added profiles: [${profiles.join(", ")}]. Active: [${Array.from(this.activeProfiles).join(", ")}]`
+      );
     }
   }
 
@@ -75,9 +81,9 @@ export class ProfileManager {
     }
 
     const activeProfiles = this.getActiveProfiles();
-    
+
     // Handle negation profiles (e.g., "!prod")
-    if (profile.startsWith('!')) {
+    if (profile.startsWith("!")) {
       const negatedProfile = profile.substring(1);
       return !activeProfiles.includes(negatedProfile);
     }
@@ -95,7 +101,7 @@ export class ProfileManager {
     }
 
     // Service is loaded if ANY of its profiles match active profiles
-    return serviceProfiles.some(profile => this.isProfileActive(profile));
+    return serviceProfiles.some((profile) => this.isProfileActive(profile));
   }
 
   /**
@@ -108,14 +114,10 @@ export class ProfileManager {
   /**
    * Check if bean method should be loaded considering both config and method profiles
    */
-  shouldLoadBean(
-    configProfiles?: string[], 
-    beanProfiles?: string[]
-  ): boolean {
+  shouldLoadBean(configProfiles?: string[], beanProfiles?: string[]): boolean {
     // Bean method profiles override configuration profiles
-    const effectiveProfiles = beanProfiles && beanProfiles.length > 0 
-      ? beanProfiles 
-      : configProfiles;
+    const effectiveProfiles =
+      beanProfiles && beanProfiles.length > 0 ? beanProfiles : configProfiles;
 
     return this.shouldLoadService(effectiveProfiles);
   }
@@ -126,7 +128,9 @@ export class ProfileManager {
   filterServicesByProfiles<T extends { profiles?: string[] }>(
     services: T[]
   ): T[] {
-    return services.filter(service => this.shouldLoadService(service.profiles));
+    return services.filter((service) =>
+      this.shouldLoadService(service.profiles)
+    );
   }
 
   /**
@@ -138,42 +142,72 @@ export class ProfileManager {
     }
 
     const activeProfiles = this.getActiveProfiles();
-    const matchingProfiles = serviceProfiles.filter(profile => this.isProfileActive(profile));
+    const matchingProfiles = serviceProfiles.filter((profile) =>
+      this.isProfileActive(profile)
+    );
 
     if (matchingProfiles.length > 0) {
-      return `Matches active profiles: ${matchingProfiles.join(', ')} (active: ${activeProfiles.join(', ')})`;
+      return `Matches active profiles: ${matchingProfiles.join(", ")} (active: ${activeProfiles.join(", ")})`;
     } else {
-      return `No matching profiles. Service profiles: [${serviceProfiles.join(', ')}], Active: [${activeProfiles.join(', ')}]`;
+      return `No matching profiles. Service profiles: [${serviceProfiles.join(", ")}], Active: [${activeProfiles.join(", ")}]`;
     }
   }
 
   /**
    * Validate profile expressions
    */
-  validateProfileExpression(profile: string): { isValid: boolean; error?: string } {
-    if (!profile || typeof profile !== 'string') {
-      return { isValid: false, error: 'Profile must be a non-empty string' };
+  validateProfileExpression(profile: string): {
+    isValid: boolean;
+    error?: string;
+  } {
+    if (!profile || typeof profile !== "string") {
+      return { isValid: false, error: "Profile must be a non-empty string" };
     }
 
     const trimmed = profile.trim();
     if (trimmed.length === 0) {
-      return { isValid: false, error: 'Profile cannot be empty or whitespace only' };
+      return {
+        isValid: false,
+        error: "Profile cannot be empty or whitespace only",
+      };
     }
 
     // Check for valid negation syntax
-    if (trimmed.startsWith('!')) {
+    if (trimmed.startsWith("!")) {
       const negatedProfile = trimmed.substring(1).trim();
       if (negatedProfile.length === 0) {
-        return { isValid: false, error: 'Negated profile cannot be empty (e.g., "!prod", not "!")' };
+        return {
+          isValid: false,
+          error: 'Negated profile cannot be empty (e.g., "!prod", not "!")',
+        };
       }
     }
 
     // Check for invalid characters (basic validation)
     if (!/^[!]?[a-zA-Z0-9_-]+$/.test(trimmed)) {
-      return { isValid: false, error: 'Profile contains invalid characters. Use only letters, numbers, underscore, hyphen, and optional leading !' };
+      return {
+        isValid: false,
+        error:
+          "Profile contains invalid characters. Use only letters, numbers, underscore, hyphen, and optional leading !",
+      };
     }
 
     return { isValid: true };
+  }
+
+  /**
+   * Get environment variables in a browser-safe way
+   */
+  private getEnvironmentVariables(): Record<string, string | undefined> {
+    if (typeof process === "undefined" || !process?.env) {
+      console.warn(
+        "⚠️ process.env is undefined, skipping environment profile initialization."
+      );
+
+      return {};
+    }
+
+    return process.env;
   }
 
   /**
@@ -181,20 +215,24 @@ export class ProfileManager {
    */
   private initializeFromEnvironment(): void {
     // Check common environment variables for profile activation
-    const envProfiles = 
-      process.env.TDI2_PROFILES || 
-      process.env.ACTIVE_PROFILES || 
-      process.env.PROFILES ||
-      process.env.NODE_ENV;
+    const env = this.getEnvironmentVariables();
+
+    const envProfiles =
+      env.TDI2_PROFILES || env.ACTIVE_PROFILES || env.PROFILES || env.NODE_ENV;
 
     if (envProfiles) {
-      const profiles = envProfiles.split(',').map(p => p.trim()).filter(p => p.length > 0);
-      
+      const profiles = envProfiles
+        .split(",")
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0);
+
       if (profiles.length > 0) {
         this.setActiveProfiles(profiles);
-        
+
         if (this.options.verbose) {
-          console.log(`🌍 Profiles loaded from environment: [${profiles.join(', ')}]`);
+          console.log(
+            `🌍 Profiles loaded from environment: [${profiles.join(", ")}]`
+          );
         }
       }
     }
@@ -209,17 +247,17 @@ export class ProfileManager {
     hasEnvironmentProfiles: boolean;
     environmentSource: string | null;
   } {
-    const envProfiles = 
-      process.env.TDI2_PROFILES || 
-      process.env.ACTIVE_PROFILES || 
-      process.env.PROFILES ||
-      process.env.NODE_ENV;
+    const env = this.getEnvironmentVariables();
+    const envProfiles =
+      env.TDI2_PROFILES || env.ACTIVE_PROFILES || env.PROFILES || env.NODE_ENV;
 
     return {
       activeProfiles: this.getActiveProfiles(),
-      defaultProfiles: this.options.defaultProfiles || [ProfileManager.DEFAULT_PROFILE],
+      defaultProfiles: this.options.defaultProfiles || [
+        ProfileManager.DEFAULT_PROFILE,
+      ],
       hasEnvironmentProfiles: !!envProfiles,
-      environmentSource: envProfiles || null
+      environmentSource: envProfiles || null,
     };
   }
 
@@ -234,9 +272,11 @@ export class ProfileManager {
   /**
    * Create a profile expression matcher (for advanced use cases)
    */
-  static createProfileMatcher(expression: string): (activeProfiles: string[]) => boolean {
+  static createProfileMatcher(
+    expression: string
+  ): (activeProfiles: string[]) => boolean {
     return (activeProfiles: string[]) => {
-      if (expression.startsWith('!')) {
+      if (expression.startsWith("!")) {
         const negatedProfile = expression.substring(1);
         return !activeProfiles.includes(negatedProfile);
       }
