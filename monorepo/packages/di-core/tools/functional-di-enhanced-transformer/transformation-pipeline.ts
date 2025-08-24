@@ -88,26 +88,23 @@ export class TransformationPipeline {
       console.log(`🚀 Starting FIXED transformation pipeline`);
     }
 
-    // Step 0: Extract ALL parameter variables BEFORE any normalization
-    const parameterVariables = this.extractAllParameterVariables(func);
-
-    // Step 1: Enhance dependencies with resolved implementations
+    // Step 0: Enhance dependencies with resolved implementations
     const enhancedDependencies = this.enhanceDependenciesWithResolution(dependencies);
 
-    // Step 2: Normalize parameters (remove destructuring from function signature)
+    // Step 1: Normalize parameters (remove destructuring from function signature)
     this.normalizeParameters(func);
 
-    // Step 3: FIXED - Generate DI hook calls with proper optional chaining AND preserve non-DI destructuring
+    // Step 2: FIXED - Generate DI hook calls with proper optional chaining AND preserve non-DI destructuring
     this.generateDIHookCallsAndPreserveDestructuring(func, enhancedDependencies);
 
-    // Step 4: Update property access expressions to use new variables
+    // Step 3: Update property access expressions to use new variables
     this.propertyUpdater.updatePropertyAccessAdvanced(func, enhancedDependencies);
 
-    // Step 5: Normalize ALL parameter variable references to props.* access
-    this.normalizeParameterVariableReferences(func, parameterVariables);
-
-    // Step 6: FIXED - Only remove DI-related destructuring, preserve other destructuring
+    // Step 4: FIXED - Only remove DI-related destructuring, preserve other destructuring
     this.removeOnlyDIDestructuring(func, enhancedDependencies);
+
+    // Step 5: TARGETED - Remove only conflicting destructuring after DI hooks are generated
+    this.removeConflictingDestructuring(func, enhancedDependencies);
 
     // Step 7: Lifecycle hooks are now handled automatically in useService() hooks
     // No code generation needed - lifecycle management is built into the DI system
@@ -703,13 +700,21 @@ export class TransformationPipeline {
     const firstParam = parameters[0];
     const nameNode = firstParam.getNameNode();
 
-    // If the parameter is destructured, extract all variables with their paths
+    // If the parameter is destructured in signature, extract all variables with their paths
     if (Node.isObjectBindingPattern(nameNode)) {
       this.extractVariablesFromDestructuring(nameNode, [], parameterVariables);
+    } else if (Node.isIdentifier(nameNode)) {
+      // FIXED: Handle case where parameter is not destructured in signature (e.g., props: PropsType)
+      // But destructuring happens in function body: const { ... } = props;
+      const paramName = nameNode.getText();
+      this.extractDirectPropsDestructuring(func, paramName, parameterVariables);
     }
 
+    // ENHANCED: Also extract parameter-derived variables from function body
+    this.extractParameterDerivedVariables(func, parameterVariables);
+
     if (this.options.verbose) {
-      console.log(`🔍 Extracted ${parameterVariables.size} parameter variables:`, 
+      console.log(`🔍 Extracted ${parameterVariables.size} parameter variables (including derived):`, 
         Array.from(parameterVariables.entries()));
     }
 
@@ -861,6 +866,580 @@ export class TransformationPipeline {
         console.log(`🔄 Normalized parameter variable: ${varName} -> ${propsAccess}`);
       }
     }
+  }
+
+  /**
+   * Extract variables from direct props destructuring in function body
+   * e.g., const { services, onComplete } = props;
+   */
+  private extractDirectPropsDestructuring(
+    func: FunctionDeclaration | ArrowFunction,
+    propsParamName: string,
+    result: Map<string, string>
+  ): void {
+    const body = this.getFunctionBody(func);
+    if (!body || !Node.isBlock(body)) return;
+
+    const statements = body.getStatements();
+
+    for (const statement of statements) {
+      if (Node.isVariableStatement(statement)) {
+        const declarations = statement.getDeclarationList().getDeclarations();
+        
+        for (const declaration of declarations) {
+          const nameNode = declaration.getNameNode();
+          const initializer = declaration.getInitializer();
+          
+          // Look for: const { ... } = props
+          if (Node.isObjectBindingPattern(nameNode) && 
+              initializer && 
+              Node.isIdentifier(initializer) && 
+              initializer.getText() === propsParamName) {
+            
+            // Extract variables from this destructuring
+            this.extractVariablesFromDestructuring(nameNode, [], result);
+            
+            if (this.options.verbose) {
+              console.log(`📝 Found direct props destructuring: const { ... } = ${propsParamName}`);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Extract parameter-derived variables from destructuring in function body
+   */
+  private extractParameterDerivedVariables(
+    func: FunctionDeclaration | ArrowFunction,
+    knownParameterVars: Map<string, string>
+  ): void {
+    const body = this.getFunctionBody(func);
+    if (!body || !Node.isBlock(body)) return;
+
+    const statements = body.getStatements();
+    let foundNewVars = true;
+
+    // Keep scanning until no new parameter-derived variables are found
+    while (foundNewVars) {
+      foundNewVars = false;
+      
+      for (const statement of statements) {
+        if (Node.isVariableStatement(statement)) {
+          const declarations = statement.getDeclarationList().getDeclarations();
+          
+          for (const declaration of declarations) {
+            const nameNode = declaration.getNameNode();
+            const initializer = declaration.getInitializer();
+            
+            // Check for destructuring assignment: const { ... } = someVar
+            if (Node.isObjectBindingPattern(nameNode) && initializer && Node.isIdentifier(initializer)) {
+              const sourceVarName = initializer.getText();
+              
+              // If source variable is parameter-derived, extract its destructured variables
+              if (knownParameterVars.has(sourceVarName)) {
+                const sourcePath = knownParameterVars.get(sourceVarName)!;
+                const newVars = this.extractDestructuredVariablesWithSource(nameNode, sourcePath);
+                
+                // Add newly found variables
+                for (const [varName, varPath] of newVars.entries()) {
+                  if (!knownParameterVars.has(varName)) {
+                    knownParameterVars.set(varName, varPath);
+                    foundNewVars = true;
+                    
+                    if (this.options.verbose) {
+                      console.log(`📝 Found parameter-derived variable: ${varName} -> ${varPath}`);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Extract destructured variables with their full source path
+   */
+  private extractDestructuredVariablesWithSource(
+    pattern: any,
+    sourcePath: string
+  ): Map<string, string> {
+    const result = new Map<string, string>();
+    const elements = pattern.getElements();
+
+    for (const element of elements) {
+      if (Node.isBindingElement(element)) {
+        const nameNode = element.getNameNode();
+        const propertyNameNode = element.getPropertyNameNode();
+
+        if (Node.isIdentifier(nameNode)) {
+          let propertyName: string;
+          let localName: string;
+
+          if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
+            // { propertyName: localName } pattern
+            propertyName = propertyNameNode.getText();
+            localName = nameNode.getText();
+          } else {
+            // { localName } shorthand pattern
+            propertyName = nameNode.getText();
+            localName = nameNode.getText();
+          }
+
+          // Build full path: sourcePath.propertyName
+          const fullPath = sourcePath.includes('?.') || sourcePath.includes('.') ? 
+            `${sourcePath}?.${propertyName}` : 
+            `${sourcePath}.${propertyName}`;
+          
+          result.set(localName, fullPath);
+
+        } else if (Node.isObjectBindingPattern(nameNode)) {
+          // Nested destructuring: { services: { api } }
+          let propertyName: string;
+          
+          if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
+            propertyName = propertyNameNode.getText();
+          } else {
+            continue;
+          }
+          
+          const nestedPath = sourcePath.includes('?.') || sourcePath.includes('.') ? 
+            `${sourcePath}?.${propertyName}` : 
+            `${sourcePath}.${propertyName}`;
+          
+          // Recurse into nested destructuring
+          const nestedVars = this.extractDestructuredVariablesWithSource(nameNode, nestedPath);
+          for (const [varName, varPath] of nestedVars.entries()) {
+            result.set(varName, varPath);
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Remove ALL destructuring statements that reference parameter-derived variables
+   */
+  private removeParameterDerivedDestructuring(
+    func: FunctionDeclaration | ArrowFunction,
+    parameterVariables: Map<string, string>
+  ): void {
+    const body = this.getFunctionBody(func);
+    if (!body || !Node.isBlock(body)) return;
+
+    const statements = body.getStatements();
+    const statementsToRemove: any[] = [];
+
+    if (this.options.verbose) {
+      console.log(`🗑️  Scanning for parameter-derived destructuring to remove...`);
+    }
+
+    for (const statement of statements) {
+      if (Node.isVariableStatement(statement)) {
+        const declarations = statement.getDeclarationList().getDeclarations();
+        let shouldRemoveStatement = false;
+        
+        for (const declaration of declarations) {
+          const nameNode = declaration.getNameNode();
+          const initializer = declaration.getInitializer();
+          
+          // Check for destructuring assignment: const { ... } = someVar
+          if (Node.isObjectBindingPattern(nameNode) && initializer && Node.isIdentifier(initializer)) {
+            const sourceVarName = initializer.getText();
+            
+            // If source variable is parameter-derived, mark statement for removal
+            if (parameterVariables.has(sourceVarName)) {
+              shouldRemoveStatement = true;
+              
+              if (this.options.verbose) {
+                console.log(`🗑️  Marked for removal - destructuring from parameter-derived variable: ${sourceVarName}`);
+              }
+              break;
+            }
+          }
+        }
+
+        if (shouldRemoveStatement) {
+          statementsToRemove.push(statement);
+        }
+      }
+    }
+
+    // Remove the identified statements
+    for (const statement of statementsToRemove) {
+      statement.remove();
+      
+      if (this.options.verbose) {
+        console.log(`🗑️  Removed parameter-derived destructuring statement`);
+      }
+    }
+
+    if (this.options.verbose) {
+      console.log(`🗑️  Removed ${statementsToRemove.length} parameter-derived destructuring statements`);
+    }
+  }
+
+  /**
+   * TARGETED: Remove only destructuring that conflicts with generated DI hooks
+   */
+  private removeConflictingDestructuring(
+    func: FunctionDeclaration | ArrowFunction,
+    dependencies: ExtractedDependency[]
+  ): void {
+    const body = this.getFunctionBody(func);
+    if (!body || !Node.isBlock(body)) return;
+
+    if (this.options.verbose) {
+      console.log(`🎯 Removing only conflicting destructuring statements`);
+    }
+
+    // Build set of variables that have DI hooks generated for them
+    const diServiceVariables = new Set<string>();
+    for (const dep of dependencies) {
+      diServiceVariables.add(dep.serviceKey);
+    }
+
+    const statements = body.getStatements();
+    const statementsToRemove: any[] = [];
+
+    // Only remove destructuring statements that try to destructure DI service variables
+    for (const statement of statements) {
+      if (Node.isVariableStatement(statement)) {
+        const declarations = statement.getDeclarationList().getDeclarations();
+        
+        for (const declaration of declarations) {
+          const nameNode = declaration.getNameNode();
+          const initializer = declaration.getInitializer();
+          
+          if (Node.isObjectBindingPattern(nameNode) && 
+              initializer && 
+              Node.isIdentifier(initializer)) {
+            
+            // Check if this destructuring tries to extract any DI service variables
+            if (this.destructuringContainsDIServices(nameNode, diServiceVariables)) {
+              statementsToRemove.push(statement);
+              
+              if (this.options.verbose) {
+                console.log(`🗑️  Removing conflicting destructuring: ${statement.getText()}`);
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Remove the identified statements
+    for (const statement of statementsToRemove) {
+      statement.remove();
+    }
+
+    if (this.options.verbose && statementsToRemove.length > 0) {
+      console.log(`🗑️  Removed ${statementsToRemove.length} conflicting destructuring statements`);
+    }
+  }
+
+  /**
+   * Check if destructuring pattern contains any DI service variables
+   */
+  private destructuringContainsDIServices(
+    bindingPattern: any, 
+    diServiceVariables: Set<string>
+  ): boolean {
+    const elements = bindingPattern.getElements();
+
+    for (const element of elements) {
+      if (Node.isBindingElement(element)) {
+        const nameNode = element.getNameNode();
+        
+        if (Node.isIdentifier(nameNode)) {
+          const varName = nameNode.getText();
+          if (diServiceVariables.has(varName)) {
+            return true; // Found a conflicting DI service variable
+          }
+        } else if (Node.isObjectBindingPattern(nameNode)) {
+          // Check nested destructuring recursively
+          if (this.destructuringContainsDIServices(nameNode, diServiceVariables)) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * SURGICAL: Clean up all remaining destructuring and normalize orphaned variables  
+   */
+  private surgicalDestructuringCleanup(
+    func: FunctionDeclaration | ArrowFunction,
+    dependencies: ExtractedDependency[]
+  ): void {
+    const body = this.getFunctionBody(func);
+    if (!body || !Node.isBlock(body)) return;
+
+    if (this.options.verbose) {
+      console.log(`🔧 Starting surgical destructuring cleanup`);
+    }
+
+    // Step 1: Remove ALL remaining destructuring statements
+    this.removeAllDestructuringStatements(func);
+
+    // Step 2: Normalize orphaned variable references
+    this.normalizeOrphanedVariableReferences(func, dependencies);
+
+    if (this.options.verbose) {
+      console.log(`✅ Surgical cleanup completed`);
+    }
+  }
+
+  /**
+   * Remove ONLY broken destructuring statements (that reference undefined variables)
+   */
+  private removeAllDestructuringStatements(func: FunctionDeclaration | ArrowFunction): void {
+    const body = this.getFunctionBody(func);
+    if (!body || !Node.isBlock(body)) return;
+
+    const statements = body.getStatements();
+    const statementsToRemove: any[] = [];
+
+    // Get list of currently defined variables in the function
+    const definedVariables = new Set<string>();
+    
+    // Add function parameters
+    const parameters = func.getParameters();
+    for (const param of parameters) {
+      const nameNode = param.getNameNode();
+      if (Node.isIdentifier(nameNode)) {
+        definedVariables.add(nameNode.getText());
+      }
+    }
+    
+    // Add variables defined in statements
+    for (const statement of statements) {
+      if (Node.isVariableStatement(statement)) {
+        const declarations = statement.getDeclarationList().getDeclarations();
+        for (const declaration of declarations) {
+          const nameNode = declaration.getNameNode();
+          if (Node.isIdentifier(nameNode)) {
+            definedVariables.add(nameNode.getText());
+          }
+        }
+      }
+    }
+
+    for (const statement of statements) {
+      if (Node.isVariableStatement(statement)) {
+        const declarations = statement.getDeclarationList().getDeclarations();
+        
+        for (const declaration of declarations) {
+          const nameNode = declaration.getNameNode();
+          const initializer = declaration.getInitializer();
+          
+          // Only remove destructuring that references undefined variables
+          if (Node.isObjectBindingPattern(nameNode) && 
+              initializer && 
+              Node.isIdentifier(initializer)) {
+            
+            const sourceVar = initializer.getText();
+            
+            // Remove if source variable is not defined (like 'services' after DI processing)
+            if (!definedVariables.has(sourceVar)) {
+              statementsToRemove.push(statement);
+              
+              if (this.options.verbose) {
+                console.log(`🗑️  Removing broken destructuring from undefined var: ${sourceVar}`);
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Remove the identified statements
+    for (const statement of statementsToRemove) {
+      statement.remove();
+    }
+
+    if (this.options.verbose && statementsToRemove.length > 0) {
+      console.log(`🗑️  Removed ${statementsToRemove.length} broken destructuring statements`);
+    }
+  }
+
+  /**
+   * Normalize ONLY truly orphaned parameter variables (not built-ins)
+   */
+  private normalizeOrphanedVariableReferences(
+    func: FunctionDeclaration | ArrowFunction,
+    dependencies: ExtractedDependency[]
+  ): void {
+    const body = this.getFunctionBody(func);
+    if (!body) return;
+
+    // Build map of service variables that have DI hooks generated
+    const serviceVariables = new Set<string>();
+    for (const dep of dependencies) {
+      serviceVariables.add(dep.serviceKey);
+    }
+
+    // Get all identifiers in the function body
+    const identifiers = body.getDescendantsOfKind(SyntaxKind.Identifier);
+    
+    // Set of known local variables (DI services and other local declarations)
+    const knownLocalVariables = new Set<string>();
+    
+    // Add DI service variables and other local variables
+    const existingStatements = body.getStatements();
+    for (const statement of existingStatements) {
+      const statementText = statement.getText();
+      const match = statementText.match(/^\s*const\s+(\w+)\s*=/);
+      if (match) {
+        knownLocalVariables.add(match[1]);
+      }
+    }
+
+    if (this.options.verbose) {
+      console.log(`🔍 Known local variables:`, Array.from(knownLocalVariables));
+    }
+    
+    // Normalize orphaned variable references
+    for (const identifier of identifiers) {
+      const varName = identifier.getText();
+      const parent = identifier.getParent();
+      
+      // Skip if this is a known local variable
+      if (knownLocalVariables.has(varName)) {
+        continue;
+      }
+      
+      // Skip if this identifier is already part of a property access
+      if (Node.isPropertyAccessExpression(parent) && parent.getExpression() === identifier) {
+        continue;
+      }
+      
+      // Skip if this is a property name (like in obj.propertyName)
+      if (Node.isPropertyAccessExpression(parent) && parent.getName() === varName) {
+        continue;
+      }
+      
+      // FIXED: Skip ALL built-in identifiers, TypeScript types, HTML elements, etc.
+      if (this.isBuiltInIdentifier(varName, parent)) {
+        continue;
+      }
+
+      // Only normalize variables that look like parameter-derived variables
+      if (this.isLikelyParameterVariable(varName)) {
+        const propsAccess = `props.${varName}`;
+        identifier.replaceWithText(propsAccess);
+        
+        if (this.options.verbose) {
+          console.log(`🔄 Normalized parameter variable: ${varName} -> ${propsAccess}`);
+        }
+      }
+    }
+  }
+
+  /**
+   * Check if identifier is a built-in (React, TypeScript, HTML, etc.)
+   */
+  private isBuiltInIdentifier(varName: string, parent: any): boolean {
+    // React/global identifiers
+    if (['React', 'console', 'JSON', 'props', 'useEffect', 'useState', 'useService', 'useOptionalService'].includes(varName)) {
+      return true;
+    }
+    
+    // TypeScript interfaces (typically end with Interface or are PascalCase)
+    if (varName.endsWith('Interface') || varName.endsWith('Type') || varName.endsWith('Props')) {
+      return true;
+    }
+    
+    // HTML elements (all lowercase, common elements)
+    const htmlElements = ['div', 'span', 'button', 'input', 'form', 'img', 'a', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'li', 'nav', 'header', 'footer', 'section', 'article'];
+    if (htmlElements.includes(varName)) {
+      return true;
+    }
+    
+    // JSX tag names (check if used as JSX element)
+    if (this.isJSXTagName(parent)) {
+      return true;
+    }
+    
+    // Type annotations (check if in type position)
+    if (this.isInTypePosition(parent)) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Check if identifier is likely a parameter-derived variable
+   */
+  private isLikelyParameterVariable(varName: string): boolean {
+    // Typically parameter variables are camelCase and don't match built-in patterns
+    return /^[a-z][a-zA-Z0-9]*$/.test(varName) && 
+           !varName.endsWith('Interface') && 
+           !varName.endsWith('Type') && 
+           !varName.endsWith('Props');
+  }
+
+  /**
+   * Check if identifier is used as JSX tag name
+   */
+  private isJSXTagName(parent: any): boolean {
+    // Check if this is an opening tag name: <div>
+    if (Node.isJsxOpeningElement(parent)) {
+      return true;
+    }
+    
+    // Check if this is a closing tag name: </div>
+    if (Node.isJsxClosingElement(parent)) {
+      return true;
+    }
+    
+    // Check if this is a self-closing tag: <div />
+    if (Node.isJsxSelfClosingElement(parent)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if identifier is in a type position (like type annotations)
+   */
+  private isInTypePosition(parent: any): boolean {
+    // Check if this is in a type assertion: (something as InterfaceName)
+    if (Node.isTypeAssertion(parent) || Node.isAsExpression(parent)) {
+      return true;
+    }
+    
+    // Check if this is in a type reference: Inject<InterfaceName>
+    if (Node.isTypeReference(parent)) {
+      return true;
+    }
+
+    // Walk up the parent chain to see if we're in any type-related context
+    let currentParent = parent;
+    while (currentParent) {
+      if (Node.isTypeNode(currentParent) || 
+          Node.isTypeReference(currentParent) ||
+          Node.isTypeAssertion(currentParent) ||
+          Node.isAsExpression(currentParent)) {
+        return true;
+      }
+      currentParent = currentParent.getParent();
+    }
+
+    return false;
   }
 
   /**

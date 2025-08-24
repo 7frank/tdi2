@@ -8,6 +8,10 @@
 
 > secondary destructurings fails
 
+> we need something like @babel/plugin-transform-destructuring which normalizes the code to something that does not contain destructuring
+
+[❌] we have a **potential solution** but that checks for jsx and types which might not be needed at all
+
 ```typescript
 export function DemographicsForm(props: DemographicsFormProps) {
   const { services, onComplete } = props;
