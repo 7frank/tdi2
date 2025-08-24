@@ -18,7 +18,6 @@
 
 - [❌] check that we have a unified view in di-test-harness app for all snapshot tests to better see if things change
 
-
 - [❌] double and tripple check the changes
 - [❌] double and tripple check the changes
 - [❌] double and tripple check the changes
@@ -70,6 +69,10 @@ and prod/PostProductionRoadmap.md
       "@tdi2/di-core/*": ["./src/*"]
     },
 ```
+
+### [❌] profile.manager.ts process.env not set in di-test-harness
+
+> check that this doesnt ahve implications for passing profiles via env in other places too
 
 ### [❌] transformed not writing to file system
 

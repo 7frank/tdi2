@@ -5,7 +5,7 @@ import { CompileTimeDIContainer } from "@tdi2/di-core/container";
 import { DI_CONFIG } from "../../.tdi2/di-config";
 
 // Import the transformed component for live demo
-const InlineDestructured = lazy(
+const InlineDestructuredBasic = lazy(
   () =>
     import("@tdi2/di-core/examples/inline-destructured.basic.transformed.snap"),
   "InlineDestructured"
@@ -15,7 +15,7 @@ const InlineDestructured = lazy(
 const container = new CompileTimeDIContainer();
 container.loadConfiguration(DI_CONFIG);
 
-export const AInlineDestructuredTransformation: Story = () => {
+export const AInlineDestructuredBasic: Story = () => {
   return (
     <DITransformationDemo
       diContainer={container}
@@ -27,7 +27,7 @@ export const AInlineDestructuredTransformation: Story = () => {
           "@tdi2/di-core/sources/inline-destructured.basic.transformed.snap.tsx?raw"
         )
       }
-      transformedComponent={InlineDestructured}
+      transformedComponent={InlineDestructuredBasic}
       title="Inline Destructured Props Transformation"
       originalFileName="inline-destructured.basic.input.tsx"
       transformedFileName="inline-destructured.basic.transformed.snap.tsx"
