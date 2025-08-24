@@ -2,25 +2,40 @@
 
 ## ordered log (for production release)
 
+### [❌] missing fixtures tests for edge cases
+
+service-lifecycle-decorators.basic.input
+separate-interface.interfaces
+non-di-services.basic.input
+no-services.basic.input.tsx
+nested-arrow-functions.basic.input
+empty-services.basic.input
+conditional-rendering.basic.input
+complex-props-spreading.basic.input
+multiple-components.basic.input
+
+### harden di-test-harness fxiture tests
+
+- for one if any cant be imported curretny all fail
+- diff works but will not run examples but show errors for DI
+
 ### [❌] DI bugs & side effects (part 1)
 
-#### [❌] Fixme: example which his generating invalid code
+#### [✅] Fixme: example which his generating invalid code
 
 > secondary destructurings fails
 
-> [❌]but our current normalization attempts seem brittle and might add more problems than solving things
+> [✅]but our current normalization attempts seem brittle and might add more problems than solving things
 
 > we might need something like **@babel/plugin-transform-destructuring** which normalizes the code to something that does not contain destructuring
 
-- [❌] we have a **potential solution** but that checks for jsx and types which might not be needed at all
+- [✅] we have a **potential solution** but that checks for jsx and types which might not be needed at all
   - e330dfa74ef635cee217d9273f1472197055824a
   - and the next
 
 - [❌] check that we have a unified view in di-test-harness app for all snapshot tests to better see if things change
+- [❌] double and tripple check the changes
 
-- [❌] double and tripple check the changes
-- [❌] double and tripple check the changes
-- [❌] double and tripple check the changes
 
 ```typescript
 export function DemographicsForm(props: DemographicsFormProps) {
@@ -30,9 +45,25 @@ export function DemographicsForm(props: DemographicsFormProps) {
 }
 ```
 
-#### [❌] FIXME duplicated keys, see generated list of services
+#### [❌] FIXME duplicated keys, see generated list of services in browser console of "legacy" app
 
 - potential duplicate
+
+#### [❌] improper handling of rest parameters
+
+- functional-di-enhanced-transformer/**tests**/**fixtures**/complex-props-spreading.basic.
+
+> const { id, onClick, restProps } = props;
+> const { id, onClick, ...restProps } = props;
+
+- [❌] fix test
+- [❌] enable test in di-test-harness
+
+> ensure that there are no compilation errors by building after running tests
+
+- cd di-core
+- br test:update
+- br build
 
 #### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
 
