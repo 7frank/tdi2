@@ -2,52 +2,35 @@
 
 ## ordered log (for production release)
 
-### [❌] missing fixtures tests for edge cases
-
-service-lifecycle-decorators.basic.input
-separate-interface.interfaces
-non-di-services.basic.input
-no-services.basic.input.tsx
-nested-arrow-functions.basic.input
-empty-services.basic.input
-conditional-rendering.basic.input
-complex-props-spreading.basic.input
-multiple-components.basic.input
-
-### harden di-test-harness fxiture tests
-
-- for one if any cant be imported curretny all fail
-- diff works but will not run examples but show errors for DI
-
 ### [❌] DI bugs & side effects (part 1)
-
-#### [✅] Fixme: example which his generating invalid code
-
-> secondary destructurings fails
-
-> [✅]but our current normalization attempts seem brittle and might add more problems than solving things
-
-> we might need something like **@babel/plugin-transform-destructuring** which normalizes the code to something that does not contain destructuring
-
-- [✅] we have a **potential solution** but that checks for jsx and types which might not be needed at all
-  - e330dfa74ef635cee217d9273f1472197055824a
-  - and the next
-
-- [❌] check that we have a unified view in di-test-harness app for all snapshot tests to better see if things change
-- [❌] double and tripple check the changes
-
-
-```typescript
-export function DemographicsForm(props: DemographicsFormProps) {
-  const { services, onComplete } = props;
-
-  const { demographicsForm } = services;
-}
-```
 
 #### [❌] FIXME duplicated keys, see generated list of services in browser console of "legacy" app
 
-- potential duplicate
+> this might still introduce collisions
+
+📋 Factories:
+0: "LoggerInterface**src_logging_tdi_logger_service_ts_line_16"
+1: "TDILoggerService"
+2: "LoggerService**src_services_ConsoleLoggerService_ts_line_7"
+3: "ConsoleLoggerService"
+4: "ExampleApiInterface**src_services_ExampleApiService_ts_line_12"
+5: "ExampleApiService"
+6: "LoggerInterface**src_services_UserApiServiceImpl_ts_line_21"
+7: "ConsoleLogger"
+8: "CacheInterface_T**src_services_UserApiServiceImpl_ts_line_37"
+9: "MemoryCache"
+10: "ExampleApiInterface**src_services_UserApiServiceImpl_ts_line_64"
+11: "UserApiServiceImpl"
+12: "ExampleApiInterface**src_services_UserApiServiceImpl_ts_line_157"
+13: "MockUserApiService"
+14: "AppStateServiceInterface**src_todo2_AppStateService_ts_line_5"
+15: "AppStateService"
+16: "NotificationServiceInterface**src_todo2_NotificationService_ts_line_5"
+17: "NotificationService"
+18: "TodoRepositoryInterface2**src_todo2_TodoRepository_ts_line_10"
+19: "TodoRepository"
+20: "TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14"
+21: "TodoService2"
 
 #### [❌] improper handling of rest parameters
 
@@ -72,40 +55,7 @@ evaluate scenarios
 - to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
 - or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
 
-### [❌] add tsc type check to fixture tests
-
-> this way the test will show more meaningful errors and at least warn about them
-
-### [❌] reason about InjectOptional and remove it if not enough use cases speak for it
-
-- there seem to be some good reasons for
-  - doḱument them, write ADR
-
-### [❌] create plan whats missing for "prod"
-
-from prod/PotentialProblems.md
-and prod/PostProductionRoadmap.md
-
-- update easy wins if any
-
-### [❌] handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
-
-> test with local instead of npm ?
-> maybe by setting these otions
-
-```
-"compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@tdi2/di-core/*": ["./src/*"]
-    },
-```
-
-### [❌] profile.manager.ts process.env not set in di-test-harness
-
-> check that this doesnt ahve implications for passing profiles via env in other places too
-
-### [❌] transformed not writing to file system
+### [❌] transformed code not written to file system
 
 > easier to check if something went wrong
 > also easier to add to di-debug
@@ -121,7 +71,63 @@ see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the othe
 - [❌] di-react
 - [❌] di-debug (serve,(analytics),cli)
 
+### [❌] create plan whats missing for "prod"
+
+from prod/PotentialProblems.md
+and prod/PostProductionRoadmap.md
+
+> only one documentation piece missing form prod
+
+- [❌] write state ownership docs section
+
+---
+
+---
+
+---
+
+### [❌] profile.manager.ts process.env not set in di-test-harness
+
+- [❌] check that this doesnt have implications for passing profiles via env in other places too
+
+- [❌] import.meta.data vs process.env update documentation for less friction when using Profile
+
+### [❌] handle testing "basic and enterprise" examples locally so that we dont unnecessarily push versions
+
+> test with local instead of npm ?
+> maybe by setting these otions
+
+```
+"compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@tdi2/di-core/*": ["./src/*"]
+    },
+```
+
 ## ordered log (for post-production)
+
+### [❌] changeset publish
+
+- will not properly restore workspace:\*
+- also not every workspace:\* is replaced beforehand
+
+### [❌] harden di-test-harness fixtures tests
+
+- for one if any cant be imported curretny all fail
+- diff works but will not run examples but show errors for DI
+  - maybe this has to do with reeact bundling `useDI must be used within a DIProvider` maybe different contexts
+
+### [❌] add tsc type check to fixture tests
+
+> this way the test will show more meaningful errors and at least warn about them
+
+> actually we only need to run build afterwards which will show all errors regardless
+
+### [❌] reason about InjectOptional and remove it if not enough use cases speak for it
+
+- there seem to be some good reasons for
+  - doḱument them, write ADR
 
 ### [❌] in di-debug serve graph
 
@@ -506,6 +512,43 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] missing fixtures tests for edge cases
+
+service-lifecycle-decorators.basic.input
+separate-interface.interfaces
+non-di-services.basic.input
+no-services.basic.input.tsx
+nested-arrow-functions.basic.input
+empty-services.basic.input
+conditional-rendering.basic.input
+
+multiple-components.basic.input
+
+### DI bugs & side effects (part 1)
+
+#### [✅] Fixme: example which his generating invalid code
+
+> secondary destructurings fails
+
+> [✅]but our current normalization attempts seem brittle and might add more problems than solving things
+
+> we might need something like **@babel/plugin-transform-destructuring** which normalizes the code to something that does not contain destructuring
+
+- [✅] we have a **potential solution** but that checks for jsx and types which might not be needed at all
+  - e330dfa74ef635cee217d9273f1472197055824a
+  - and the next
+
+- [✅] check that we have a unified view in di-test-harness app for all snapshot tests to better see if things change
+- [✅] double and tripple check the changes
+
+```typescript
+export function DemographicsForm(props: DemographicsFormProps) {
+  const { services, onComplete } = props;
+
+  const { demographicsForm } = services;
+}
+```
 
 #### [✅] normalizing destructured function arguments is only applied to "Inject"ed not all variables
 
