@@ -16,7 +16,7 @@ container.loadConfiguration(DI_CONFIG);
 
 import { DITransformationDemo } from "../utils/DITransformationDemo";
 
-export const AInlineDestructuredTransformation: Story = () => {
+export const ASimpleAnimalTransformation: Story = () => {
   return (
     <DITransformationDemo
       diContainer={container}

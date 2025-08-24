@@ -83,6 +83,54 @@ describe("Functional DI Transformation Tests", () => {
       "should handle more nested destucturing values",
       defineTransformationTest("destructured-services-params", FIXTURES_DIR)
     );
+    
+    it(
+      "should handle secondary destructuring from services",
+      defineTransformationTest("secondary-destructuring", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle nested arrow functions",
+      defineTransformationTest("nested-arrow-functions", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle complex props spreading",
+      defineTransformationTest("complex-props-spreading", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle conditional rendering patterns",
+      defineTransformationTest("conditional-rendering", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle multiple components in one file",
+      defineTransformationTest("multiple-components", FIXTURES_DIR)
+    );
+  });
+
+  // Service Lifecycle and Special Cases
+  describe("Service Lifecycle and Special Cases", () => {
+    it(
+      "should handle service lifecycle decorators",
+      defineTransformationTest("service-lifecycle-decorators", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle non-DI services",
+      defineTransformationTest("non-di-services", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle components with no services",
+      defineTransformationTest("no-services", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle empty services configuration",
+      defineTransformationTest("empty-services", FIXTURES_DIR)
+    );
   });
 
   // Custom test with detailed verification

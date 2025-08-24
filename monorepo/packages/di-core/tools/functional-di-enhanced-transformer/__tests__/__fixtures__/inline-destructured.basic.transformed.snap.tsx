@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for InlineValueProps
-// Generated: 2025-08-17T07:17:00.885Z
+// Generated: 2025-08-24T07:46:20.677Z
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface, TestStateInterface } from "./shared-types";
 import { useService, useOptionalService } from "@tdi2/di-core/context";
@@ -90,6 +90,7 @@ export function TodoCard2(props: TodoCardProps) {
  */
 export function TodoCard3(props: TodoCardProps) {
     const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
+    const { todo } = props;
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
 
@@ -99,5 +100,6 @@ export function TodoCard3(props: TodoCardProps) {
  */
 export function TodoCard4(props: TodoCardProps) {
     const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
+    const { todo } = props;
   return <div>{todo.completed ? "completed" : "not completed"}</div>;
 }
