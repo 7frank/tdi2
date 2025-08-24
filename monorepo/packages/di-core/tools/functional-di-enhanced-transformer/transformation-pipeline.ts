@@ -6,11 +6,11 @@ import {
   SourceFile,
   Node,
   SyntaxKind,
-  VariableStatement
-} from 'ts-morph';
-import { PropertyAccessUpdater } from './property-access-updater';
-import { ExtractedDependency } from '../shared/SharedDependencyExtractor';
-import type { IntegratedInterfaceResolver } from '../interface-resolver/integrated-interface-resolver';
+  VariableStatement,
+} from "ts-morph";
+import { PropertyAccessUpdater } from "./property-access-updater";
+import { ExtractedDependency } from "../shared/SharedDependencyExtractor";
+import type { IntegratedInterfaceResolver } from "../interface-resolver/integrated-interface-resolver";
 
 export interface TransformationPipelineOptions {
   verbose?: boolean;
@@ -20,56 +20,72 @@ export interface TransformationPipelineOptions {
 }
 
 export class TransformationPipeline {
-
   private propertyUpdater: PropertyAccessUpdater;
 
   constructor(private options: TransformationPipelineOptions = {}) {
     this.propertyUpdater = new PropertyAccessUpdater({
-      verbose: this.options.verbose
+      verbose: this.options.verbose,
     });
   }
 
   /**
    * Step 0: Enhance dependencies with resolved implementations
    */
-  private enhanceDependenciesWithResolution(dependencies: ExtractedDependency[]): ExtractedDependency[] {
+  private enhanceDependenciesWithResolution(
+    dependencies: ExtractedDependency[]
+  ): ExtractedDependency[] {
     if (this.options.verbose) {
-      console.log(`🔍 Enhancing ${dependencies.length} dependencies with resolution...`);
-      dependencies.forEach(dep => {
-        console.log(`  - ${dep.serviceKey}: ${dep.interfaceType} (resolvedImplementation: ${dep.resolvedImplementation ? 'already set' : 'not set'})`);
+      console.log(
+        `🔍 Enhancing ${dependencies.length} dependencies with resolution...`
+      );
+      dependencies.forEach((dep) => {
+        console.log(
+          `  - ${dep.serviceKey}: ${dep.interfaceType} (resolvedImplementation: ${dep.resolvedImplementation ? "already set" : "not set"})`
+        );
       });
     }
 
     if (!this.options.interfaceResolver) {
       if (this.options.verbose) {
-        console.log('⚠️  No interface resolver available for dependency resolution');
+        console.log(
+          "⚠️  No interface resolver available for dependency resolution"
+        );
       }
       return dependencies;
     }
 
-    return dependencies.map(dep => {
+    return dependencies.map((dep) => {
       // If already resolved, keep the existing resolution
       if (dep.resolvedImplementation) {
         if (this.options.verbose) {
-          console.log(`✅ Keeping existing resolution: ${dep.interfaceType} → ${dep.resolvedImplementation.implementationClass}`);
+          console.log(
+            `✅ Keeping existing resolution: ${dep.interfaceType} → ${dep.resolvedImplementation.implementationClass}`
+          );
         }
         return dep;
       }
 
       // Try to resolve if not already resolved
-      const resolvedImplementation = this.options.interfaceResolver!.resolveImplementation(dep.interfaceType);
-      
+      const resolvedImplementation =
+        this.options.interfaceResolver!.resolveImplementation(
+          dep.interfaceType
+        );
+
       if (resolvedImplementation) {
         if (this.options.verbose) {
-          console.log(`✅ Newly resolved ${dep.interfaceType} → ${resolvedImplementation.implementationClass}`);
+          console.log(
+            `✅ Newly resolved ${dep.interfaceType} → ${resolvedImplementation.implementationClass}`
+          );
         }
         return {
           ...dep,
-          resolvedImplementation
+          resolvedImplementation,
         };
       } else {
         if (this.options.verbose) {
-          console.log(`❌ Could not resolve implementation for ${dep.interfaceType}`);
+          console.log(
+            `❌ Could not resolve implementation for ${dep.interfaceType}`
+          );
         }
         return dep;
       }
@@ -89,19 +105,31 @@ export class TransformationPipeline {
     }
 
     // Step 0: Enhance dependencies with resolved implementations
-    const enhancedDependencies = this.enhanceDependenciesWithResolution(dependencies);
+    const enhancedDependencies =
+      this.enhanceDependenciesWithResolution(dependencies);
 
     // Step 0.5: Extract non-DI parameter variables BEFORE parameter normalization
-    const nonDIParameterDestructuring = this.extractNonDIParameterVariablesBeforeNormalization(func, enhancedDependencies);
+    const nonDIParameterDestructuring =
+      this.extractNonDIParameterVariablesBeforeNormalization(
+        func,
+        enhancedDependencies
+      );
 
     // Step 1: Normalize parameters (remove destructuring from function signature)
     this.normalizeParameters(func);
 
     // Step 2: FIXED - Generate DI hook calls with proper optional chaining AND preserve non-DI destructuring
-    this.generateDIHookCallsAndPreserveDestructuring(func, enhancedDependencies, nonDIParameterDestructuring);
+    this.generateDIHookCallsAndPreserveDestructuring(
+      func,
+      enhancedDependencies,
+      nonDIParameterDestructuring
+    );
 
     // Step 3: Update property access expressions to use new variables
-    this.propertyUpdater.updatePropertyAccessAdvanced(func, enhancedDependencies);
+    this.propertyUpdater.updatePropertyAccessAdvanced(
+      func,
+      enhancedDependencies
+    );
 
     // Step 4: FIXED - Only remove DI-related destructuring, preserve other destructuring
     this.removeOnlyDIDestructuring(func, enhancedDependencies);
@@ -114,11 +142,17 @@ export class TransformationPipeline {
 
     // Step 8: Validate the transformation
     if (this.options.verbose) {
-      const validation = this.propertyUpdater.validateUpdates(func, enhancedDependencies);
+      const validation = this.propertyUpdater.validateUpdates(
+        func,
+        enhancedDependencies
+      );
       if (!validation.isValid) {
-        console.warn('⚠️  Property access validation issues:', validation.issues);
+        console.warn(
+          "⚠️  Property access validation issues:",
+          validation.issues
+        );
       } else {
-        console.log('✅ Property access validation passed');
+        console.log("✅ Property access validation passed");
       }
     }
 
@@ -140,10 +174,10 @@ export class TransformationPipeline {
     // If already using simple parameter name, ensure it's 'props'
     if (Node.isIdentifier(nameNode)) {
       const currentName = nameNode.getText();
-      if (currentName !== 'props') {
+      if (currentName !== "props") {
         // Rename parameter to 'props'
-        nameNode.replaceWithText('props');
-        this.updateReferencesInBody(func, currentName, 'props');
+        nameNode.replaceWithText("props");
+        this.updateReferencesInBody(func, currentName, "props");
       }
       return;
     }
@@ -151,13 +185,15 @@ export class TransformationPipeline {
     // If using destructuring, convert to props parameter
     if (Node.isObjectBindingPattern(nameNode)) {
       const typeNode = firstParam.getTypeNode();
-      const typeText = typeNode ? typeNode.getText() : 'any';
-      
+      const typeText = typeNode ? typeNode.getText() : "any";
+
       // Replace destructured parameter with props parameter
       firstParam.replaceWithText(`props: ${typeText}`);
-      
+
       if (this.options.verbose) {
-        console.log(`🔄 Normalized destructured parameter to: props: ${typeText}`);
+        console.log(
+          `🔄 Normalized destructured parameter to: props: ${typeText}`
+        );
       }
     }
   }
@@ -184,7 +220,10 @@ export class TransformationPipeline {
     }
 
     // FIXED: Analyze existing destructuring to preserve non-DI parts
-    const preservedDestructuring = this.extractNonDIDestructuring(func, dependencies);
+    const preservedDestructuring = this.extractNonDIDestructuring(
+      func,
+      dependencies
+    );
 
     // Insert DI statements at the beginning of function body
     for (let i = diStatements.length - 1; i >= 0; i--) {
@@ -192,17 +231,27 @@ export class TransformationPipeline {
     }
 
     // FIXED: Re-add preserved destructuring (from body) and parameter destructuring after DI statements
-    const allPreservedDestructuring = [...preservedDestructuring, ...nonDIParameterDestructuring];
+    const allPreservedDestructuring = [
+      ...preservedDestructuring,
+      ...nonDIParameterDestructuring,
+    ];
     if (allPreservedDestructuring.length > 0) {
       for (let i = allPreservedDestructuring.length - 1; i >= 0; i--) {
-        body.insertStatements(diStatements.length, allPreservedDestructuring[i]);
+        body.insertStatements(
+          diStatements.length,
+          allPreservedDestructuring[i]
+        );
       }
     }
 
     if (this.options.verbose) {
-      console.log(`✅ Generated ${diStatements.length} DI hook statements with optional chaining`);
+      console.log(
+        `✅ Generated ${diStatements.length} DI hook statements with optional chaining`
+      );
       if (preservedDestructuring.length > 0) {
-        console.log(`✅ Preserved ${preservedDestructuring.length} non-DI destructuring statements`);
+        console.log(
+          `✅ Preserved ${preservedDestructuring.length} non-DI destructuring statements`
+        );
       }
     }
   }
@@ -219,7 +268,7 @@ export class TransformationPipeline {
 
     const firstParam = parameters[0];
     const nameNode = firstParam.getNameNode();
-    
+
     // Only process if parameter was originally destructured
     if (!Node.isObjectBindingPattern(nameNode)) {
       return [];
@@ -229,16 +278,24 @@ export class TransformationPipeline {
     const diPropertyPaths = new Set<string>();
     for (const dep of dependencies) {
       if (dep.propertyPath && dep.propertyPath.length > 0) {
-        diPropertyPaths.add(dep.propertyPath.join('.'));
+        diPropertyPaths.add(dep.propertyPath.join("."));
       }
       diPropertyPaths.add(dep.serviceKey);
     }
 
     const nonDIDestructuring: string[] = [];
-    this.extractNonDIParameterDestructuring(nameNode, [], diPropertyPaths, nonDIDestructuring);
-    
+    this.extractNonDIParameterDestructuring(
+      nameNode,
+      [],
+      diPropertyPaths,
+      nonDIDestructuring
+    );
+
     if (this.options.verbose && nonDIDestructuring.length > 0) {
-      console.log(`🔒 Extracted ${nonDIDestructuring.length} non-DI parameter destructuring statements:`, nonDIDestructuring);
+      console.log(
+        `🔒 Extracted ${nonDIDestructuring.length} non-DI parameter destructuring statements:`,
+        nonDIDestructuring
+      );
     }
 
     return nonDIDestructuring;
@@ -263,21 +320,25 @@ export class TransformationPipeline {
         const nameNode = element.getNameNode();
         const propertyNameNode = element.getPropertyNameNode();
         const dotDotDotToken = element.getDotDotDotToken();
-        
+
         // Skip rest parameters (like ...props)
         if (dotDotDotToken) {
           if (this.options.verbose) {
-            console.log(`⏭️  Skipping rest parameter: ...${nameNode.getText()}`);
+            console.log(
+              `⏭️  Skipping rest parameter: ...${nameNode.getText()}`
+            );
           }
           continue;
         }
-        
+
         let propertyName: string;
         let localName: string;
 
         if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
           propertyName = propertyNameNode.getText();
-          localName = Node.isIdentifier(nameNode) ? nameNode.getText() : nameNode.getText();
+          localName = Node.isIdentifier(nameNode)
+            ? nameNode.getText()
+            : nameNode.getText();
         } else if (Node.isIdentifier(nameNode)) {
           propertyName = nameNode.getText();
           localName = nameNode.getText();
@@ -286,12 +347,19 @@ export class TransformationPipeline {
           if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
             propertyName = propertyNameNode.getText();
             const nestedPath = [...currentPath, propertyName];
-            const fullPath = nestedPath.join('.');
-            
+            const fullPath = nestedPath.join(".");
+
             // Check if this nested container is DI-related
-            if (!this.isPathDIRelated(fullPath, propertyName, diPropertyPaths)) {
+            if (
+              !this.isPathDIRelated(fullPath, propertyName, diPropertyPaths)
+            ) {
               // This is a non-DI nested container, extract its contents
-              this.extractNonDIParameterDestructuring(nameNode, nestedPath, diPropertyPaths, result);
+              this.extractNonDIParameterDestructuring(
+                nameNode,
+                nestedPath,
+                diPropertyPaths,
+                result
+              );
             }
           }
           continue;
@@ -299,19 +367,21 @@ export class TransformationPipeline {
           continue;
         }
 
-        const fullPath = [...currentPath, propertyName].join('.');
-        
+        const fullPath = [...currentPath, propertyName].join(".");
+
         // Only include non-DI properties
         if (!this.isPathDIRelated(fullPath, propertyName, diPropertyPaths)) {
-          const containerPath = currentPath.join('.');
-          const containerKey = containerPath || 'root';
-          
+          const containerPath = currentPath.join(".");
+          const containerKey = containerPath || "root";
+
           if (!containerGroups.has(containerKey)) {
             containerGroups.set(containerKey, []);
           }
-          
+
           if (propertyName !== localName) {
-            containerGroups.get(containerKey)!.push(`${propertyName}: ${localName}`);
+            containerGroups
+              .get(containerKey)!
+              .push(`${propertyName}: ${localName}`);
           } else {
             containerGroups.get(containerKey)!.push(propertyName);
           }
@@ -322,12 +392,15 @@ export class TransformationPipeline {
     // Generate destructuring statements for each container
     for (const [containerKey, properties] of containerGroups.entries()) {
       if (properties.length > 0) {
-        const propsAccess = containerKey === 'root' ? 'props' : `props.${containerKey}`;
-        const destructuringStatement = `const { ${properties.join(', ')} } = ${propsAccess};`;
+        const propsAccess =
+          containerKey === "root" ? "props" : `props.${containerKey}`;
+        const destructuringStatement = `const { ${properties.join(", ")} } = ${propsAccess};`;
         result.push(destructuringStatement);
-        
+
         if (this.options.verbose) {
-          console.log(`📝 Generated non-DI parameter destructuring: ${destructuringStatement}`);
+          console.log(
+            `📝 Generated non-DI parameter destructuring: ${destructuringStatement}`
+          );
         }
       }
     }
@@ -345,13 +418,13 @@ export class TransformationPipeline {
 
     const statements = body.getStatements();
     const preservedStatements: string[] = [];
-    
+
     // Build a set of all property paths that are DI-related
     const diPropertyPaths = new Set<string>();
     for (const dep of dependencies) {
       // Add the full property path (e.g., "services.api", "config.cache", etc.)
       if (dep.propertyPath && dep.propertyPath.length > 0) {
-        diPropertyPaths.add(dep.propertyPath.join('.'));
+        diPropertyPaths.add(dep.propertyPath.join("."));
       }
       // Also add just the service key for direct access
       diPropertyPaths.add(dep.serviceKey);
@@ -360,24 +433,33 @@ export class TransformationPipeline {
     for (const statement of statements) {
       if (Node.isVariableStatement(statement)) {
         const declarations = statement.getDeclarationList().getDeclarations();
-        
+
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
-          
+
           // Check for destructuring assignments from props
           if (Node.isObjectBindingPattern(nameNode)) {
             const initializer = declaration.getInitializer();
-            if (initializer && Node.isIdentifier(initializer) && initializer.getText() === 'props') {
-              
+            if (
+              initializer &&
+              Node.isIdentifier(initializer) &&
+              initializer.getText() === "props"
+            ) {
               // FIXED: Extract only non-DI properties from destructuring
-              const nonDIProperties = this.extractNonDIPropertiesFromDestructuring(nameNode, diPropertyPaths);
-              
+              const nonDIProperties =
+                this.extractNonDIPropertiesFromDestructuring(
+                  nameNode,
+                  diPropertyPaths
+                );
+
               if (nonDIProperties.length > 0) {
-                const preservedDestructuring = `const { ${nonDIProperties.join(', ')} } = props;`;
+                const preservedDestructuring = `const { ${nonDIProperties.join(", ")} } = props;`;
                 preservedStatements.push(preservedDestructuring);
-                
+
                 if (this.options.verbose) {
-                  console.log(`📝 Preserving non-DI destructuring: ${preservedDestructuring}`);
+                  console.log(
+                    `📝 Preserving non-DI destructuring: ${preservedDestructuring}`
+                  );
                 }
               }
             }
@@ -397,7 +479,7 @@ export class TransformationPipeline {
     diPropertyPaths: Set<string>
   ): string[] {
     const nonDIProperties: string[] = [];
-    
+
     // Recursively analyze the destructuring pattern
     const analyzePattern = (pattern: any, currentPath: string[] = []): void => {
       const elements = pattern.getElements();
@@ -406,14 +488,16 @@ export class TransformationPipeline {
         if (Node.isBindingElement(element)) {
           const nameNode = element.getNameNode();
           const propertyNameNode = element.getPropertyNameNode();
-          
+
           let propertyName: string;
           let localName: string;
 
           if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
             // { propertyName: localName } pattern
             propertyName = propertyNameNode.getText();
-            localName = Node.isIdentifier(nameNode) ? nameNode.getText() : nameNode.getText();
+            localName = Node.isIdentifier(nameNode)
+              ? nameNode.getText()
+              : nameNode.getText();
           } else if (Node.isIdentifier(nameNode)) {
             // { localName } shorthand pattern
             propertyName = nameNode.getText();
@@ -430,25 +514,36 @@ export class TransformationPipeline {
             }
           }
 
-          const fullPath = [...currentPath, propertyName].join('.');
-          
+          const fullPath = [...currentPath, propertyName].join(".");
+
           // Check if this property path is DI-related
-          const isDIRelated = this.isPathDIRelated(fullPath, propertyName, diPropertyPaths);
-          
+          const isDIRelated = this.isPathDIRelated(
+            fullPath,
+            propertyName,
+            diPropertyPaths
+          );
+
           if (!isDIRelated) {
             // Handle nested destructuring
             if (Node.isObjectBindingPattern(nameNode)) {
               // This is nested destructuring like: { config: { theme, language } }
               // We need to preserve the structure but exclude DI parts
               const nestedNonDI: string[] = [];
-              this.extractNestedNonDIProperties(nameNode, [...currentPath, propertyName], diPropertyPaths, nestedNonDI);
-              
+              this.extractNestedNonDIProperties(
+                nameNode,
+                [...currentPath, propertyName],
+                diPropertyPaths,
+                nestedNonDI
+              );
+
               if (nestedNonDI.length > 0) {
-                const nestedPattern = `${propertyName}: { ${nestedNonDI.join(', ')} }`;
+                const nestedPattern = `${propertyName}: { ${nestedNonDI.join(", ")} }`;
                 nonDIProperties.push(nestedPattern);
-                
+
                 if (this.options.verbose) {
-                  console.log(`🔒 Preserving nested non-DI property: ${nestedPattern}`);
+                  console.log(
+                    `🔒 Preserving nested non-DI property: ${nestedPattern}`
+                  );
                 }
               }
             } else {
@@ -458,9 +553,11 @@ export class TransformationPipeline {
               } else {
                 nonDIProperties.push(propertyName);
               }
-              
+
               if (this.options.verbose) {
-                console.log(`🔒 Preserving non-DI property: ${propertyName}${propertyName !== localName ? ` as ${localName}` : ''}`);
+                console.log(
+                  `🔒 Preserving non-DI property: ${propertyName}${propertyName !== localName ? ` as ${localName}` : ""}`
+                );
               }
             }
           } else {
@@ -479,31 +576,35 @@ export class TransformationPipeline {
   /**
    * Check if a property path is DI-related by comparing against actual dependency paths
    */
-  private isPathDIRelated(fullPath: string, propertyName: string, diPropertyPaths: Set<string>): boolean {
+  private isPathDIRelated(
+    fullPath: string,
+    propertyName: string,
+    diPropertyPaths: Set<string>
+  ): boolean {
     // Direct match
     if (diPropertyPaths.has(fullPath)) {
       return true;
     }
-    
+
     // Check if this property is a service key
     if (diPropertyPaths.has(propertyName)) {
       return true;
     }
-    
+
     // Check if this path is a parent of any DI path
     for (const diPath of diPropertyPaths) {
-      if (diPath.startsWith(fullPath + '.')) {
+      if (diPath.startsWith(fullPath + ".")) {
         return true; // This is a parent container of DI properties
       }
     }
-    
-    // Check if this path is a child of any DI path  
+
+    // Check if this path is a child of any DI path
     for (const diPath of diPropertyPaths) {
-      if (fullPath.startsWith(diPath + '.')) {
+      if (fullPath.startsWith(diPath + ".")) {
         return true; // This is a child of a DI property
       }
     }
-    
+
     return false;
   }
 
@@ -511,9 +612,9 @@ export class TransformationPipeline {
    * Helper method to extract nested non-DI properties recursively
    */
   private extractNestedNonDIProperties(
-    pattern: any, 
-    currentPath: string[], 
-    diPropertyPaths: Set<string>, 
+    pattern: any,
+    currentPath: string[],
+    diPropertyPaths: Set<string>,
     result: string[]
   ): void {
     const elements = pattern.getElements();
@@ -522,9 +623,9 @@ export class TransformationPipeline {
       if (Node.isBindingElement(element)) {
         const nameNode = element.getNameNode();
         const propertyNameNode = element.getPropertyNameNode();
-        
+
         let propertyName: string;
-        
+
         if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
           propertyName = propertyNameNode.getText();
         } else if (Node.isIdentifier(nameNode)) {
@@ -533,15 +634,20 @@ export class TransformationPipeline {
           continue;
         }
 
-        const fullPath = [...currentPath, propertyName].join('.');
-        
+        const fullPath = [...currentPath, propertyName].join(".");
+
         if (!this.isPathDIRelated(fullPath, propertyName, diPropertyPaths)) {
           if (Node.isObjectBindingPattern(nameNode)) {
             // Further nested destructuring
             const nestedResult: string[] = [];
-            this.extractNestedNonDIProperties(nameNode, [...currentPath, propertyName], diPropertyPaths, nestedResult);
+            this.extractNestedNonDIProperties(
+              nameNode,
+              [...currentPath, propertyName],
+              diPropertyPaths,
+              nestedResult
+            );
             if (nestedResult.length > 0) {
-              result.push(`${propertyName}: { ${nestedResult.join(', ')} }`);
+              result.push(`${propertyName}: { ${nestedResult.join(", ")} }`);
             }
           } else {
             result.push(propertyName);
@@ -554,43 +660,52 @@ export class TransformationPipeline {
   /**
    * Generate DI hook statement with proper optional chaining
    */
-  private generateDIHookStatementsWithOptionalChaining(dependency: ExtractedDependency): string[] | null {
+  private generateDIHookStatementsWithOptionalChaining(
+    dependency: ExtractedDependency
+  ): string[] | null {
     // Determine the property path with optional chaining
     const propertyPath = this.determineOptionalPropertyPath(dependency);
-    
+
     if (!dependency.resolvedImplementation) {
       // Log for debugging - this helps track which services couldn't be resolved
-      console.error(`❌❌❌ "Could not find implementation for '${dependency.interfaceType}'`, dependency);
-      
+      console.error(
+        `❌❌❌ "Could not find implementation for '${dependency.interfaceType}'`,
+        dependency
+      );
+
       if (dependency.isOptional) {
         // Optional dependency that couldn't be resolved - use optional chaining with useOptionalService fallback
         return [
-          `const ${dependency.serviceKey} = ${propertyPath} ?? (useOptionalService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`
+          `const ${dependency.serviceKey} = ${propertyPath} ?? (useOptionalService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`,
         ];
       } else {
         // Required dependency that couldn't be resolved - use optional chaining with useService fallback
         return [
-          `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`
+          `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`,
         ];
       }
     }
 
     const token = dependency.resolvedImplementation.sanitizedKey;
-    const hookName = dependency.isOptional ? 'useOptionalService' : 'useService';
-    
+    const hookName = dependency.isOptional
+      ? "useOptionalService"
+      : "useService";
+
     // Generate the exact pattern from your expected output
     return [
-      `const ${dependency.serviceKey} = ${propertyPath} ?? (${hookName}('${token}') as unknown as ${dependency.interfaceType});`
+      `const ${dependency.serviceKey} = ${propertyPath} ?? (${hookName}('${token}') as unknown as ${dependency.interfaceType});`,
     ];
   }
 
   /**
    * Determine property path with proper optional chaining
    */
-  private determineOptionalPropertyPath(dependency: ExtractedDependency): string {
+  private determineOptionalPropertyPath(
+    dependency: ExtractedDependency
+  ): string {
     if (dependency.propertyPath && dependency.propertyPath.length > 0) {
       // Use optional chaining for nested properties: props.services?.api
-      const path = dependency.propertyPath.join('?.');
+      const path = dependency.propertyPath.join("?.");
       return `props.${path}`;
     } else {
       // Use optional chaining for direct property access: props.serviceKey
@@ -601,18 +716,21 @@ export class TransformationPipeline {
   /**
    * FIXED: Step 4 - Remove ALL original destructuring that contains ANY DI properties
    */
-  private removeOnlyDIDestructuring(func: FunctionDeclaration | ArrowFunction, dependencies: ExtractedDependency[]): void {
+  private removeOnlyDIDestructuring(
+    func: FunctionDeclaration | ArrowFunction,
+    dependencies: ExtractedDependency[]
+  ): void {
     const body = this.getFunctionBody(func);
     if (!body || !Node.isBlock(body)) return;
 
     const statements = body.getStatements();
     const toRemove: VariableStatement[] = [];
-    
+
     // Build a set of all property paths that are DI-related
     const diPropertyPaths = new Set<string>();
     for (const dep of dependencies) {
       if (dep.propertyPath && dep.propertyPath.length > 0) {
-        diPropertyPaths.add(dep.propertyPath.join('.'));
+        diPropertyPaths.add(dep.propertyPath.join("."));
       }
       diPropertyPaths.add(dep.serviceKey);
     }
@@ -620,37 +738,48 @@ export class TransformationPipeline {
     for (const statement of statements) {
       if (Node.isVariableStatement(statement)) {
         const declarations = statement.getDeclarationList().getDeclarations();
-        
+
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
-          
+
           // FIXED: Remove ANY destructuring from props that contains DI properties
           if (Node.isObjectBindingPattern(nameNode)) {
             const initializer = declaration.getInitializer();
-            if (initializer && Node.isIdentifier(initializer) && initializer.getText() === 'props') {
-              
+            if (
+              initializer &&
+              Node.isIdentifier(initializer) &&
+              initializer.getText() === "props"
+            ) {
               // Check if this destructuring contains ANY DI-related properties
               if (this.containsAnyDIProperties(nameNode, diPropertyPaths)) {
                 toRemove.push(statement);
-                
+
                 if (this.options.verbose) {
-                  console.log(`🗑️  Removing original destructuring (contains DI): ${statement.getText()}`);
+                  console.log(
+                    `🗑️  Removing original destructuring (contains DI): ${statement.getText()}`
+                  );
                 }
               }
             }
           }
-          
+
           // Remove simple assignments that are now redundant (like const api = props.services?.api)
           if (Node.isIdentifier(nameNode)) {
             const initializer = declaration.getInitializer();
-            if (initializer && initializer.getText().includes('props.') && !initializer.getText().includes('??')) {
+            if (
+              initializer &&
+              initializer.getText().includes("props.") &&
+              !initializer.getText().includes("??")
+            ) {
               const varName = nameNode.getText();
               // Check if this variable is used elsewhere in the function
               if (!this.isVariableUsedInFunction(func, varName, statement)) {
                 toRemove.push(statement);
-                
+
                 if (this.options.verbose) {
-                  console.log(`🗑️  Removing redundant assignment: ${statement.getText()}`);
+                  console.log(
+                    `🗑️  Removing redundant assignment: ${statement.getText()}`
+                  );
                 }
               }
             }
@@ -665,30 +794,39 @@ export class TransformationPipeline {
     }
 
     if (this.options.verbose && toRemove.length > 0) {
-      console.log(`🗑️  Removed ${toRemove.length} original destructuring statements`);
+      console.log(
+        `🗑️  Removed ${toRemove.length} original destructuring statements`
+      );
     }
   }
 
   /**
    * FIXED: Check if destructuring contains ANY DI-related properties (not just only DI)
    */
-  private containsAnyDIProperties(bindingPattern: any, diPropertyPaths: Set<string>): boolean {
+  private containsAnyDIProperties(
+    bindingPattern: any,
+    diPropertyPaths: Set<string>
+  ): boolean {
     return this.findAnyDIInDestructuring(bindingPattern, [], diPropertyPaths);
   }
 
   /**
    * Recursively search for ANY DI-related properties in destructuring pattern
    */
-  private findAnyDIInDestructuring(pattern: any, currentPath: string[], diPropertyPaths: Set<string>): boolean {
+  private findAnyDIInDestructuring(
+    pattern: any,
+    currentPath: string[],
+    diPropertyPaths: Set<string>
+  ): boolean {
     const elements = pattern.getElements();
-    
+
     for (const element of elements) {
       if (Node.isBindingElement(element)) {
         const nameNode = element.getNameNode();
         const propertyNameNode = element.getPropertyNameNode();
-        
+
         let propertyName: string;
-        
+
         if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
           propertyName = propertyNameNode.getText();
         } else if (Node.isIdentifier(nameNode)) {
@@ -697,47 +835,59 @@ export class TransformationPipeline {
           // For complex patterns, continue checking
           continue;
         }
-        
-        const fullPath = [...currentPath, propertyName].join('.');
-        
+
+        const fullPath = [...currentPath, propertyName].join(".");
+
         // Check if this property is DI-related
         if (this.isPathDIRelated(fullPath, propertyName, diPropertyPaths)) {
           return true; // Found a DI property
         }
-        
+
         // If this has nested destructuring, check recursively
         if (Node.isObjectBindingPattern(nameNode)) {
-          if (this.findAnyDIInDestructuring(nameNode, [...currentPath, propertyName], diPropertyPaths)) {
+          if (
+            this.findAnyDIInDestructuring(
+              nameNode,
+              [...currentPath, propertyName],
+              diPropertyPaths
+            )
+          ) {
             return true; // Found DI properties in nested structure
           }
         }
       }
     }
-    
+
     return false; // No DI properties found
   }
 
   /**
    * Update property access expressions to use the new direct variables
    */
-  private updatePropertyAccessExpressions(func: FunctionDeclaration | ArrowFunction): void {
+  private updatePropertyAccessExpressions(
+    func: FunctionDeclaration | ArrowFunction
+  ): void {
     const body = this.getFunctionBody(func);
     if (!body) return;
 
     // Find all property access expressions in the function body
-    const propertyAccessExpressions = body.getDescendantsOfKind(SyntaxKind.PropertyAccessExpression);
-    
+    const propertyAccessExpressions = body.getDescendantsOfKind(
+      SyntaxKind.PropertyAccessExpression
+    );
+
     for (const propAccess of propertyAccessExpressions) {
       const fullText = propAccess.getText();
 
       // Handle patterns like "services.api.getData()" -> "api.getData()"
-      if (fullText.includes('.')) {
+      if (fullText.includes(".")) {
         const updated = this.simplifyPropertyAccess(fullText);
         if (updated !== fullText) {
           propAccess.replaceWithText(updated);
-          
+
           if (this.options.verbose) {
-            console.log(`🔄 Updated property access: ${fullText} -> ${updated}`);
+            console.log(
+              `🔄 Updated property access: ${fullText} -> ${updated}`
+            );
           }
         }
       }
@@ -749,20 +899,20 @@ export class TransformationPipeline {
    */
   private simplifyPropertyAccess(propertyAccess: string): string {
     // Handle "services.api.getData()" -> "api.getData()"
-    if (propertyAccess.startsWith('services.')) {
-      const parts = propertyAccess.split('.');
+    if (propertyAccess.startsWith("services.")) {
+      const parts = propertyAccess.split(".");
       if (parts.length >= 3) {
         // services.api.getData() -> api.getData()
-        return parts.slice(1).join('.');
+        return parts.slice(1).join(".");
       } else if (parts.length === 2) {
         // services.api -> api
         return parts[1];
       }
     }
-    
+
     // Handle direct property access like "cache.get()" -> "cache.get()"
     // (no change needed if it's already simplified)
-    
+
     return propertyAccess;
   }
 
@@ -779,12 +929,12 @@ export class TransformationPipeline {
 
     const bodyText = body.getText();
     const excludeText = excludeStatement.getText();
-    const bodyWithoutDeclaration = bodyText.replace(excludeText, '');
-    
+    const bodyWithoutDeclaration = bodyText.replace(excludeText, "");
+
     // Simple check for variable usage (could be made more sophisticated)
-    const variableRegex = new RegExp(`\\b${variableName}\\b`, 'g');
+    const variableRegex = new RegExp(`\\b${variableName}\\b`, "g");
     const matches = bodyWithoutDeclaration.match(variableRegex);
-    
+
     return matches && matches.length > 0;
   }
 
@@ -803,12 +953,15 @@ export class TransformationPipeline {
 
     // Get all identifiers in the function body
     const identifiers = body.getDescendantsOfKind(SyntaxKind.Identifier);
-    
+
     for (const identifier of identifiers) {
       if (identifier.getText() === oldName) {
         // Check if this is a variable reference (not a property name)
         const parent = identifier.getParent();
-        if (!Node.isPropertyAccessExpression(parent) || parent.getNameNode() !== identifier) {
+        if (
+          !Node.isPropertyAccessExpression(parent) ||
+          parent.getNameNode() !== identifier
+        ) {
           identifier.replaceWithText(newName);
         }
       }
@@ -822,10 +975,12 @@ export class TransformationPipeline {
   /**
    * Extract ALL parameter variables with their original destructuring paths
    */
-  private extractAllParameterVariables(func: FunctionDeclaration | ArrowFunction): Map<string, string> {
+  private extractAllParameterVariables(
+    func: FunctionDeclaration | ArrowFunction
+  ): Map<string, string> {
     const parameterVariables = new Map<string, string>();
     const parameters = func.getParameters();
-    
+
     if (parameters.length === 0) return parameterVariables;
 
     const firstParam = parameters[0];
@@ -845,8 +1000,10 @@ export class TransformationPipeline {
     this.extractParameterDerivedVariables(func, parameterVariables);
 
     if (this.options.verbose) {
-      console.log(`🔍 Extracted ${parameterVariables.size} parameter variables (including derived):`, 
-        Array.from(parameterVariables.entries()));
+      console.log(
+        `🔍 Extracted ${parameterVariables.size} parameter variables (including derived):`,
+        Array.from(parameterVariables.entries())
+      );
     }
 
     return parameterVariables;
@@ -856,8 +1013,8 @@ export class TransformationPipeline {
    * Recursively extract variables from destructuring patterns with their paths
    */
   private extractVariablesFromDestructuring(
-    pattern: any, 
-    currentPath: string[], 
+    pattern: any,
+    currentPath: string[],
     result: Map<string, string>
   ): void {
     const elements = pattern.getElements();
@@ -884,28 +1041,32 @@ export class TransformationPipeline {
 
           // Build the props access path
           const fullPath = [...currentPath, propertyName];
-          const propsAccess = fullPath.length > 0 ? 
-            `props.${fullPath.join('?.')}` : 
-            `props.${propertyName}`;
-          
+          const propsAccess =
+            fullPath.length > 0
+              ? `props.${fullPath.join("?.")}`
+              : `props.${propertyName}`;
+
           result.set(localName, propsAccess);
-          
+
           if (this.options.verbose) {
             console.log(`📝 Variable mapping: ${localName} -> ${propsAccess}`);
           }
-
         } else if (Node.isObjectBindingPattern(nameNode)) {
           // Nested destructuring: { services: { api } }
           let propertyName: string;
-          
+
           if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
             propertyName = propertyNameNode.getText();
           } else {
             continue; // Skip complex patterns we can't parse
           }
-          
+
           // Recurse into nested destructuring
-          this.extractVariablesFromDestructuring(nameNode, [...currentPath, propertyName], result);
+          this.extractVariablesFromDestructuring(
+            nameNode,
+            [...currentPath, propertyName],
+            result
+          );
         }
       }
     }
@@ -929,20 +1090,25 @@ export class TransformationPipeline {
     if (!body) return;
 
     if (this.options.verbose) {
-      console.log(`🔄 Normalizing ${parameterVariables.size} parameter variable references`);
+      console.log(
+        `🔄 Normalizing ${parameterVariables.size} parameter variable references`
+      );
     }
 
     // Get all identifiers in the function body
     const identifiers = body.getDescendantsOfKind(SyntaxKind.Identifier);
-    
+
     // Set of known local variables (DI services and other local declarations)
     const knownLocalVariables = new Set<string>();
-    
+
     // Add DI service variables that were injected
     const existingStatements = body.getStatements();
     for (const statement of existingStatements) {
       const statementText = statement.getText();
-      if (statementText.includes('useService') || statementText.includes('useOptionalService')) {
+      if (
+        statementText.includes("useService") ||
+        statementText.includes("useOptionalService")
+      ) {
         // Extract variable name from "const variableName = ..."
         const match = statementText.match(/^\s*const\s+(\w+)\s*=/);
         if (match) {
@@ -950,12 +1116,12 @@ export class TransformationPipeline {
         }
       }
     }
-    
+
     // Add other local variables (like 'data' in function body)
     for (const statement of existingStatements) {
       const statementText = statement.getText();
       const localVarMatch = statementText.match(/^\s*const\s+(\w+)\s*=/);
-      if (localVarMatch && !statementText.includes('useService')) {
+      if (localVarMatch && !statementText.includes("useService")) {
         knownLocalVariables.add(localVarMatch[1]);
       }
     }
@@ -963,12 +1129,12 @@ export class TransformationPipeline {
     if (this.options.verbose) {
       console.log(`🔍 Known local variables:`, Array.from(knownLocalVariables));
     }
-    
+
     // Normalize only parameter variables
     for (const identifier of identifiers) {
       const varName = identifier.getText();
       const parent = identifier.getParent();
-      
+
       // Only normalize if this is a parameter variable
       if (!parameterVariables.has(varName)) {
         continue;
@@ -978,23 +1144,31 @@ export class TransformationPipeline {
       if (knownLocalVariables.has(varName)) {
         continue;
       }
-      
+
       // Skip if this identifier is already part of a property access (like props.something)
-      if (Node.isPropertyAccessExpression(parent) && parent.getExpression() === identifier) {
+      if (
+        Node.isPropertyAccessExpression(parent) &&
+        parent.getExpression() === identifier
+      ) {
         continue;
       }
-      
+
       // Skip if this is a property name (like in obj.propertyName)
-      if (Node.isPropertyAccessExpression(parent) && parent.getName() === varName) {
+      if (
+        Node.isPropertyAccessExpression(parent) &&
+        parent.getName() === varName
+      ) {
         continue;
       }
-      
+
       // Convert to props.* access using the original path
       const propsAccess = parameterVariables.get(varName)!;
       identifier.replaceWithText(propsAccess);
-      
+
       if (this.options.verbose) {
-        console.log(`🔄 Normalized parameter variable: ${varName} -> ${propsAccess}`);
+        console.log(
+          `🔄 Normalized parameter variable: ${varName} -> ${propsAccess}`
+        );
       }
     }
   }
@@ -1016,22 +1190,25 @@ export class TransformationPipeline {
     for (const statement of statements) {
       if (Node.isVariableStatement(statement)) {
         const declarations = statement.getDeclarationList().getDeclarations();
-        
+
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
           const initializer = declaration.getInitializer();
-          
+
           // Look for: const { ... } = props
-          if (Node.isObjectBindingPattern(nameNode) && 
-              initializer && 
-              Node.isIdentifier(initializer) && 
-              initializer.getText() === propsParamName) {
-            
+          if (
+            Node.isObjectBindingPattern(nameNode) &&
+            initializer &&
+            Node.isIdentifier(initializer) &&
+            initializer.getText() === propsParamName
+          ) {
             // Extract variables from this destructuring
             this.extractVariablesFromDestructuring(nameNode, [], result);
-            
+
             if (this.options.verbose) {
-              console.log(`📝 Found direct props destructuring: const { ... } = ${propsParamName}`);
+              console.log(
+                `📝 Found direct props destructuring: const { ... } = ${propsParamName}`
+              );
             }
           }
         }
@@ -1055,32 +1232,41 @@ export class TransformationPipeline {
     // Keep scanning until no new parameter-derived variables are found
     while (foundNewVars) {
       foundNewVars = false;
-      
+
       for (const statement of statements) {
         if (Node.isVariableStatement(statement)) {
           const declarations = statement.getDeclarationList().getDeclarations();
-          
+
           for (const declaration of declarations) {
             const nameNode = declaration.getNameNode();
             const initializer = declaration.getInitializer();
-            
+
             // Check for destructuring assignment: const { ... } = someVar
-            if (Node.isObjectBindingPattern(nameNode) && initializer && Node.isIdentifier(initializer)) {
+            if (
+              Node.isObjectBindingPattern(nameNode) &&
+              initializer &&
+              Node.isIdentifier(initializer)
+            ) {
               const sourceVarName = initializer.getText();
-              
+
               // If source variable is parameter-derived, extract its destructured variables
               if (knownParameterVars.has(sourceVarName)) {
                 const sourcePath = knownParameterVars.get(sourceVarName)!;
-                const newVars = this.extractDestructuredVariablesWithSource(nameNode, sourcePath);
-                
+                const newVars = this.extractDestructuredVariablesWithSource(
+                  nameNode,
+                  sourcePath
+                );
+
                 // Add newly found variables
                 for (const [varName, varPath] of newVars.entries()) {
                   if (!knownParameterVars.has(varName)) {
                     knownParameterVars.set(varName, varPath);
                     foundNewVars = true;
-                    
+
                     if (this.options.verbose) {
-                      console.log(`📝 Found parameter-derived variable: ${varName} -> ${varPath}`);
+                      console.log(
+                        `📝 Found parameter-derived variable: ${varName} -> ${varPath}`
+                      );
                     }
                   }
                 }
@@ -1122,28 +1308,32 @@ export class TransformationPipeline {
           }
 
           // Build full path: sourcePath.propertyName
-          const fullPath = sourcePath.includes('?.') || sourcePath.includes('.') ? 
-            `${sourcePath}?.${propertyName}` : 
-            `${sourcePath}.${propertyName}`;
-          
-          result.set(localName, fullPath);
+          const fullPath =
+            sourcePath.includes("?.") || sourcePath.includes(".")
+              ? `${sourcePath}?.${propertyName}`
+              : `${sourcePath}.${propertyName}`;
 
+          result.set(localName, fullPath);
         } else if (Node.isObjectBindingPattern(nameNode)) {
           // Nested destructuring: { services: { api } }
           let propertyName: string;
-          
+
           if (propertyNameNode && Node.isIdentifier(propertyNameNode)) {
             propertyName = propertyNameNode.getText();
           } else {
             continue;
           }
-          
-          const nestedPath = sourcePath.includes('?.') || sourcePath.includes('.') ? 
-            `${sourcePath}?.${propertyName}` : 
-            `${sourcePath}.${propertyName}`;
-          
+
+          const nestedPath =
+            sourcePath.includes("?.") || sourcePath.includes(".")
+              ? `${sourcePath}?.${propertyName}`
+              : `${sourcePath}.${propertyName}`;
+
           // Recurse into nested destructuring
-          const nestedVars = this.extractDestructuredVariablesWithSource(nameNode, nestedPath);
+          const nestedVars = this.extractDestructuredVariablesWithSource(
+            nameNode,
+            nestedPath
+          );
           for (const [varName, varPath] of nestedVars.entries()) {
             result.set(varName, varPath);
           }
@@ -1168,28 +1358,36 @@ export class TransformationPipeline {
     const statementsToRemove: any[] = [];
 
     if (this.options.verbose) {
-      console.log(`🗑️  Scanning for parameter-derived destructuring to remove...`);
+      console.log(
+        `🗑️  Scanning for parameter-derived destructuring to remove...`
+      );
     }
 
     for (const statement of statements) {
       if (Node.isVariableStatement(statement)) {
         const declarations = statement.getDeclarationList().getDeclarations();
         let shouldRemoveStatement = false;
-        
+
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
           const initializer = declaration.getInitializer();
-          
+
           // Check for destructuring assignment: const { ... } = someVar
-          if (Node.isObjectBindingPattern(nameNode) && initializer && Node.isIdentifier(initializer)) {
+          if (
+            Node.isObjectBindingPattern(nameNode) &&
+            initializer &&
+            Node.isIdentifier(initializer)
+          ) {
             const sourceVarName = initializer.getText();
-            
+
             // If source variable is parameter-derived, mark statement for removal
             if (parameterVariables.has(sourceVarName)) {
               shouldRemoveStatement = true;
-              
+
               if (this.options.verbose) {
-                console.log(`🗑️  Marked for removal - destructuring from parameter-derived variable: ${sourceVarName}`);
+                console.log(
+                  `🗑️  Marked for removal - destructuring from parameter-derived variable: ${sourceVarName}`
+                );
               }
               break;
             }
@@ -1205,14 +1403,16 @@ export class TransformationPipeline {
     // Remove the identified statements
     for (const statement of statementsToRemove) {
       statement.remove();
-      
+
       if (this.options.verbose) {
         console.log(`🗑️  Removed parameter-derived destructuring statement`);
       }
     }
 
     if (this.options.verbose) {
-      console.log(`🗑️  Removed ${statementsToRemove.length} parameter-derived destructuring statements`);
+      console.log(
+        `🗑️  Removed ${statementsToRemove.length} parameter-derived destructuring statements`
+      );
     }
   }
 
@@ -1243,21 +1443,26 @@ export class TransformationPipeline {
     for (const statement of statements) {
       if (Node.isVariableStatement(statement)) {
         const declarations = statement.getDeclarationList().getDeclarations();
-        
+
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
           const initializer = declaration.getInitializer();
-          
-          if (Node.isObjectBindingPattern(nameNode) && 
-              initializer && 
-              Node.isIdentifier(initializer)) {
-            
+
+          if (
+            Node.isObjectBindingPattern(nameNode) &&
+            initializer &&
+            Node.isIdentifier(initializer)
+          ) {
             // Check if this destructuring tries to extract any DI service variables
-            if (this.destructuringContainsDIServices(nameNode, diServiceVariables)) {
+            if (
+              this.destructuringContainsDIServices(nameNode, diServiceVariables)
+            ) {
               statementsToRemove.push(statement);
-              
+
               if (this.options.verbose) {
-                console.log(`🗑️  Removing conflicting destructuring: ${statement.getText()}`);
+                console.log(
+                  `🗑️  Removing conflicting destructuring: ${statement.getText()}`
+                );
               }
               break;
             }
@@ -1272,7 +1477,9 @@ export class TransformationPipeline {
     }
 
     if (this.options.verbose && statementsToRemove.length > 0) {
-      console.log(`🗑️  Removed ${statementsToRemove.length} conflicting destructuring statements`);
+      console.log(
+        `🗑️  Removed ${statementsToRemove.length} conflicting destructuring statements`
+      );
     }
   }
 
@@ -1280,7 +1487,7 @@ export class TransformationPipeline {
    * Check if destructuring pattern contains any DI service variables
    */
   private destructuringContainsDIServices(
-    bindingPattern: any, 
+    bindingPattern: any,
     diServiceVariables: Set<string>
   ): boolean {
     const elements = bindingPattern.getElements();
@@ -1288,7 +1495,7 @@ export class TransformationPipeline {
     for (const element of elements) {
       if (Node.isBindingElement(element)) {
         const nameNode = element.getNameNode();
-        
+
         if (Node.isIdentifier(nameNode)) {
           const varName = nameNode.getText();
           if (diServiceVariables.has(varName)) {
@@ -1296,7 +1503,9 @@ export class TransformationPipeline {
           }
         } else if (Node.isObjectBindingPattern(nameNode)) {
           // Check nested destructuring recursively
-          if (this.destructuringContainsDIServices(nameNode, diServiceVariables)) {
+          if (
+            this.destructuringContainsDIServices(nameNode, diServiceVariables)
+          ) {
             return true;
           }
         }
@@ -1307,7 +1516,7 @@ export class TransformationPipeline {
   }
 
   /**
-   * SURGICAL: Clean up all remaining destructuring and normalize orphaned variables  
+   * SURGICAL: Clean up all remaining destructuring and normalize orphaned variables
    */
   private surgicalDestructuringCleanup(
     func: FunctionDeclaration | ArrowFunction,
@@ -1334,7 +1543,9 @@ export class TransformationPipeline {
   /**
    * Remove ONLY broken destructuring statements (that reference undefined variables)
    */
-  private removeAllDestructuringStatements(func: FunctionDeclaration | ArrowFunction): void {
+  private removeAllDestructuringStatements(
+    func: FunctionDeclaration | ArrowFunction
+  ): void {
     const body = this.getFunctionBody(func);
     if (!body || !Node.isBlock(body)) return;
 
@@ -1343,7 +1554,7 @@ export class TransformationPipeline {
 
     // Get list of currently defined variables in the function
     const definedVariables = new Set<string>();
-    
+
     // Add function parameters
     const parameters = func.getParameters();
     for (const param of parameters) {
@@ -1352,7 +1563,7 @@ export class TransformationPipeline {
         definedVariables.add(nameNode.getText());
       }
     }
-    
+
     // Add variables defined in statements
     for (const statement of statements) {
       if (Node.isVariableStatement(statement)) {
@@ -1369,24 +1580,27 @@ export class TransformationPipeline {
     for (const statement of statements) {
       if (Node.isVariableStatement(statement)) {
         const declarations = statement.getDeclarationList().getDeclarations();
-        
+
         for (const declaration of declarations) {
           const nameNode = declaration.getNameNode();
           const initializer = declaration.getInitializer();
-          
+
           // Only remove destructuring that references undefined variables
-          if (Node.isObjectBindingPattern(nameNode) && 
-              initializer && 
-              Node.isIdentifier(initializer)) {
-            
+          if (
+            Node.isObjectBindingPattern(nameNode) &&
+            initializer &&
+            Node.isIdentifier(initializer)
+          ) {
             const sourceVar = initializer.getText();
-            
+
             // Remove if source variable is not defined (like 'services' after DI processing)
             if (!definedVariables.has(sourceVar)) {
               statementsToRemove.push(statement);
-              
+
               if (this.options.verbose) {
-                console.log(`🗑️  Removing broken destructuring from undefined var: ${sourceVar}`);
+                console.log(
+                  `🗑️  Removing broken destructuring from undefined var: ${sourceVar}`
+                );
               }
               break;
             }
@@ -1401,7 +1615,9 @@ export class TransformationPipeline {
     }
 
     if (this.options.verbose && statementsToRemove.length > 0) {
-      console.log(`🗑️  Removed ${statementsToRemove.length} broken destructuring statements`);
+      console.log(
+        `🗑️  Removed ${statementsToRemove.length} broken destructuring statements`
+      );
     }
   }
 
@@ -1423,10 +1639,10 @@ export class TransformationPipeline {
 
     // Get all identifiers in the function body
     const identifiers = body.getDescendantsOfKind(SyntaxKind.Identifier);
-    
+
     // Set of known local variables (DI services and other local declarations)
     const knownLocalVariables = new Set<string>();
-    
+
     // Add DI service variables and other local variables
     const existingStatements = body.getStatements();
     for (const statement of existingStatements) {
@@ -1440,29 +1656,30 @@ export class TransformationPipeline {
     if (this.options.verbose) {
       console.log(`🔍 Known local variables:`, Array.from(knownLocalVariables));
     }
-    
+
     // Normalize orphaned variable references
     for (const identifier of identifiers) {
       const varName = identifier.getText();
       const parent = identifier.getParent();
-      
+
       // Skip if this is a known local variable
       if (knownLocalVariables.has(varName)) {
         continue;
       }
-      
+
       // Skip if this identifier is already part of a property access
-      if (Node.isPropertyAccessExpression(parent) && parent.getExpression() === identifier) {
+      if (
+        Node.isPropertyAccessExpression(parent) &&
+        parent.getExpression() === identifier
+      ) {
         continue;
       }
-      
+
       // Skip if this is a property name (like in obj.propertyName)
-      if (Node.isPropertyAccessExpression(parent) && parent.getName() === varName) {
-        continue;
-      }
-      
-      // FIXED: Skip ALL built-in identifiers, TypeScript types, HTML elements, etc.
-      if (this.isBuiltInIdentifier(varName, parent)) {
+      if (
+        Node.isPropertyAccessExpression(parent) &&
+        parent.getName() === varName
+      ) {
         continue;
       }
 
@@ -1470,9 +1687,11 @@ export class TransformationPipeline {
       if (this.isLikelyParameterVariable(varName)) {
         const propsAccess = `props.${varName}`;
         identifier.replaceWithText(propsAccess);
-        
+
         if (this.options.verbose) {
-          console.log(`🔄 Normalized parameter variable: ${varName} -> ${propsAccess}`);
+          console.log(
+            `🔄 Normalized parameter variable: ${varName} -> ${propsAccess}`
+          );
         }
       }
     }
@@ -1482,32 +1701,10 @@ export class TransformationPipeline {
    * Check if identifier is a built-in (React, TypeScript, HTML, etc.)
    */
   private isBuiltInIdentifier(varName: string, parent: any): boolean {
-    // React/global identifiers
-    if (['React', 'console', 'JSON', 'props', 'useEffect', 'useState', 'useService', 'useOptionalService'].includes(varName)) {
-      return true;
-    }
-    
-    // TypeScript interfaces (typically end with Interface or are PascalCase)
-    if (varName.endsWith('Interface') || varName.endsWith('Type') || varName.endsWith('Props')) {
-      return true;
-    }
-    
-    // HTML elements (all lowercase, common elements)
-    const htmlElements = ['div', 'span', 'button', 'input', 'form', 'img', 'a', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'li', 'nav', 'header', 'footer', 'section', 'article'];
-    if (htmlElements.includes(varName)) {
-      return true;
-    }
-    
-    // JSX tag names (check if used as JSX element)
-    if (this.isJSXTagName(parent)) {
-      return true;
-    }
-    
-    // Type annotations (check if in type position)
     if (this.isInTypePosition(parent)) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -1516,32 +1713,12 @@ export class TransformationPipeline {
    */
   private isLikelyParameterVariable(varName: string): boolean {
     // Typically parameter variables are camelCase and don't match built-in patterns
-    return /^[a-z][a-zA-Z0-9]*$/.test(varName) && 
-           !varName.endsWith('Interface') && 
-           !varName.endsWith('Type') && 
-           !varName.endsWith('Props');
-  }
-
-  /**
-   * Check if identifier is used as JSX tag name
-   */
-  private isJSXTagName(parent: any): boolean {
-    // Check if this is an opening tag name: <div>
-    if (Node.isJsxOpeningElement(parent)) {
-      return true;
-    }
-    
-    // Check if this is a closing tag name: </div>
-    if (Node.isJsxClosingElement(parent)) {
-      return true;
-    }
-    
-    // Check if this is a self-closing tag: <div />
-    if (Node.isJsxSelfClosingElement(parent)) {
-      return true;
-    }
-
-    return false;
+    return (
+      /^[a-z][a-zA-Z0-9]*$/.test(varName) &&
+      !varName.endsWith("Interface") &&
+      !varName.endsWith("Type") &&
+      !varName.endsWith("Props")
+    );
   }
 
   /**
@@ -1552,7 +1729,7 @@ export class TransformationPipeline {
     if (Node.isTypeAssertion(parent) || Node.isAsExpression(parent)) {
       return true;
     }
-    
+
     // Check if this is in a type reference: Inject<InterfaceName>
     if (Node.isTypeReference(parent)) {
       return true;
@@ -1561,10 +1738,12 @@ export class TransformationPipeline {
     // Walk up the parent chain to see if we're in any type-related context
     let currentParent = parent;
     while (currentParent) {
-      if (Node.isTypeNode(currentParent) || 
-          Node.isTypeReference(currentParent) ||
-          Node.isTypeAssertion(currentParent) ||
-          Node.isAsExpression(currentParent)) {
+      if (
+        Node.isTypeNode(currentParent) ||
+        Node.isTypeReference(currentParent) ||
+        Node.isTypeAssertion(currentParent) ||
+        Node.isAsExpression(currentParent)
+      ) {
         return true;
       }
       currentParent = currentParent.getParent();
@@ -1614,16 +1793,16 @@ export class IntegratedTransformer {
    */
   private ensureImports(sourceFile: SourceFile): void {
     const existingImports = sourceFile.getImportDeclarations();
-    
+
     // Check if DI context imports exist
-    const hasDIImport = existingImports.some(imp =>
-      imp.getModuleSpecifierValue().includes('@tdi2/di-core/context')
+    const hasDIImport = existingImports.some((imp) =>
+      imp.getModuleSpecifierValue().includes("@tdi2/di-core/context")
     );
 
     if (!hasDIImport) {
       sourceFile.addImportDeclaration({
-        moduleSpecifier: '@tdi2/di-core/context',
-        namedImports: ['useService', 'useOptionalService']
+        moduleSpecifier: "@tdi2/di-core/context",
+        namedImports: ["useService", "useOptionalService"],
       });
     }
   }
@@ -1640,6 +1819,6 @@ export class IntegratedTransformer {
     if (!typeNode) return false;
 
     const typeText = typeNode.getText();
-    return typeText.includes('Inject<') || typeText.includes('InjectOptional<');
+    return typeText.includes("Inject<") || typeText.includes("InjectOptional<");
   }
 }

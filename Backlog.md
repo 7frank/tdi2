@@ -10,11 +10,14 @@
 
 > [❌]but our current normalization attempts seem brittle and might add more problems than solving things
 
-> we need something like **@babel/plugin-transform-destructuring** which normalizes the code to something that does not contain destructuring
+> we might need something like **@babel/plugin-transform-destructuring** which normalizes the code to something that does not contain destructuring
 
 - [❌] we have a **potential solution** but that checks for jsx and types which might not be needed at all
   - e330dfa74ef635cee217d9273f1472197055824a
   - and the next
+
+- [❌] check that we have a unified view in di-test-harness app for all snapshot tests to better see if things change
+
 
 - [❌] double and tripple check the changes
 - [❌] double and tripple check the changes
