@@ -2,6 +2,29 @@
 
 ## ordered log (for production release)
 
+### [❌] rather than optimize edge case document happy path and visualize changes in di-debug so that delveoper can see what they transform in realtime and can mitigate
+
+**OR** ship prod with documentend quirks
+
+- for a first iteration that should be good enough
+- don't use destructuring too much
+- don't use rest parameters
+- don't use aliases should be good enough
+- rendering the input and transformed in the di-debug with the same diff view di-test-harness has will allow dev to see what is breaking
+
+### (out of scope for prod - )create separate files/classes that focus on normalizing a step at a time
+
+> **separation of concern** from whats there extract/create logical parts of the pipeline for:
+
+> follow the plan in monorepo/packages/di-core/tools/functional-di-enhanced-transformer/normalizations/README.md for:
+
+- destructuring
+- rest parameters
+- aliases
+
+**OR** <del>HOC wrap implementation in wrapper and di ffrom the otuside...</del>
+**OR** <del>restrict services to be only second parameter unused in react</del>
+
 ### [❌] DI bugs & side effects (part 1)
 
 #### [❌] FIXME duplicated keys, see generated list of services in browser console of "legacy" app
