@@ -54,6 +54,7 @@
     "build": "tsup  && tsc -p tsconfig.dts.json || true",
     "test": "bun test",
     "test:update": "UPDATE_SNAPSHOTS=1 bun test --updateSnapshots",
+    "test:fixture:update": " UPDATE_SNAPSHOTS=1 bun test tools/functional-di-enhanced-transformer/__tests__/code-transformation.test.ts",
     "lint": "echo 'No linting configured yet'",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",
