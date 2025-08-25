@@ -13,6 +13,7 @@ export interface SharedTransformationOptions {
   enableInheritanceDI: boolean;
   enableStateDI: boolean;
   customSuffix?: string;
+  generateDebugFiles?: boolean;
 }
 
 /**
