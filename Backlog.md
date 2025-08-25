@@ -32,15 +32,6 @@
 20: "TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14"
 21: "TodoService2"
 
-### [❌] transformed code not written to file system
-
-> useInMemoryFileSystem
-
-> easier to check if something went wrong
-> also easier to add to di-debug
-
-see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned for debugging this
-
 #### [❌] improper handling of rest parameters
 
 - functional-di-enhanced-transformer/**tests**/**fixtures**/complex-props-spreading.basic.
@@ -88,6 +79,12 @@ and prod/PostProductionRoadmap.md
 
 ---
 
+## ordered log (for post-production)
+
+### [❌] see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned for debugging this
+
+### [❌] dead code elimination in di-core
+
 ### [❌] profile.manager.ts process.env not set in di-test-harness
 
 - [❌] check that this doesnt have implications for passing profiles via env in other places too
@@ -106,8 +103,6 @@ and prod/PostProductionRoadmap.md
       "@tdi2/di-core/*": ["./src/*"]
     },
 ```
-
-## ordered log (for post-production)
 
 ### [❌] changeset publish
 
@@ -514,6 +509,13 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] transformed code not written to file system
+
+> variables werent passed properly
+
+> easier to check if something went wrong
+> also easier to add to di-debug
 
 ### [✅] missing fixtures tests for edge cases
 

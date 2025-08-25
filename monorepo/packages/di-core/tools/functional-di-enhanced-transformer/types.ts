@@ -14,6 +14,7 @@ export interface TransformationOptions {
   preserveOriginal?: boolean; // Whether to preserve original files
   transformPatterns?: string[]; // File patterns to transform
   skipPatterns?: string[]; // File patterns to skip
+  generateDebugFiles?: boolean; // Whether to generate debug files for transformed components
 }
 
 export interface TypeResolutionContext {

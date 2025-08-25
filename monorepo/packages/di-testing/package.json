@@ -64,7 +64,7 @@
   "author": "TDI2 Team",
   "license": "MIT",
   "dependencies": {
-    "@tdi2/di-core": "3.1.2",
+    "@tdi2/di-core": "workspace:*",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1"
   },

@@ -82,13 +82,15 @@ export class FunctionalDIEnhancedTransformer {
 
   constructor(options: TransformerOptions = {}) {
     this.options = {
-      srcDir: options.srcDir || './src',
-      outputDir: options.outputDir || './src/generated',
-      verbose: options.verbose || false,
+      srcDir: './src',
+      outputDir: './src/generated',
+      verbose:  false,
       enableInterfaceResolution: true,
       enableInheritanceDI: true,
       enableStateDI: true,
-      customSuffix: options.customSuffix
+      customSuffix: undefined,
+      generateDebugFiles: false,
+      ...options
     };
 
     this.project = new Project({

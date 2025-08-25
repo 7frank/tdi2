@@ -36,6 +36,10 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
   const options = getDIPluginDefaults(userOptions);
   validateDIPluginOptions(options);
 
+  if (options.verbose){
+    console.log("🔧 TDI2 Vite Plugin Options:", options);
+  }
+
   // Plugin state
   let classTransformer: EnhancedDITransformer;
   let functionalTransformer: FunctionalDIEnhancedTransformer;

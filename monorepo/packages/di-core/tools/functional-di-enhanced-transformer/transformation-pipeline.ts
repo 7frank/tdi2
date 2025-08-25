@@ -230,6 +230,11 @@ export class TransformationPipeline {
       body.insertStatements(0, diStatements[i]);
     }
 
+    // TARGETED FIX: Remove original destructuring that will be re-added to prevent duplicates
+    if (preservedDestructuring.length > 0) {
+      this.removeOriginalDestructuringThatWillBePreserved(func, preservedDestructuring);
+    }
+
     // FIXED: Re-add preserved destructuring (from body) and parameter destructuring after DI statements
     const allPreservedDestructuring = [
       ...preservedDestructuring,
@@ -488,6 +493,18 @@ export class TransformationPipeline {
         if (Node.isBindingElement(element)) {
           const nameNode = element.getNameNode();
           const propertyNameNode = element.getPropertyNameNode();
+          const dotDotDotToken = element.getDotDotDotToken();
+
+          // Handle rest parameters (like ...restProps) - preserve them with spread syntax
+          if (dotDotDotToken) {
+            const restName = Node.isIdentifier(nameNode) ? nameNode.getText() : nameNode.getText();
+            nonDIProperties.push(`...${restName}`);
+            
+            if (this.options.verbose) {
+              console.log(`🔒 Preserving rest parameter: ...${restName}`);
+            }
+            continue;
+          }
 
           let propertyName: string;
           let localName: string;
@@ -1016,6 +1033,50 @@ export class TransformationPipeline {
     }
 
     return false;
+  }
+
+
+  /**
+   * Remove original destructuring statements that match the ones we're about to re-add
+   */
+  private removeOriginalDestructuringThatWillBePreserved(
+    func: FunctionDeclaration | ArrowFunction,
+    preservedStatements: string[]
+  ): void {
+    const body = this.getFunctionBody(func);
+    if (!body || !Node.isBlock(body)) return;
+
+    // Normalize preserved statements for comparison
+    const normalizedPreserved = preservedStatements.map(stmt => 
+      stmt.trim().replace(/\s+/g, ' ')
+    );
+
+    const statements = body.getStatements();
+    const toRemove: any[] = [];
+
+    for (const statement of statements) {
+      if (Node.isVariableStatement(statement)) {
+        const statementText = statement.getText().trim().replace(/\s+/g, ' ');
+        
+        // Check if this statement matches any preserved statement
+        if (normalizedPreserved.includes(statementText)) {
+          toRemove.push(statement);
+          
+          if (this.options.verbose) {
+            console.log(`🗑️  Removing original destructuring that will be re-added: ${statementText}`);
+          }
+        }
+      }
+    }
+
+    // Remove identified statements
+    for (const statement of toRemove) {
+      statement.remove();
+    }
+
+    if (this.options.verbose && toRemove.length > 0) {
+      console.log(`🗑️  Removed ${toRemove.length} duplicate destructuring statements`);
+    }
   }
 
   /**
