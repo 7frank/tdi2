@@ -108,6 +108,32 @@ describe("Functional DI Transformation Tests", () => {
       "should handle multiple components in one file",
       defineTransformationTest("multiple-components", FIXTURES_DIR)
     );
+
+    // Complex destructuring edge cases
+    it(
+      "should handle nested destructuring with rest parameters",
+      defineTransformationTest("nested-destructuring-with-rest", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle aliasing with rest parameters and DI services",
+      defineTransformationTest("aliasing-with-rest-and-di", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle multiple rest parameters with mixed DI and non-DI",
+      defineTransformationTest("multiple-rest-mixed-di", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle default values with rest parameters and DI",
+      defineTransformationTest("defaults-with-rest-and-di", FIXTURES_DIR)
+    );
+
+    it(
+      "should handle dynamic destructuring patterns",
+      defineTransformationTest("dynamic-destructuring", FIXTURES_DIR)
+    );
   });
 
   // Service Lifecycle and Special Cases
