@@ -2,27 +2,20 @@
 
 ## ordered log (for production release)
 
-### [❌] rather than optimize edge case document happy path and visualize changes in di-debug so that delveoper can see what they transform in realtime and can mitigate
-
-**OR** ship prod with documentend quirks
-
-- for a first iteration that should be good enough
-- don't use destructuring too much
-- don't use rest parameters
-- don't use aliases should be good enough
-
 ### [❌]fix di-debug
 
 #### [❌] regression broke main
 
 > adding file path and line number broke lookup
 
-useService('TodoServiceInterface__src_todo2_TodoService_ts_line_14') 
+useService('TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14')
 
 something wrong with the setup and the dashboard build
 
+// curent work flow
 
-> br build
+> di-core dev (once)
+> br build (once)
 > br build:dashboard
 > bunx tdi2 serve --src ../legacy/src/
 
@@ -31,20 +24,20 @@ something wrong with the setup and the dashboard build
 - `br src/cli.ts serve --src ../legacy/src/`
 - `bunx tdi2 serve --src ../legacy/src/`
 
+#### [❌] render actual transformed and source side by side the same was di-test-harness does
+
+> this will allow us to debug di transformations and prevent edge cases to be too much in the way
+
 - rendering the input and transformed in the di-debug with the same diff view di-test-harness has will allow dev to see what is breaking
 
-### (out of scope for prod - )create separate files/classes that focus on normalizing a step at a time
+### [❌] rather than optimize edge case document happy path and visualize changes in di-debug so that delveoper can see what they transform in realtime and can mitigate
 
-> **separation of concern** from whats there extract/create logical parts of the pipeline for:
+**OR** ship prod with documentend quirks
 
-> follow the plan in monorepo/packages/di-core/tools/functional-di-enhanced-transformer/normalizations/README.md for:
-
-- destructuring
-- rest parameters
-- aliases
-
-**OR** <del>HOC wrap implementation in wrapper and di ffrom the otuside...</del>
-**OR** <del>restrict services to be only second parameter unused in react</del>
+- for a first iteration that should be good enough
+- don't use destructuring too much
+- don't use rest parameters
+- don't use aliases should be good enough
 
 ### [❌] DI bugs & side effects (part 1)
 
@@ -108,14 +101,12 @@ evaluate scenarios
 - [❌] di-react
 - [❌] di-debug (serve,(analytics),cli)
 
-### [❌] create plan whats missing for "prod"
+### [❌] write state ownership docs section
+
+> the only one documentation piece missing form prod
 
 from prod/PotentialProblems.md
 and prod/PostProductionRoadmap.md
-
-> only one documentation piece missing form prod
-
-- [❌] write state ownership docs section
 
 ---
 
@@ -124,6 +115,19 @@ and prod/PostProductionRoadmap.md
 ---
 
 ## ordered log (for post-production)
+
+### [❌] (out of scope for prod )create separate files/classes that focus on normalizing a step at a time
+
+> **separation of concern** from whats there extract/create logical parts of the pipeline for:
+
+> follow the plan in monorepo/packages/di-core/tools/functional-di-enhanced-transformer/normalizations/README.md for:
+
+- destructuring
+- rest parameters
+- aliases
+
+**OR** <del>HOC wrap implementation in wrapper and di ffrom the otuside...</del>
+**OR** <del>restrict services to be only second parameter unused in react</del>
 
 ### [❌] see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned for debugging this
 
