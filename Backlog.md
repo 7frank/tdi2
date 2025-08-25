@@ -2,6 +2,24 @@
 
 ## ordered log (for production release)
 
+### (out of scope for prod - rather document short commings)create separate files/classes that focus on normalizing a step at a time
+
+**separation of concern** from whats there extract/create logical parts of the pipeline for:
+
+- destructuring
+- rest parameters
+- aliases
+
+**OR** HOC wrap implementation in wrapper and di ffrom the otuside...
+**OR** restrict services to be only second parameter unused in react
+
+**OR** ship prod with documentend quirks
+- for a first iteration that should be good enough
+- don't use destructuring too much
+- don't use rest parameters
+- don't use aliases should be good enough
+- rendering the input and transformed in the di-debug with the same diff view di-test-harness has will allow dev to see what is breaking
+
 ### [❌] DI bugs & side effects (part 1)
 
 #### [❌] FIXME duplicated keys, see generated list of services in browser console of "legacy" app
