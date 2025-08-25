@@ -2,17 +2,6 @@
 
 ## ordered log (for production release)
 
-### [❌] transformed code not written to file system
-
-> useInMemoryFileSystem
-
-> easier to check if something went wrong
-> also easier to add to di-debug
-
-see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned for debugging this
-
-> fix this together with duplicated keys DI bugs
-
 ### [❌] DI bugs & side effects (part 1)
 
 #### [❌] FIXME duplicated keys, see generated list of services in browser console of "legacy" app
@@ -91,6 +80,8 @@ and prod/PostProductionRoadmap.md
 ---
 
 ## ordered log (for post-production)
+
+### [❌] see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned for debugging this
 
 ### [❌] dead code elimination in di-core
 
@@ -518,6 +509,13 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### [✅] transformed code not written to file system
+
+> variables werent passed properly
+
+> easier to check if something went wrong
+> also easier to add to di-debug
 
 ### [✅] missing fixtures tests for edge cases
 
