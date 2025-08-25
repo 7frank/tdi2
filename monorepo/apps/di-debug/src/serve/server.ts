@@ -64,8 +64,13 @@ export class TDI2Server {
     // Try multiple possible dashboard locations
     const possibleDashboardPaths = [
       join(__dirname, "..", "dashboard"), // Built CLI: dist/serve/../dashboard = dist/dashboard
-      join(__dirname, "..", "..", "dist", "dashboard"), // Source: src/serve/../../dist/dashboard
+      join(__dirname, "..", "dist", "dashboard"), // Source: src/serve/../../dist/dashboard
     ];
+
+    console.log(
+      "Looking in paths for dashboard index.html",
+      possibleDashboardPaths
+    );
 
     let dashboardPath: string | null = null;
     for (const path of possibleDashboardPaths) {
@@ -98,7 +103,6 @@ export class TDI2Server {
         analytics: "ready",
       });
     });
-
 
     // Error handling
     this.app.use((error: Error, _req: Request, res: Response, _next: any) => {

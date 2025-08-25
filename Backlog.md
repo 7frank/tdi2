@@ -10,6 +10,27 @@
 - don't use destructuring too much
 - don't use rest parameters
 - don't use aliases should be good enough
+
+### [❌]fix di-debug
+
+#### [❌] regression broke main
+
+> adding file path and line number broke lookup
+
+useService('TodoServiceInterface__src_todo2_TodoService_ts_line_14') 
+
+something wrong with the setup and the dashboard build
+
+
+> br build
+> br build:dashboard
+> bunx tdi2 serve --src ../legacy/src/
+
+- `br src/cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
+- `br src/cli.ts analyze --src ../legacy/src/`
+- `br src/cli.ts serve --src ../legacy/src/`
+- `bunx tdi2 serve --src ../legacy/src/`
+
 - rendering the input and transformed in the di-debug with the same diff view di-test-harness has will allow dev to see what is breaking
 
 ### (out of scope for prod - )create separate files/classes that focus on normalizing a step at a time
