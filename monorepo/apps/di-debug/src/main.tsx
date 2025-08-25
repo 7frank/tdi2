@@ -10,7 +10,8 @@ import "./styles/dashboard.css";
 
 import { DI_CONFIG } from "./.tdi2/di-config";
 
-console.log("DI Config:", DI_CONFIG);
+console.log("DI Config:", Object.keys(DI_CONFIG));
+console.log("DI Config:", Object.values(DI_CONFIG));
 
 // Create and configure the DI container
 const container = new CompileTimeDIContainer();

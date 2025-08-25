@@ -10,6 +10,7 @@ export interface ServiceRegistration {
   token: string;                    // Sanitized key for DI lookup
   interfaceName: string;           // Original interface name
   implementationClass: string;     // Implementation class name
+  implementationClassPath: string; // Full location-based path for resolution (sanitized key)
   scope: 'singleton' | 'transient' | 'scoped';
   dependencies: string[];          // Dependency tokens
   factory: string;                 // Factory function name
@@ -94,6 +95,7 @@ export class SharedServiceRegistry {
       token,
       interfaceName,
       implementationClass: config.configurationClass || 'UnknownConfig',
+      implementationClassPath: token, // Use token as the resolution path for beans
       scope: config.scope,
       dependencies: config.dependencies || [],
       factory: `bean_${config.beanMethodName}_factory`,
@@ -249,6 +251,7 @@ export class SharedServiceRegistry {
       token: implementation.sanitizedKey,
       interfaceName: implementation.interfaceName,
       implementationClass: implementation.implementationClass,
+      implementationClassPath: implementation.sanitizedKey, // Use sanitized key as the resolution path
       scope: implementation.scope || 'singleton', // Use scope from decorator or default to singleton
       dependencies: dependencyTokens,
       factory: this.generateFactoryName(implementation.implementationClass),
@@ -346,6 +349,7 @@ export class SharedServiceRegistry {
     dependencies: [${registration.dependencies.map(dep => `'${dep}'`).join(', ')}],
     interfaceName: '${registration.interfaceName}',
     implementationClass: '${implementationClass}',
+    implementationClassPath: '${registration.implementationClassPath}',
     isAutoResolved: ${registration.metadata.isAutoResolved},
     registrationType: '${registration.registrationType}',
     isClassBased: ${registration.registrationType === 'class'},

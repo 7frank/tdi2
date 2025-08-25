@@ -692,18 +692,20 @@ export class TransformationPipeline {
 
       if (dependency.isOptional) {
         // Optional dependency that couldn't be resolved - use optional chaining with useOptionalService fallback
+        const optionalFallbackToken = this.getImplementationClassPath(dependency.sanitizedKey);
         return [
-          `const ${dependency.serviceKey} = ${propertyPath} ?? (useOptionalService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`,
+          `const ${dependency.serviceKey} = ${propertyPath} ?? (useOptionalService('${optionalFallbackToken}') as unknown as ${dependency.interfaceType});`,
         ];
       } else {
         // Required dependency that couldn't be resolved - use optional chaining with useService fallback
+        const fallbackToken = this.getImplementationClassPath(dependency.sanitizedKey);
         return [
-          `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${dependency.sanitizedKey}') as unknown as ${dependency.interfaceType});`,
+          `const ${dependency.serviceKey} = ${propertyPath} ?? (useService('${fallbackToken}') as unknown as ${dependency.interfaceType});`,
         ];
       }
     }
 
-    const token = dependency.resolvedImplementation.sanitizedKey;
+    const token = this.getImplementationClassPath(dependency.resolvedImplementation.sanitizedKey);
     const hookName = dependency.isOptional
       ? "useOptionalService"
       : "useService";
@@ -712,6 +714,18 @@ export class TransformationPipeline {
     return [
       `const ${dependency.serviceKey} = ${propertyPath} ?? (${hookName}('${token}') as unknown as ${dependency.interfaceType});`,
     ];
+  }
+
+   /**
+   * Get implementation class path from service registry for resolution
+   * 
+   * The sanitized key IS the implementation class path since both registration 
+   * and resolution now use the same location-based key format.
+   */
+  private getImplementationClassPath(sanitizedKey: string): string {
+    // The sanitized key is now the implementation class path
+    // This ensures both registration and resolution use the same location-based key
+    return sanitizedKey;
   }
 
   /**
