@@ -110,20 +110,7 @@ export class ValidationEngine {
     for (const [token, config] of Object.entries(diConfig)) {
       if (config.dependencies) {
         for (const dep of config.dependencies) {
-          // Check for exact match first
-          if (availableTokens.has(dep)) {
-            continue; // Dependency is satisfied
-          }
-          
-          // Extract interface name from location-based key and check for interface implementations
-          const interfaceName = dep.split('__')[0];
-          const hasImplementation = Array.from(availableTokens).some(token => {
-            const tokenConfig = diConfig[token];
-            return tokenConfig.interfaceName === interfaceName;
-          });
-          
-          // Only report as missing if no implementation of the interface exists
-          if (!hasImplementation) {
+          if (!availableTokens.has(dep)) {
             issues.push({
               type: 'missing-service',
               severity: 'error',

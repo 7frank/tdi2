@@ -413,12 +413,6 @@ export class GraphVisualization {
   }
 
   private getNodeColor(node: GraphNode): string {
-    // Use the color from the backend if available (which includes issue-based coloring)
-    if (node.color) {
-      return node.color;
-    }
-    
-    // Fallback: Check issues directly
     if (node.metadata.issues.some(issue => issue.type === 'error')) {
       return '#F44336'; // Red for errors
     }
@@ -523,44 +517,19 @@ export class GraphVisualization {
   }
 
   private showNodeTooltip(event: MouseEvent, node: GraphNode): void {
-    const details: Array<{label: string, value: string, type?: 'error' | 'warning'}> = [
-      { label: 'Dependencies', value: node.metadata.dependencies.length.toString() },
-      { label: 'Dependents', value: node.metadata.dependents.length.toString() }
-    ];
-
-    // Add interface name if available
-    if (node.metadata.interfaceName) {
-      details.push({ label: 'Interface', value: node.metadata.interfaceName });
-    }
-
-    // Add implementation class if different from label
-    if (node.metadata.implementationClass && node.metadata.implementationClass !== node.label) {
-      details.push({ label: 'Implementation', value: node.metadata.implementationClass });
-    }
-
-    // Add file path
-    if (node.metadata.filePath) {
-      details.push({ label: 'File', value: node.metadata.filePath });
-    }
-
-    // Add full token for detailed info
-    if (node.metadata.fullToken) {
-      details.push({ label: 'Full Token', value: node.metadata.fullToken });
-    }
-
-    // Add issues
-    if (node.metadata.issues && node.metadata.issues.length > 0) {
-      details.push(...node.metadata.issues.map(issue => ({
-        label: issue.type.toUpperCase(),
-        value: issue.message,
-        type: issue.type as 'error' | 'warning'
-      })));
-    }
-
     const tooltipData: TooltipData = {
       title: node.label,
-      subtitle: `${node.type} • ${node.metadata.scope}${node.metadata.registrationType ? ` • ${node.metadata.registrationType}` : ''}`,
-      details
+      subtitle: `${node.type} • ${node.metadata.scope}`,
+      details: [
+        { label: 'Dependencies', value: node.metadata.dependencies.length.toString() },
+        { label: 'Dependents', value: node.metadata.dependents.length.toString() },
+        { label: 'File', value: node.metadata.filePath || 'Unknown' },
+        ...node.metadata.issues.map(issue => ({
+          label: issue.type.toUpperCase(),
+          value: issue.message,
+          type: issue.type as 'error' | 'warning'
+        }))
+      ]
     };
 
     this.showTooltip(event, tooltipData);

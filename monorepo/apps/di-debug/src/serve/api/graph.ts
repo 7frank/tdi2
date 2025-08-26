@@ -95,12 +95,13 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
       return graphCache.data;
     }
 
-    // Use the same approach as CLI - build dependency graph and get validation from analysis
+    // Get analysis data for issue detection
     const analysis = analytics.analyzeConfiguration(diConfig);
-    const dependencyGraph = analysis.graph; // Use the properly resolved graph from analysis
-    const validation = analysis.validation; // Use validation from analysis (already includes all issues)
+    const dependencyGraph = analysis.graph; // Use the graph from analysis
+    const validation = analysis.validation; // Use validation from analysis
     
-    // Note: Don't call validate() separately as it would duplicate issues
+    // Get additional validation details for enhanced issue reporting
+    const fullValidation = analytics.validate(diConfig, 'all');
 
     // Build enhanced graph with interfaces, classes, and dependencies
     const nodes: GraphNode[] = [];
@@ -109,48 +110,16 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
 
     // Helper function to determine node color based on issues
     function getNodeColor(nodeId: string, allIssues: any[]): string {
-      const nodeIssues = filterIssuesForNode(nodeId, allIssues);
+      const nodeIssues = allIssues.filter(issue => 
+        issue.location?.service === nodeId || 
+        issue.token === nodeId ||
+        issue.message?.includes(nodeId) ||
+        issue.relatedTokens?.includes(nodeId)
+      );
       
       if (nodeIssues.some(issue => issue.severity === 'error' || issue.type === 'error')) return '#F44336'; // Red for errors
       if (nodeIssues.some(issue => issue.severity === 'warning' || issue.type === 'warning')) return '#FF9800'; // Orange for warnings
       return '#4CAF50'; // Green for healthy
-    }
-
-    // Enhanced issue filtering function with deduplication
-    function filterIssuesForNode(nodeId: string, allIssues: any[]): any[] {
-      const filteredIssues = allIssues.filter(issue => {
-        // Direct token match
-        if (issue.token === nodeId) return true;
-        
-        // Location-based matching
-        if (issue.location?.service === nodeId) return true;
-        
-        // Related tokens array matching
-        if (issue.relatedTokens?.includes(nodeId)) return true;
-        
-        // For location-based keys, also check by interface name
-        const interfaceName = nodeId.split('__')[0];
-        if (issue.token === interfaceName || issue.location?.service === interfaceName) return true;
-        
-        // Message content matching (more specific)
-        if (issue.message?.includes(nodeId) || issue.message?.includes(interfaceName)) return true;
-        
-        return false;
-      });
-      
-      // Deduplicate issues by message content
-      const uniqueIssues = [];
-      const seenMessages = new Set();
-      
-      for (const issue of filteredIssues) {
-        const messageKey = `${issue.type || issue.severity}-${issue.message}`;
-        if (!seenMessages.has(messageKey)) {
-          seenMessages.add(messageKey);
-          uniqueIssues.push(issue);
-        }
-      }
-      
-      return uniqueIssues;
     }
 
     // Helper function to get node size based on connection count
@@ -162,89 +131,50 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
     }
 
     // Process all services from the dependency graph
-    const allIssues = [
-      ...(validation.issues.errors || []), 
-      ...(validation.issues.warnings || [])
-      // Note: Don't include fullValidation to avoid duplicates
-    ];
-    
-    if (serverOptions.verbose && allIssues.length > 0) {
-      console.log(`🔍 Found ${allIssues.length} total issues for graph coloring:`);
-      allIssues.forEach(issue => {
-        console.log(`  - ${issue.type || issue.severity}: ${issue.token} - ${issue.message}`);
-      });
-    }
-    
     Array.from(dependencyGraph.nodes.keys()).forEach(serviceId => {
       if (processedNodes.has(serviceId)) return;
       
       const service = dependencyGraph.nodes.get(serviceId);
-      const serviceConfig = diConfig[serviceId]; // Get original config for this service
-      
-      // Create a clean label from interface name or implementation class
-      const cleanLabel = (() => {
-        if (serviceConfig?.interfaceName) {
-          // Use interface name and clean it up
-          return serviceConfig.interfaceName.replace(/Interface$/, '');
-        } else if (serviceConfig?.implementationClass) {
-          // Use implementation class name and clean it up
-          return serviceConfig.implementationClass.replace(/Service$/, '').replace(/Impl$/, '');
-        } else {
-          // Fallback: extract interface name from location-based key
-          // Format: InterfaceName__src_path_to_file_ts_line_123
-          const interfaceName = serviceId.split('__')[0];
-          return interfaceName.replace(/Interface$/, '').replace(/Service$/, '');
-        }
-      })();
+      const allIssues = [
+        ...(validation.issues.errors || []), 
+        ...(validation.issues.warnings || []),
+        ...(fullValidation.issues.errors || []),
+        ...(fullValidation.issues.warnings || [])
+      ];
       
       // Determine node type based on naming patterns and metadata
       let nodeType: GraphNode['type'] = 'service';
-      if (serviceId.includes('Interface') || serviceId.endsWith('Interface') || serviceConfig?.registrationType === 'interface') {
+      if (serviceId.includes('Interface') || serviceId.endsWith('Interface')) {
         nodeType = 'interface';
       } else if (serviceId.includes('Component') || serviceId.endsWith('Component')) {
         nodeType = 'component';
-      } else if (serviceId.includes('Service') || serviceId.endsWith('Service') || serviceConfig?.implementationClass?.includes('Service')) {
+      } else if (serviceId.includes('Service') || serviceId.endsWith('Service')) {
         nodeType = 'service';
-      } else if (service?.metadata?.isClass || serviceConfig?.isClassBased) {
+      } else if (service?.metadata?.isClass) {
         nodeType = 'class';
       }
 
       const node: GraphNode = {
         id: serviceId,
-        label: cleanLabel,
+        label: serviceId.replace(/Interface$/, '').replace(/Service$/, ''),
         type: nodeType,
         metadata: {
           dependencies: dependencyGraph.dependencies.get(serviceId) || [],
           dependents: dependencyGraph.dependents.get(serviceId) || [],
-          issues: (() => {
-            const nodeIssues = filterIssuesForNode(serviceId, allIssues);
-            if (serverOptions.verbose && nodeIssues.length > 0) {
-              console.log(`📍 Node ${serviceId} has ${nodeIssues.length} issues:`);
-              nodeIssues.forEach(issue => console.log(`    ${issue.type || issue.severity}: ${issue.message}`));
-            }
-            return nodeIssues.map(issue => {
-              // Normalize issue type (some issues use 'severity', others use 'type')
-              const issueType = issue.severity || issue.type || 'info';
-              // Ensure type is one of the expected values
-              const normalizedType = issueType === 'error' || issueType === 'warning' ? issueType : 'info';
-              
-              return {
-                type: normalizedType,
-                code: issue.code || 'UNKNOWN',
-                message: issue.message || issue.toString(),
-                suggestion: issue.suggestion
-              };
-            });
-          })(),
-          scope: service?.scope || serviceConfig?.scope || 'singleton',
-          filePath: service?.filePath || serviceConfig?.filePath || undefined,
-          lifecycle: service?.lifecycle || [],
-          // Additional metadata for tooltips
-          fullToken: serviceId, // Full location-based token for detailed info
-          interfaceName: serviceConfig?.interfaceName,
-          implementationClass: serviceConfig?.implementationClass,
-          implementationClassPath: serviceConfig?.implementationClassPath,
-          registrationType: serviceConfig?.registrationType
+          issues: allIssues.filter(issue => 
+            issue.location?.service === serviceId || 
+            issue.token === serviceId ||
+            issue.message?.includes(serviceId) ||
+            issue.relatedTokens?.includes(serviceId)
+          ).map(issue => ({
+            type: issue.severity || issue.type || 'info',
+            code: issue.code || 'UNKNOWN',
+            message: issue.message || issue.toString(),
+            suggestion: issue.suggestion
+          })),
+          scope: service?.scope || 'singleton',
+          filePath: service?.filePath || undefined,
+          lifecycle: service?.lifecycle || []
         },
         color: getNodeColor(serviceId, allIssues),
         size: getNodeSize(serviceId)

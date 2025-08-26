@@ -3,20 +3,12 @@ export interface GraphNode {
   label: string;
   type: 'interface' | 'class' | 'service' | 'component';
   size?: number;
-  color?: string; // Backend-computed color based on issues and type
   metadata: {
     scope: string;
     dependencies: string[];
     dependents: string[];
     filePath?: string;
     issues: ValidationIssue[];
-    // Additional metadata for enhanced tooltips
-    fullToken?: string;
-    interfaceName?: string;
-    implementationClass?: string;
-    implementationClassPath?: string;
-    registrationType?: string;
-    lifecycle?: any[];
   };
   x?: number;
   y?: number;

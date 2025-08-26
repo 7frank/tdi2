@@ -26,25 +26,6 @@ export class DependencyAnalyzer {
     const dependencies = new Map<string, string[]>();
     const dependents = new Map<string, string[]>();
     
-    // Create interface to token mapping for dependency resolution
-    const interfaceToToken = new Map<string, string>();
-    const interfaceImplementations = new Map<string, string[]>();
-    
-    for (const [token, config] of Object.entries(diConfig)) {
-      if (config.interfaceName) {
-        // Map interface name to the primary implementation token
-        if (!interfaceToToken.has(config.interfaceName)) {
-          interfaceToToken.set(config.interfaceName, token);
-        }
-        
-        // Also track all implementations of this interface
-        if (!interfaceImplementations.has(config.interfaceName)) {
-          interfaceImplementations.set(config.interfaceName, []);
-        }
-        interfaceImplementations.get(config.interfaceName)!.push(token);
-      }
-    }
-    
     // First pass: Create all nodes
     for (const [token, config] of Object.entries(diConfig)) {
       const node: DependencyNode = {
@@ -65,10 +46,7 @@ export class DependencyAnalyzer {
       };
       
       nodes.set(token, node);
-      
-      // Resolve dependencies using interface matching
-      const resolvedDependencies = this.resolveDependencies(config.dependencies || [], interfaceToToken, interfaceImplementations);
-      dependencies.set(token, resolvedDependencies);
+      dependencies.set(token, config.dependencies || []);
     }
     
     // Second pass: Build reverse dependencies
@@ -364,43 +342,5 @@ export class DependencyAnalyzer {
       className.includes('provider') ||
       node.metadata.isStateBased
     );
-  }
-
-  /**
-   * Resolve dependency keys to actual registered service tokens
-   */
-  private resolveDependencies(
-    dependencies: string[], 
-    interfaceToToken: Map<string, string>,
-    interfaceImplementations: Map<string, string[]>
-  ): string[] {
-    return dependencies.map(dep => {
-      // Try direct token match first (exact key)
-      if (interfaceToToken.values().next().value && Array.from(interfaceToToken.values()).includes(dep)) {
-        return dep;
-      }
-      
-      // Extract interface name from location-based key
-      // Format: InterfaceName__src_path_to_file_ts_line_123
-      const interfaceName = dep.split('__')[0];
-      
-      // Look for any implementation of this interface
-      const implementations = interfaceImplementations.get(interfaceName);
-      if (implementations && implementations.length > 0) {
-        // Return the first available implementation
-        // In a more sophisticated system, we might choose based on scope, priority, etc.
-        return implementations[0];
-      }
-      
-      // Try direct interface name match as fallback
-      const resolvedToken = interfaceToToken.get(interfaceName);
-      if (resolvedToken) {
-        return resolvedToken;
-      }
-      
-      // If no match found, return original dependency key
-      // This will show as missing in the graph
-      return dep;
-    });
   }
 }
