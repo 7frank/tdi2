@@ -319,6 +319,12 @@ export class GraphVisualizationEngine {
   }
 
   private getNodeColor(node: GraphNode): string {
+    // Use the color from the backend if available (which includes issue-based coloring)
+    if (node.color) {
+      return node.color;
+    }
+    
+    // Fallback: Check issues directly
     if (node.metadata.issues.some(issue => issue.type === 'error')) {
       return '#F44336';
     }
@@ -326,6 +332,7 @@ export class GraphVisualizationEngine {
       return '#FF9800';
     }
     
+    // Default colors by node type
     switch (node.type) {
       case 'interface': return '#2196F3';
       case 'class': return '#9C27B0';
@@ -397,7 +404,7 @@ export class GraphVisualizationEngine {
         ${node.label}
       </div>
       <div style="font-size: 11px; color: #ccc; margin-bottom: 8px;">
-        ${node.type} • ${node.metadata.scope}
+        ${node.type} • ${node.metadata.scope}${node.metadata.registrationType ? ` • ${node.metadata.registrationType}` : ''}
       </div>
       <div style="margin-bottom: 4px; display: flex; justify-content: space-between;">
         <span>Dependencies:</span>
@@ -407,18 +414,41 @@ export class GraphVisualizationEngine {
         <span>Dependents:</span>
         <span style="margin-left: 8px; font-weight: bold;">${node.metadata.dependents.length}</span>
       </div>
+      ${node.metadata.interfaceName ? `
+        <div style="margin-bottom: 4px;">
+          <span style="color: #ccc;">Interface:</span>
+          <div style="margin-top: 2px; font-size: 10px; color: #fff;">${node.metadata.interfaceName}</div>
+        </div>
+      ` : ''}
+      ${node.metadata.implementationClass && node.metadata.implementationClass !== node.label ? `
+        <div style="margin-bottom: 4px;">
+          <span style="color: #ccc;">Implementation:</span>
+          <div style="margin-top: 2px; font-size: 10px; color: #fff;">${node.metadata.implementationClass}</div>
+        </div>
+      ` : ''}
+      ${node.metadata.fullToken ? `
+        <div style="margin-bottom: 4px;">
+          <span style="color: #ccc;">Full Token:</span>
+          <div style="margin-top: 2px; font-size: 9px; color: #aaa; word-break: break-all; max-width: 300px;">${node.metadata.fullToken}</div>
+        </div>
+      ` : ''}
       ${node.metadata.filePath ? `
         <div style="margin-bottom: 4px;">
           <span style="color: #ccc;">File:</span>
-          <div style="margin-top: 2px; font-size: 10px; color: #fff; word-break: break-all;">${node.metadata.filePath}</div>
+          <div style="margin-top: 2px; font-size: 10px; color: #fff; word-break: break-all; max-width: 300px;">${node.metadata.filePath}</div>
         </div>
       ` : ''}
-      ${node.metadata.issues.map(issue => `
-        <div style="margin-bottom: 4px; display: flex; justify-content: space-between;">
-          <span style="color: ${issue.type === 'error' ? '#F44336' : '#FF9800'}">${issue.type.toUpperCase()}:</span>
-          <span style="margin-left: 8px; font-weight: bold; font-size: 10px;">${issue.message}</span>
+      ${node.metadata.issues.length > 0 ? `
+        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #444;">
+          ${node.metadata.issues.map(issue => `
+            <div style="margin-bottom: 4px;">
+              <span style="color: ${issue.type === 'error' ? '#F44336' : issue.type === 'warning' ? '#FF9800' : '#2196F3'}; font-weight: bold;">${issue.type.toUpperCase()}:</span>
+              <div style="margin-top: 2px; font-size: 10px; color: #fff;">${issue.message}</div>
+              ${issue.suggestion ? `<div style="margin-top: 2px; font-size: 9px; color: #4CAF50; font-style: italic;">💡 ${issue.suggestion}</div>` : ''}
+            </div>
+          `).join('')}
         </div>
-      `).join('')}
+      ` : ''}
     `;
 
     this.tooltip
