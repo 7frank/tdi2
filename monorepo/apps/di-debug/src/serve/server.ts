@@ -65,6 +65,7 @@ export class TDI2Server {
     const possibleDashboardPaths = [
       join(__dirname, "..", "dashboard"), // Built CLI: dist/serve/../dashboard = dist/dashboard
       join(__dirname, "..", "dist", "dashboard"), // Source: src/serve/../../dist/dashboard
+       join(__dirname, "..","..","dist", "dashboard"),
     ];
 
     console.log(

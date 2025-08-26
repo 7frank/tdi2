@@ -2,6 +2,13 @@
 
 ## ordered log (for production release)
 
+### [❌] fix di-debug v2
+
+- [❌] dashboard resolution the way it is, is brittle and we should do something about it
+  - maybe use vite directly for the index.html copy operation
+- [❌] using ts-node to read config file is unnecessary overhead
+  - and will only work for "dev" not "built" graph rendering in di-debug
+
 ### [❌]fix di-debug
 
 #### [❌] regression broke main
