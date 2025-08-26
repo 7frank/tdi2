@@ -2,16 +2,9 @@
 
 ## ordered log (for production release)
 
-### [❌] fix di-debug v2
-
-- [❌] dashboard resolution the way it is, is brittle and we should do something about it
-  - maybe use vite directly for the index.html copy operation
-- [❌] using ts-node to read config file is unnecessary overhead
-  - and will only work for "dev" not "built" graph rendering in di-debug
-
 ### [❌]fix di-debug
 
-#### [❌] regression broke main
+#### [✅] regression broke main
 
 > adding file path and line number broke lookup
 
@@ -36,6 +29,21 @@ something wrong with the setup and the dashboard build
 > this will allow us to debug di transformations and prevent edge cases to be too much in the way
 
 - rendering the input and transformed in the di-debug with the same diff view di-test-harness has will allow dev to see what is breaking
+
+
+
+### [❌] fix di-debug v2
+
+- [❌] dashboard resolution the way it is, is brittle and we should do something about it
+  - maybe use vite directly for the index.html copy operation
+- [❌] using ts-node to read config file is unnecessary overhead
+  - and will only work for "dev" not "built" graph rendering in di-debug
+
+- [❌] cli graph currently hard to read with addition of the file path and line
+
+- [❌] dashboard graph currently broken with addition of the file path and line
+
+
 
 ### [❌] rather than optimize edge case document happy path and visualize changes in di-debug so that delveoper can see what they transform in realtime and can mitigate
 
