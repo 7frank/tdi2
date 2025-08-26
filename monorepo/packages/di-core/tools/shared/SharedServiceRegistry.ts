@@ -5,6 +5,10 @@ import type { InterfaceImplementation } from '../interface-resolver/interface-re
 import type { ConfigManager } from '../config-manager';
 import * as path from 'path';
 import * as fs from 'fs';
+import { KeySanitizer } from '../interface-resolver/key-sanitizer';
+
+const keySanitizer = new KeySanitizer();
+ 
 
 export interface ServiceRegistration {
   token: string;                    // Sanitized key for DI lookup
@@ -12,7 +16,7 @@ export interface ServiceRegistration {
   implementationClass: string;     // Implementation class name
   implementationClassPath: string; // Full location-based path for resolution (sanitized key)
   scope: 'singleton' | 'transient' | 'scoped';
-  dependencies: string[];          // Dependency tokens
+  dependencies: ExtractedDependency[];          // Dependency tokens
   factory: string;                 // Factory function name
   filePath: string;               // Source file path
   registrationType: 'interface' | 'inheritance' | 'state' | 'class';
@@ -32,7 +36,7 @@ export interface RegistryConfiguration {
   services: Map<string, ServiceRegistration>;
   interfaceMapping: Map<string, string[]>;     // Interface -> Implementation classes
   classMapping: Map<string, string>;          // Class -> Token
-  dependencyGraph: Map<string, string[]>;     // Service -> Dependencies
+  dependencyGraph: Map<string, ExtractedDependency[]>;     // Service -> Dependencies
 }
 
 export interface RegistryStats {
@@ -47,7 +51,7 @@ export class SharedServiceRegistry {
   private services = new Map<string, ServiceRegistration>();
   private interfaceMapping = new Map<string, string[]>();
   private classMapping = new Map<string, string>();
-  private dependencyGraph = new Map<string, string[]>();
+  private dependencyGraph = new Map<string, ExtractedDependency[]>();
 
   constructor(
     private configManager: ConfigManager,
@@ -161,7 +165,7 @@ export class SharedServiceRegistry {
   /**
    * Get dependency graph for a service
    */
-  getDependencies(serviceToken: string): string[] {
+  getDependencies(serviceToken: string): ExtractedDependency[] {
     return this.dependencyGraph.get(serviceToken) || [];
   }
 
@@ -214,7 +218,7 @@ export class SharedServiceRegistry {
     // Check for missing dependencies
     for (const [serviceToken, deps] of this.dependencyGraph) {
       for (const depToken of deps) {
-        if (!this.services.has(depToken)) {
+        if (!this.services.has(depToken.sanitizedKey)) {
           errors.push(`Service ${serviceToken} depends on missing service ${depToken}`);
         }
       }
@@ -243,9 +247,9 @@ export class SharedServiceRegistry {
     implementation: InterfaceImplementation,
     dependencies: ExtractedDependency[]
   ): ServiceRegistration {
-    const dependencyTokens = dependencies
-      .map(dep => dep.sanitizedKey)
-      .filter(token => token); // Remove empty tokens
+    const filteredDependencies = dependencies
+      
+      .filter(it => !!it.sanitizedKey); // Remove empty tokens
 
     return {
       token: implementation.sanitizedKey,
@@ -253,7 +257,7 @@ export class SharedServiceRegistry {
       implementationClass: implementation.implementationClass,
       implementationClassPath: implementation.sanitizedKey, // Use sanitized key as the resolution path
       scope: implementation.scope || 'singleton', // Use scope from decorator or default to singleton
-      dependencies: dependencyTokens,
+      dependencies: filteredDependencies,
       factory: this.generateFactoryName(implementation.implementationClass),
       filePath: implementation.filePath,
       registrationType: this.determineRegistrationType(implementation),
@@ -322,7 +326,7 @@ export class SharedServiceRegistry {
     const processedClasses = new Set<string>();
 
     for (const [token, registration] of this.services) {
-      const { implementationClass } = registration;
+      const { implementationClass,implementationClassPath } = registration;
       
       // Generate import (only once per class)
       if (!processedClasses.has(implementationClass)) {
@@ -346,7 +350,11 @@ export class SharedServiceRegistry {
       diMapEntries.push(`  '${token}': {
     factory: ${registration.factory},
     scope: '${registration.scope}' as const,
-    dependencies: [${registration.dependencies.map(dep => `'${dep}'`).join(', ')}],
+    dependencies: [${registration.dependencies.map(function (dep)  {
+        // Use the resolved implementation's sanitized key for consistent resolution
+        const resolvedKey = dep.resolvedImplementation?.sanitizedKey || dep.sanitizedKey;
+        return `'${resolvedKey}'`;
+      }).join(', ')}],
     interfaceName: '${registration.interfaceName}',
     implementationClass: '${implementationClass}',
     implementationClassPath: '${registration.implementationClassPath}',
@@ -418,7 +426,7 @@ export const ALL_SERVICES = ${JSON.stringify(servicesList, null, 2)};`;
    * Generate factory function for service
    */
   private generateFactoryFunction(registration: ServiceRegistration): string {
-    const { implementationClass, dependencies } = registration;
+    const { implementationClass, dependencies,implementationClassPath } = registration;
     
     if (dependencies.length === 0) {
       return `function ${registration.factory}(container: any) {
@@ -426,9 +434,12 @@ export const ALL_SERVICES = ${JSON.stringify(servicesList, null, 2)};`;
 }`;
     }
 
-    const dependencyResolves = dependencies.map((depToken, index) => 
-      `    const dep${index} = container.resolve('${depToken}');`
-    ).join('\n');
+
+    const dependencyResolves = dependencies.map(function (depToken, index) {
+      // Use the resolved implementation's sanitized key for consistent resolution
+      const resolvedKey = depToken.resolvedImplementation?.sanitizedKey || depToken.sanitizedKey;
+      return  `    const dep${index} = container.resolve('${resolvedKey}');`
+    }).join('\n');
 
     const constructorArgs = dependencies.map((_, index) => `dep${index}`).join(', ');
 
@@ -464,7 +475,7 @@ ${dependencyResolves}
 
       const dependencies = this.dependencyGraph.get(token) || [];
       for (const depToken of dependencies) {
-        if (detectCycle(depToken, [...path, token])) {
+        if (detectCycle(depToken.sanitizedKey, [...path, token])) {
           recursionStack.delete(token);
           return true;
         }
@@ -529,7 +540,7 @@ ${dependencyResolves}
     
     for (const dependencies of this.dependencyGraph.values()) {
       for (const token of dependencies) {
-        usedTokens.add(token);
+        usedTokens.add(token.sanitizedKey);
       }
     }
     
