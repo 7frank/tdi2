@@ -22,6 +22,12 @@ export interface GraphNode {
     scope?: string;
     filePath?: string;
     lifecycle?: string[];
+    // Enhanced metadata for better tooltips
+    fullToken?: string; // The full implementationClassPath token
+    implementationClass?: string;
+    implementationClassPath?: string;
+    interfaceName?: string;
+    registrationType?: string;
   };
   position?: { x: number; y: number };
   color?: string;

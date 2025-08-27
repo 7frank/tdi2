@@ -4,6 +4,16 @@
 
 ### [❌]fix di-debug
 
+#### [❌] overhaul of line based approach commit b596e7b
+
+- extractInterfaceNameFromKey probably use implementationClass isntead
+- implementationClassPath is too brittle
+  - we should add file location {path,line} and have one method that generates a sanitied key from that, the location info should be available elsewhere too
+
+- [TBD] only after the generated DI-Config is properly readable
+  - then we should try to use **analyze** the graph or have a SPOT in **di-core** to **validate** the graph
+  - this validation and analysation logic can then be used to build the cli and web view on top
+
 #### [✅] regression broke main
 
 > adding file path and line number broke lookup
@@ -24,13 +34,19 @@ something wrong with the setup and the dashboard build
 - `br src/cli.ts serve --src ../legacy/src/`
 - `bunx tdi2 serve --src ../legacy/src/`
 
-#### [❌] render actual transformed and source side by side the same was di-test-harness does
+- [❌] 19 services detected vs 22 after regression
+  - ensure that they are not false positives, maybe we now actually detect more
+  - also we get warnings now which might be good
+  - and the "Missing service dependency 'CacheInterface_any\_\_src_UserApiServiceImpl_ts_line_69' might actually work
+  - we might need some tests actually
+
+#### [❌] di-debug; render actual transformed and source side by side the same was di-test-harness does
+
+- [❌] do something about the "build:dashboard" missing dashboard
 
 > this will allow us to debug di transformations and prevent edge cases to be too much in the way
 
 - rendering the input and transformed in the di-debug with the same diff view di-test-harness has will allow dev to see what is breaking
-
-
 
 ### [❌] fix di-debug v2
 
@@ -42,8 +58,6 @@ something wrong with the setup and the dashboard build
 - [❌] cli graph currently hard to read with addition of the file path and line
 
 - [❌] dashboard graph currently broken with addition of the file path and line
-
-
 
 ### [❌] rather than optimize edge case document happy path and visualize changes in di-debug so that delveoper can see what they transform in realtime and can mitigate
 
