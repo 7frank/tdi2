@@ -21,6 +21,7 @@ export interface InterfaceImplementation {
   isGeneric: boolean;
   typeParameters: string[];
   sanitizedKey: string;
+  location?: SourceLocation; // NEW: Structured location info
   isClassBased?: boolean;
   isInheritanceBased?: boolean;
   isStateBased?: boolean; // NEW: State-based registration
@@ -58,6 +59,12 @@ export interface DependencyNode {
   resolved: string[];
 }
 
+// Location information for unique key generation
+export interface SourceLocation {
+  filePath: string;
+  lineNumber: number;
+}
+
 // Interface information structures
 export interface InterfaceInfo {
   name: string;
@@ -67,6 +74,7 @@ export interface InterfaceInfo {
   // Location information for unique key generation
   sourceFilePath?: string;
   lineNumber?: number;
+  location?: SourceLocation;
 }
 
 export interface InheritanceInfo {

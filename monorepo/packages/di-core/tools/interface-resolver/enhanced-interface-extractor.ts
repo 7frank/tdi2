@@ -7,7 +7,7 @@ import {
   ImportDeclaration,
   SourceFile
 } from "ts-morph";
-import { InterfaceInfo } from "./interface-resolver-types";
+import { InterfaceInfo, SourceLocation } from "./interface-resolver-types";
 import { KeySanitizer } from "./key-sanitizer";
 
 export interface DISourceConfiguration {
@@ -169,6 +169,7 @@ export class EnhancedInterfaceExtractor {
       // Extract location information
       let sourceFilePath: string | undefined;
       let lineNumber: number | undefined;
+      let location: SourceLocation | undefined;
 
       if (sourceFile && typeNode) {
         try {
@@ -178,6 +179,12 @@ export class EnhancedInterfaceExtractor {
           const startPos = typeNode.getStart();
           if (startPos !== undefined) {
             lineNumber = sourceFile.getLineAndColumnAtPos(startPos).line;
+            
+            // Create structured location info
+            location = {
+              filePath: sourceFilePath,
+              lineNumber: lineNumber
+            };
           }
         } catch (error) {
           if (this.verbose) {
@@ -192,7 +199,8 @@ export class EnhancedInterfaceExtractor {
         isGeneric,
         typeParameters,
         sourceFilePath,
-        lineNumber
+        lineNumber,
+        location
       };
     } catch (error) {
       if (this.verbose) {

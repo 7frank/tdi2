@@ -4,7 +4,7 @@
 
 ### [❌]fix di-debug
 
-#### [❌] overhaul of line based approach commit b596e7b
+#### [❌] overhaul of line based approach of  commit b596e7b
 
 - extractInterfaceNameFromKey probably use implementationClass isntead
 - implementationClassPath is too brittle

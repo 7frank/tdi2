@@ -1,5 +1,7 @@
 // tools/interface-resolver/key-sanitizer.ts - FIXED VERSION with enhanced type parameter handling
 
+import { SourceLocation } from "./interface-resolver-types";
+
 export class KeySanitizer {
   
   /**
@@ -288,6 +290,17 @@ export class KeySanitizer {
     
     // Create location-based key: InterfaceName__path_to_file_ts_line_123
     return `${this.sanitizeKey(interfaceName)}__${encodedPath}_line_${lineNumber}`;
+  }
+
+  /**
+   * Create a unique key using structured location info
+   */
+  createLocationBasedKeyFromLocation(interfaceName: string, location?: SourceLocation): string {
+    if (!location) {
+      return this.sanitizeKey(interfaceName);
+    }
+
+    return this.createLocationBasedKey(interfaceName, location.filePath, location.lineNumber);
   }
 
   /**

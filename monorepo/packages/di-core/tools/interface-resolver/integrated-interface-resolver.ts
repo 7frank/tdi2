@@ -5,8 +5,8 @@ import {
   SourceFile,
   ClassDeclaration,
   Node,
+  SyntaxKind,
 } from "ts-morph";
-import * as path from "path";
 
 // Import enhanced components
 import { EnhancedInterfaceExtractor, type DISourceConfiguration } from "./enhanced-interface-extractor";
@@ -23,7 +23,8 @@ import type {
   ValidationResult, 
   DependencyNode,
   InterfaceInfo,
-  InheritanceInfo
+  InheritanceInfo,
+  SourceLocation
 } from "./interface-resolver-types";
 
 export interface IntegratedResolverOptions {
@@ -167,8 +168,6 @@ export class IntegratedInterfaceResolver {
 
       // Enhanced interface extraction using AST methods
       const implementedInterfaces = this.interfaceExtractor.getImplementedInterfaces(classDecl, sourceFile);
-      const extendedClasses = this.interfaceExtractor.getExtendedClasses(classDecl, sourceFile);
-      const allHeritage = [...implementedInterfaces, ...extendedClasses];
 
       // Enhanced inheritance analysis
       const inheritanceInfo = this.inheritanceAnalyzer.getInheritanceInfo(classDecl);
@@ -245,6 +244,7 @@ export class IntegratedInterfaceResolver {
       isGeneric: interfaceInfo.isGeneric,
       typeParameters: interfaceInfo.typeParameters,
       sanitizedKey,
+      location: interfaceInfo.location,
       isClassBased: false,
       isInheritanceBased: false,
       isStateBased: false,
@@ -267,7 +267,13 @@ export class IntegratedInterfaceResolver {
     sourceFile: SourceFile,
     inheritanceInfo: InheritanceInfo
   ): Promise<void> {
-    const sanitizedKey = this.keySanitizer.sanitizeInheritanceKey(inheritanceMapping.baseClassGeneric);
+    // Extract location info from inheritance heritage clause
+    const location = this.extractLocationFromInheritance(className, sourceFile);
+    
+    // Use location-based key generation if location is available
+    const sanitizedKey = location 
+      ? this.keySanitizer.createLocationBasedKeyFromLocation(inheritanceMapping.baseTypeName, location)
+      : this.keySanitizer.sanitizeInheritanceKey(inheritanceMapping.baseClassGeneric);
 
     // Extract scope from @Service decorator
     const classDecl = sourceFile.getClass(className);
@@ -280,6 +286,7 @@ export class IntegratedInterfaceResolver {
       isGeneric: inheritanceMapping.isGeneric,
       typeParameters: inheritanceMapping.typeParameters,
       sanitizedKey,
+      location,
       isClassBased: false,
       isInheritanceBased: true,
       isStateBased: false,
@@ -304,7 +311,13 @@ export class IntegratedInterfaceResolver {
     className: string,
     sourceFile: SourceFile
   ): Promise<void> {
-    const sanitizedKey = this.keySanitizer.sanitizeKey(stateRegistration.serviceInterface);
+    // Extract location info - use state registration location if available, fallback to class location
+    const location = stateRegistration.location || this.extractLocationFromClass(className, sourceFile);
+    
+    // Use location-based key generation if location is available
+    const sanitizedKey = location 
+      ? this.keySanitizer.createLocationBasedKeyFromLocation(stateRegistration.serviceInterface, location)
+      : this.keySanitizer.sanitizeKey(stateRegistration.serviceInterface);
 
     // Extract scope from @Service decorator
     const classDecl = sourceFile.getClass(className);
@@ -317,6 +330,7 @@ export class IntegratedInterfaceResolver {
       isGeneric: true,
       typeParameters: [stateRegistration.stateType],
       sanitizedKey,
+      location,
       isClassBased: false,
       isInheritanceBased: false,
       isStateBased: true,
@@ -340,7 +354,13 @@ export class IntegratedInterfaceResolver {
     sourceFile: SourceFile,
     isPrimary: boolean
   ): Promise<void> {
-    const sanitizedKey = this.keySanitizer.sanitizeKey(className);
+    // Extract location info from class declaration
+    const location = this.extractLocationFromClass(className, sourceFile);
+    
+    // Use location-based key generation if location is available
+    const sanitizedKey = location 
+      ? this.keySanitizer.createLocationBasedKeyFromLocation(className, location)
+      : this.keySanitizer.sanitizeKey(className);
 
     // Extract scope from @Service decorator
     const classDecl = sourceFile.getClass(className);
@@ -353,6 +373,7 @@ export class IntegratedInterfaceResolver {
       isGeneric: false,
       typeParameters: [],
       sanitizedKey,
+      location,
       isClassBased: true,
       isInheritanceBased: false,
       isStateBased: false,
@@ -492,7 +513,7 @@ export class IntegratedInterfaceResolver {
     const isRequestedGeneric = this.keySanitizer.isGenericType(interfaceType);
     
     if (isRequestedGeneric) {
-      for (const [key, implementation] of this.interfaces) {
+      for (const [, implementation] of this.interfaces) {
         // Match by interface name and generic capability
         if (implementation.interfaceName === requestedInterfaceName && implementation.isGeneric) {
           if (this.options.verbose) {
@@ -509,7 +530,7 @@ export class IntegratedInterfaceResolver {
       const stateType = asyncStateMatch[1];
       
       // Look for state-based registrations first
-      for (const [key, implementation] of this.interfaces) {
+      for (const [, implementation] of this.interfaces) {
         if (implementation.isStateBased && 
             implementation.stateType === stateType &&
             implementation.serviceInterface === interfaceType) {
@@ -521,7 +542,7 @@ export class IntegratedInterfaceResolver {
       }
       
       // Look for inheritance-based registrations
-      for (const [key, implementation] of this.interfaces) {
+      for (const [, implementation] of this.interfaces) {
         if (implementation.isInheritanceBased && 
             implementation.baseClassGeneric === interfaceType) {
           if (this.options.verbose) {
@@ -534,7 +555,7 @@ export class IntegratedInterfaceResolver {
 
     // 4. Inheritance-based lookups
     const inheritanceSanitizedKey = this.keySanitizer.sanitizeInheritanceKey(interfaceType);
-    for (const [key, implementation] of this.interfaces) {
+    for (const [, implementation] of this.interfaces) {
       if (implementation.isInheritanceBased && 
           (implementation.sanitizedKey === sanitizedKey || implementation.sanitizedKey === inheritanceSanitizedKey)) {
         if (this.options.verbose) {
@@ -545,7 +566,7 @@ export class IntegratedInterfaceResolver {
     }
 
     // 5. State-based lookups
-    for (const [key, implementation] of this.interfaces) {
+    for (const [, implementation] of this.interfaces) {
       if (implementation.isStateBased && implementation.sanitizedKey === sanitizedKey) {
         if (this.options.verbose) {
           console.log(`✅ State-based match: ${implementation.implementationClass}`);
@@ -555,7 +576,7 @@ export class IntegratedInterfaceResolver {
     }
 
     // 6. Class-based lookups
-    for (const [key, implementation] of this.interfaces) {
+    for (const [, implementation] of this.interfaces) {
       if (implementation.isClassBased && implementation.sanitizedKey === sanitizedKey) {
         if (this.options.verbose) {
           console.log(`✅ Class-based match: ${implementation.implementationClass}`);
@@ -565,7 +586,7 @@ export class IntegratedInterfaceResolver {
     }
 
     // 7. Fallback to interface name matching
-    for (const [key, implementation] of this.interfaces) {
+    for (const [, implementation] of this.interfaces) {
       if (implementation.interfaceName === interfaceType || implementation.interfaceName === requestedInterfaceName) {
         if (this.options.verbose) {
           console.log(`⚠️  Interface name fallback: ${implementation.implementationClass}`);
@@ -603,7 +624,7 @@ export class IntegratedInterfaceResolver {
     const implementations: InterfaceImplementation[] = [];
     const sanitizedKey = this.keySanitizer.sanitizeKey(interfaceName);
 
-    for (const [key, implementation] of this.interfaces) {
+    for (const [, implementation] of this.interfaces) {
       if (
         implementation.sanitizedKey === sanitizedKey ||
         implementation.interfaceName === interfaceName
@@ -616,7 +637,7 @@ export class IntegratedInterfaceResolver {
   }
 
   getImplementationByClass(className: string): InterfaceImplementation | undefined {
-    for (const [key, implementation] of this.interfaces) {
+    for (const [, implementation] of this.interfaces) {
       if (implementation.implementationClass === className) {
         return implementation;
       }
@@ -639,7 +660,7 @@ export class IntegratedInterfaceResolver {
       const resolved: string[] = [];
 
       for (const depKey of dependency.interfaceDependencies) {
-        for (const [key, implementation] of this.interfaces) {
+        for (const [, implementation] of this.interfaces) {
           // Handle both location-based and standard key matching
           if (implementation.sanitizedKey === depKey) {
             // Exact match (backward compatibility)
@@ -787,6 +808,83 @@ export class IntegratedInterfaceResolver {
     }
 
     return "singleton"; // Default scope
+  }
+
+  /**
+   * Extract location information from an AST node
+   */
+  private extractLocationFromNode(node: Node, sourceFile: SourceFile): SourceLocation | undefined {
+    if (!node || !sourceFile) {
+      return undefined;
+    }
+
+    try {
+      const startPos = node.getStart();
+      if (startPos === undefined) {
+        return undefined;
+      }
+
+      const { line } = sourceFile.getLineAndColumnAtPos(startPos);
+      return {
+        filePath: sourceFile.getFilePath(),
+        lineNumber: line
+      };
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Could not extract location from AST node:`, error);
+      }
+      return undefined;
+    }
+  }
+
+  /**
+   * Extract location information from a class declaration
+   */
+  private extractLocationFromClass(className: string, sourceFile: SourceFile): SourceLocation | undefined {
+    try {
+      const classDecl = sourceFile.getClass(className);
+      if (!classDecl) {
+        return undefined;
+      }
+
+      return this.extractLocationFromNode(classDecl, sourceFile);
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Could not extract location from class ${className}:`, error);
+      }
+      return undefined;
+    }
+  }
+
+  /**
+   * Extract location information from inheritance heritage clause
+   */
+  private extractLocationFromInheritance(className: string, sourceFile: SourceFile): SourceLocation | undefined {
+    try {
+      const classDecl = sourceFile.getClass(className);
+      if (!classDecl) {
+        return undefined;
+      }
+
+      // Find the extends heritage clause
+      const heritageClauses = classDecl.getHeritageClauses();
+      for (const heritageClause of heritageClauses) {
+        if (heritageClause.getToken() === SyntaxKind.ExtendsKeyword) {
+          const types = heritageClause.getTypeNodes();
+          if (types.length > 0) {
+            return this.extractLocationFromNode(types[0], sourceFile);
+          }
+        }
+      }
+
+      // Fallback to class declaration location
+      return this.extractLocationFromNode(classDecl, sourceFile);
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Could not extract inheritance location from class ${className}:`, error);
+      }
+      return undefined;
+    }
   }
 
   private getDecoratorName(decorator: any): string | null {

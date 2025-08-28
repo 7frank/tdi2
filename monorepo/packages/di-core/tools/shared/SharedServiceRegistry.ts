@@ -14,7 +14,6 @@ export interface ServiceRegistration {
   token: string;                    // Sanitized key for DI lookup
   interfaceName: string;           // Original interface name
   implementationClass: string;     // Implementation class name
-  implementationClassPath: string; // Full location-based path for resolution (sanitized key)
   scope: 'singleton' | 'transient' | 'scoped';
   dependencies: ExtractedDependency[];          // Dependency tokens
   factory: string;                 // Factory function name
@@ -99,7 +98,6 @@ export class SharedServiceRegistry {
       token,
       interfaceName,
       implementationClass: config.configurationClass || 'UnknownConfig',
-      implementationClassPath: token, // Use token as the resolution path for beans
       scope: config.scope,
       dependencies: config.dependencies || [],
       factory: `bean_${config.beanMethodName}_factory`,
@@ -255,7 +253,6 @@ export class SharedServiceRegistry {
       token: implementation.sanitizedKey,
       interfaceName: implementation.interfaceName,
       implementationClass: implementation.implementationClass,
-      implementationClassPath: implementation.sanitizedKey, // Use sanitized key as the resolution path
       scope: implementation.scope || 'singleton', // Use scope from decorator or default to singleton
       dependencies: filteredDependencies,
       factory: this.generateFactoryName(implementation.implementationClass),
@@ -326,7 +323,7 @@ export class SharedServiceRegistry {
     const processedClasses = new Set<string>();
 
     for (const [token, registration] of this.services) {
-      const { implementationClass,implementationClassPath } = registration;
+      const { implementationClass } = registration;
       
       // Generate import (only once per class)
       if (!processedClasses.has(implementationClass)) {
@@ -357,7 +354,6 @@ export class SharedServiceRegistry {
       }).join(', ')}],
     interfaceName: '${registration.interfaceName}',
     implementationClass: '${implementationClass}',
-    implementationClassPath: '${registration.implementationClassPath}',
     isAutoResolved: ${registration.metadata.isAutoResolved},
     registrationType: '${registration.registrationType}',
     isClassBased: ${registration.registrationType === 'class'},
@@ -426,7 +422,7 @@ export const ALL_SERVICES = ${JSON.stringify(servicesList, null, 2)};`;
    * Generate factory function for service
    */
   private generateFactoryFunction(registration: ServiceRegistration): string {
-    const { implementationClass, dependencies,implementationClassPath } = registration;
+    const { implementationClass, dependencies } = registration;
     
     if (dependencies.length === 0) {
       return `function ${registration.factory}(container: any) {
