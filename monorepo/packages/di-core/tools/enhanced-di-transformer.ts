@@ -423,8 +423,7 @@ export class EnhancedDITransformer {
 
     for (const [, impl] of implementations) {
       successfulResolutions++;
-      if (impl.isStateBased) byStrategy.state++;
-      else if (impl.isInheritanceBased) byStrategy.inheritance++;
+      if (impl.isInheritanceBased) byStrategy.inheritance++;
       else if (impl.isClassBased) byStrategy.class++;
       else byStrategy.interface++;
     }

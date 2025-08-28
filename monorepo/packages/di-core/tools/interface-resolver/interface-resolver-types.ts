@@ -24,12 +24,9 @@ export interface InterfaceImplementation {
   location?: SourceLocation; // NEW: Structured location info
   isClassBased?: boolean;
   isInheritanceBased?: boolean;
-  isStateBased?: boolean; // NEW: State-based registration
   inheritanceChain?: string[];
   baseClass?: string;
   baseClassGeneric?: string;
-  stateType?: string; // NEW: The state type this service manages
-  serviceInterface?: string; // NEW: The service interface (e.g., AsyncStateService<T>)
   scope?: "singleton" | "transient" | "scoped"; // NEW: Scope extracted from @Service decorator
 }
 
@@ -92,7 +89,3 @@ export interface InheritanceMapping {
   typeParameters: string[];
 }
 
-export interface StateBasedRegistration {
-  stateType: string;
-  serviceInterface: string;
-}

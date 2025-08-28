@@ -676,17 +676,10 @@ export class Service${i} implements Service${i}Interface {
         expect(keySanitizer.sanitizeKey("Complex<{name: string}>")).toMatch(/Complex_name_string/);
         
         // Test inheritance sanitization - more flexible patterns
-        expect(keySanitizer.sanitizeInheritanceKey("AsyncState<UserData>")).toMatch(/AsyncState.*UserData/);
+        expect(keySanitizer.sanitizeInheritanceKey("BaseService<UserData>")).toMatch(/BaseService.*UserData/);
         expect(keySanitizer.sanitizeInheritanceKey("BaseService<T, U>")).toMatch(/BaseService.*T.*U/);
         
-        // Test state key sanitization - check actual implementation behavior
-        expect(keySanitizer.sanitizeStateKey("UserState")).toBe("UserState");
-        // ProductData doesn't end with State/Data/Model/Entity, so State is added
-        expect(keySanitizer.sanitizeStateKey("ProductData")).toBe("ProductData"); // FIXED: Match actual behavior
-        expect(keySanitizer.sanitizeStateKey("OrderInterface")).toBe("OrderState"); // Interface suffix removed, State added
-        expect(keySanitizer.sanitizeStateKey("OrderType")).toBe("OrderState"); // Type suffix removed, State added
-
-        expect(keySanitizer.sanitizeStateKey("AsyncState<UserServiceState>")).toBe("AsyncState_UserServiceState"); 
+        // State key sanitization tests removed as sanitizeStateKey method is no longer available 
         
       });
 

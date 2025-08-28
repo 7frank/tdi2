@@ -473,8 +473,6 @@ export class SharedDependencyExtractor {
     for (const dep of dependencies) {
       if (!dep.resolvedImplementation) {
         groups.notFound.push(dep);
-      } else if (dep.resolvedImplementation.isStateBased) {
-        groups.state.push(dep);
       } else if (dep.resolvedImplementation.isInheritanceBased) {
         groups.inheritance.push(dep);
       } else if (dep.resolvedImplementation.isClassBased) {

@@ -18,15 +18,13 @@ export interface ServiceRegistration {
   dependencies: ExtractedDependency[];          // Dependency tokens
   factory: string;                 // Factory function name
   filePath: string;               // Source file path
-  registrationType: 'interface' | 'inheritance' | 'state' | 'class';
+  registrationType: 'interface' | 'inheritance' | 'class';
   metadata: {
     isGeneric: boolean;
     typeParameters: string[];
     sanitizedKey: string;
     baseClass?: string;
     baseClassGeneric?: string;
-    stateType?: string;
-    serviceInterface?: string;
     isAutoResolved: boolean;
   };
 }
@@ -108,7 +106,6 @@ export class SharedServiceRegistry {
         typeParameters: [],
         sanitizedKey: token,
         isAutoResolved: config.isAutoResolved || true,
-        serviceInterface: interfaceName
       }
     };
 
@@ -264,8 +261,6 @@ export class SharedServiceRegistry {
         sanitizedKey: implementation.sanitizedKey,
         baseClass: implementation.baseClass,
         baseClassGeneric: implementation.baseClassGeneric,
-        stateType: implementation.stateType,
-        serviceInterface: implementation.serviceInterface,
         isAutoResolved: true
       }
     };
@@ -297,8 +292,7 @@ export class SharedServiceRegistry {
   /**
    * Determine registration type from implementation
    */
-  private determineRegistrationType(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'state' | 'class' {
-    if (implementation.isStateBased) return 'state';
+  private determineRegistrationType(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'class' {
     if (implementation.isInheritanceBased) return 'inheritance';
     if (implementation.isClassBased) return 'class';
     return 'interface';
@@ -358,11 +352,8 @@ export class SharedServiceRegistry {
     registrationType: '${registration.registrationType}',
     isClassBased: ${registration.registrationType === 'class'},
     isInheritanceBased: ${registration.registrationType === 'inheritance'},
-    isStateBased: ${registration.registrationType === 'state'},
     baseClass: ${registration.metadata.baseClass ? `'${registration.metadata.baseClass}'` : 'null'},
     baseClassGeneric: ${registration.metadata.baseClassGeneric ? `'${registration.metadata.baseClassGeneric}'` : 'null'},
-    stateType: ${registration.metadata.stateType ? `'${registration.metadata.stateType}'` : 'null'},
-    serviceInterface: ${registration.metadata.serviceInterface ? `'${registration.metadata.serviceInterface}'` : 'null'}
   }`);
     }
 
@@ -409,7 +400,6 @@ export const REGISTRY_STATS = {
   byType: {
     interface: ${servicesList.filter(s => s.registrationType === 'interface').length},
     inheritance: ${servicesList.filter(s => s.registrationType === 'inheritance').length},
-    state: ${servicesList.filter(s => s.registrationType === 'state').length},
     class: ${servicesList.filter(s => s.registrationType === 'class').length}
   },
   withDependencies: ${servicesList.filter(s => s.dependencies.length > 0).length}

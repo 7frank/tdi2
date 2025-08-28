@@ -12,7 +12,6 @@ import {
 import { EnhancedInterfaceExtractor, type DISourceConfiguration } from "./enhanced-interface-extractor";
 import { EnhancedServiceValidator } from "./enhanced-service-validator";
 import { InheritanceAnalyzer } from "./inheritance-analyzer";
-import { StateTypeExtractor } from "./state-type-extractor";
 import { DependencyAnalyzer } from "./dependency-analyzer";
 import { KeySanitizer } from "./key-sanitizer";
 
@@ -45,7 +44,6 @@ export class IntegratedInterfaceResolver {
   private interfaceExtractor: EnhancedInterfaceExtractor;
   private serviceValidator: EnhancedServiceValidator;
   private inheritanceAnalyzer: InheritanceAnalyzer;
-  private stateTypeExtractor: StateTypeExtractor;
   private dependencyAnalyzer: DependencyAnalyzer;
   private keySanitizer: KeySanitizer;
 
@@ -78,7 +76,6 @@ export class IntegratedInterfaceResolver {
     );
     
     this.inheritanceAnalyzer = new InheritanceAnalyzer(this.keySanitizer, this.options.verbose);
-    this.stateTypeExtractor = new StateTypeExtractor(this.keySanitizer, this.options.verbose);
     this.dependencyAnalyzer = new DependencyAnalyzer(this.keySanitizer, this.options.verbose);
   }
 
@@ -172,16 +169,10 @@ export class IntegratedInterfaceResolver {
       // Enhanced inheritance analysis
       const inheritanceInfo = this.inheritanceAnalyzer.getInheritanceInfo(classDecl);
 
-      // Enhanced state-based registration extraction
-      const stateBasedRegistrations = this.stateTypeExtractor.extractStateBasedRegistrations(
-        implementedInterfaces,
-        inheritanceInfo
-      );
 
       // Track registration types
       let hasInterfaceRegistrations = false;
       let hasInheritanceRegistrations = false;
-      let hasStateRegistrations = false;
 
       // Register interface-based implementations
       if (implementedInterfaces.length > 0) {
@@ -199,19 +190,12 @@ export class IntegratedInterfaceResolver {
         }
       }
 
-      // Register state-based implementations  
-      if (this.options.enableStateDI && stateBasedRegistrations.length > 0) {
-        hasStateRegistrations = true;
-        for (const stateRegistration of stateBasedRegistrations) {
-          await this.registerStateImplementation(stateRegistration, className, sourceFile);
-        }
-      }
 
       // Always register class-based lookup (primary or secondary)
       await this.registerClassImplementation(
         className, 
         sourceFile, 
-        !hasInterfaceRegistrations && !hasInheritanceRegistrations && !hasStateRegistrations
+        !hasInterfaceRegistrations && !hasInheritanceRegistrations
       );
 
     } catch (error) {
@@ -247,7 +231,6 @@ export class IntegratedInterfaceResolver {
       location: interfaceInfo.location,
       isClassBased: false,
       isInheritanceBased: false,
-      isStateBased: false,
       scope,
     };
 
@@ -289,7 +272,6 @@ export class IntegratedInterfaceResolver {
       location,
       isClassBased: false,
       isInheritanceBased: true,
-      isStateBased: false,
       inheritanceChain: inheritanceInfo.inheritanceChain,
       baseClass: inheritanceMapping.baseClass,
       baseClassGeneric: inheritanceMapping.baseClassGeneric,
@@ -306,48 +288,6 @@ export class IntegratedInterfaceResolver {
     }
   }
 
-  private async registerStateImplementation(
-    stateRegistration: any,
-    className: string,
-    sourceFile: SourceFile
-  ): Promise<void> {
-    // Extract location info - use state registration location if available, fallback to class location
-    const location = stateRegistration.location || this.extractLocationFromClass(className, sourceFile);
-    
-    // Use location-based key generation if location is available
-    const sanitizedKey = location 
-      ? this.keySanitizer.createLocationBasedKeyFromLocation(stateRegistration.serviceInterface, location)
-      : this.keySanitizer.sanitizeKey(stateRegistration.serviceInterface);
-
-    // Extract scope from @Service decorator
-    const classDecl = sourceFile.getClass(className);
-    const scope = classDecl ? this.extractScopeFromDecorator(classDecl) : "singleton";
-
-    const implementation: InterfaceImplementation = {
-      interfaceName: stateRegistration.serviceInterface,
-      implementationClass: className,
-      filePath: sourceFile.getFilePath(),
-      isGeneric: true,
-      typeParameters: [stateRegistration.stateType],
-      sanitizedKey,
-      location,
-      isClassBased: false,
-      isInheritanceBased: false,
-      isStateBased: true,
-      stateType: stateRegistration.stateType,
-      serviceInterface: stateRegistration.serviceInterface,
-      scope,
-    };
-
-    const uniqueKey = `${sanitizedKey}_${className}_state`;
-    this.interfaces.set(uniqueKey, implementation);
-
-    if (this.options.verbose) {
-      console.log(
-        `🎯 ${className} manages state ${stateRegistration.stateType} via ${stateRegistration.serviceInterface} (key: ${sanitizedKey})`
-      );
-    }
-  }
 
   private async registerClassImplementation(
     className: string,
@@ -376,7 +316,6 @@ export class IntegratedInterfaceResolver {
       location,
       isClassBased: true,
       isInheritanceBased: false,
-      isStateBased: false,
       scope,
     };
 
@@ -434,13 +373,11 @@ export class IntegratedInterfaceResolver {
     const stats = {
       interface: 0,
       inheritance: 0,
-      state: 0,
       class: 0
     };
 
     for (const [, impl] of this.interfaces) {
-      if (impl.isStateBased) stats.state++;
-      else if (impl.isInheritanceBased) stats.inheritance++;
+      if (impl.isInheritanceBased) stats.inheritance++;
       else if (impl.isClassBased) stats.class++;
       else stats.interface++;
     }
@@ -448,7 +385,6 @@ export class IntegratedInterfaceResolver {
     console.log('\n📊 Registration Summary:');
     console.log(`  🔌 Interface-based: ${stats.interface}`);
     console.log(`  🧬 Inheritance-based: ${stats.inheritance}`);
-    console.log(`  🎯 State-based: ${stats.state}`);
     console.log(`  📦 Class-based: ${stats.class}`);
     console.log(`  📋 Total: ${this.interfaces.size}\n`);
   }
@@ -524,34 +460,6 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 3. AsyncState pattern matching
-    const asyncStateMatch = interfaceType.match(/^AsyncState<(.+)>$/);
-    if (asyncStateMatch) {
-      const stateType = asyncStateMatch[1];
-      
-      // Look for state-based registrations first
-      for (const [, implementation] of this.interfaces) {
-        if (implementation.isStateBased && 
-            implementation.stateType === stateType &&
-            implementation.serviceInterface === interfaceType) {
-          if (this.options.verbose) {
-            console.log(`✅ AsyncState state-based match: ${implementation.implementationClass}`);
-          }
-          return implementation;
-        }
-      }
-      
-      // Look for inheritance-based registrations
-      for (const [, implementation] of this.interfaces) {
-        if (implementation.isInheritanceBased && 
-            implementation.baseClassGeneric === interfaceType) {
-          if (this.options.verbose) {
-            console.log(`✅ AsyncState inheritance match: ${implementation.implementationClass}`);
-          }
-          return implementation;
-        }
-      }
-    }
 
     // 4. Inheritance-based lookups
     const inheritanceSanitizedKey = this.keySanitizer.sanitizeInheritanceKey(interfaceType);
@@ -565,17 +473,8 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 5. State-based lookups
-    for (const [, implementation] of this.interfaces) {
-      if (implementation.isStateBased && implementation.sanitizedKey === sanitizedKey) {
-        if (this.options.verbose) {
-          console.log(`✅ State-based match: ${implementation.implementationClass}`);
-        }
-        return implementation;
-      }
-    }
 
-    // 6. Class-based lookups
+    // 5. Class-based lookups
     for (const [, implementation] of this.interfaces) {
       if (implementation.isClassBased && implementation.sanitizedKey === sanitizedKey) {
         if (this.options.verbose) {
@@ -585,7 +484,7 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 7. Fallback to interface name matching
+    // 6. Fallback to interface name matching
     for (const [, implementation] of this.interfaces) {
       if (implementation.interfaceName === interfaceType || implementation.interfaceName === requestedInterfaceName) {
         if (this.options.verbose) {
@@ -608,7 +507,6 @@ export class IntegratedInterfaceResolver {
   }
 
   private getRegistrationType(implementation: InterfaceImplementation): string {
-    if (implementation.isStateBased) return 'state';
     if (implementation.isInheritanceBased) return 'inheritance';
     if (implementation.isClassBased) return 'class';
     return 'interface';
@@ -714,7 +612,6 @@ export class IntegratedInterfaceResolver {
     const registrationTypes = {
       interface: 0,
       inheritance: 0,
-      state: 0,
       class: 0
     };
 
@@ -726,7 +623,6 @@ export class IntegratedInterfaceResolver {
     // Test resolution for common patterns
     const testPatterns = [
       'LoggerInterface',
-      'AsyncState<UserServiceState>',
       'Repository<User>',
       'CacheInterface<any>'
     ];
