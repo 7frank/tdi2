@@ -5,7 +5,7 @@
 ### [❌]fix di-debug
 
 #### integrated interface resolver too cluttered
-- [❌] "AsyncState" "isStateBased" 
+- [✅] "AsyncState" "isStateBased" 
 
 - AsyncState TodoServiceState
 
@@ -33,6 +33,10 @@
 
 - cleanup di-core interfaces
 
+- InterfaceImplementation type  is too unstructured we need something for di_config that contains the core info
+  - uniqueKey
+  - classNameFoo
+  - ....
 
 
 
