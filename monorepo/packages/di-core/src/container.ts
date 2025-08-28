@@ -123,48 +123,6 @@ export class CompileTimeDIContainer implements DIContainer {
     return instance;
   }
 
-  private async createInstance<T>(token: string | symbol): Promise<T> {
-    const tokenKey = this.getTokenKey(token);
-    let instance: T;
-
-    if (this.factories.has(tokenKey)) {
-      // Use generated factory
-      const factory = this.factories.get(tokenKey)!;
-      instance = factory();
-    } else if (this.services.has(tokenKey)) {
-      // Use constructor
-      const constructor = this.services.get(tokenKey);
-      if (typeof constructor === "function") {
-        instance = new constructor();
-      } else {
-        instance = constructor;
-      }
-    } else if (this.parent && this.parent.has(token)) {
-      // Service is defined in parent - get the factory/service and create instance
-      if (this.parent.hasFactory(token)) {
-        const factory = this.parent.getFactory(token);
-        instance = factory();
-      } else if (this.parent.hasService(token)) {
-        const constructor = this.parent.getService(token);
-        if (typeof constructor === "function") {
-          instance = new constructor();
-        } else {
-          instance = constructor;
-        }
-      } else {
-        // Fallback to parent resolve (shouldn't happen but for safety)
-        instance = this.parent.resolve<T>(token);
-      }
-    } else {
-      throw new Error(`Service not registered: ${String(token)}`);
-    }
-
-    // Execute OnInit lifecycle hook after dependency injection
-    await this.executeOnInitLifecycle(instance);
-
-    return instance;
-  }
-
   // Create instance synchronously for backward compatibility
   private createInstanceSync<T>(token: string | symbol): T {
     const tokenKey = this.getTokenKey(token);
