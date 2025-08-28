@@ -31,6 +31,9 @@
 >    return 'interface';
 >  }
 
+- cleanup di-core interfaces
+
+
 
 
 #### [❌] overhaul of line based approach of  commit b596e7b

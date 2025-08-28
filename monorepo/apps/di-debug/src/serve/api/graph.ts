@@ -229,7 +229,7 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
     // Collect interfaces and classes based on metadata
     for (const [token, node] of dependencyGraph.nodes.entries()) {
       if (node.metadata?.isInterface) interfaceNodes.add(token);
-      else if (node.metadata?.isClass || (!node.metadata?.isInheritanceBased && !node.metadata?.isStateBased && !node.metadata?.isInterface)) {
+      else if (node.metadata?.isClass || (!node.metadata?.isInheritanceBased && !node.metadata?.isInterface)) {
         classNodes.add(token);
       }
     }

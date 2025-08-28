@@ -10,12 +10,11 @@ interface StatsPanelProps {
 export const StatsPanel: React.FC<StatsPanelProps> = ({ data }) => {
   const stats = useMemo(() => {
     const implementationTypes = data.implementations.reduce((acc, [, impl]) => {
-      if (impl.isStateBased) acc.state++;
-      else if (impl.isInheritanceBased) acc.inheritance++;
+      if (impl.isInheritanceBased) acc.inheritance++;
       else if (impl.isClassBased) acc.class++;
       else acc.interface++;
       return acc;
-    }, { interface: 0, class: 0, inheritance: 0, state: 0 });
+    }, { interface: 0, class: 0, inheritance: 0 });
 
     const totalDependencies = data.dependencies.reduce(
       (acc, [, dep]) => acc + dep.constructorParams.length,

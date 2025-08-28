@@ -614,7 +614,6 @@ export class FunctionalDIEnhancedTransformer {
     const byStrategy: Record<string, number> = {
       interface: 0,
       inheritance: 0,
-      state: 0,
       class: 0,
       notFound: 0
     };

@@ -37,10 +37,7 @@ export function processDIConfig(diConfig: any): DIDebugInfo {
         sanitizedKey: token,
         isClassBased: config.isClassBased || false,
         isInheritanceBased: config.isInheritanceBased || false,
-        isStateBased: config.isStateBased || false,
         baseClass: config.baseClass,
-        stateType: config.stateType,
-        serviceInterface: config.serviceInterface,
         inheritanceChain: config.inheritanceChain || [],
       };
 
@@ -76,7 +73,7 @@ export function processDIConfig(diConfig: any): DIDebugInfo {
 
     } catch (error) {
       console.warn(`⚠️  Failed to process config for token ${token}:`, error);
-      missingImplementations.push(`${token}: ${error.message}`);
+      missingImplementations.push(`${token}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 

@@ -40,7 +40,6 @@ export class DependencyAnalyzer {
           isInterface: config.registrationType === 'interface',
           isClass: config.isClassBased || false,
           isInheritanceBased: config.isInheritanceBased || false,
-          isStateBased: config.isStateBased || false,
           profiles: config.profiles
         }
       };
@@ -339,8 +338,7 @@ export class DependencyAnalyzer {
       className.includes('service') ||
       className.includes('store') ||
       className.includes('manager') ||
-      className.includes('provider') ||
-      node.metadata.isStateBased
+      className.includes('provider')
     );
   }
 }

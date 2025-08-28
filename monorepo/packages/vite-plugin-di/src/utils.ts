@@ -353,9 +353,7 @@ export function createDebugEndpoints(
                       ? 'class' 
                       : impl.isInheritanceBased 
                         ? 'inheritance' 
-                        : impl.isStateBased 
-                          ? 'state' 
-                          : 'interface',
+                        : 'interface',
                   })
                 ),
                 dependencies: debugInfo.dependencies.map(
@@ -385,9 +383,7 @@ export function createDebugEndpoints(
                       ? 'class' 
                       : impl.isInheritanceBased 
                         ? 'inheritance' 
-                        : impl.isStateBased 
-                          ? 'state' 
-                          : 'interface';
+                        : 'interface';
                     acc[type] = (acc[type] || 0) + 1;
                     return acc;
                   }, {} as Record<string, number>),
@@ -434,9 +430,7 @@ export function createDebugEndpoints(
                   ? 'class' 
                   : impl.isInheritanceBased 
                     ? 'inheritance' 
-                    : impl.isStateBased 
-                      ? 'state' 
-                      : 'interface',
+                    : 'interface',
               }))
             : [],
           dependencies: debugInfo
