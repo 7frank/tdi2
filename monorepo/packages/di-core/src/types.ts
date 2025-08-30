@@ -1,10 +1,17 @@
 // src/di/types.ts - Updated for interface-based DI
 
+import type { 
+  ServiceScope, 
+  RegistrationType, 
+  ServiceImplementationBase,
+  DependencyNode as BaseDependencyNode
+} from '../tools/interface-resolver/interface-resolver-types';
+
 export type Constructor<T = object> = new (...args: any[]) => T;
 
 export interface ServiceMetadata {
   token?: string | symbol; // Optional - auto-resolved from interface if not provided
-  scope?: "singleton" | "transient" | "scoped";
+  scope?: ServiceScope;
   implementation: Constructor;
   autoResolve?: boolean; // True if token should be auto-resolved
   profiles?: string[]; // Environment profiles
@@ -16,7 +23,7 @@ export interface DIContainer {
   register<T>(
     token: string | symbol,
     implementation: Constructor<T>,
-    scope?: "singleton" | "transient" | "scoped"
+    scope?: ServiceScope
   ): void;
   resolve<T>(token: string | symbol): T;
   has(token: string | symbol): boolean;
@@ -26,13 +33,13 @@ export interface DIContainer {
   registerByInterface<T>(
     interfaceName: string,
     implementation: () => T,
-    scope?: "singleton" | "transient" | "scoped"
+    scope?: ServiceScope
   ): void;
   resolveByInterface<T>(interfaceName: string): T;
   hasInterface(interfaceName: string): boolean;
 
   // Helper methods for parent-child scope resolution
-  getScope(token: string | symbol): "singleton" | "transient" | "scoped" | undefined;
+  getScope(token: string | symbol): ServiceScope | undefined;
   hasFactory(token: string | symbol): boolean;
   getFactory(token: string | symbol): any;
   hasService(token: string | symbol): boolean;
@@ -72,7 +79,7 @@ export interface BeanMetadata {
   methodName: string | symbol;
   returnType: string; // Interface name from return type
   parameters: BeanParameterMetadata[];
-  scope: "singleton" | "transient" | "scoped";
+  scope: ServiceScope;
   primary: boolean;
   qualifier?: string;
   autoResolve: boolean;
@@ -105,7 +112,7 @@ type ServiceFactoryFactory<T> = (container?: any) => () => T;
 export interface DIMap {
   [token: string]: {
     factory: ServiceFactory<any> | ServiceFactoryFactory<any>;
-    scope: "singleton" | "transient" | "scoped";
+    scope: ServiceScope;
     dependencies: string[];
     interfaceName?: string; // The interface this service implements
     implementationClass: string; // The actual implementation class or configuration class
@@ -173,12 +180,18 @@ export interface InterfaceResolutionData {
   typeParameters: string[];
 }
 
-// Dependency graph node
-export interface DependencyNode {
-  id: string; // Service class name
-  interfaceName?: string; // Interface it implements
-  dependencies: DependencyEdge[];
-  scope: string;
+/**
+ * Extended dependency graph node with additional runtime information.
+ * Extends the base DependencyNode with container-specific metadata.
+ */
+export interface DependencyNode extends BaseDependencyNode {
+  /** Interface this node implements */
+  interfaceName?: string;
+  /** Dependencies as edge objects with detailed information */
+  dependencyEdges: DependencyEdge[];
+  /** Service lifecycle scope */
+  scope: ServiceScope;
+  /** Whether this service was auto-resolved from interface */
   isAutoResolved: boolean;
 }
 

@@ -12,11 +12,13 @@ import {
   InterfaceImplementation,
   ValidationResult,
 } from "./interface-resolver-types";
+import { LocationKeyGenerator } from "./location-key-generator";
 import type { DISourceConfiguration } from "./enhanced-interface-extractor";
 
 export class EnhancedServiceValidator {
   private sourceConfig: DISourceConfiguration;
   private validationCache = new Map<string, boolean>();
+  private locationKeyGenerator = new LocationKeyGenerator();
 
   constructor(
     private verbose: boolean = false,
@@ -316,17 +318,15 @@ export class EnhancedServiceValidator {
       for (const depKey of dependency.interfaceDependencies) {
         let found = false;
         for (const [key, implementation] of interfaces) {
-          if (implementation.sanitizedKey === depKey) {
-            // Exact match (backward compatibility)
+          // Use LocationKeyGenerator for robust key matching
+          if (this.locationKeyGenerator.keysEqual(implementation.sanitizedKey, depKey)) {
             found = true;
             break;
-          } else {
-            // For location-based keys, check interface name match
-            const interfaceName = this.extractInterfaceNameFromKey(implementation.sanitizedKey);
-            if (interfaceName === depKey) {
-              found = true;
-              break;
-            }
+          }
+          // Also check direct match with implementation class name
+          if (implementation.implementationClass === depKey) {
+            found = true;
+            break;
           }
         }
         if (!found) {
@@ -380,16 +380,9 @@ export class EnhancedServiceValidator {
         for (const depKey of dependency.interfaceDependencies) {
           // Find implementation for this dependency
           for (const [key, implementation] of interfaces) {
-            let matches = false;
-            if (implementation.sanitizedKey === depKey) {
-              matches = true;
-            } else {
-              // For location-based keys, check interface name match
-              const interfaceName = this.extractInterfaceNameFromKey(implementation.sanitizedKey);
-              if (interfaceName === depKey) {
-                matches = true;
-              }
-            }
+            // Use LocationKeyGenerator for robust matching
+            const matches = this.locationKeyGenerator.keysEqual(implementation.sanitizedKey, depKey) ||
+                           implementation.implementationClass === depKey;
             
             if (matches) {
               if (
@@ -703,15 +696,4 @@ export class EnhancedServiceValidator {
     return false;
   }
 
-  /**
-   * Extract interface name from a key (handles both standard and location-based keys)
-   */
-  private extractInterfaceNameFromKey(sanitizedKey: string): string {
-    // Check if it's a location-based key
-    if (sanitizedKey.includes('__') && sanitizedKey.includes('_line_')) {
-      return sanitizedKey.split('__')[0];
-    }
-    // Otherwise return the key as-is (standard key)
-    return sanitizedKey;
-  }
 }

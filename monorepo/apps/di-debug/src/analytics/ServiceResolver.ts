@@ -317,7 +317,6 @@ export class ServiceResolver {
   private determineResolutionStrategy(config: any):  ResolutionStep['strategy'] {
     if (config.registrationType === 'interface') return 'interface';
     if (config.isInheritanceBased) return 'inheritance';
-    if (config.isStateBased) return 'state';
     if (config.isClassBased) return 'class';
     return 'factory';
   }

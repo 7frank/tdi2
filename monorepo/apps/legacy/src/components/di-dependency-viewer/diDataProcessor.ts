@@ -37,10 +37,7 @@ export function processDIConfig(diConfig: any): DIDebugInfo {
         sanitizedKey: token,
         isClassBased: config.isClassBased || false,
         isInheritanceBased: config.isInheritanceBased || false,
-        isStateBased: config.isStateBased || false,
         baseClass: config.baseClass,
-        stateType: config.stateType,
-        serviceInterface: config.serviceInterface,
         inheritanceChain: config.inheritanceChain || [],
       };
 
@@ -76,7 +73,7 @@ export function processDIConfig(diConfig: any): DIDebugInfo {
 
     } catch (error) {
       console.warn(`⚠️  Failed to process config for token ${token}:`, error);
-      missingImplementations.push(`${token}: ${error.message}`);
+      missingImplementations.push(`${token}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -149,7 +146,6 @@ function extractParamName(depToken: string, index: number = 0): string {
     .replace(/Interface$/, '')
     .replace(/Service$/, '')
     .replace(/Type$/, '')
-    .replace(/^AsyncState_/, '')
     .replace(/_/g, '')
     .replace(/^([A-Z])/, (match) => match.toLowerCase())
     .replace(/([A-Z])/g, (match, offset) => offset > 0 ? match.toLowerCase() : match);
@@ -164,12 +160,6 @@ function extractParamName(depToken: string, index: number = 0): string {
 
 function extractInterfaceType(depToken: string): string {
   // Handle common patterns in the DI config
-  
-  // AsyncState patterns
-  if (depToken.startsWith('AsyncState_')) {
-    const stateType = depToken.replace('AsyncState_', '');
-    return `AsyncState<${stateType}>`;
-  }
   
   // Generic patterns with underscores (e.g., CacheInterface_UserData)
   const genericMatch = depToken.match(/^([A-Za-z]+Interface)_(.+)$/);
