@@ -7,8 +7,6 @@
 #### integrated interface resolver too cluttered
 - [✅] "AsyncState" "isStateBased" 
 
-- AsyncState TodoServiceState
-
 
 - [❌]instead
   -  if (implementation.isInheritanceBased) return 'inheritance';

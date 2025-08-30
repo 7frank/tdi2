@@ -14,20 +14,28 @@ import {
 import type { SharedTypeResolver, TypeResolutionRequest } from './SharedTypeResolver';
 import type { 
   InterfaceImplementation,
-  InterfaceResolverInterface
+  InterfaceResolverInterface,
+  DependencyBase
 } from '../interface-resolver/interface-resolver-types';
 import { RecursiveInjectExtractor, ExtractedInjectMarker } from './RecursiveInjectExtractor';
 import * as path from 'path';
 
-export interface ExtractedDependency {
-  serviceKey: string;           // Parameter/property name
-  interfaceType: string;        // Original interface type string
-  sanitizedKey: string;         // Sanitized key for DI lookup
-  isOptional: boolean;
+/**
+ * Extended dependency information used during extraction and resolution.
+ * Extends DependencyBase with extraction-specific metadata.
+ */
+export interface ExtractedDependency extends DependencyBase {
+  /** Parameter/property name in the source code */
+  serviceKey: string;
+  /** Resolved implementation if available */
   resolvedImplementation?: InterfaceImplementation;
+  /** How this dependency was discovered */
   extractionSource: 'decorator' | 'marker-type' | 'parameter-type';
-  sourceLocation: string;       // For debugging
-  propertyPath?: string[];      // Path to nested property (e.g., ['services', 'api'])
+  /** Source location for debugging */
+  sourceLocation: string;
+  /** Path to nested property (e.g., ['services', 'api']) */
+  propertyPath?: string[];
+  /** Additional extraction metadata */
   metadata?: {
     parameterIndex?: number;
     propertyName?: string;

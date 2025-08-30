@@ -1,7 +1,12 @@
 // tools/shared/SharedServiceRegistry.ts
 
 import type { ExtractedDependency } from './SharedDependencyExtractor';
-import type { InterfaceImplementation } from '../interface-resolver/interface-resolver-types';
+import type { 
+  InterfaceImplementation, 
+  ServiceScope, 
+  RegistrationType,
+  ServiceImplementationBase
+} from '../interface-resolver/interface-resolver-types';
 import type { ConfigManager } from '../config-manager';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -10,20 +15,27 @@ import { KeySanitizer } from '../interface-resolver/key-sanitizer';
 const keySanitizer = new KeySanitizer();
  
 
-export interface ServiceRegistration {
-  token: string;                    // Sanitized key for DI lookup
-  interfaceName: string;           // Original interface name
-  implementationClass: string;     // Implementation class name
-  implementationClassPath: string; // Full location-based path for resolution (sanitized key)
-  scope: 'singleton' | 'transient' | 'scoped';
-  dependencies: ExtractedDependency[];          // Dependency tokens
-  factory: string;                 // Factory function name
-  filePath: string;               // Source file path
-  registrationType: 'interface' | 'inheritance' | 'class';
+/**
+ * Service registration information used by the registry.
+ * Extends ServiceImplementationBase with registry-specific metadata.
+ */
+export interface ServiceRegistration extends ServiceImplementationBase {
+  /** Unique token for DI lookup (same as sanitizedKey) */
+  token: string;
+  /** Full location-based path for resolution (legacy field, use sanitizedKey instead) */
+  implementationClassPath: string;
+  /** Service lifecycle scope */
+  scope: ServiceScope;
+  /** List of dependencies this service requires */
+  dependencies: ExtractedDependency[];
+  /** Factory function name for creating instances */
+  factory: string;
+  /** How this service is registered in the DI system */
+  registrationType: RegistrationType;
+  /** Additional metadata for the service */
   metadata: {
     isGeneric: boolean;
     typeParameters: string[];
-    sanitizedKey: string;
     baseClass?: string;
     baseClassGeneric?: string;
     isAutoResolved: boolean;
@@ -97,6 +109,7 @@ export class SharedServiceRegistry {
       token,
       interfaceName,
       implementationClass: config.configurationClass || 'UnknownConfig',
+      sanitizedKey: token,
       implementationClassPath: token, // Use token as the resolution path for beans
       scope: config.scope,
       dependencies: config.dependencies || [],
@@ -106,7 +119,6 @@ export class SharedServiceRegistry {
       metadata: {
         isGeneric: false,
         typeParameters: [],
-        sanitizedKey: token,
         isAutoResolved: config.isAutoResolved || true,
       }
     };
@@ -252,6 +264,7 @@ export class SharedServiceRegistry {
       token: implementation.sanitizedKey,
       interfaceName: implementation.interfaceName,
       implementationClass: implementation.implementationClass,
+      sanitizedKey: implementation.sanitizedKey,
       implementationClassPath: implementation.sanitizedKey, // Use sanitized key as the resolution path
       scope: implementation.scope || 'singleton', // Use scope from decorator or default to singleton
       dependencies: filteredDependencies,
@@ -261,7 +274,6 @@ export class SharedServiceRegistry {
       metadata: {
         isGeneric: implementation.isGeneric,
         typeParameters: implementation.typeParameters,
-        sanitizedKey: implementation.sanitizedKey,
         baseClass: implementation.baseClass,
         baseClassGeneric: implementation.baseClassGeneric,
         isAutoResolved: true
