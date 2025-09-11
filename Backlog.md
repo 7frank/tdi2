@@ -2,7 +2,22 @@
 
 ## ordered log (for production release)
 
+### [❌] mutable vs immutable
+- curretnly we only use the mutable from valtio
+- instead for passing values to other functions including jsx, we should use the immutable snap
+  - this would allow to pass objects "by value"
+  - and would  remove the problem of passing objects "by reference" 
+
 ### [❌]fix di-debug
+
+
+#### [❌] stream line di debugging
+- below we ahve different approaches
+- re-revaluate them
+- we need one clear dependency tree in the core implementation
+  - which we should use as s.P.o.T. 
+  - di-debug should rely/build on it
+
 
 #### integrated interface resolver too cluttered
 - [✅] "AsyncState" "isStateBased" 
