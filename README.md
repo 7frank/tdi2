@@ -21,10 +21,10 @@
 **🧪 [Interactive Examples](https://7frank.github.io/tdi2/test-harness/)** - Live Storybook demonstrations
 
 Quick Links:
-- **[Quick Start Guide](https://7frank.github.io/tdi2/getting-started/quick-start/)** - Get up and running in 5 minutes
-- **[E-Commerce Case Study](https://7frank.github.io/tdi2/examples/ecommerce-case-study/)** - Complete real-world example
-- **[Enterprise Implementation](https://7frank.github.io/tdi2/guides/enterprise/implementation/)** - Guide for large teams
-- **[Architecture Patterns](https://7frank.github.io/tdi2/guides/architecture/controller-service-pattern/)** - Controller vs Service pattern
+- **[Quick Start Guide](https://7frank.github.io/tdi2/docs/getting-started/quick-start/)** - Get up and running in 5 minutes
+- **[E-Commerce Case Study](https://7frank.github.io/tdi2/docs/examples/ecommerce-case-study/)** - Complete real-world example
+- **[Enterprise Implementation](https://7frank.github.io/tdi2/docs/guides/enterprise/implementation/)** - Guide for large teams
+- **[Architecture Patterns](https://7frank.github.io/tdi2/docs/guides/architecture/controller-service-pattern/)** - Controller vs Service pattern
 
 ## TL;DR
 
@@ -90,9 +90,9 @@ function UserDashboard({ userService, appState }: {
 ## Quick Start
 
 1. **Install**: `npm install @tdi2/di-core @tdi2/vite-plugin-di valtio`
-2. **Configure build pipeline** → [Setup Guide](https://7frank.github.io/tdi2/getting-started/quick-start/)
-3. **Create services** → [Service Patterns](https://7frank.github.io/tdi2/guides/component-transformation/)
-4. **Transform components** → [Component Guide](https://7frank.github.io/tdi2/guides/component-transformation/)
+2. **Configure build pipeline** → [Setup Guide](https://7frank.github.io/tdi2/docs/getting-started/quick-start/)
+3. **Create services** → [Service Patterns](https://7frank.github.io/tdi2/docs/guides/component-transformation/)
+4. **Transform components** → [Component Guide](https://7frank.github.io/tdi2/docs/guides/component-transformation/)
 
 ---
 
@@ -112,26 +112,26 @@ function UserDashboard({ userService, appState }: {
 
 **Getting Started**
 
-- [Quick Start Guide](https://7frank.github.io/tdi2/getting-started/quick-start/) - Setup and first service
-- [Component Transformation](https://7frank.github.io/tdi2/guides/component-transformation/) - Converting existing components
-- [API Reference](https://7frank.github.io/tdi2/api/di-core/) - Complete package documentation
+- [Quick Start Guide](https://7frank.github.io/tdi2/docs/getting-started/quick-start/) - Setup and first service
+- [Component Transformation](https://7frank.github.io/tdi2/docs/guides/component-transformation/) - Converting existing components
+- [API Reference](https://7frank.github.io/tdi2/docs/packages/di-core/overview/) - Complete package documentation
 
 **Enterprise Implementation**
 
-- [Enterprise Guide](https://7frank.github.io/tdi2/guides/enterprise/implementation/) - Large team adoption
-- [Team Onboarding](https://7frank.github.io/tdi2/guides/enterprise/onboarding/) - Developer training
-- [Migration Strategy](https://7frank.github.io/tdi2/guides/migration/strategy/) - Systematic migration approach
+- [Enterprise Guide](https://7frank.github.io/tdi2/docs/guides/enterprise/implementation/) - Large team adoption
+- [Team Onboarding](https://7frank.github.io/tdi2/docs/guides/enterprise/onboarding/) - Developer training
+- [Migration Strategy](https://7frank.github.io/tdi2/docs/guides/migration/strategy/) - Systematic migration approach
 
 **Architecture Deep Dive**
 
-- [Why TDI2?](https://7frank.github.io/tdi2/why-tdi2/react-problems/) - React's architectural problems
-- [Architecture Principles](https://7frank.github.io/tdi2/why-tdi2/architecture-principles/) - Service-oriented design
-- [Framework Comparisons](https://7frank.github.io/tdi2/comparison/redux-vs-tdi2/) - vs Redux, Context API, Zustand
+- [Why TDI2?](https://7frank.github.io/tdi2/docs/why-tdi2/react-problems/) - React's architectural problems
+- [Architecture Principles](https://7frank.github.io/tdi2/docs/why-tdi2/architecture-principles/) - Service-oriented design
+- [Framework Comparisons](https://7frank.github.io/tdi2/docs/comparison/redux-vs-tdi2/) - vs Redux, Context API, Zustand
 
 **Advanced Guides**
 
-- [Features & Roadmap](https://7frank.github.io/tdi2/guides/advanced/features-roadmap/) - Production readiness status
-- [Troubleshooting](https://7frank.github.io/tdi2/guides/advanced/troubleshooting/) - Common issues and solutions
+- [Features & Roadmap](https://7frank.github.io/tdi2/docs/guides/advanced/features-roadmap/) - Production readiness status
+- [Troubleshooting](https://7frank.github.io/tdi2/docs/guides/advanced/troubleshooting/) - Common issues and solutions
 ---
 
 ## Community
