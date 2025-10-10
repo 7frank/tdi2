@@ -4,8 +4,6 @@
 
 > [React doesn't scale](https://verved.ai/blog/react-doesn-t-scale) **until now?**
 
-
-
 ## Enterprise-Grade Architecture for Scalable React Applications
 
 **The Problem**: React components drowning in props, state synchronization hell, testing nightmares.
@@ -13,30 +11,6 @@
 **The Solution**: Move ALL state and logic to services. Zero props. Pure templates. Automatic synchronization.
 
 ---
-
-## 📚 Documentation
-
-**📖 [Live Documentation Site](https://7frank.github.io/tdi2/)** - Comprehensive guides, examples, and reference materials
-
-**🧪 [Interactive Examples](https://7frank.github.io/tdi2/test-harness/)** - Live Storybook demonstrations
-
-Quick Links:
-- **[Quick Start Guide](https://7frank.github.io/tdi2/docs/getting-started/quick-start/)** - Get up and running in 5 minutes
-- **[Basic Example](https://7frank.github.io/tdi2/docs/examples/tdi2-basic-example/)** - **Recommended if you just want to try it out**
-
-   ```bash
-   npx degit 7frank/tdi2/examples/tdi2-basic-example di-react-example
-   cd di-react-example
-   npm install
-   npm run clean && npm run dev
-   # Open http://localhost:5173
-   ```
-
-
-
-- **[E-Commerce Case Study](https://7frank.github.io/tdi2/docs/examples/ecommerce-case-study/)** - Complete real-world example
-- **[Enterprise Implementation](https://7frank.github.io/tdi2/docs/guides/enterprise/implementation/)** - Guide for large teams
-- **[Architecture Patterns](https://7frank.github.io/tdi2/docs/guides/architecture/controller-service-pattern/)** - Controller vs Service pattern
 
 ## TL;DR
 
@@ -62,6 +36,57 @@ function UserDashboard({ userService, appState }: {
 
 **Result**: Components become templates. Services handle everything. Zero prop drilling. Automatic sync across your entire app.
 
+### Try it out for yourself
+
+```bash
+npx degit 7frank/tdi2/examples/tdi2-basic-example di-react-example
+cd di-react-example
+npm install
+npm run clean && npm run dev
+# Open http://localhost:5173
+```
+
+---
+
+## 📚 Documentation
+
+**📖 [Live Documentation Site](https://7frank.github.io/tdi2/)** - Comprehensive guides, examples, and reference materials
+
+**🧪 [Interactive Examples](https://7frank.github.io/tdi2/test-harness/)** - Live Storybook demonstrations
+
+Quick Links:
+
+- **[Quick Start Guide](https://7frank.github.io/tdi2/docs/getting-started/quick-start/)** - Get up and running in 5 minutes
+- **[Basic Example](https://7frank.github.io/tdi2/docs/examples/tdi2-basic-example/)** - **Recommended if you just want to try it out**
+
+- **[E-Commerce Case Study](https://7frank.github.io/tdi2/docs/examples/ecommerce-case-study/)** - Complete real-world example
+- **[Enterprise Implementation](https://7frank.github.io/tdi2/docs/guides/enterprise/implementation/)** - Guide for large teams
+- **[Architecture Patterns](https://7frank.github.io/tdi2/docs/guides/architecture/controller-service-pattern/)** - Controller vs Service pattern
+
+
+**Getting Started**
+
+- [Quick Start Guide](https://7frank.github.io/tdi2/docs/getting-started/quick-start/) - Setup and first service
+- [Component Transformation](https://7frank.github.io/tdi2/docs/guides/component-transformation/) - Converting existing components
+- [API Reference](https://7frank.github.io/tdi2/docs/packages/di-core/overview/) - Complete package documentation
+
+**Enterprise Implementation**
+
+- [Enterprise Guide](https://7frank.github.io/tdi2/docs/guides/enterprise/implementation/) - Large team adoption
+- [Team Onboarding](https://7frank.github.io/tdi2/docs/guides/enterprise/onboarding/) - Developer training
+- [Migration Strategy](https://7frank.github.io/tdi2/docs/guides/migration/strategy/) - Systematic migration approach
+
+**Architecture Deep Dive**
+
+- [Why TDI2?](https://7frank.github.io/tdi2/docs/why-tdi2/react-problems/) - React's architectural problems
+- [Architecture Principles](https://7frank.github.io/tdi2/docs/why-tdi2/architecture-principles/) - Service-oriented design
+- [Framework Comparisons](https://7frank.github.io/tdi2/docs/comparison/redux-vs-tdi2/) - vs Redux, Context API, Zustand
+
+**Advanced Guides**
+
+- [Features & Roadmap](https://7frank.github.io/tdi2/docs/guides/advanced/features-roadmap/) - Production readiness status
+- [Troubleshooting](https://7frank.github.io/tdi2/docs/guides/advanced/troubleshooting/) - Common issues and solutions
+
 ---
 
 ## ⚠️ Disclaimer
@@ -70,14 +95,12 @@ function UserDashboard({ userService, appState }: {
 
 **📊 Performance Claims**: All performance metrics and benchmarks referenced in this documentation are currently placeholders and educated guesses. Real-world performance data is still being collected.
 
-**📝 Documentation Status**: Most documentation is in draft form and requires peer review. We're actively seeking feedback from the React community.
+**📝 Documentation Status**: Most documentation is in draft form and requires peer review. We're actively [seeking feedback](https://github.com/7frank/tdi2/discussions) from the React community.
 
-**🤝 Contributing**: Found issues or have suggestions? Please [open an issue](https://github.com/your-repo/issues) or submit a pull request. Your feedback helps shape RSI's development.
+**🤝 Contributing**: Found issues or have suggestions? Please [open an issue](https://github.com/7frank/tdi2/issues) or submit a pull request. Your feedback helps shape RSI's development.
 
 > [see feature status](./Features.md) for the "production" ready system
 > [see problems status](./PotentialProblems.md) for the "production" ready system
-
-
 
 ---
 
@@ -120,35 +143,10 @@ function UserDashboard({ userService, appState }: {
 
 ---
 
-## Documentation
-
-**Getting Started**
-
-- [Quick Start Guide](https://7frank.github.io/tdi2/docs/getting-started/quick-start/) - Setup and first service
-- [Component Transformation](https://7frank.github.io/tdi2/docs/guides/component-transformation/) - Converting existing components
-- [API Reference](https://7frank.github.io/tdi2/docs/packages/di-core/overview/) - Complete package documentation
-
-**Enterprise Implementation**
-
-- [Enterprise Guide](https://7frank.github.io/tdi2/docs/guides/enterprise/implementation/) - Large team adoption
-- [Team Onboarding](https://7frank.github.io/tdi2/docs/guides/enterprise/onboarding/) - Developer training
-- [Migration Strategy](https://7frank.github.io/tdi2/docs/guides/migration/strategy/) - Systematic migration approach
-
-**Architecture Deep Dive**
-
-- [Why TDI2?](https://7frank.github.io/tdi2/docs/why-tdi2/react-problems/) - React's architectural problems
-- [Architecture Principles](https://7frank.github.io/tdi2/docs/why-tdi2/architecture-principles/) - Service-oriented design
-- [Framework Comparisons](https://7frank.github.io/tdi2/docs/comparison/redux-vs-tdi2/) - vs Redux, Context API, Zustand
-
-**Advanced Guides**
-
-- [Features & Roadmap](https://7frank.github.io/tdi2/docs/guides/advanced/features-roadmap/) - Production readiness status
-- [Troubleshooting](https://7frank.github.io/tdi2/docs/guides/advanced/troubleshooting/) - Common issues and solutions
----
 
 ## Community
 
-**Seeking feedback from:**
+**[Seeking feedback](https://github.com/7frank/tdi2/discussions) from:**
 
 - Enterprise React teams struggling with scale
 - Dashboard developers with sync issues
@@ -163,20 +161,24 @@ function UserDashboard({ userService, appState }: {
 > **Note**: The following documents are still in active development and may contain incomplete or outdated information. We welcome feedback and contributions.
 
 **Core Concepts**
+
 - [Motivation & Background](./monorepo/docs/Impuls.md) - Why RSI was created
 - [Dependency Injection Foundation](./monorepo/docs/Whitepaper.md) - The underlying DI system
 - [React Integration Details](./monorepo/docs/React-Whitepaper.md) - Core RSI innovation explained
 
 **Examples & Patterns**
+
 - [Working Example](./monorepo/docs/React-Example.md) - Complete implementation example
 - [Service Recipes](./monorepo/docs/Recipes-and-Reactive-Services.md) - Common patterns and reactive services
 
 **Analysis & Critique**
+
 - [Design Principles](./docs/principles/) - Guidelines for maximizing RSI value
 
 - [Known Issues](./monorepo/docs/KnownIssues.md) - Current limitations and planned fixes
 
 **Planned Documentation**
+
 - Migration Strategy - Phased rollout plan for existing applications
 - Impact Assessment - Measuring RSI effectiveness in real projects
 
