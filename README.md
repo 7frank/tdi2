@@ -22,6 +22,18 @@
 
 Quick Links:
 - **[Quick Start Guide](https://7frank.github.io/tdi2/docs/getting-started/quick-start/)** - Get up and running in 5 minutes
+- **[Basic Example](https://7frank.github.io/tdi2/docs/examples/tdi2-basic-example/)** - **Recommended if you just want to try it out**
+
+   ```bash
+   npx degit 7frank/tdi2/examples/tdi2-basic-example di-react-example
+   cd di-react-example
+   npm install
+   npm run clean && npm run dev
+   # Open http://localhost:5173
+   ```
+
+
+
 - **[E-Commerce Case Study](https://7frank.github.io/tdi2/docs/examples/ecommerce-case-study/)** - Complete real-world example
 - **[Enterprise Implementation](https://7frank.github.io/tdi2/docs/guides/enterprise/implementation/)** - Guide for large teams
 - **[Architecture Patterns](https://7frank.github.io/tdi2/docs/guides/architecture/controller-service-pattern/)** - Controller vs Service pattern
