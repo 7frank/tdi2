@@ -16,7 +16,6 @@
     "legacy",
     "@repo/eslint-config",
     "@repo/typescript-config",
-    "@repo/ui",
     "di-test-harness",
     "@tdi2/docs-starlight"
   ]
