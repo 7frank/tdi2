@@ -2,6 +2,34 @@
 
 ## ordered log (for production release)
 
+### check feedback
+
+- any response on https://www.reddit.com/r/reactjs/comments/1o3e8uw/react_service_injection_bringing_spring/
+- PR or discussions?
+
+### write article that compare to other solutions
+
+- other di solutions other non di solutions streangths weaknesses and target audiences
+
+### compare to other solutions
+
+https://www.reddit.com/r/react/comments/1f5yfp2/dependency_injection_in_react_framework/?sort=new
+
+https://github.com/wix-incubator/obsidian?tab=readme-ov-file
+https://github.com/wox-team/wox-inject
+https://github.com/AdiMarianMutu/x-injection-reactjs
+
+Feature matrix
+
+- autowiring
+- interaface based
+- scoped or other additional use cases
+- inject into FC
+- inject into hooks or other functions
+- SSR
+- react native
+- ... other stuff that might be relevant
+
 ### [❌]fix di-debug
 
 #### [❌] overhaul of line based approach commit b596e7b
