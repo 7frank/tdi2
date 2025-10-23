@@ -10,11 +10,13 @@ Baseline React implementation using `useState` hook. All state and logic live di
 ### [Context API](./vanilla-context/)
 Idiomatic React Context API pattern. State centralized in a Provider component, accessed via custom hooks.
 
+### [Zustand](./zustandjs/)
+Lightweight state management library. Global store with automatic subscriptions, no providers needed.
+
 ### [TDI2 with Reactive Services](./tdi2/)
 Dependency injection with reactive state management (Valtio). Business logic in service classes, components are pure templates.
 
 ## ToDo
 
-- Zustand
 - Redux
 - Various DI solutions (InversifyJS, TSyringe, etc.)

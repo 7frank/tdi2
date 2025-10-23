@@ -1,5 +1,5 @@
-# Vanilla State Example
+# Zustand Example
 
 [App.tsx](./src/App.tsx)
 
-This is the baseline React implementation using the standard `useState` hook. All state and logic live directly in the component, representing the simplest and most common approach to building React applications. This example serves as the foundation for comparing against other state management and dependency injection patterns.
+This example demonstrates Zustand, a lightweight state management library. State and actions are defined in a global store created with the `create` function. Components access the store via the custom hook, and Zustand automatically handles subscriptions and re-renders. This approach offers a simpler API than Redux while providing global state management without requiring providers or context.
