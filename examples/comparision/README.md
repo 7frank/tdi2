@@ -32,4 +32,4 @@ Dependency injection with reactive state management (Valtio). Business logic in 
 - **InversifyJS** – Powerful but verbose and reflection-heavy.
 - **Awilix** – Dynamic, predictable, low-ceremony container; lacks interface typing.
 - **react-ioc** – Minimal contextual DI; pragmatic but not full-featured.
-- **Obsidian** – https://github.com/wix-incubator
+- **Obsidian** – https://github.com/wix-incubator/obsidian
