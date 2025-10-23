@@ -2,6 +2,18 @@
 
 ## ordered log (for production release)
 
+
+### changesets still published with workspace dependencies
+
+https://www.npmjs.com/package/@tdi2/vite-plugin-di?activeTab=code
+
+
+it appears we have some regresssion where we still publish stuff wrong which breaks examples...
+
+https://github.com/oven-sh/bun/issues/16074
+https://github.com/CodeForBreakfast/eventsourcing/pull/57
+https://github.com/CodeForBreakfast/eventsourcing/pull/57
+
 ### check feedback
 
 - any response on https://www.reddit.com/r/reactjs/comments/1o3e8uw/react_service_injection_bringing_spring/
