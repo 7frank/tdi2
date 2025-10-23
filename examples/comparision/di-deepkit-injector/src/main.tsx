@@ -1,9 +1,18 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
+import './index.css'
+import { ProviderWithScope, ServiceContainer } from "@deepkit/injector";
+import { Logger } from "./logger.ts";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+const providers: ProviderWithScope[] = [
+    Logger
+];
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+    <React.StrictMode>
+        <ServiceContainer providers={providers}>
+            <App/>
+        </ServiceContainer>
+    </React.StrictMode>,
 )

@@ -17,23 +17,19 @@ Idiomatic React Context API pattern. State centralized in a Provider component, 
 Lightweight state management library. Global store with automatic subscriptions, no providers needed.
 
 ### [Redux Toolkit](./redux-toolkit/)
-
 Official Redux toolset with slices and automatic action creators. Centralized state with predictable updates via dispatched actions.
 
-### [TDI2 with Reactive Services](./tdi2/)
+### [Deepkit Injector](./di-deepkit-injector/)
+TypeScript reflection-based DI. Services injected via function parameters using runtime type metadata, no decorators needed.
 
+### [TDI2 with Reactive Services](./tdi2/)
 Dependency injection with reactive state management (Valtio). Business logic in service classes, components are pure templates.
 
 ## ToDo
 
-Various DI solutions:
-
-- @deepkit/injector https://github.com/marcj/typescript-react-dependency-injection
-
-- obsidian https://github.com/wix-incubator
-
-4. **TSyringe / TypeDI** – solid decorator-based DI; ergonomic but less React-aware.
-5. **InversifyJS** – powerful but verbose and reflection-heavy.
-6. **Awilix** – dynamic, predictable, low-ceremony container; lacks interface typing.
-7. **react-ioc** – minimal contextual DI; pragmatic but not full-featured.
-8. **react-magnetic-di** – testing-oriented, not architectural DI.
+### More DI Solutions:
+- **TSyringe / TypeDI** – Decorator-based DI; ergonomic but less React-aware.
+- **InversifyJS** – Powerful but verbose and reflection-heavy.
+- **Awilix** – Dynamic, predictable, low-ceremony container; lacks interface typing.
+- **react-ioc** – Minimal contextual DI; pragmatic but not full-featured.
+- **Obsidian** – https://github.com/wix-incubator
