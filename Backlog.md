@@ -2,6 +2,11 @@
 
 ## ordered log (for production release)
 
+### [❌] make valtio transformations and reactivity optional
+
+- this would allow us to run with any reactivity approach that we like
+- valtio might for now be the best for our use case but maybe ppl do not like the approach
+- also we might want to go ssr where we then isntead could provide an implementation with a redis cache for state hydration
 
 ### [❌] check feedback
 
@@ -19,7 +24,7 @@
 
 - other di solutions other non di solutions streangths weaknesses and target audiences
 
-### [❌]  compare to other solutions
+### [❌] compare to other solutions
 
 https://www.reddit.com/r/react/comments/1f5yfp2/dependency_injection_in_react_framework/?sort=new
 
@@ -658,7 +663,6 @@ https://github.com/aleclarson/valtio-kit
 
 ## Done
 
-
 ### [✅] changesets still published with workspace dependencies
 
 https://www.npmjs.com/package/@tdi2/vite-plugin-di?activeTab=code
@@ -668,7 +672,6 @@ it appears we have some regresssion where we still publish stuff wrong which bre
 https://github.com/oven-sh/bun/issues/16074
 https://github.com/CodeForBreakfast/eventsourcing/pull/57
 https://github.com/CodeForBreakfast/eventsourcing/pull/57
-
 
 ### [✅] transformed code not written to file system
 

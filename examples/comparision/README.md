@@ -25,6 +25,15 @@ TypeScript reflection-based DI. Services injected via function parameters using 
 ### [TDI2 with Reactive Services](./tdi2/)
 Dependency injection with reactive state management (Valtio). Business logic in service classes, components are pure templates.
 
+### [React Obsidian](./di-obsidian/)
+Decorator-based DI framework for React/React Native by Wix. Features dependency injection via `injectComponent()`, Object Graphs with `@provides()`, and built-in reactive programming with `Observable` and `useObserver()`. Requires SWC/Babel transformer for decorator support.
+
+
+## Feature Matrix
+
+[see here](./FeatureMatrix.md)
+
+
 ## ToDo
 
 ### More DI Solutions:
@@ -32,4 +41,3 @@ Dependency injection with reactive state management (Valtio). Business logic in 
 - **InversifyJS** – Powerful but verbose and reflection-heavy.
 - **Awilix** – Dynamic, predictable, low-ceremony container; lacks interface typing.
 - **react-ioc** – Minimal contextual DI; pragmatic but not full-featured.
-- **Obsidian** – https://github.com/wix-incubator/obsidian
