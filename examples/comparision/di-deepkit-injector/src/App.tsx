@@ -1,46 +1,42 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import deepkitLogo from './assets/deepkit_white.svg'
+// https://github.com/7frank/tdi2/tree/main/examples/comparision/di-deepkit-injector
+import { useEffect, useState } from "react";
+import { CounterService } from "./services/CounterService";
 
-import './App.css'
-import { Logger } from "./logger.ts";
+// Component receives injected service via function parameters
+function Counter(props: object, counterService: CounterService) {
+  const [, forceUpdate] = useState({});
 
-function App(props: object, logger: Logger) {
-    const [count, setCount] = useState(0)
+  useEffect(() => {
+    const unsubscribe = counterService.subscribe(() => {
+      forceUpdate({});
+    });
+    return unsubscribe;
+  }, [counterService]);
 
-    return (
-        <>
-            <div>
-                <a href="https://vitejs.dev" target="_blank">
-                    <img src={viteLogo} className="logo" alt="Vite logo"/>
-                </a>
-                <a href="https://react.dev" target="_blank">
-                    <img src={reactLogo} className="logo react" alt="React logo"/>
-                </a>
-                <a href="https://deepkit.io" target="_blank">
-                    <img src={deepkitLogo} className="logo deepkit" alt="Deepkit logo"/>
-                </a>
-            </div>
-            <h1>Vite + React + Deepkit</h1>
+  return (
+    <div>
+      <h1>Simple Counter (Deepkit DI)</h1>
 
-            <div className="card">
-                <button onClick={() => setCount((count) => count + 1)}>
-                    count is {count}
-                </button>
-                <p>
-                    Edit <code>src/App.tsx</code> and save to test HMR
-                </p>
-            </div>
+      <p>{counterService.message}</p>
 
-            <button onClick={() => logger.log('Hi there')}>Log message</button>
+      <div>
+        <h2>{counterService.count}</h2>
+        <button onClick={() => counterService.decrement()}>- Decrease</button>
+        <br />
+        <button onClick={() => counterService.reset()}>Reset</button>
+        <br />
+        <button onClick={() => counterService.increment()}>+ Increase</button>
+      </div>
 
-
-            <p className="read-the-docs">
-                Click on the Vite and React logos to learn more
-            </p>
-        </>
-    )
+      <input
+        type="text"
+        placeholder="Enter custom message"
+        onChange={(e) => counterService.setMessage(e.target.value)}
+      />
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  return <Counter />;
+}
