@@ -1,6 +1,16 @@
-import { Observable } from 'react-obsidian';
+import { Observable } from "react-obsidian";
 
-export class CounterService {
+export interface CounterServiceInterface {
+  count: Observable<number>;
+
+  increment(): void;
+
+  decrement(): void;
+
+  reset(): void;
+}
+
+export class CounterService implements CounterServiceInterface {
   public count = new Observable(0);
 
   increment(): void {
