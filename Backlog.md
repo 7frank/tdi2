@@ -11,9 +11,8 @@
 
 - https://chatgpt.com/c/68f29da3-15e8-8328-b75e-088908a5dfc1
 - what farmeworks try to achieve similar what we are doing
-- feature matrix
-
-
+- feature matrix, include zustandjs and container / state examples
+- self contained examples
 
 
 ### write article that compare to other solutions
