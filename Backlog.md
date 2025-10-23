@@ -3,35 +3,23 @@
 ## ordered log (for production release)
 
 
-### changesets still published with workspace dependencies
-
-https://www.npmjs.com/package/@tdi2/vite-plugin-di?activeTab=code
-
-
-it appears we have some regresssion where we still publish stuff wrong which breaks examples...
-
-https://github.com/oven-sh/bun/issues/16074
-https://github.com/CodeForBreakfast/eventsourcing/pull/57
-https://github.com/CodeForBreakfast/eventsourcing/pull/57
-
-### check feedback
+### [❌] check feedback
 
 - any response on https://www.reddit.com/r/reactjs/comments/1o3e8uw/react_service_injection_bringing_spring/
 - PR or discussions?
 
-### update docs 
+### [❌] update docs
 
 - https://chatgpt.com/c/68f29da3-15e8-8328-b75e-088908a5dfc1
 - what farmeworks try to achieve similar what we are doing
 - feature matrix, include zustandjs and container / state examples
 - self contained examples
 
-
-### write article that compare to other solutions
+### [❌] write article that compare to other solutions
 
 - other di solutions other non di solutions streangths weaknesses and target audiences
 
-### compare to other solutions
+### [❌]  compare to other solutions
 
 https://www.reddit.com/r/react/comments/1f5yfp2/dependency_injection_in_react_framework/?sort=new
 
@@ -49,6 +37,41 @@ Feature matrix
 - SSR
 - react native
 - ... other stuff that might be relevant
+
+### add a option that wraps proxy at comile time with method bindings for additional convenience
+
+```ts
+// Binds all prototype methods to the given Valtio proxy instance.
+// - Skips constructor/getters/setters
+// - Preserves names, hides bound copies from enumeration
+// - Works with symbols
+export function bindAllMethodsToProxy<T extends object>(p: T): T {
+  const seen = new Set<PropertyKey>();
+  let proto = Reflect.getPrototypeOf(p);
+
+  while (proto && proto !== Object.prototype) {
+    for (const key of Reflect.ownKeys(proto)) {
+      if (key === "constructor" || seen.has(key)) continue;
+
+      const desc = Object.getOwnPropertyDescriptor(proto, key);
+      if (!desc) continue;
+      if (typeof desc.value !== "function") continue; // skip accessors
+
+      // Create an own, non-enumerable, writable, configurable bound method
+      Object.defineProperty(p, key, {
+        value: (desc.value as Function).bind(p),
+        writable: true,
+        configurable: true,
+        enumerable: false,
+      });
+
+      seen.add(key);
+    }
+    proto = Reflect.getPrototypeOf(proto);
+  }
+  return p;
+}
+```
 
 ### [❌]fix di-debug
 
@@ -634,6 +657,18 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+
+### [✅] changesets still published with workspace dependencies
+
+https://www.npmjs.com/package/@tdi2/vite-plugin-di?activeTab=code
+
+it appears we have some regresssion where we still publish stuff wrong which breaks examples...
+
+https://github.com/oven-sh/bun/issues/16074
+https://github.com/CodeForBreakfast/eventsourcing/pull/57
+https://github.com/CodeForBreakfast/eventsourcing/pull/57
+
 
 ### [✅] transformed code not written to file system
 
