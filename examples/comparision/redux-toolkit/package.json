@@ -1,5 +1,5 @@
 {
-  "name": "vanilla-state",
+  "name": "redux-toolkit",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "@reduxjs/toolkit": "^2.5.0",
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@types/node": "^24.6.0",

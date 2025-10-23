@@ -1,16 +1,37 @@
-import { useState } from "react";
+// https://github.com/7frank/tdi2/tree/main/examples/comparision/redux-toolkit
+import { useAppDispatch, useAppSelector } from "./store/hooks";
+import { increment, decrement, reset, setMessage } from "./store/counterSlice";
 
-function App() {
-  const [count, setCount] = useState(0);
+function Counter() {
+  // Access Redux store via typed hooks
+  const count = useAppSelector((state) => state.counter.count);
+  const message = useAppSelector((state) => state.counter.message);
+  const dispatch = useAppDispatch();
+
   return (
-    <>
-      <h1>Vite + React</h1>
+    <div>
+      <h1>Simple Counter (Redux Toolkit)</h1>
 
-      <button onClick={() => setCount((count) => count + 1)}>
-        count is {count}
-      </button>
-    </>
+      <p>{message}</p>
+
+      <div>
+        <h2>{count}</h2>
+        <button onClick={() => dispatch(decrement())}>- Decrease</button>
+        <br />
+        <button onClick={() => dispatch(reset())}>Reset</button>
+        <br />
+        <button onClick={() => dispatch(increment())}>+ Increase</button>
+      </div>
+
+      <input
+        type="text"
+        placeholder="Enter custom message"
+        onChange={(e) => dispatch(setMessage(e.target.value))}
+      />
+    </div>
   );
 }
 
-export default App;
+export default function App() {
+  return <Counter />;
+}

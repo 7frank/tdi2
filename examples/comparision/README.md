@@ -13,10 +13,12 @@ Idiomatic React Context API pattern. State centralized in a Provider component, 
 ### [Zustand](./zustandjs/)
 Lightweight state management library. Global store with automatic subscriptions, no providers needed.
 
+### [Redux Toolkit](./redux-toolkit/)
+Official Redux toolset with slices and automatic action creators. Centralized state with predictable updates via dispatched actions.
+
 ### [TDI2 with Reactive Services](./tdi2/)
 Dependency injection with reactive state management (Valtio). Business logic in service classes, components are pure templates.
 
 ## ToDo
 
-- Redux
 - Various DI solutions (InversifyJS, TSyringe, etc.)
