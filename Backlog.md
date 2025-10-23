@@ -7,6 +7,15 @@
 - any response on https://www.reddit.com/r/reactjs/comments/1o3e8uw/react_service_injection_bringing_spring/
 - PR or discussions?
 
+### update docs 
+
+- https://chatgpt.com/c/68f29da3-15e8-8328-b75e-088908a5dfc1
+- what farmeworks try to achieve similar what we are doing
+- feature matrix
+
+
+
+
 ### write article that compare to other solutions
 
 - other di solutions other non di solutions streangths weaknesses and target audiences
