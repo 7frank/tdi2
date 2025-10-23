@@ -52,7 +52,7 @@
     "prepublishOnly": "npm run clean && npm run build",
     "publish:npm": "npm publish --access public",
     "publish:jsr": "npx jsr publish",
-    "publish:package": "bun publish --dry-run"
+    "publish:package": "bun publish"
   },
   "dependencies": {
     "@tdi2/di-core": "workspace:*"
