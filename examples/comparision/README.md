@@ -1,13 +1,20 @@
-# done
+# State Management & DI Comparison Examples
 
-- [idiomatic react state example](./vanilla-state/)
+A collection of counter implementations demonstrating different approaches to decoupling, dependency injection and state management  in React.
 
-- [tdi2/rsi](./tdi2/)
+## Implemented Examples
 
-# ToDo
+### [Vanilla State](./vanilla-state/)
+Baseline React implementation using `useState` hook. All state and logic live directly in the component.
 
-context api
-zustand js 
-redux
+### [Context API](./vanilla-context/)
+Idiomatic React Context API pattern. State centralized in a Provider component, accessed via custom hooks.
 
-various di solutions
+### [TDI2 with Reactive Services](./tdi2/)
+Dependency injection with reactive state management (Valtio). Business logic in service classes, components are pure templates.
+
+## ToDo
+
+- Zustand
+- Redux
+- Various DI solutions (InversifyJS, TSyringe, etc.)

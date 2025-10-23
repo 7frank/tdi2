@@ -1,5 +1,3 @@
-# React + TypeScript + Vite
+# Vanilla State Example
 
-> Vanilla example using `useState` stipped down to the bare minimum
-
-> used as base line for all other examples
+This is the baseline React implementation using the standard `useState` hook. All state and logic live directly in the component, representing the simplest and most common approach to building React applications. This example serves as the foundation for comparing against other state management and dependency injection patterns.
