@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/di-core",
-  "version": "3.1.2",
+  "version": "3.2.0",
   "description": "TypeScript Dependency Injection 2 - Core DI framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -70,6 +70,7 @@
   ],
   "author": "TDI2 Team",
   "license": "MIT",
+  "repository": {"url": "https://github.com/7frank/tdi2"},
   "dependencies": {
     "ts-morph": "^21.0.1",
     "valtio": "^2.1.2"
