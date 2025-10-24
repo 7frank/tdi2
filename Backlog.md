@@ -8,6 +8,16 @@
 - valtio might for now be the best for our use case but maybe ppl do not like the approach
 - also we might want to go ssr where we then isntead could provide an implementation with a redis cache for state hydration
 
+### [❌] SSR
+
+- ssr is no only for certain quailty factors, for which react might actually not always be the best choice
+- if for example ssr is used for landing pages
+  - static pages
+  - astro& sveltekit
+  - caching and others might be a decent fit too
+
+- so for ssr although we are not focusing, we want to provide at least one "cache" & "session-token" implementation e.g. via redis, that allows us to have this kind of usage
+
 ### [❌] check feedback
 
 - any response on https://www.reddit.com/r/reactjs/comments/1o3e8uw/react_service_injection_bringing_spring/
@@ -77,6 +87,16 @@ export function bindAllMethodsToProxy<T extends object>(p: T): T {
   return p;
 }
 ```
+
+### [❌] migration paths - hooks to services
+
+for example librechat has a lot of hooks,
+
+- it would be highly usefull if we could replace a wrapper hooks useCombinedThing with a service with the same interface
+  - this service internally would have to be able to use hooks, so that the PR change is not too big
+  - OR from bottom up a useCombineThing hook should be able to inject its services that previously where their useSimpleThingHook
+
+either way having smaller working changes while refactoring should improve adoption
 
 ### [❌]fix di-debug
 
