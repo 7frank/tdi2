@@ -2,6 +2,12 @@
 
 ## ordered log (for production release)
 
+### merge or remove branches before additional features
+
+feature/attempt-at-streamlining-interfaces
+feature/normalization
+feature/refactor-di-debug-into-vite-react-app
+
 ### [❌] make valtio transformations and reactivity optional
 
 - this would allow us to run with any reactivity approach that we like
