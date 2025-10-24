@@ -15,3 +15,11 @@ A comparison of different state management and dependency injection approaches i
 | **Zustand** | [zustand](https://github.com/pmndrs/zustand) | Lightweight state management with minimal boilerplate. Global store with automatic subscriptions, no providers needed. | 🟡 **Medium** - External store but logic in actions | ❌ No DI - Direct imports | External Library (Proxy-based) | 🟡 **Moderate** - Create store with `create()`, no providers needed | Manual Dependency Management - Store definition | Manual - Direct import of store hook |
 | **Context API** | [React Context](https://react.dev/reference/react/createContext) | Idiomatic React pattern for sharing state across components. Centralized state in Provider, accessed via custom hooks. | 🟡 **Medium** - State separated but still React-bound | 🔑 **Token-based** - Context as token | React Built-in (Context + useState) | 🔴 **Heavy** - Wrap with `<Provider>` for each context, create context, custom hooks | Manual Dependency Management - Manual Provider/Context nesting | Manual - `useContext()` hook-based retrieval from Context |
 | **Vanilla State** | [React useState](https://react.dev/reference/react/useState) | Baseline React implementation using built-in hooks. Simple and direct, with all logic in the component. | 🔴 **Low** - Logic tightly coupled to component | ❌ No DI | React Built-in (useState) | 🟢 **Minimal** - Just hooks in component, no setup | Direct instantiation | N/A - No autowiring |
+
+
+
+**Placement of Spring-Boot-like DI in React ecosystem:**
+
+* Best fit: enterprise dashboards, large microfrontend systems, design systems, state-dense collaborative tools—domains needing strict boundaries, service orchestration, or multiple data contexts.
+* Frameworks suited for that tier: **RSI/TDI2**, **Deepkit Injector**, **Obsidian**.
+* Lower tiers remain better for small apps or libraries prioritizing simplicity over structure.
