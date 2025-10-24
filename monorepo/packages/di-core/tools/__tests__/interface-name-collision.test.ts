@@ -21,7 +21,7 @@ describe("[DI Edge-Case] Interface Name Collision Resolution", () => {
     project.createSourceFile(
       "src/todo/interfaces/TodoInterfaces.ts",
       `
-// AsyncState-based TodoServiceInterface (line 4)
+// Legacy TodoServiceInterface (line 4)
 export interface TodoServiceInterface {
   loadTodos(): Promise<void>;
   addTodo(todo: any): Promise<void>;
@@ -34,7 +34,7 @@ export interface TodoServiceInterface {
     project.createSourceFile(
       "src/todo2/types.ts",
       `
-// Reactive state-based TodoServiceInterface (line 4)  
+// Modern TodoServiceInterface (line 4)  
 export interface TodoServiceInterface {
   state: {
     todos: any[];
@@ -119,7 +119,7 @@ export class ModernTodoService implements TodoServiceInterface {
     // But what if we wanted the LegacyTodoService instead?
     // Currently impossible to distinguish them!
     expect(() => {
-      // This would fail because we can't access the AsyncState-based service
+      // This would fail because we can't access the legacy service
       (service as any).getCurrentData();
     }).toThrow();
 

@@ -5,14 +5,13 @@ import {
   SourceFile,
   ClassDeclaration,
   Node,
+  SyntaxKind,
 } from "ts-morph";
-import * as path from "path";
 
 // Import enhanced components
 import { EnhancedInterfaceExtractor, type DISourceConfiguration } from "./enhanced-interface-extractor";
 import { EnhancedServiceValidator } from "./enhanced-service-validator";
 import { InheritanceAnalyzer } from "./inheritance-analyzer";
-import { StateTypeExtractor } from "./state-type-extractor";
 import { DependencyAnalyzer } from "./dependency-analyzer";
 import { KeySanitizer } from "./key-sanitizer";
 
@@ -23,7 +22,8 @@ import type {
   ValidationResult, 
   DependencyNode,
   InterfaceInfo,
-  InheritanceInfo
+  InheritanceInfo,
+  SourceLocation
 } from "./interface-resolver-types";
 
 export interface IntegratedResolverOptions {
@@ -44,7 +44,6 @@ export class IntegratedInterfaceResolver {
   private interfaceExtractor: EnhancedInterfaceExtractor;
   private serviceValidator: EnhancedServiceValidator;
   private inheritanceAnalyzer: InheritanceAnalyzer;
-  private stateTypeExtractor: StateTypeExtractor;
   private dependencyAnalyzer: DependencyAnalyzer;
   private keySanitizer: KeySanitizer;
 
@@ -77,7 +76,6 @@ export class IntegratedInterfaceResolver {
     );
     
     this.inheritanceAnalyzer = new InheritanceAnalyzer(this.keySanitizer, this.options.verbose);
-    this.stateTypeExtractor = new StateTypeExtractor(this.keySanitizer, this.options.verbose);
     this.dependencyAnalyzer = new DependencyAnalyzer(this.keySanitizer, this.options.verbose);
   }
 
@@ -167,22 +165,14 @@ export class IntegratedInterfaceResolver {
 
       // Enhanced interface extraction using AST methods
       const implementedInterfaces = this.interfaceExtractor.getImplementedInterfaces(classDecl, sourceFile);
-      const extendedClasses = this.interfaceExtractor.getExtendedClasses(classDecl, sourceFile);
-      const allHeritage = [...implementedInterfaces, ...extendedClasses];
 
       // Enhanced inheritance analysis
       const inheritanceInfo = this.inheritanceAnalyzer.getInheritanceInfo(classDecl);
 
-      // Enhanced state-based registration extraction
-      const stateBasedRegistrations = this.stateTypeExtractor.extractStateBasedRegistrations(
-        implementedInterfaces,
-        inheritanceInfo
-      );
 
       // Track registration types
       let hasInterfaceRegistrations = false;
       let hasInheritanceRegistrations = false;
-      let hasStateRegistrations = false;
 
       // Register interface-based implementations
       if (implementedInterfaces.length > 0) {
@@ -200,19 +190,12 @@ export class IntegratedInterfaceResolver {
         }
       }
 
-      // Register state-based implementations  
-      if (this.options.enableStateDI && stateBasedRegistrations.length > 0) {
-        hasStateRegistrations = true;
-        for (const stateRegistration of stateBasedRegistrations) {
-          await this.registerStateImplementation(stateRegistration, className, sourceFile);
-        }
-      }
 
       // Always register class-based lookup (primary or secondary)
       await this.registerClassImplementation(
         className, 
         sourceFile, 
-        !hasInterfaceRegistrations && !hasInheritanceRegistrations && !hasStateRegistrations
+        !hasInterfaceRegistrations && !hasInheritanceRegistrations
       );
 
     } catch (error) {
@@ -245,9 +228,10 @@ export class IntegratedInterfaceResolver {
       isGeneric: interfaceInfo.isGeneric,
       typeParameters: interfaceInfo.typeParameters,
       sanitizedKey,
+      location: interfaceInfo.location,
+      registrationType: 'interface',
       isClassBased: false,
       isInheritanceBased: false,
-      isStateBased: false,
       scope,
     };
 
@@ -267,7 +251,13 @@ export class IntegratedInterfaceResolver {
     sourceFile: SourceFile,
     inheritanceInfo: InheritanceInfo
   ): Promise<void> {
-    const sanitizedKey = this.keySanitizer.sanitizeInheritanceKey(inheritanceMapping.baseClassGeneric);
+    // Extract location info from inheritance heritage clause
+    const location = this.extractLocationFromInheritance(className, sourceFile);
+    
+    // Use location-based key generation if location is available
+    const sanitizedKey = location 
+      ? this.keySanitizer.createLocationBasedKeyFromLocation(inheritanceMapping.baseTypeName, location)
+      : this.keySanitizer.sanitizeInheritanceKey(inheritanceMapping.baseClassGeneric);
 
     // Extract scope from @Service decorator
     const classDecl = sourceFile.getClass(className);
@@ -280,9 +270,10 @@ export class IntegratedInterfaceResolver {
       isGeneric: inheritanceMapping.isGeneric,
       typeParameters: inheritanceMapping.typeParameters,
       sanitizedKey,
+      location,
+      registrationType: 'inheritance',
       isClassBased: false,
       isInheritanceBased: true,
-      isStateBased: false,
       inheritanceChain: inheritanceInfo.inheritanceChain,
       baseClass: inheritanceMapping.baseClass,
       baseClassGeneric: inheritanceMapping.baseClassGeneric,
@@ -299,48 +290,19 @@ export class IntegratedInterfaceResolver {
     }
   }
 
-  private async registerStateImplementation(
-    stateRegistration: any,
-    className: string,
-    sourceFile: SourceFile
-  ): Promise<void> {
-    const sanitizedKey = this.keySanitizer.sanitizeKey(stateRegistration.serviceInterface);
-
-    // Extract scope from @Service decorator
-    const classDecl = sourceFile.getClass(className);
-    const scope = classDecl ? this.extractScopeFromDecorator(classDecl) : "singleton";
-
-    const implementation: InterfaceImplementation = {
-      interfaceName: stateRegistration.serviceInterface,
-      implementationClass: className,
-      filePath: sourceFile.getFilePath(),
-      isGeneric: true,
-      typeParameters: [stateRegistration.stateType],
-      sanitizedKey,
-      isClassBased: false,
-      isInheritanceBased: false,
-      isStateBased: true,
-      stateType: stateRegistration.stateType,
-      serviceInterface: stateRegistration.serviceInterface,
-      scope,
-    };
-
-    const uniqueKey = `${sanitizedKey}_${className}_state`;
-    this.interfaces.set(uniqueKey, implementation);
-
-    if (this.options.verbose) {
-      console.log(
-        `🎯 ${className} manages state ${stateRegistration.stateType} via ${stateRegistration.serviceInterface} (key: ${sanitizedKey})`
-      );
-    }
-  }
 
   private async registerClassImplementation(
     className: string,
     sourceFile: SourceFile,
     isPrimary: boolean
   ): Promise<void> {
-    const sanitizedKey = this.keySanitizer.sanitizeKey(className);
+    // Extract location info from class declaration
+    const location = this.extractLocationFromClass(className, sourceFile);
+    
+    // Use location-based key generation if location is available
+    const sanitizedKey = location 
+      ? this.keySanitizer.createLocationBasedKeyFromLocation(className, location)
+      : this.keySanitizer.sanitizeKey(className);
 
     // Extract scope from @Service decorator
     const classDecl = sourceFile.getClass(className);
@@ -353,9 +315,10 @@ export class IntegratedInterfaceResolver {
       isGeneric: false,
       typeParameters: [],
       sanitizedKey,
+      location,
+      registrationType: 'class',
       isClassBased: true,
       isInheritanceBased: false,
-      isStateBased: false,
       scope,
     };
 
@@ -413,13 +376,11 @@ export class IntegratedInterfaceResolver {
     const stats = {
       interface: 0,
       inheritance: 0,
-      state: 0,
       class: 0
     };
 
     for (const [, impl] of this.interfaces) {
-      if (impl.isStateBased) stats.state++;
-      else if (impl.isInheritanceBased) stats.inheritance++;
+      if (impl.isInheritanceBased) stats.inheritance++;
       else if (impl.isClassBased) stats.class++;
       else stats.interface++;
     }
@@ -427,7 +388,6 @@ export class IntegratedInterfaceResolver {
     console.log('\n📊 Registration Summary:');
     console.log(`  🔌 Interface-based: ${stats.interface}`);
     console.log(`  🧬 Inheritance-based: ${stats.inheritance}`);
-    console.log(`  🎯 State-based: ${stats.state}`);
     console.log(`  📦 Class-based: ${stats.class}`);
     console.log(`  📋 Total: ${this.interfaces.size}\n`);
   }
@@ -492,7 +452,7 @@ export class IntegratedInterfaceResolver {
     const isRequestedGeneric = this.keySanitizer.isGenericType(interfaceType);
     
     if (isRequestedGeneric) {
-      for (const [key, implementation] of this.interfaces) {
+      for (const [, implementation] of this.interfaces) {
         // Match by interface name and generic capability
         if (implementation.interfaceName === requestedInterfaceName && implementation.isGeneric) {
           if (this.options.verbose) {
@@ -503,38 +463,10 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 3. AsyncState pattern matching
-    const asyncStateMatch = interfaceType.match(/^AsyncState<(.+)>$/);
-    if (asyncStateMatch) {
-      const stateType = asyncStateMatch[1];
-      
-      // Look for state-based registrations first
-      for (const [key, implementation] of this.interfaces) {
-        if (implementation.isStateBased && 
-            implementation.stateType === stateType &&
-            implementation.serviceInterface === interfaceType) {
-          if (this.options.verbose) {
-            console.log(`✅ AsyncState state-based match: ${implementation.implementationClass}`);
-          }
-          return implementation;
-        }
-      }
-      
-      // Look for inheritance-based registrations
-      for (const [key, implementation] of this.interfaces) {
-        if (implementation.isInheritanceBased && 
-            implementation.baseClassGeneric === interfaceType) {
-          if (this.options.verbose) {
-            console.log(`✅ AsyncState inheritance match: ${implementation.implementationClass}`);
-          }
-          return implementation;
-        }
-      }
-    }
 
     // 4. Inheritance-based lookups
     const inheritanceSanitizedKey = this.keySanitizer.sanitizeInheritanceKey(interfaceType);
-    for (const [key, implementation] of this.interfaces) {
+    for (const [, implementation] of this.interfaces) {
       if (implementation.isInheritanceBased && 
           (implementation.sanitizedKey === sanitizedKey || implementation.sanitizedKey === inheritanceSanitizedKey)) {
         if (this.options.verbose) {
@@ -544,18 +476,9 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 5. State-based lookups
-    for (const [key, implementation] of this.interfaces) {
-      if (implementation.isStateBased && implementation.sanitizedKey === sanitizedKey) {
-        if (this.options.verbose) {
-          console.log(`✅ State-based match: ${implementation.implementationClass}`);
-        }
-        return implementation;
-      }
-    }
 
-    // 6. Class-based lookups
-    for (const [key, implementation] of this.interfaces) {
+    // 5. Class-based lookups
+    for (const [, implementation] of this.interfaces) {
       if (implementation.isClassBased && implementation.sanitizedKey === sanitizedKey) {
         if (this.options.verbose) {
           console.log(`✅ Class-based match: ${implementation.implementationClass}`);
@@ -564,8 +487,8 @@ export class IntegratedInterfaceResolver {
       }
     }
 
-    // 7. Fallback to interface name matching
-    for (const [key, implementation] of this.interfaces) {
+    // 6. Fallback to interface name matching
+    for (const [, implementation] of this.interfaces) {
       if (implementation.interfaceName === interfaceType || implementation.interfaceName === requestedInterfaceName) {
         if (this.options.verbose) {
           console.log(`⚠️  Interface name fallback: ${implementation.implementationClass}`);
@@ -587,7 +510,6 @@ export class IntegratedInterfaceResolver {
   }
 
   private getRegistrationType(implementation: InterfaceImplementation): string {
-    if (implementation.isStateBased) return 'state';
     if (implementation.isInheritanceBased) return 'inheritance';
     if (implementation.isClassBased) return 'class';
     return 'interface';
@@ -603,7 +525,7 @@ export class IntegratedInterfaceResolver {
     const implementations: InterfaceImplementation[] = [];
     const sanitizedKey = this.keySanitizer.sanitizeKey(interfaceName);
 
-    for (const [key, implementation] of this.interfaces) {
+    for (const [, implementation] of this.interfaces) {
       if (
         implementation.sanitizedKey === sanitizedKey ||
         implementation.interfaceName === interfaceName
@@ -616,7 +538,7 @@ export class IntegratedInterfaceResolver {
   }
 
   getImplementationByClass(className: string): InterfaceImplementation | undefined {
-    for (const [key, implementation] of this.interfaces) {
+    for (const [, implementation] of this.interfaces) {
       if (implementation.implementationClass === className) {
         return implementation;
       }
@@ -639,7 +561,7 @@ export class IntegratedInterfaceResolver {
       const resolved: string[] = [];
 
       for (const depKey of dependency.interfaceDependencies) {
-        for (const [key, implementation] of this.interfaces) {
+        for (const [, implementation] of this.interfaces) {
           // Handle both location-based and standard key matching
           if (implementation.sanitizedKey === depKey) {
             // Exact match (backward compatibility)
@@ -693,7 +615,6 @@ export class IntegratedInterfaceResolver {
     const registrationTypes = {
       interface: 0,
       inheritance: 0,
-      state: 0,
       class: 0
     };
 
@@ -705,7 +626,6 @@ export class IntegratedInterfaceResolver {
     // Test resolution for common patterns
     const testPatterns = [
       'LoggerInterface',
-      'AsyncState<UserServiceState>',
       'Repository<User>',
       'CacheInterface<any>'
     ];
@@ -787,6 +707,83 @@ export class IntegratedInterfaceResolver {
     }
 
     return "singleton"; // Default scope
+  }
+
+  /**
+   * Extract location information from an AST node
+   */
+  private extractLocationFromNode(node: Node, sourceFile: SourceFile): SourceLocation | undefined {
+    if (!node || !sourceFile) {
+      return undefined;
+    }
+
+    try {
+      const startPos = node.getStart();
+      if (startPos === undefined) {
+        return undefined;
+      }
+
+      const { line } = sourceFile.getLineAndColumnAtPos(startPos);
+      return {
+        filePath: sourceFile.getFilePath(),
+        lineNumber: line
+      };
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Could not extract location from AST node:`, error);
+      }
+      return undefined;
+    }
+  }
+
+  /**
+   * Extract location information from a class declaration
+   */
+  private extractLocationFromClass(className: string, sourceFile: SourceFile): SourceLocation | undefined {
+    try {
+      const classDecl = sourceFile.getClass(className);
+      if (!classDecl) {
+        return undefined;
+      }
+
+      return this.extractLocationFromNode(classDecl, sourceFile);
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Could not extract location from class ${className}:`, error);
+      }
+      return undefined;
+    }
+  }
+
+  /**
+   * Extract location information from inheritance heritage clause
+   */
+  private extractLocationFromInheritance(className: string, sourceFile: SourceFile): SourceLocation | undefined {
+    try {
+      const classDecl = sourceFile.getClass(className);
+      if (!classDecl) {
+        return undefined;
+      }
+
+      // Find the extends heritage clause
+      const heritageClauses = classDecl.getHeritageClauses();
+      for (const heritageClause of heritageClauses) {
+        if (heritageClause.getToken() === SyntaxKind.ExtendsKeyword) {
+          const types = heritageClause.getTypeNodes();
+          if (types.length > 0) {
+            return this.extractLocationFromNode(types[0], sourceFile);
+          }
+        }
+      }
+
+      // Fallback to class declaration location
+      return this.extractLocationFromNode(classDecl, sourceFile);
+    } catch (error) {
+      if (this.options.verbose) {
+        console.warn(`⚠️  Could not extract inheritance location from class ${className}:`, error);
+      }
+      return undefined;
+    }
   }
 
   private getDecoratorName(decorator: any): string | null {

@@ -11,21 +11,17 @@ interface ServiceNodeProps {
     typeParameters?: string[];
     isClassBased?: boolean;
     isInheritanceBased?: boolean;
-    isStateBased?: boolean;
-    stateType?: string;
   };
 }
 
 export const ServiceNode: React.FC<ServiceNodeProps> = ({ data }) => {
   const getNodeColor = () => {
-    if (data.isStateBased) return '#8B5CF6'; // Purple for state-based
     if (data.isInheritanceBased) return '#06B6D4'; // Cyan for inheritance-based
     if (data.isClassBased) return '#F59E0B'; // Amber for class-based
     return '#10B981'; // Emerald for interface-based
   };
 
   const getNodeIcon = () => {
-    if (data.isStateBased) return '🎯';
     if (data.isInheritanceBased) return '🧬';
     if (data.isClassBased) return '📦';
     return '🔌';
@@ -74,11 +70,6 @@ export const ServiceNode: React.FC<ServiceNodeProps> = ({ data }) => {
       {data.isGeneric && (
         <div className="text-xs opacity-75">
           &lt;{data.typeParameters?.join(', ')}&gt;
-        </div>
-      )}
-      {data.stateType && (
-        <div className="text-xs opacity-75">
-          state: {data.stateType}
         </div>
       )}
       <div className="text-xs opacity-60 mt-1">

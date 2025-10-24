@@ -109,8 +109,7 @@ export class SharedTypeResolver {
   /**
    * Determine which strategy was used for resolution
    */
-  private determineStrategy(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'state' | 'class' {
-    if (implementation.isStateBased) return 'state';
+  private determineStrategy(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'class' {
     if (implementation.isInheritanceBased) return 'inheritance';
     if (implementation.isClassBased) return 'class';
     return 'interface';
@@ -139,9 +138,6 @@ export class SharedTypeResolver {
       types.add(impl.interfaceName);
       if (impl.baseClassGeneric) {
         types.add(impl.baseClassGeneric);
-      }
-      if (impl.serviceInterface) {
-        types.add(impl.serviceInterface);
       }
     }
     

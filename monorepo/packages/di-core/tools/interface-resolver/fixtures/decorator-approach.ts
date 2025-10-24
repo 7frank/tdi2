@@ -150,38 +150,38 @@ export class NestedGenericInterfaceService implements FooInterface<string> {
 }
   `,
 
-  ASYNC_STATE_INHERITANCE: `
+  BASE_SERVICE_INHERITANCE: `
 import { Service } from "@tdi2/di-core/decorators";
 
-export class AsyncState<T> {
-  protected state: T | null = null;
+export class BaseService<T> {
+  protected data: T | null = null;
   
-  getState(): T | null {
-    return this.state;
+  getData(): T | null {
+    return this.data;
   }
   
-  setState(newState: T): void {
-    this.state = newState;
+  setData(newData: T): void {
+    this.data = newData;
   }
 }
 
-export interface UserServiceState {
+export interface UserServiceData {
   userId: string;
   isLoggedIn: boolean;
   profile?: any;
 }
 
 @Service()
-export class UserService extends AsyncState<UserServiceState> {
+export class UserService extends BaseService<UserServiceData> {
   login(userId: string): void {
-    this.setState({
+    this.setData({
       userId,
       isLoggedIn: true
     });
   }
   
   logout(): void {
-    this.setState({
+    this.setData({
       userId: '',
       isLoggedIn: false
     });
@@ -189,7 +189,7 @@ export class UserService extends AsyncState<UserServiceState> {
 }
   `,
 
-  COMPLEX_STATE_SERVICE: `
+  COMPLEX_SERVICE_PATTERN: `
 import { Service } from "@tdi2/di-core/decorators";
 
 export interface ProductData {
@@ -198,27 +198,31 @@ export interface ProductData {
   price: number;
 }
 
-export interface CartState {
+export interface CartData {
   items: ProductData[];
   total: number;
 }
 
-export class AsyncState<T> {
-  protected state: T | null = null;
+export class BaseService<T> {
+  protected data: T | null = null;
   
-  getState(): T | null {
-    return this.state;
+  getData(): T | null {
+    return this.data;
+  }
+  
+  setData(newData: T): void {
+    this.data = newData;
   }
 }
 
 @Service()
-export class CartService extends AsyncState<CartState> {
+export class CartService extends BaseService<CartData> {
   addItem(product: ProductData): void {
-    const currentState = this.getState() || { items: [], total: 0 };
-    const newItems = [...currentState.items, product];
+    const currentData = this.getData() || { items: [], total: 0 };
+    const newItems = [...currentData.items, product];
     const newTotal = newItems.reduce((sum, item) => sum + item.price, 0);
     
-    this.setState({
+    this.setData({
       items: newItems,
       total: newTotal
     });

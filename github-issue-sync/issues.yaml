@@ -128,7 +128,7 @@
 
 - title: "In case of multiple unnamed generic interfaces we should throw an error or warning"
   body: |
-    (Inject<AsyncState<{ name: string; email: string }>>;)
+    (Inject<{ name: string; email: string }>;)
 
     evaluate scenarios
 
@@ -259,17 +259,6 @@
     - "testing"
     - "refactoring"
     - "unit-tests"
-  created_at: "2024-01-01T10:00:00Z"
-  updated_at: "2024-01-01T10:00:00Z"
-
-- title: "Remove AsyncState special cases, or fix them in di-core"
-  body: |
-    they where never meant to be this specific in the first place
-  state: "open"
-  labels:
-    - "refactoring"
-    - "cleanup"
-    - "async-state"
   created_at: "2024-01-01T10:00:00Z"
   updated_at: "2024-01-01T10:00:00Z"
 

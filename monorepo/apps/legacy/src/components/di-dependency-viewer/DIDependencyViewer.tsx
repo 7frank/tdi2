@@ -44,7 +44,6 @@ function DIDependencyViewerComponent({ diConfig }: DIDependencyViewerProps) {
       interface: true,
       class: true,
       inheritance: true,
-      state: true,
     },
     showOptional: true,
     showRequired: true,
@@ -198,11 +197,9 @@ function DIDependencyViewerComponent({ diConfig }: DIDependencyViewerProps) {
       const typeMatches =
         (filters.types.interface &&
           !impl.isClassBased &&
-          !impl.isInheritanceBased &&
-          !impl.isStateBased) ||
+          !impl.isInheritanceBased) ||
         (filters.types.class && impl.isClassBased) ||
-        (filters.types.inheritance && impl.isInheritanceBased) ||
-        (filters.types.state && impl.isStateBased);
+        (filters.types.inheritance && impl.isInheritanceBased);
 
       // Search filter
       const searchMatches =
@@ -413,7 +410,6 @@ function DIDependencyViewerComponent({ diConfig }: DIDependencyViewerProps) {
         <Controls />
         <MiniMap
           nodeColor={(node) => {
-            if (node.data.isStateBased) return "#8B5CF6";
             if (node.data.isInheritanceBased) return "#06B6D4";
             if (node.data.isClassBased) return "#F59E0B";
             return "#10B981";

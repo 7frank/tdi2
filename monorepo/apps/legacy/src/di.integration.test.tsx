@@ -75,54 +75,7 @@ describe("DI Container Service Resolution", () => {
     });
   });
 
-  describe("TodoServiceType (AsyncState pattern)", () => {
-    it("should be registered and resolvable", () => {
-      // Verify registration
-      expect(container.has("TodoServiceType")).toBe(true);
 
-      // Verify resolution
-      const service = container.resolve("TodoServiceType");
-      expect(service).toBeDefined();
-      expect(service.constructor.name).toBe("TodoService");
-
-      console.log("✅ TodoServiceType -> TodoService resolved successfully");
-    });
-
-    it("should have correct initial state", () => {
-      const service = container.resolve("TodoServiceType");
-
-      const state = service.getCurrentData();
-      expect(state?.todos || []).toEqual([]);
-      expect(service.isLoading).toBe(false);
-      expect(state?.stats?.total || 0).toBe(0);
-
-      console.log("✅ TodoServiceType initial state is correct");
-    });
-
-    it("should handle AsyncState operations", async () => {
-      const service = container.resolve("TodoServiceType");
-
-      // Load todos first
-      await service.loadTodos();
-
-      // Add a todo
-      await service.addTodo({
-        title: "AsyncState Todo",
-        description: "Test description",
-        priority: "high",
-        completed: false,
-        tags: ["test"],
-      });
-
-      const state = service.getCurrentData();
-      expect(state?.todos.length).toBe(1);
-      expect(state?.todos[0].title).toBe("AsyncState Todo");
-      expect(state?.stats?.total).toBe(1);
-      expect(state?.stats?.pending).toBe(1);
-
-      console.log("✅ TodoServiceType AsyncState operations work correctly");
-    });
-  });
 
   describe("Service comparison", () => {
     it("should resolve different service implementations", () => {

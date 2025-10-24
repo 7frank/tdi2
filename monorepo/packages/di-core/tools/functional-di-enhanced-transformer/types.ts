@@ -1,10 +1,17 @@
 // tools/functional-di-enhanced-transformer/types.ts - Types for functional DI transformation
 
-export interface FunctionalDependency {
-  serviceKey: string; // The property name (e.g., "userService")
-  interfaceType: string; // The interface type (e.g., "UserServiceInterface")
-  sanitizedKey: string; // Sanitized key for lookups
-  isOptional: boolean; // Whether the dependency is optional
+import type { DependencyBase } from '../interface-resolver/interface-resolver-types';
+
+/**
+ * Represents a dependency used in functional component transformation.
+ * Extends DependencyBase with transformer-specific properties.
+ */
+export interface FunctionalDependency extends DependencyBase {
+  /** 
+   * The property name in the component props (e.g., "userService")
+   * Generated from the interface type name
+   */
+  serviceKey: string;
 }
 
 export interface TransformationOptions {

@@ -30,9 +30,58 @@ Feature matrix
 - react native
 - ... other stuff that might be relevant
 
+### [❌] mutable vs immutable
+- curretnly we only use the mutable from valtio
+- instead for passing values to other functions including jsx, we should use the immutable snap
+  - this would allow to pass objects "by value"
+  - and would  remove the problem of passing objects "by reference" 
+
 ### [❌]fix di-debug
 
-#### [❌] overhaul of line based approach commit b596e7b
+
+#### [❌] stream line di debugging
+- below we ahve different approaches
+- re-revaluate them
+- we need one clear dependency tree in the core implementation
+  - which we should use as s.P.o.T. 
+  - di-debug should rely/build on it
+
+
+#### integrated interface resolver too cluttered
+- [✅] "AsyncState" "isStateBased" 
+
+
+- [❌]instead
+  -  if (implementation.isInheritanceBased) return 'inheritance';
+  -  if (implementation.isClassBased) return 'class';
+  - have a inerhitanceType: 'inheritance' | 'class' |... or something totally else
+
+- [❌]what are these for , wouldnt the sanitizedKey work as the unique key already?
+> const uniqueKey = isPrimary 
+>       ? `${sanitizedKey}_${className}`
+>       : `${sanitizedKey}_${className}_direct`;
+>     
+>     this.interfaces.set(uniqueKey, implementation);
+
+
+- [❌] "byStrategry" cant we unify the strategies
+
+>  private determineStrategy(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'class' {
+>    if (implementation.isInheritanceBased) return 'inheritance';
+>    if (implementation.isClassBased) return 'class';
+>    return 'interface';
+>  }
+
+- cleanup di-core interfaces
+
+- InterfaceImplementation type  is too unstructured we need something for di_config that contains the core info
+  - uniqueKey
+  - classNameFoo
+  - ....
+
+
+
+#### [❌] overhaul of line based approach of  commit b596e7b
 
 - extractInterfaceNameFromKey probably use implementationClass isntead
 - implementationClassPath is too brittle
@@ -142,7 +191,7 @@ something wrong with the setup and the dashboard build
 - br test:update
 - br build
 
-#### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
+#### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<{ name: string; email: string }>;)
 
 evaluate scenarios
 

@@ -136,12 +136,12 @@ export class ModernTodoService implements TodoServiceInterface {
       // Should have 4 registrations total: 2 interface-based + 2 class-based  
       expect(implementations.size).toBe(4);
       
-      // Check for location-based keys (only the interface-based ones have locations)
+      // Check for location-based keys (all registration types now have locations)
       const keys = Array.from(implementations.keys());
       const locationBasedKeys = keys.filter(key => key.includes('__') && key.includes('_line_'));
       
-      // Should have exactly 2 location-based keys (one for each TodoServiceInterface implementation)
-      expect(locationBasedKeys.length).toBe(2);
+      // Should have 4 location-based keys (2 interface-based + 2 class-based registrations)
+      expect(locationBasedKeys.length).toBe(4);
       
       console.log("🎉 SUCCESS: Location-based interface collision resolution working!");
       console.log(`   Found ${locationBasedKeys.length} location-based keys out of ${implementations.size} total registrations`);
@@ -154,7 +154,7 @@ export class ModernTodoService implements TodoServiceInterface {
     const keys = Array.from(implementations.keys());
     const locationBasedKeys = keys.filter(key => key.includes('__') && key.includes('_line_'));
     
-    expect(locationBasedKeys.length).toBe(2);
+    expect(locationBasedKeys.length).toBe(4);
 
     // Both should be TodoServiceInterface implementations but with different location keys
     const todo1Key = keys.find(k => k.includes('todo_TodoService_ts'));
