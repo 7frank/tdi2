@@ -5,7 +5,19 @@ lets ahve these as one liners before we talk about the focus
 > just one more hook
 > just one more framework, u"ll see functional is much more composable
 
+## agenda
+
+- first "show dont tell"
+- then reasons why i think this is good
+- short break
+- then later again coding session
+
 ## Focus of the presentation
+
+!!! we need to show that it is simple and compatible to existing react stuff otherwise the buy in and sceptisism will prevail despite the architectural benetifs
+
+!!! what also would work is something where code needs to be reusable like with astro where you ssr some stuff in language A for speed and use react somewhere else
+
 
 > Note
 > classes are a vehicle for DI not the reason
