@@ -24,6 +24,11 @@ lets ahve these as one liners before we talk about the focus
 > reducing boilerplate for some characters and trading that with increase in cognitive load ... is "copium" of the react ecosystem (we are so modern / we are functional)
 > react helps new developers to get small things done easily, but doesnt help them when things get harder, but instead teaches the "GIT good" and leaving developers alone with the cognitive load and uncertainty
 
+### multiple disclaimers
+
+- this talk is not about classes vs functions
+- ...
+
 ### decoupling => [feature matrix](../../examples/comparision/FeatureMatrix.md)
 
 ### cognitive load
