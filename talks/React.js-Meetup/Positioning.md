@@ -1,66 +1,91 @@
-# TDI for React: Summary and Framing
+# TDI for React: Summary and Framing (Reactive Edition)
 
 ## 1. Architectural Intent
-TDI restores **clear boundaries**.  
-- **Components** render.  
-- **Services** own logic and state.  
-- **Dependency Injection** wires them together.
+
+TDI enforces **explicit boundaries** while remaining **natively reactive**.
+
+- **Components** render declaratively.
+- **Services** encapsulate logic and state, implemented as **reactive classes** (via Valtio `proxy`).
+- **Dependency Injection** provides lifecycle and scoping.
 
 ---
 
 ## 2. Problem It Solves
-React’s hook-based composition **degrades under scale**.  
-When many components share synchronized state or cross-cutting behavior, symptoms appear:
-- Prop-drilling
-- Duplicated effect logic
-- Hidden coupling between components
 
-TDI resolves this by isolating logic in services and treating components as declarative surfaces.
+React’s hook composition becomes brittle as shared or cross-cutting state expands.  
+Symptoms:
+
+- Prop-drilling and prop explosion
+- Repeated effect logic
+- Inconsistent synchronization across views
+
+TDI isolates behavior in reactive services. Components stay simple renderers of observed state.
 
 ---
 
 ## 3. Conceptual Model
-| Role | Responsibility |
-|------|----------------|
-| **Service** | Domain module holding state and logic (class or object) |
-| **Component** | Pure template consuming injected services |
-| **Container** | Controls lifetimes and dependency wiring |
+
+| Role                 | Responsibility                                                                 |
+| -------------------- | ------------------------------------------------------------------------------ |
+| **Reactive Service** | Class or object containing observable state and logic (Valtio-powered)         |
+| **Component**        | Pure view consuming injected services; auto-updates when service state changes |
+| **Container**        | Manages service instances, scopes, and dependencies                            |
 
 ---
 
 ## 4. Functional Contrast
-- **React:** prioritizes *local reasoning* — each component owns its state and effects.  
-- **TDI:** prioritizes *architectural reasoning* — shared services manage state, components stay pure.
+
+- **React Standard:** local reasoning through hooks and props.
+- **TDI:** architectural reasoning through reactive service objects; DI ensures controlled lifetimes.  
+  Both remain reactive, but TDI externalizes state ownership and synchronization.
 
 ---
 
 ## 5. Trade-offs
+
 **Gains**
-- Stronger module boundaries  
-- Shared state consistency  
-- Explicit lifecycles  
-- Simplified collaboration in large teams  
+
+- Zero glue code: reactivity handled by proxies, no manual subscriptions.
+- Strong domain boundaries and shared state consistency.
+- Lifecycle and dependency control through DI.
+- Reduced boilerplate versus custom hook networks.
 
 **Costs**
-- Added indirection  
-- Less React DevTools visibility  
-- Manual reactivity bridging  
-- Stricter rules for concurrency and SSR
+
+- Additional indirection layer (DI container + reactive proxy).
+- Less transparent for React DevTools and profiler.
+- Requires disciplined scoping for SSR and concurrency safety.
 
 ---
 
 ## 6. Integration Discipline
-- Services expose **observable data**, not raw mutable fields.  
-- Components subscribe via a **thin adapter** (e.g. `useService`).  
-- Scope services per **route**, **session**, or **request**, never global.  
-- Place side effects inside services; keep components declarative.  
+
+- Use **Valtio proxies** inside service classes; React components auto-subscribe through `useSnapshot`.
+- Scope services per route, session, or request; avoid global singletons.
+- Keep side effects inside services, not components.
+- Treat components as _pure templates_—they render state, never own it.
 
 ---
 
 ## 7. Positioning Statement
+
+### 1
+
 TDI is **not anti-React** and **not anti-functional**.  
 It **inverts emphasis**: from local hook composition to architectural service composition.  
 The goal is **maintainability at scale**, not purity.
 
 > “TDI trades a bit of React’s compositional freedom for predictable structure and long-term scalability.  
 > It doesn’t replace React — it constrains it to behave architecturally.”
+
+
+### 2
+
+
+TDI is **not a rejection of React’s functional model**; it’s a structural refinement.  
+It merges **reactive data flow** with **object-level architecture**.  
+By using Valtio proxies, it retains React’s automatic rendering behavior while reinstating service-oriented design.
+
+> “TDI combines React’s reactivity with classical architectural clarity.  
+> Components render; services think. The glue code is gone, the boundaries remain.”
+
