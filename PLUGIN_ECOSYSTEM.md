@@ -319,7 +319,29 @@ This ensures:
 
 ## Testing
 
-TODO: Create example projects for each plugin:
+All plugins include end-to-end tests that verify the complete transformation pipeline. See [TESTING.md](TESTING.md) for detailed documentation.
+
+### Test Coverage
+
+- ✅ `@tdi2/rollup-plugin-di` - E2E test with Rollup API
+- ✅ `@tdi2/webpack-plugin-di` - E2E test with Webpack 5
+- ✅ `@tdi2/esbuild-plugin-di` - E2E test with esbuild API
+- ✅ `@tdi2/babel-plugin-di` - E2E test with Babel transform
+- ✅ `@tdi2/typescript-transformer` - E2E test with TypeScript compiler
+
+### Running Tests
+
+```bash
+# All plugins
+cd monorepo
+bun run test
+
+# Individual plugin
+cd monorepo/packages/rollup-plugin-di
+bun test
+```
+
+### Future Example Projects
 
 - [ ] `examples/tdi2-vite-example` (already exists)
 - [ ] `examples/tdi2-typescript-example`
