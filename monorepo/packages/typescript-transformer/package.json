@@ -51,7 +51,8 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
-    "@tdi2/di-core": "workspace:*"
+    "@tdi2/di-core": "workspace:*",
+    "@tdi2/plugin-core": "workspace:*"
   },
   "peerDependencies": {
     "ts-patch": "^3.0.0",

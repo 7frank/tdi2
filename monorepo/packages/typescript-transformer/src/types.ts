@@ -3,63 +3,14 @@
  */
 
 import type * as ts from 'typescript';
+import type { PluginConfig as BasePluginConfig } from '@tdi2/plugin-core';
 
 /**
  * Plugin configuration that can be specified in tsconfig.json
+ * Extends the base plugin-core configuration
  */
-export interface TDI2TransformerConfig {
-  /**
-   * Source directory to scan for DI decorators and interfaces
-   * @default './src'
-   */
-  srcDir?: string;
-
-  /**
-   * Output directory for generated DI configuration files
-   * @default './src/generated'
-   */
-  outputDir?: string;
-
-  /**
-   * Enable verbose logging for debugging
-   * @default false
-   */
-  verbose?: boolean;
-
-  /**
-   * Enable functional component dependency injection transformation
-   * @default true
-   */
-  enableFunctionalDI?: boolean;
-
-  /**
-   * Enable automatic interface-to-implementation resolution
-   * @default true
-   */
-  enableInterfaceResolution?: boolean;
-
-  /**
-   * Generate debug files for transformation inspection
-   * @default false
-   */
-  generateDebugFiles?: boolean;
-
-  /**
-   * Custom suffix for configuration identification
-   */
-  customSuffix?: string;
-
-  /**
-   * Enable parameter normalization in functional components
-   * @default true
-   */
-  enableParameterNormalization?: boolean;
-
-  /**
-   * Generate fallback implementations for missing dependencies
-   * @default false
-   */
-  generateFallbacks?: boolean;
+export interface TDI2TransformerConfig extends BasePluginConfig {
+  // TypeScript-specific options can be added here
 }
 
 /**

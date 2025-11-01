@@ -55,7 +55,8 @@
     "publish:package": "bun publish"
   },
   "dependencies": {
-    "@tdi2/di-core": "workspace:*"
+    "@tdi2/di-core": "workspace:*",
+    "@tdi2/plugin-core": "workspace:*"
   },
   "peerDependencies": {
     "vite": "^4.0.0 || ^5.0.0 || ^6.0.0"

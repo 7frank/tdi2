@@ -2,53 +2,14 @@
  * Type definitions for the TDI2 Vite plugin
  */
 
-export interface DIPluginOptions {
-  /**
-   * Source directory to scan for DI decorators and interfaces
-   * @default './src'
-   */
-  srcDir?: string;
+import type { PluginConfig as BasePluginConfig } from '@tdi2/plugin-core';
 
-  /**
-   * Output directory for generated DI configuration files
-   * @default './src/generated'
-   */
-  outputDir?: string;
-
-  /**
-   * Enable verbose logging for debugging
-   * @default false
-   */
-  verbose?: boolean;
-
+export interface DIPluginOptions extends BasePluginConfig {
   /**
    * Enable file watching for hot reload during development
    * @default true
    */
   watch?: boolean;
-
-  /**
-   * Enable functional component dependency injection transformation
-   * @default true
-   */
-  enableFunctionalDI?: boolean;
-
-  /**
-   * Enable automatic interface-to-implementation resolution
-   * @default true
-   */
-  enableInterfaceResolution?: boolean;
-
-  /**
-   * Generate debug files for transformation inspection
-   * @default false
-   */
-  generateDebugFiles?: boolean;
-
-  /**
-   * Custom suffix for configuration identification
-   */
-  customSuffix?: string;
 
   /**
    * Automatically clean old configuration files
@@ -67,49 +28,6 @@ export interface DIPluginOptions {
    * @default true
    */
   reuseExistingConfig?: boolean;
-
-  /**
-   * Additional configuration for advanced use cases
-   */
-  advanced?: {
-    /**
-     * Custom file extensions to scan for DI patterns
-     * @default ['.ts', '.tsx']
-     */
-    fileExtensions?: string[];
-
-    /**
-     * Custom patterns to detect DI usage
-     */
-    diPatterns?: {
-      serviceDecorator?: RegExp;
-      injectDecorator?: RegExp;
-      interfaceMarker?: RegExp;
-    };
-
-    /**
-     * Performance optimization settings
-     */
-    performance?: {
-      /**
-       * Enable parallel processing for large codebases
-       * @default true
-       */
-      parallel?: boolean;
-
-      /**
-       * Maximum number of files to process concurrently
-       * @default 10
-       */
-      maxConcurrency?: number;
-
-      /**
-       * Enable caching of transformation results
-       * @default true
-       */
-      enableCache?: boolean;
-    };
-  };
 }
 
 export interface TransformationSummary {

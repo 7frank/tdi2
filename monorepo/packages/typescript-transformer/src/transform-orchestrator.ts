@@ -11,6 +11,7 @@ import {
   FunctionalDIEnhancedTransformer,
   EnhancedDITransformer,
 } from '@tdi2/di-core/tools';
+import { getDefaultConfig, validateConfig, shouldProcessFile } from '@tdi2/plugin-core';
 import type { TransformOrchestratorOptions, TransformResult, TransformStats } from './types';
 
 export class TransformOrchestrator {
@@ -21,17 +22,15 @@ export class TransformOrchestrator {
   private initializationPromise: Promise<void> | null = null;
 
   constructor(options: TransformOrchestratorOptions) {
+    // Use plugin-core to get defaults with proper type handling
+    const baseConfig = getDefaultConfig(options);
     this.options = {
-      srcDir: './src',
-      outputDir: './src/generated',
-      verbose: false,
-      enableFunctionalDI: true,
-      enableInterfaceResolution: true,
-      generateDebugFiles: false,
-      enableParameterNormalization: true,
-      generateFallbacks: false,
+      ...baseConfig,
       ...options,
-    };
+    } as TransformOrchestratorOptions;
+
+    // Validate configuration using plugin-core
+    validateConfig(this.options as any);
 
     this.stats = {
       filesProcessed: 0,
@@ -151,8 +150,8 @@ export class TransformOrchestrator {
       const filePath = sourceFile.fileName;
       const content = sourceFile.getFullText();
 
-      // Skip non-TypeScript/TSX files
-      if (!filePath.endsWith('.ts') && !filePath.endsWith('.tsx')) {
+      // Use plugin-core's shouldProcessFile utility
+      if (!shouldProcessFile(filePath, this.options.advanced?.fileExtensions ?? ['.ts', '.tsx'])) {
         this.stats.filesSkipped++;
         return {
           sourceFile,
