@@ -143,16 +143,40 @@ export function detectDIPatterns(
   content: string,
   options: Required<DIPluginOptions>
 ): { hasDI: boolean; patterns: string[] } {
-  const coreResult = coreDetectDIPatterns(content, options as Required<PluginConfig>);
-
-  // Convert core result to vite-plugin-di format
   const patterns: string[] = [];
-  if (coreResult.hasService) patterns.push('@Service');
-  if (coreResult.hasInject) patterns.push('@Inject');
-  if (coreResult.hasInterface) patterns.push('Interface implementation');
-  if (coreResult.hasComponent) patterns.push('Component');
+  let hasDI = false;
 
-  return { hasDI: coreResult.hasDI, patterns };
+  // Check for service decorators
+  if (options.advanced.diPatterns.serviceDecorator?.test(content)) {
+    patterns.push('@Service');
+    hasDI = true;
+  }
+
+  // Check for inject decorators
+  if (options.advanced.diPatterns.injectDecorator?.test(content)) {
+    patterns.push('@Inject');
+    hasDI = true;
+  }
+
+  // Check for interface markers (Inject<T>, InjectOptional<T>)
+  if (options.advanced.diPatterns.interfaceMarker?.test(content)) {
+    patterns.push('Inject<T>');
+    hasDI = true;
+  }
+
+  // Check for @Autowired decorator
+  if (content.includes('@Autowired') || content.includes('@AutoWire')) {
+    patterns.push('@Autowired');
+    hasDI = true;
+  }
+
+  // Check for interface implementations
+  if (content.includes('implements ') && content.includes('Interface')) {
+    patterns.push('Interface implementation');
+    hasDI = true;
+  }
+
+  return { hasDI, patterns };
 }
 
 /**
