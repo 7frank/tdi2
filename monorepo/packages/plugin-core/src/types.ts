@@ -120,24 +120,10 @@ export interface DIPatternDetection {
   hasDI: boolean;
 
   /**
-   * Whether the content contains @Service decorator
+   * Array of pattern names found (for logging/debugging)
+   * Examples: '@Service', '@Inject', 'Inject<T>', '@Autowired', 'Interface implementation'
    */
-  hasService: boolean;
-
-  /**
-   * Whether the content contains Inject<> type usage
-   */
-  hasInject: boolean;
-
-  /**
-   * Whether the content contains interface implementations
-   */
-  hasInterface: boolean;
-
-  /**
-   * Whether the content contains React components
-   */
-  hasComponent: boolean;
+  patterns: string[];
 }
 
 /**

@@ -4,7 +4,7 @@ import * as path from 'path';
 import {
   getDefaultConfig as getCoreDefaults,
   validateConfig as validateCoreConfig,
-  detectDIPatterns as coreDetectDIPatterns,
+  detectDIPatterns,
   createPerformanceTracker as coreCreatePerformanceTracker,
   type PluginConfig,
 } from '@tdi2/plugin-core';
@@ -136,48 +136,8 @@ export function createDIPluginPresets(): Record<string, DIPluginPreset> {
   };
 }
 
-/**
- * Detect DI patterns in source code (wraps plugin-core)
- */
-export function detectDIPatterns(
-  content: string,
-  options: Required<DIPluginOptions>
-): { hasDI: boolean; patterns: string[] } {
-  const patterns: string[] = [];
-  let hasDI = false;
-
-  // Check for service decorators
-  if (options.advanced.diPatterns.serviceDecorator?.test(content)) {
-    patterns.push('@Service');
-    hasDI = true;
-  }
-
-  // Check for inject decorators
-  if (options.advanced.diPatterns.injectDecorator?.test(content)) {
-    patterns.push('@Inject');
-    hasDI = true;
-  }
-
-  // Check for interface markers (Inject<T>, InjectOptional<T>)
-  if (options.advanced.diPatterns.interfaceMarker?.test(content)) {
-    patterns.push('Inject<T>');
-    hasDI = true;
-  }
-
-  // Check for @Autowired decorator
-  if (content.includes('@Autowired') || content.includes('@AutoWire')) {
-    patterns.push('@Autowired');
-    hasDI = true;
-  }
-
-  // Check for interface implementations
-  if (content.includes('implements ') && content.includes('Interface')) {
-    patterns.push('Interface implementation');
-    hasDI = true;
-  }
-
-  return { hasDI, patterns };
-}
+// Export detectDIPatterns directly from plugin-core
+export { detectDIPatterns };
 
 /**
  * Create performance tracking utilities (wraps plugin-core)

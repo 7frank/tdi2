@@ -11,35 +11,40 @@ export function detectDIPatterns(
   content: string,
   config: Required<PluginConfig>
 ): DIPatternDetection {
-  const patterns = config.advanced.diPatterns;
+  const patternsList: string[] = [];
+  let hasDI = false;
 
-  // Check for @Service decorator
-  const hasService = patterns?.serviceDecorator?.test(content) ?? false;
+  // Check for service decorators
+  if (config.advanced.diPatterns?.serviceDecorator?.test(content)) {
+    patternsList.push('@Service');
+    hasDI = true;
+  }
 
-  // Check for Inject<> type usage
-  const hasInject = patterns?.interfaceMarker?.test(content) ?? false;
+  // Check for inject decorators
+  if (config.advanced.diPatterns?.injectDecorator?.test(content)) {
+    patternsList.push('@Inject');
+    hasDI = true;
+  }
 
-  // Check for @Inject decorator
-  const hasInjectDecorator = patterns?.injectDecorator?.test(content) ?? false;
+  // Check for interface markers (Inject<T>, InjectOptional<T>)
+  if (config.advanced.diPatterns?.interfaceMarker?.test(content)) {
+    patternsList.push('Inject<T>');
+    hasDI = true;
+  }
 
-  // Check for interface implementations (likely services)
-  const hasInterface = content.includes('implements') && content.includes('Interface');
+  // Check for @Autowired decorator
+  if (content.includes('@Autowired') || content.includes('@AutoWire')) {
+    patternsList.push('@Autowired');
+    hasDI = true;
+  }
 
-  // Check for React components
-  const hasComponent =
-    (content.includes('function') || content.includes('=>')) &&
-    (content.includes('React') || content.includes('FC') || content.includes('JSX') || content.includes('tsx'));
+  // Check for interface implementations
+  if (content.includes('implements ') && content.includes('Interface')) {
+    patternsList.push('Interface implementation');
+    hasDI = true;
+  }
 
-  // Determine if file has any DI patterns
-  const hasDI = hasService || hasInject || hasInjectDecorator || (hasInterface && hasComponent);
-
-  return {
-    hasDI,
-    hasService,
-    hasInject: hasInject || hasInjectDecorator,
-    hasInterface,
-    hasComponent,
-  };
+  return { hasDI, patterns: patternsList };
 }
 
 /**
