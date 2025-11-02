@@ -31,6 +31,20 @@ describe('Webpack Plugin E2E', () => {
       path.join(fixturesDest, 'Counter.tsx')
     );
 
+    // Create tsconfig.json for ts-loader
+    const tsconfigPath = path.join(tempDir, 'tsconfig.json');
+    fs.writeFileSync(tsconfigPath, JSON.stringify({
+      compilerOptions: {
+        target: 'ES2020',
+        module: 'commonjs',
+        jsx: 'react',
+        esModuleInterop: true,
+        skipLibCheck: true,
+        experimentalDecorators: true,
+      },
+      include: ['src/**/*'],
+    }, null, 2));
+
     // Create entry file
     const entryFile = path.join(fixturesDest, 'index.ts');
     fs.writeFileSync(entryFile, `
@@ -39,9 +53,10 @@ describe('Webpack Plugin E2E', () => {
     `);
 
     // Run webpack with TDI2 plugin
-    await webpackAsync({
+    const stats = await webpackAsync({
       mode: 'development',
       entry: entryFile,
+      context: tempDir, // Set context so ts-loader finds tsconfig.json
       output: {
         path: path.join(tempDir, 'dist'),
         filename: 'bundle.js',
@@ -50,11 +65,19 @@ describe('Webpack Plugin E2E', () => {
       resolve: {
         extensions: ['.ts', '.tsx', '.js', '.jsx'],
       },
+      resolveLoader: {
+        modules: ['node_modules', path.join(__dirname, '../../../../node_modules')],
+      },
       module: {
         rules: [
           {
             test: /\.tsx?$/,
-            use: 'ts-loader',
+            use: [{
+              loader: 'ts-loader',
+              options: {
+                configFile: tsconfigPath,
+              },
+            }],
             exclude: /node_modules/,
           },
         ],
@@ -75,6 +98,11 @@ describe('Webpack Plugin E2E', () => {
         '@tdi2/di-core/context': '@tdi2/di-core/context',
       },
     });
+
+    // Check for webpack errors
+    if (stats && stats.hasErrors()) {
+      console.error('Webpack build errors:', stats.toString({ errors: true, warnings: false }));
+    }
   }, 30000); // 30 second timeout for webpack
 
   afterAll(() => {

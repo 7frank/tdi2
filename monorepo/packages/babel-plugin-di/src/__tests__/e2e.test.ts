@@ -1,9 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { transformFileSync } from '@babel/core';
+import { transformFile } from '@babel/core';
+import { promisify } from 'util';
 import tdi2BabelPlugin from '../index';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+
+const transformFileAsync = promisify(transformFile);
 
 describe('Babel Plugin E2E', () => {
   let tempDir: string;
@@ -27,9 +30,11 @@ describe('Babel Plugin E2E', () => {
       path.join(fixturesDest, 'Counter.tsx')
     );
 
-    // Transform Counter.tsx with babel + TDI2 plugin
+    // Transform Counter.tsx with babel + TDI2 plugin (using async transform)
+    // The async transformFile allows the plugin's async initialization to complete
     const counterFile = path.join(fixturesDest, 'Counter.tsx');
-    const result = transformFileSync(counterFile, {
+
+    const result = await transformFileAsync(counterFile, {
       plugins: [
         ['@babel/plugin-syntax-typescript', { isTSX: true }],
         [
@@ -37,7 +42,7 @@ describe('Babel Plugin E2E', () => {
           {
             scanDirs: [fixturesDest],
             outputDir: path.join(fixturesDest, 'generated'),
-            verbose: false,
+            verbose: true,
             enableFunctionalDI: true,
             enableInterfaceResolution: true,
           },
@@ -53,7 +58,7 @@ describe('Babel Plugin E2E', () => {
       transformedFile = path.join(tempDir, 'Counter.transformed.js');
       fs.writeFileSync(transformedFile, result.code);
     }
-  });
+  }, 30000); // Increase timeout for async initialization
 
   afterAll(() => {
     // Cleanup

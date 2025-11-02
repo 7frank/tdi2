@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
-    "@babel/plugin-syntax-typescript": "^7.24.0",
+    "@babel/plugin-syntax-typescript": "^7.27.1",
     "@babel/preset-react": "^7.24.0",
     "@babel/preset-typescript": "^7.24.0",
     "@types/babel__core": "^7.20.0",

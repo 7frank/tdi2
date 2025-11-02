@@ -75,6 +75,25 @@ export function tdi2Plugin(userOptions: RollupPluginDIOptions = {}): Plugin {
       }
     },
 
+    load(id: string) {
+      // Only intercept .ts/.tsx files before Rollup tries to parse them
+      if (!shouldProcessFile(id, config.advanced.fileExtensions ?? ['.ts', '.tsx'])) {
+        return null;
+      }
+
+      // Get transformed content from cache
+      const transformedCode = orchestrator?.getTransformedContent(id);
+
+      if (transformedCode) {
+        if (config.verbose) {
+          console.log(`[Rollup] 🔍 Using transformed version of ${id}`);
+        }
+        return transformedCode;
+      }
+
+      return null;
+    },
+
     async transform(code: string, id: string) {
       // Skip if file shouldn't be processed
       if (!shouldProcessFile(id, config.advanced.fileExtensions ?? ['.ts', '.tsx'])) {

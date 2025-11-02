@@ -106,8 +106,16 @@ export default function tdi2BabelPlugin(api: any, options: BabelPluginDIOptions 
             // Get original code
             const originalCode = state.file.code;
 
+            if (config.verbose) {
+              console.log(`🔍 Babel visitor processing: ${filename}`);
+            }
+
             // Transform
             const result = orchestratorInstance.transformFile(filename, originalCode);
+
+            if (config.verbose) {
+              console.log(`📋 Transform result for ${filename}: wasTransformed=${result.wasTransformed}`);
+            }
 
             if (result.wasTransformed) {
               // Parse transformed code and replace AST
@@ -133,6 +141,15 @@ export default function tdi2BabelPlugin(api: any, options: BabelPluginDIOptions 
       }
     },
   };
+}
+
+/**
+ * Wait for initialization to complete (useful for testing)
+ */
+export async function waitForInitialization(): Promise<void> {
+  if (initPromise) {
+    await initPromise;
+  }
 }
 
 /**

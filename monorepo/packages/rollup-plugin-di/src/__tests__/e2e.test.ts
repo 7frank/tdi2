@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { rollup } from 'rollup';
+import nodeResolve from '@rollup/plugin-node-resolve';
+import typescript from '@rollup/plugin-typescript';
 import { tdi2Plugin } from '../index';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -39,12 +41,26 @@ describe('Rollup Plugin E2E', () => {
     const bundle = await rollup({
       input: entryFile,
       plugins: [
+        nodeResolve({
+          extensions: ['.ts', '.tsx', '.js', '.jsx'],
+        }),
         tdi2Plugin({
           scanDirs: [fixturesDest],
           outputDir: path.join(fixturesDest, 'generated'),
-          verbose: false,
+          verbose: true,
           enableFunctionalDI: true,
           enableInterfaceResolution: true,
+        }),
+        typescript({
+          tsconfig: false,
+          compilerOptions: {
+            target: 'ES2020',
+            module: 'ESNext',
+            jsx: 'react',
+            esModuleInterop: true,
+            skipLibCheck: true,
+            experimentalDecorators: true,
+          },
         }),
       ],
       external: [
