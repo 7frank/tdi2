@@ -78,10 +78,9 @@ export class TDI2WebpackPlugin {
       this.performanceTracker.endTransformation();
     });
 
-    // Transform modules
-    compiler.hooks.compilation.tap(pluginName, (compilation) => {
-      compilation.hooks.buildModule.tap(pluginName, (module: any) => {
-        // Skip non-source modules
+    // Transform modules by intercepting the source
+    compiler.hooks.thisCompilation.tap(pluginName, (compilation) => {
+      compilation.hooks.succeedModule.tap(pluginName, (module: any) => {
         if (!module.resource || !this.orchestrator) {
           return;
         }
@@ -93,33 +92,21 @@ export class TDI2WebpackPlugin {
           return;
         }
 
-        try {
-          // Get original source
-          const originalSource = module._source?._value;
-          if (!originalSource) return;
+        // Get transformed content from cache
+        const transformedCode = this.orchestrator.getTransformedContent(filePath);
 
-          // Transform
-          const result = this.orchestrator.transformFile(filePath, originalSource);
+        if (transformedCode && module._source) {
+          // Create new source with transformed code
+          const {webpack} = compilation.compiler;
+          module._source = new webpack.sources.RawSource(transformedCode);
 
-          if (result.wasTransformed) {
-            // Replace module source with transformed code
-            module._source = {
-              _value: result.code,
-              source: () => result.code,
-              size: () => result.code.length,
-            };
+          this.performanceTracker.recordCacheHit();
 
-            this.performanceTracker.recordCacheHit();
-
-            if (this.config.verbose) {
-              console.log(`🔄 Transformed: ${filePath}`);
-            }
-          } else {
-            this.performanceTracker.recordCacheMiss();
+          if (this.config.verbose) {
+            console.log(`🔄 Applied transformation: ${filePath}`);
           }
-        } catch (error) {
-          this.performanceTracker.recordError();
-          console.error(`❌ TDI2 transformation failed for ${filePath}:`, error);
+        } else {
+          this.performanceTracker.recordCacheMiss();
         }
       });
     });
