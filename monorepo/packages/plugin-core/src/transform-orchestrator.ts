@@ -46,13 +46,13 @@ export class TransformOrchestrator {
   private async performInitialization(): Promise<void> {
     try {
       this.logger.info('Initializing TDI2 transformers...');
-      this.logger.debug(`Source directory: ${this.options.srcDir}`);
+      this.logger.debug(`Scan directories: ${this.options.scanDirs.join(', ')}`);
 
       // Step 1: Run class-based DI transformer for interface resolution
       this.logger.debug('Building interface resolution map...');
 
       const classTransformer = new EnhancedDITransformer({
-        srcDir: this.options.srcDir,
+        scanDirs: this.options.scanDirs,
         outputDir: this.options.outputDir,
         verbose: this.options.verbose,
         enableInterfaceResolution: this.options.enableInterfaceResolution,
@@ -67,7 +67,7 @@ export class TransformOrchestrator {
         this.logger.debug('Transforming functional components...');
 
         const functionalTransformer = new FunctionalDIEnhancedTransformer({
-          srcDir: this.options.srcDir,
+          scanDirs: this.options.scanDirs,
           outputDir: this.options.outputDir,
           generateDebugFiles: this.options.generateDebugFiles,
           verbose: this.options.verbose,

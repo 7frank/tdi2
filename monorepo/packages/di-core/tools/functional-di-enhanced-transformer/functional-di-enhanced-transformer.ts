@@ -41,7 +41,8 @@ import { BeanFactoryGenerator } from '../config-processor/bean-factory-generator
 import type { ConfigurationMetadata } from '../../src/types';
 
 interface TransformerOptions {
-  srcDir?: string;
+  srcDir?: string; // Deprecated - use scanDirs
+  scanDirs?: string[];
   outputDir?: string;
   generateDebugFiles?: boolean;
   verbose?: boolean;
@@ -81,8 +82,11 @@ export class FunctionalDIEnhancedTransformer {
   private configurations: ConfigurationMetadata[] = [];
 
   constructor(options: TransformerOptions = {}) {
+    // Support both scanDirs (new) and srcDir (backward compat)
+    const scanDirs = options.scanDirs || (options.srcDir ? [options.srcDir] : ['./src']);
+
     this.options = {
-      srcDir: './src',
+      srcDir: scanDirs[0], // Keep for backward compat
       outputDir: './src/generated',
       verbose:  false,
       enableInterfaceResolution: true,
@@ -90,8 +94,9 @@ export class FunctionalDIEnhancedTransformer {
       enableStateDI: true,
       customSuffix: undefined,
       generateDebugFiles: false,
-      ...options
-    };
+      ...options,
+      scanDirs: scanDirs
+    } as any;
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json',
@@ -107,10 +112,11 @@ export class FunctionalDIEnhancedTransformer {
       customSuffix: this.options.customSuffix
     });
 
-    // Initialize InterfaceResolver
+    // Initialize InterfaceResolver with all scan directories
     this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
       srcDir: this.options.srcDir,
+      scanDirs: scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
       enableStateDI: this.options.enableStateDI
     });
@@ -296,10 +302,15 @@ export class FunctionalDIEnhancedTransformer {
     }
 
     const pattern = "/**/*.{ts,tsx}";
-    this.project.addSourceFilesAtPaths(`${this.options.srcDir}${pattern}`);
+
+    // Add source files from all scan directories
+    const scanDirs = (this.options as any).scanDirs || [this.options.srcDir];
+    for (const dir of scanDirs) {
+      this.project.addSourceFilesAtPaths(`${dir}${pattern}`);
+    }
 
     if (this.options.verbose) {
-      console.log(`📂 Scanned source files in ${this.options.srcDir} with pattern: ${pattern}`);
+      console.log(`📂 Scanned source files in ${scanDirs.join(', ')} with pattern: ${pattern}`);
       console.log(`🔍 Total source files: ${this.project.getSourceFiles().length}`);
     }
 

@@ -30,7 +30,8 @@ import type {
 import { IntegratedInterfaceResolver } from './interface-resolver/integrated-interface-resolver';
 
 interface TransformerOptions {
-  srcDir?: string;
+  srcDir?: string; // Deprecated - use scanDirs
+  scanDirs?: string[];
   outputDir?: string;
   verbose?: boolean;
   generateRegistry?: boolean;
@@ -56,15 +57,19 @@ export class EnhancedDITransformer {
   private warnings: TransformationWarning[] = [];
 
   constructor(options: TransformerOptions = {}) {
+    // Support both scanDirs (new) and srcDir (backward compat)
+    const scanDirs = options.scanDirs || (options.srcDir ? [options.srcDir] : ['./src']);
+
     this.options = {
-      srcDir: options.srcDir || './src',
+      srcDir: scanDirs[0], // Keep for backward compat with internal APIs
       outputDir: options.outputDir || './src/generated',
       verbose: options.verbose || false,
       enableInterfaceResolution: options.enableInterfaceResolution !== false,
       enableInheritanceDI: true,
       enableStateDI: true,
-      customSuffix: options.customSuffix
-    };
+      customSuffix: options.customSuffix,
+      scanDirs: scanDirs
+    } as any;
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json'
@@ -79,10 +84,11 @@ export class EnhancedDITransformer {
       customSuffix: this.options.customSuffix
     });
 
-    // Initialize InterfaceResolver
+    // Initialize InterfaceResolver with all scan directories
     this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
       srcDir: this.options.srcDir,
+      scanDirs: scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
       enableStateDI: this.options.enableStateDI
     });
@@ -195,8 +201,11 @@ export class EnhancedDITransformer {
       console.log('🔍 Finding transformation candidates...');
     }
 
-    // Add source files to project
-    this.project.addSourceFilesAtPaths(`${this.options.srcDir}/**/*.{ts,tsx}`);
+    // Add source files from all scan directories
+    const scanDirs = (this.options as any).scanDirs || [this.options.srcDir];
+    for (const dir of scanDirs) {
+      this.project.addSourceFilesAtPaths(`${dir}/**/*.{ts,tsx}`);
+    }
 
     const sourceFiles = this.project.getSourceFiles();
 

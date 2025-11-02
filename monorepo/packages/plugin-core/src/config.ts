@@ -25,7 +25,7 @@ const DEFAULT_ADVANCED_CONFIG: Required<AdvancedPluginConfig> = {
  * Default base configuration
  */
 const DEFAULT_BASE_CONFIG: Required<BasePluginConfig> = {
-  srcDir: './src',
+  scanDirs: ['./src'],
   outputDir: './src/generated',
   verbose: false,
   enableFunctionalDI: true,
@@ -62,9 +62,19 @@ export function getDefaultConfig(userConfig: PluginConfig = {}): Required<Plugin
  * Validate plugin configuration and throw errors for invalid settings
  */
 export function validateConfig(config: Required<PluginConfig>): void {
-  // Validate srcDir
-  if (!config.srcDir || typeof config.srcDir !== 'string') {
-    throw new Error('TDI2 Plugin: srcDir must be a non-empty string');
+  // Validate scanDirs
+  if (!Array.isArray(config.scanDirs)) {
+    throw new Error('TDI2 Plugin: scanDirs must be an array');
+  }
+
+  if (config.scanDirs.length === 0) {
+    throw new Error('TDI2 Plugin: scanDirs cannot be empty');
+  }
+
+  for (const dir of config.scanDirs) {
+    if (typeof dir !== 'string' || dir.trim() === '') {
+      throw new Error('TDI2 Plugin: Each scanDir must be a non-empty string');
+    }
   }
 
   // Validate outputDir

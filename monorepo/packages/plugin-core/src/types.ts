@@ -7,10 +7,11 @@
  */
 export interface BasePluginConfig {
   /**
-   * Source directory to scan for DI decorators and interfaces
-   * @default './src'
+   * Directories to scan for DI decorators, interfaces, and functional components
+   * Supports multiple directories for monorepo or shared code scenarios
+   * @default ['./src']
    */
-  srcDir?: string;
+  scanDirs?: string[];
 
   /**
    * Output directory for generated DI configuration files
