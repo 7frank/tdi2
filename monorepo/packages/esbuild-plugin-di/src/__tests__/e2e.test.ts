@@ -44,7 +44,7 @@ describe('esbuild Plugin E2E', () => {
       format: 'cjs',
       plugins: [
         tdi2Plugin({
-          srcDir: fixturesDest,
+          scanDirs: [fixturesDest],
           outputDir: path.join(fixturesDest, 'generated'),
           verbose: false,
           enableFunctionalDI: true,

@@ -58,7 +58,7 @@ export class TransformOrchestrator {
     try {
       if (this.options.verbose) {
         console.log('🔧 Initializing TDI2 TypeScript transformer...');
-        console.log(`📂 Source directory: ${this.options.srcDir}`);
+        console.log(`📂 Scan directories: ${this.options.scanDirs?.join(', ')}`);
       }
 
       // Step 1: Run class-based DI transformer for interface resolution
@@ -67,7 +67,7 @@ export class TransformOrchestrator {
       }
 
       const classTransformer = new EnhancedDITransformer({
-        srcDir: this.options.srcDir,
+        scanDirs: this.options.scanDirs,
         outputDir: this.options.outputDir,
         verbose: this.options.verbose,
         enableInterfaceResolution: this.options.enableInterfaceResolution,
@@ -84,7 +84,7 @@ export class TransformOrchestrator {
         }
 
         const functionalTransformer = new FunctionalDIEnhancedTransformer({
-          srcDir: this.options.srcDir,
+          scanDirs: this.options.scanDirs,
           outputDir: this.options.outputDir,
           generateDebugFiles: this.options.generateDebugFiles,
           verbose: this.options.verbose,

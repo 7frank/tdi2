@@ -75,7 +75,7 @@ describe('TypeScript Transformer E2E', () => {
     const transformerFactory = tdi2Transformer(
       program,
       {
-        srcDir: fixturesDest,
+        scanDirs: [fixturesDest],
         outputDir: path.join(fixturesDest, 'generated'),
         verbose: false,
         enableFunctionalDI: true,

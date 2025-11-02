@@ -61,7 +61,7 @@ describe('Webpack Plugin E2E', () => {
       },
       plugins: [
         new TDI2WebpackPlugin({
-          srcDir: fixturesDest,
+          scanDirs: [fixturesDest],
           outputDir: path.join(fixturesDest, 'generated'),
           verbose: false,
           enableFunctionalDI: true,

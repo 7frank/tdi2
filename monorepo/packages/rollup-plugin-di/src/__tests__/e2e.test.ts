@@ -40,7 +40,7 @@ describe('Rollup Plugin E2E', () => {
       input: entryFile,
       plugins: [
         tdi2Plugin({
-          srcDir: fixturesDest,
+          scanDirs: [fixturesDest],
           outputDir: path.join(fixturesDest, 'generated'),
           verbose: false,
           enableFunctionalDI: true,

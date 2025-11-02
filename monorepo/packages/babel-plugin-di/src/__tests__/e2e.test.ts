@@ -35,7 +35,7 @@ describe('Babel Plugin E2E', () => {
         [
           tdi2BabelPlugin,
           {
-            srcDir: fixturesDest,
+            scanDirs: [fixturesDest],
             outputDir: path.join(fixturesDest, 'generated'),
             verbose: false,
             enableFunctionalDI: true,
