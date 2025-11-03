@@ -98,7 +98,7 @@ export class EnhancedDITransformer {
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
       verbose: this.options.verbose,
-       srcDir: this.options.srcDir
+       srcDir: this.options.scanDirs[0]
     });
 
     this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
@@ -200,7 +200,7 @@ export class EnhancedDITransformer {
     }
 
     // Add source files from all scan directories
-    const scanDirs = (this.options as any).scanDirs || [this.options.srcDir];
+    const scanDirs = this.options.scanDirs;
     for (const dir of scanDirs) {
       this.project.addSourceFilesAtPaths(`${dir}/**/*.{ts,tsx}`);
     }

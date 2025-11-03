@@ -2,7 +2,9 @@
 
 ## ordered log (for production release)
 
-### ### scanDir srcDir remove backward compatability
+### ❌ scanDir srcDir remove backward compatability
+
+- check occurences of `this.options.scanDirs[0]` where we might introcuce bugs as we currently only use the first entry in both transformers
 
 ### ✅ plugins
 
@@ -10,12 +12,10 @@ webpack rollup, esbuild, in addition to vite plugin
 
 ### ✅ add scanDirs option for many packages scanning
 
-
 ### ❌ other plugins
 
 Babel Plugin - Async/sync pipeline incompatibility (architectural issue)
 TypeScript Transformer - Complex TS compiler API integration
-
 
 ### merge or remove branches before additional features
 

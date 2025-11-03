@@ -162,6 +162,7 @@ export class DiInjectMarkers {
       if (moduleSpecifier.startsWith(".")) {
         resolvedPath = path.resolve(currentDir, moduleSpecifier);
       } else {
+        // FIXME where should that option come from, is this used at all?
         resolvedPath = path.resolve(this.options.srcDir, moduleSpecifier);
       }
 

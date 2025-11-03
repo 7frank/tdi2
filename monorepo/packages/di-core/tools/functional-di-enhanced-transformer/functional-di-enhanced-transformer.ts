@@ -126,7 +126,7 @@ export class FunctionalDIEnhancedTransformer {
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir
+      srcDir: this.options.scanDirs[0]
     });
 
     this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
@@ -144,7 +144,7 @@ export class FunctionalDIEnhancedTransformer {
 
     // Initialize functional-specific components
     const functionalOptions = {
-      srcDir: this.options.srcDir,
+      srcDir: this.options.scanDirs[0],
       outputDir: this.options.outputDir,
       generateDebugFiles: options.generateDebugFiles,
       verbose: this.options.verbose
@@ -155,7 +155,7 @@ export class FunctionalDIEnhancedTransformer {
     
     // Initialize configuration processing components
     this.configurationProcessor = new ConfigurationProcessor({
-      srcDir: this.options.srcDir,
+      srcDir: this.options.scanDirs[0],
       verbose: this.options.verbose
     });
     
@@ -302,7 +302,7 @@ export class FunctionalDIEnhancedTransformer {
     const pattern = "/**/*.{ts,tsx}";
 
     // Add source files from all scan directories
-    const scanDirs = (this.options as any).scanDirs || [this.options.srcDir];
+    const scanDirs = this.options.scanDirs
     for (const dir of scanDirs) {
       this.project.addSourceFilesAtPaths(`${dir}${pattern}`);
     }
