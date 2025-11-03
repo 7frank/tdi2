@@ -3,36 +3,37 @@ import * as esbuild from 'esbuild';
 import { tdi2Plugin } from '../index';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
+
+function firstExistingPath(paths: string[]): string {
+  for (const p of paths) if (fs.existsSync(p)) return p;
+  throw new Error(`Fixtures not found in any of: \n${paths.join('\n')}`);
+}
 
 describe('esbuild Plugin E2E', () => {
-  let tempDir: string;
+  const repoRoot = process.cwd();
+  const tmpRoot = path.join(repoRoot, '.e2e-tmp');
   let outputFile: string;
 
+  // Locate fixtures without guessing a single layout
+  const fixturesDir = firstExistingPath([
+    path.join(repoRoot, 'src', '__tests__', 'fixtures'),
+    path.join(repoRoot, '..', 'plugin-core', 'src', '__tests__', 'fixtures'),
+    path.join(repoRoot, 'plugin-core', 'src', '__tests__', 'fixtures'),
+    path.join(repoRoot, 'packages', 'plugin-core', 'src', '__tests__', 'fixtures'),
+  ]);
+
+  const counterService = path.join(fixturesDir, 'CounterService.ts');
+  const counter = path.join(fixturesDir, 'Counter.tsx');
+
   beforeAll(async () => {
-    // Create temp directory
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'esbuild-test-'));
-    outputFile = path.join(tempDir, 'bundle.js');
-
-    // Copy test fixtures
-    const fixturesSource = path.join(__dirname, '../../../plugin-core/src/__tests__/fixtures');
-    const fixturesDest = path.join(tempDir, 'src');
-
-    fs.mkdirSync(fixturesDest, { recursive: true });
-    fs.copyFileSync(
-      path.join(fixturesSource, 'CounterService.ts'),
-      path.join(fixturesDest, 'CounterService.ts')
-    );
-    fs.copyFileSync(
-      path.join(fixturesSource, 'Counter.tsx'),
-      path.join(fixturesDest, 'Counter.tsx')
-    );
+    fs.mkdirSync(tmpRoot, { recursive: true });
+    outputFile = path.join(tmpRoot, 'bundle.js');
 
     // Create entry file
-    const entryFile = path.join(fixturesDest, 'index.ts');
+    const entryFile = path.join(tmpRoot, 'index.ts');
     fs.writeFileSync(entryFile, `
-      export { Counter } from './Counter';
-      export { CounterService } from './CounterService';
+      export { Counter } from '${counter.replace(/\\/g, '/')}';
+      export { CounterService } from '${counterService.replace(/\\/g, '/')}';
     `);
 
     // Run esbuild with TDI2 plugin
@@ -44,8 +45,8 @@ describe('esbuild Plugin E2E', () => {
       format: 'cjs',
       plugins: [
         tdi2Plugin({
-          scanDirs: [fixturesDest],
-          outputDir: path.join(fixturesDest, 'generated'),
+          scanDirs: [fixturesDir],
+          outputDir: path.join(tmpRoot, 'generated'),
           verbose: false,
           enableFunctionalDI: true,
           enableInterfaceResolution: true,
@@ -61,9 +62,8 @@ describe('esbuild Plugin E2E', () => {
   });
 
   afterAll(() => {
-    // Cleanup
-    if (tempDir && fs.existsSync(tempDir)) {
-      fs.rmSync(tempDir, { recursive: true, force: true });
+    if (fs.existsSync(tmpRoot)) {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
     }
   });
 

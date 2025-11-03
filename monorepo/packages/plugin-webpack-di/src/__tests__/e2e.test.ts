@@ -3,36 +3,40 @@ import webpack from 'webpack';
 import { TDI2WebpackPlugin } from '../index';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import { promisify } from 'util';
 
 const webpackAsync = promisify(webpack);
 
+function firstExistingPath(paths: string[]): string {
+  for (const p of paths) if (fs.existsSync(p)) return p;
+  throw new Error(`Fixtures not found in any of: \n${paths.join('\n')}`);
+}
+
 describe('Webpack Plugin E2E', () => {
-  let tempDir: string;
+  const repoRoot = process.cwd();
+  const tmpRoot = path.join(repoRoot, '.e2e-tmp');
+  const outDir = path.join(tmpRoot, 'dist');
   let outputFile: string;
 
+  // Locate fixtures without guessing a single layout
+  const fixturesDir = firstExistingPath([
+    path.join(repoRoot, 'src', '__tests__', 'fixtures'),
+    path.join(repoRoot, '..', 'plugin-core', 'src', '__tests__', 'fixtures'),
+    path.join(repoRoot, 'plugin-core', 'src', '__tests__', 'fixtures'),
+    path.join(repoRoot, 'packages', 'plugin-core', 'src', '__tests__', 'fixtures'),
+  ]);
+
+  const counterService = path.join(fixturesDir, 'CounterService.ts');
+  const counter = path.join(fixturesDir, 'Counter.tsx');
+
   beforeAll(async () => {
-    // Create temp directory
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'webpack-test-'));
-    outputFile = path.join(tempDir, 'dist', 'bundle.js');
+    fs.mkdirSync(tmpRoot, { recursive: true });
+    fs.mkdirSync(outDir, { recursive: true });
 
-    // Copy test fixtures
-    const fixturesSource = path.join(__dirname, '../../../plugin-core/src/__tests__/fixtures');
-    const fixturesDest = path.join(tempDir, 'src');
-
-    fs.mkdirSync(fixturesDest, { recursive: true });
-    fs.copyFileSync(
-      path.join(fixturesSource, 'CounterService.ts'),
-      path.join(fixturesDest, 'CounterService.ts')
-    );
-    fs.copyFileSync(
-      path.join(fixturesSource, 'Counter.tsx'),
-      path.join(fixturesDest, 'Counter.tsx')
-    );
+    outputFile = path.join(outDir, 'bundle.js');
 
     // Create tsconfig.json for ts-loader
-    const tsconfigPath = path.join(tempDir, 'tsconfig.json');
+    const tsconfigPath = path.join(tmpRoot, 'tsconfig.json');
     fs.writeFileSync(tsconfigPath, JSON.stringify({
       compilerOptions: {
         target: 'ES2020',
@@ -42,23 +46,22 @@ describe('Webpack Plugin E2E', () => {
         skipLibCheck: true,
         experimentalDecorators: true,
       },
-      include: ['src/**/*'],
     }, null, 2));
 
     // Create entry file
-    const entryFile = path.join(fixturesDest, 'index.ts');
+    const entryFile = path.join(tmpRoot, 'index.ts');
     fs.writeFileSync(entryFile, `
-      export { Counter } from './Counter';
-      export { CounterService } from './CounterService';
+      export { Counter } from '${counter.replace(/\\/g, '/')}';
+      export { CounterService } from '${counterService.replace(/\\/g, '/')}';
     `);
 
     // Run webpack with TDI2 plugin
     const stats = await webpackAsync({
       mode: 'development',
       entry: entryFile,
-      context: tempDir, // Set context so ts-loader finds tsconfig.json
+      context: tmpRoot,
       output: {
-        path: path.join(tempDir, 'dist'),
+        path: outDir,
         filename: 'bundle.js',
         libraryTarget: 'commonjs2',
       },
@@ -81,7 +84,7 @@ describe('Webpack Plugin E2E', () => {
               loader: 'ts-loader',
               options: {
                 configFile: tsconfigPath,
-                transpileOnly: true, // Skip type checking to avoid external module errors
+                transpileOnly: true,
               },
             }],
             exclude: /node_modules/,
@@ -90,9 +93,9 @@ describe('Webpack Plugin E2E', () => {
       },
       plugins: [
         new TDI2WebpackPlugin({
-          scanDirs: [fixturesDest],
-          outputDir: path.join(fixturesDest, 'generated'),
-          verbose: true, // Enable to see what's happening
+          scanDirs: [fixturesDir],
+          outputDir: path.join(tmpRoot, 'generated'),
+          verbose: false,
           enableFunctionalDI: true,
           enableInterfaceResolution: true,
         }),
@@ -112,9 +115,8 @@ describe('Webpack Plugin E2E', () => {
   }, 30000); // 30 second timeout for webpack
 
   afterAll(() => {
-    // Cleanup
-    if (tempDir && fs.existsSync(tempDir)) {
-      fs.rmSync(tempDir, { recursive: true, force: true });
+    if (fs.existsSync(tmpRoot)) {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
     }
   });
 
