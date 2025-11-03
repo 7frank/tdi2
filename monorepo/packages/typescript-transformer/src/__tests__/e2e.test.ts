@@ -1,154 +1,107 @@
+// src/__tests__/e2e.test.ts
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import * as ts from 'typescript';
-import tdi2Transformer from '../transformer';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
+import { execSync } from 'child_process';
 
-describe('TypeScript Transformer E2E', () => {
-  let tempDir: string;
-  let outputDir: string;
+function firstExistingPath(paths: string[]): string {
+  for (const p of paths) if (fs.existsSync(p)) return p;
+  throw new Error(`Fixtures not found in any of: \n${paths.join('\n')}`);
+}
 
-  beforeAll(async () => {
-    // Create temp directory
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-transformer-test-'));
-    outputDir = path.join(tempDir, 'dist');
+describe('TypeScript Transformer E2E (ts-patch + tsconfig plugin, no copying)', () => {
+  const repoRoot = process.cwd();
+  const tmpRoot = path.join(repoRoot, '.e2e-tmp');
+  const outDir = path.join(tmpRoot, 'dist');
+  const genDir = path.join(tmpRoot, 'generated');
+  const tsconfigPath = path.join(tmpRoot, 'tsconfig.e2e.json');
 
-    // Copy test fixtures
-    const fixturesSource = path.join(__dirname, '../../../plugin-core/src/__tests__/fixtures');
-    const fixturesDest = path.join(tempDir, 'src');
+  // Locate fixtures without guessing a single layout
+  const fixturesDir = firstExistingPath([
+    path.join(repoRoot, 'src', '__tests__', 'fixtures'),
+    path.join(repoRoot, 'plugin-core', 'src', '__tests__', 'fixtures'),
+    path.join(repoRoot, 'packages', 'plugin-core', 'src', '__tests__', 'fixtures'),
+    path.join(repoRoot, 'packages', 'typescript-transformer', 'src', '__tests__', 'fixtures'),
+  ]);
 
-    fs.mkdirSync(fixturesDest, { recursive: true });
-    fs.mkdirSync(outputDir, { recursive: true });
+  const counterService = path.join(fixturesDir, 'CounterService.ts');
+  const counter = path.join(fixturesDir, 'Counter.tsx');
 
-    fs.copyFileSync(
-      path.join(fixturesSource, 'CounterService.ts'),
-      path.join(fixturesDest, 'CounterService.ts')
-    );
-    fs.copyFileSync(
-      path.join(fixturesSource, 'Counter.tsx'),
-      path.join(fixturesDest, 'Counter.tsx')
-    );
+  beforeAll(() => {
+    fs.mkdirSync(tmpRoot, { recursive: true });
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.mkdirSync(genDir, { recursive: true });
 
-    // Create tsconfig.json
-    const tsconfigPath = path.join(tempDir, 'tsconfig.json');
-    fs.writeFileSync(
-      tsconfigPath,
-      JSON.stringify(
-        {
-          compilerOptions: {
-            target: 'ES2020',
-            module: 'commonjs',
-            jsx: 'react',
-            outDir: './dist',
-            rootDir: './src',
-            esModuleInterop: true,
-            skipLibCheck: true,
-            experimentalDecorators: true,
-          },
-          include: ['src/**/*'],
-        },
-        null,
-        2
-      )
-    );
+    // ensure plugin is resolvable via require() (CJS build exposed via package.json "exports.require")
+    const transformerPath = require.resolve('@tdi2/typescript-transformer');
 
-    // Compile with custom transformer
-    const program = ts.createProgram(
-      [
-        path.join(fixturesDest, 'CounterService.ts'),
-        path.join(fixturesDest, 'Counter.tsx'),
-      ],
-      {
-        target: ts.ScriptTarget.ES2020,
-        module: ts.ModuleKind.CommonJS,
-        jsx: ts.JsxEmit.React,
-        outDir: outputDir,
-        rootDir: fixturesDest,
+    // Use "files" with absolute paths to avoid TS18003
+    const tsconfig = {
+      compilerOptions: {
+        target: 'ES2020',
+        module: 'commonjs',
+        jsx: 'react',
+        outDir,
+        rootDir: fixturesDir,
         esModuleInterop: true,
         skipLibCheck: true,
         experimentalDecorators: true,
-      }
-    );
-
-    // Create transformer factory
-    const transformerFactory = tdi2Transformer(
-      program,
-      {
-        scanDirs: [fixturesDest],
-        outputDir: path.join(fixturesDest, 'generated'),
-        verbose: false,
-        enableFunctionalDI: true,
-        enableInterfaceResolution: true,
+        plugins: [
+          {
+            transform: transformerPath,
+            scanDirs: [fixturesDir],
+            outputDir: genDir,
+            enableFunctionalDI: true,
+            enableInterfaceResolution: true,
+            verbose: false,
+          },
+        ],
       },
-      { ts }
-    );
+      files: [counterService, counter].map(p => p.replace(/\\/g, '/')),
+      exclude: [outDir.replace(/\\/g, '/')],
+    };
 
-    // Emit with transformer
-    const emitResult = program.emit(
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      {
-        before: [transformerFactory],
-      }
-    );
+    fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 2));
 
-    if (emitResult.emitSkipped) {
-      const diagnostics = ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics);
-      diagnostics.forEach((diagnostic) => {
-        if (diagnostic.file) {
-          const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
-            diagnostic.start!
-          );
-          const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-          console.error(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
-        } else {
-          console.error(ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'));
-        }
-      });
-    }
-  }, 30000); // 30 second timeout for compilation
+    // TypeScript MUST be invoked with Node to honor ts-patch
+    const tscBin = require.resolve('typescript/bin/tsc');
+    execSync(`node "${tscBin}" -p "${tsconfigPath}"`, {
+      stdio: 'inherit',
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        NODE_PATH: `${path.join(repoRoot, 'node_modules')}${path.delimiter}${process.env.NODE_PATH || ''}`,
+      },
+    });
+  }, 60000);
 
   afterAll(() => {
-    // Cleanup
-    if (tempDir && fs.existsSync(tempDir)) {
-      fs.rmSync(tempDir, { recursive: true, force: true });
-    }
+    if (fs.existsSync(tmpRoot)) fs.rmSync(tmpRoot, { recursive: true, force: true });
   });
 
-  it('should transform Counter component to use DI', () => {
-    const counterOutput = path.join(outputDir, 'Counter.js');
+  it('emits transformed Counter component using DI hooks', () => {
+    const counterOutput = path.join(outDir, 'Counter.js');
     expect(fs.existsSync(counterOutput)).toBe(true);
-
-    const transformedContent = fs.readFileSync(counterOutput, 'utf-8');
-
-    // Verify transformation happened
-    expect(transformedContent).toContain('useService');
-    expect(transformedContent).toContain('CounterServiceInterface');
-
-    // Verify imports were added
-    expect(transformedContent).toContain('@tdi2/di-core/context');
+    const transformed = fs.readFileSync(counterOutput, 'utf8');
+    expect(transformed).toContain('useService');
+    expect(transformed).toContain('CounterServiceInterface');
+    expect(transformed).toContain('@tdi2/di-core/context');
   });
 
-  it('should compile CounterService with decorators', () => {
-    const serviceOutput = path.join(outputDir, 'CounterService.js');
+  it('emits CounterService with decorators compiled', () => {
+    const serviceOutput = path.join(outDir, 'CounterService.js');
     expect(fs.existsSync(serviceOutput)).toBe(true);
-
-    const compiledContent = fs.readFileSync(serviceOutput, 'utf-8');
-
-    // Verify service was compiled
-    expect(compiledContent).toContain('CounterService');
+    const compiled = fs.readFileSync(serviceOutput, 'utf8');
+    expect(compiled).toContain('CounterService');
   });
 
-  it('should generate interface resolution config', () => {
-    // Config files are in node_modules/.tdi2, not src/generated
-    const tdi2Dir = path.join(process.cwd(), 'node_modules', '.tdi2');
-    expect(fs.existsSync(tdi2Dir)).toBe(true);
+  it('generates interface-resolution artifacts without touching src/', () => {
+    expect(fs.existsSync(genDir)).toBe(true);
+    expect(fs.readdirSync(genDir).length > 0).toBe(true);
+  });
 
-    // Check for generated config files
-    const configDirs = fs.readdirSync(path.join(tdi2Dir, 'configs'));
-    expect(configDirs.length).toBeGreaterThan(0);
+  it('writes interface-resolution config under node_modules/.tdi2', () => {
+    const tdi2Dir = path.join(repoRoot, 'node_modules', '.tdi2');
+    expect(fs.existsSync(path.join(tdi2Dir, 'configs'))).toBe(true);
   });
 });

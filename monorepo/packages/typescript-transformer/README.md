@@ -51,7 +51,7 @@ Add the transformer to your `tsconfig.json`:
     "plugins": [
       {
         "transform": "@tdi2/typescript-transformer",
-        "srcDir": "./src",
+        "scanDirs": ["./src"], // 
         "outputDir": "./src/generated",
         "enableFunctionalDI": true,
         "enableInterfaceResolution": true,

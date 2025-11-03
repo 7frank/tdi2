@@ -2,15 +2,19 @@
 
 ## ordered log (for production release)
 
-### ❌ scanDir srcDir remove backward compatability
-
-- check occurences of `this.options.scanDirs[0]` where we might introcuce bugs as we currently only use the first entry in both transformers
-
 ### ✅ plugins
 
 webpack rollup, esbuild, in addition to vite plugin
 
 ### ✅ add scanDirs option for many packages scanning
+
+### ❌ scanDir srcDir remove backward compatability
+
+- check occurences of `this.options.scanDirs[0]` where we might introcuce bugs as we currently only use the first entry in both transformers
+
+- both transofrmers are only using the first scan directory iin parts, which at least should result in certain cross package features not working as of jet
+
+\_ all plugings currently copy the files instead of leaving them in the package, which will problably not help in cprss package usability and
 
 ### ❌ other plugins
 

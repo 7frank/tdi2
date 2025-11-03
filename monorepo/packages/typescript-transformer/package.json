@@ -2,14 +2,13 @@
   "name": "@tdi2/typescript-transformer",
   "version": "1.0.0",
   "description": "TypeScript custom transformer for TDI2 dependency injection via ts-patch",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
@@ -48,7 +47,8 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build"
+    "prepublishOnly": "npm run clean && npm run build",
+    "prepare": "ts-patch install -s"
   },
   "dependencies": {
     "@tdi2/di-core": "workspace:*",
