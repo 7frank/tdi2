@@ -4,19 +4,27 @@
 
 ### ✅ plugins
 
-webpack rollup, esbuild, in addition to vite plugin
+✅ webpack
+✅ rollup
+✅ esbuild
+
+in addition to vite plugin
 
 ### ✅ add scanDirs option for many packages scanning
 
-### ❌ scanDir srcDir remove backward compatability
+### ✅ all plugings currently copy the files instead of leaving them in the package, which will problably not help in cprss package usability and
 
-- check occurences of `this.options.scanDirs[0]` where we might introcuce bugs as we currently only use the first entry in both transformers
+### ❌❌ scanDirs[0] srcDir remove backward compatability
 
-- both transofrmers are only using the first scan directory iin parts, which at least should result in certain cross package features not working as of jet
+- ❌ check occurences of `this.options.scanDirs[0]` where we might introcuce bugs as we currently only use the first entry in both transformers
 
-\_ all plugings currently copy the files instead of leaving them in the package, which will problably not help in cprss package usability and
+- ❌ both transofrmers are only using the first scan directory iin parts, which at least should result in certain cross package features not working as of jet
+
+- ❌ write a test that uses di-plugin fixture addiotionally to own package to ensure that cross package stuff is working then if not fix those srcDir occurences and scandir 0 until its working
 
 ### ❌ other plugins
+
+> well probably abandon them for now
 
 Babel Plugin - Async/sync pipeline incompatibility (architectural issue)
 TypeScript Transformer - Complex TS compiler API integration
