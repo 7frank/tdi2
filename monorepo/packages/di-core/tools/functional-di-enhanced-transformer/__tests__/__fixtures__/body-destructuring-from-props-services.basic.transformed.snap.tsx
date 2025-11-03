@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for SimpleComponent
-// Generated: 2025-11-03T07:21:52.657Z
+// Generated: 2025-11-03T07:30:12.321Z
 import React from 'react';
 import type { Inject } from '@tdi2/di-core/markers';
 import { ApiInterface } from './shared-types';
@@ -13,7 +13,6 @@ export function SimpleComponent(props: {
   };
 }) {
     const api = props.services?.api ?? (useService('ApiInterface') as unknown as ApiInterface);
-
   return (
     <div>
       <button onClick={() => api.getData()}>Load Data</button>
