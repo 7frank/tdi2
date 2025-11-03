@@ -81,11 +81,12 @@ describe('esbuild Plugin E2E', () => {
   });
 
   it('should generate interface resolution config', () => {
-    const generatedDir = path.join(tempDir, 'src', 'generated');
-    expect(fs.existsSync(generatedDir)).toBe(true);
+    // Config files are in node_modules/.tdi2, not src/generated
+    const tdi2Dir = path.join(process.cwd(), 'node_modules', '.tdi2');
+    expect(fs.existsSync(tdi2Dir)).toBe(true);
 
     // Check for generated config files
-    const files = fs.readdirSync(generatedDir);
-    expect(files.length).toBeGreaterThan(0);
+    const configDirs = fs.readdirSync(path.join(tdi2Dir, 'configs'));
+    expect(configDirs.length).toBeGreaterThan(0);
   });
 });

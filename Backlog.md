@@ -5,6 +5,7 @@
 ### plugins
 
 others and what about these
+webpack rollup, esbuild, in addition to vite plugin
 
 Babel Plugin - Async/sync pipeline incompatibility (architectural issue)
 TypeScript Transformer - Complex TS compiler API integration

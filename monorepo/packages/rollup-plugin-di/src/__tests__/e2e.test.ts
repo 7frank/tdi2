@@ -10,7 +10,6 @@ import * as os from 'os';
 describe('Rollup Plugin E2E', () => {
   let tempDir: string;
   let outputFile: string;
-  let buildError: Error | null = null;
 
   beforeAll(async () => {
     // Create temp directory
@@ -38,49 +37,49 @@ describe('Rollup Plugin E2E', () => {
       export { CounterService } from './CounterService';
     `);
 
-    // Run rollup with TDI2 plugin (wrapped in try-catch for known issues)
-    try {
-      const bundle = await rollup({
-        input: entryFile,
-        plugins: [
-          nodeResolve({
-            extensions: ['.ts', '.tsx', '.js', '.jsx'],
-          }),
-          tdi2Plugin({
-            scanDirs: [fixturesDest],
-            outputDir: path.join(fixturesDest, 'generated'),
-            verbose: true,
-            enableFunctionalDI: true,
-            enableInterfaceResolution: true,
-          }),
-          esbuild({
-            target: 'es2020',
-            jsx: 'transform',
-            jsxFactory: 'React.createElement',
-            loaders: {
-              '.ts': 'ts',
-              '.tsx': 'tsx',
+    // Run rollup with TDI2 plugin
+    const bundle = await rollup({
+      input: entryFile,
+      plugins: [
+        nodeResolve({
+          extensions: ['.ts', '.tsx', '.js', '.jsx'],
+        }),
+        tdi2Plugin({
+          scanDirs: [fixturesDest],
+          outputDir: path.join(fixturesDest, 'generated'),
+          verbose: true,
+          enableFunctionalDI: true,
+          enableInterfaceResolution: true,
+        }),
+        esbuild({
+          target: 'es2022',
+          jsx: 'transform',
+          jsxFactory: 'React.createElement',
+          loaders: {
+            '.ts': 'ts',
+            '.tsx': 'tsx',
+          },
+          tsconfigRaw: {
+            compilerOptions: {
+              experimentalDecorators: true,
             },
-          }),
-        ],
-        external: [
-          'react',
-          '@tdi2/di-core',
-          '@tdi2/di-core/markers',
-          '@tdi2/di-core/context',
-        ],
-      });
+          },
+        }),
+      ],
+      external: [
+        'react',
+        '@tdi2/di-core',
+        '@tdi2/di-core/markers',
+        '@tdi2/di-core/context',
+      ],
+    });
 
-      await bundle.write({
-        file: outputFile,
-        format: 'cjs',
-      });
+    await bundle.write({
+      file: outputFile,
+      format: 'cjs',
+    });
 
-      await bundle.close();
-    } catch (error) {
-      buildError = error as Error;
-      console.log('⚠️  Build failed with known issue:', error.message);
-    }
+    await bundle.close();
   });
 
   afterAll(() => {
@@ -90,18 +89,7 @@ describe('Rollup Plugin E2E', () => {
     }
   });
 
-  // KNOWN ISSUE: FunctionalDIEnhancedTransformer has a duplicate variable bug
-  // It adds `const counter = useService(...)` but doesn't remove `const { counter } = props.services`
-  // esbuild is stricter than webpack and catches this: "The symbol 'counter' has already been declared"
-  // This affects rollup, esbuild, and webpack plugins (webpack's eval mode just doesn't catch it)
-  // TODO: Fix in di-core/tools/functional-di-enhanced-transformer
   it('should transform Counter component to use DI', () => {
-    if (buildError) {
-      expect(buildError.message).toContain('The symbol "counter" has already been declared');
-      console.log('✅ Correctly detected duplicate variable bug in transformation');
-      return;
-    }
-
     expect(fs.existsSync(outputFile)).toBe(true);
 
     const bundleContent = fs.readFileSync(outputFile, 'utf-8');
