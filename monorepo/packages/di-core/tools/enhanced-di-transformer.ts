@@ -30,7 +30,6 @@ import type {
 import { IntegratedInterfaceResolver } from './interface-resolver/integrated-interface-resolver';
 
 interface TransformerOptions {
-  srcDir?: string; // Deprecated - use scanDirs
   scanDirs?: string[];
   outputDir?: string;
   verbose?: boolean;
@@ -57,7 +56,9 @@ export class EnhancedDITransformer {
   private warnings: TransformationWarning[] = [];
 
   constructor(options: TransformerOptions = {}) {
-    const scanDirs = options.scanDirs || ['./src'];
+    if (!options.scanDirs || options.scanDirs.length === 0) {
+      throw new Error('EnhancedDITransformer requires scanDirs option with at least one directory');
+    }
 
     this.options = {
       outputDir: options.outputDir || './src/generated',
@@ -66,7 +67,7 @@ export class EnhancedDITransformer {
       enableInheritanceDI: true,
       enableStateDI: true,
       customSuffix: options.customSuffix,
-      scanDirs: scanDirs
+      scanDirs: options.scanDirs
     } as any;
 
     this.project = new Project({
@@ -85,7 +86,7 @@ export class EnhancedDITransformer {
     // Initialize InterfaceResolver with all scan directories
     this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
-      scanDirs: scanDirs,
+      scanDirs: this.options.scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
       enableStateDI: this.options.enableStateDI
     });
@@ -565,7 +566,7 @@ export class EnhancedDITransformer {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const transformer = new EnhancedDITransformer({ 
     verbose: true,
-    srcDir: './src',
+    scanDirs: ['./src'],
     enableInterfaceResolution: true
   });
   

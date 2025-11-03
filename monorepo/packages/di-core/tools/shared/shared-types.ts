@@ -6,7 +6,7 @@ import type { SourceFile, ClassDeclaration, FunctionDeclaration, ArrowFunction }
  * Common transformation options used across all shared services
  */
 export interface SharedTransformationOptions {
-  srcDir: string;
+  scanDirs: string[];
   outputDir: string;
   verbose: boolean;
   enableInterfaceResolution: boolean;

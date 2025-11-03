@@ -41,7 +41,6 @@ import { BeanFactoryGenerator } from '../config-processor/bean-factory-generator
 import type { ConfigurationMetadata } from '../../src/types';
 
 interface TransformerOptions {
-  srcDir?: string; // Deprecated - use scanDirs
   scanDirs?: string[];
   outputDir?: string;
   generateDebugFiles?: boolean;
@@ -82,7 +81,9 @@ export class FunctionalDIEnhancedTransformer {
   private configurations: ConfigurationMetadata[] = [];
 
   constructor(options: TransformerOptions = {}) {
-    const scanDirs = options.scanDirs || ['./src'];
+    if (!options.scanDirs || options.scanDirs.length === 0) {
+      throw new Error('FunctionalDIEnhancedTransformer requires scanDirs option with at least one directory');
+    }
 
     this.options = {
       outputDir: './src/generated',
@@ -93,7 +94,7 @@ export class FunctionalDIEnhancedTransformer {
       customSuffix: undefined,
       generateDebugFiles: false,
       ...options,
-      scanDirs: scanDirs
+      scanDirs: options.scanDirs
     } as any;
 
     this.project = new Project({
@@ -113,7 +114,7 @@ export class FunctionalDIEnhancedTransformer {
     // Initialize InterfaceResolver with all scan directories
     this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
-      scanDirs: scanDirs,
+      scanDirs: this.options.scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
       enableStateDI: this.options.enableStateDI
     });
