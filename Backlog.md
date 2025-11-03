@@ -14,13 +14,46 @@ in addition to vite plugin
 
 ### ✅ all plugings currently copy the files instead of leaving them in the package, which will problably not help in cprss package usability and
 
-### ❌❌ scanDirs[0] srcDir remove backward compatability
+### ⚠️ scanDirs[0] srcDir remove backward compatibility - PARTIAL
 
-- ❌ check occurences of `this.options.scanDirs[0]` where we might introcuce bugs as we currently only use the first entry in both transformers
+#### ✅ Completed
 
-- ❌ both transofrmers are only using the first scan directory iin parts, which at least should result in certain cross package features not working as of jet
+- ✅ **Bridge file generation** - Creates `.tdi2/` directories in ALL scanDirs (not just first)
+  - Location: [config-manager.ts:33](monorepo/packages/di-core/tools/config-manager.ts#L33)
+  - Each package can now import from its local `.tdi2/di-config.ts`
+  - All bridges point to same config source in `node_modules/.tdi2/configs/`
 
-- ❌ write a test that uses di-plugin fixture addiotionally to own package to ensure that cross package stuff is working then if not fix those srcDir occurences and scandir 0 until its working
+- ✅ **Multi-package E2E test** - Validates transformation across multiple scanDirs
+  - Location: [e2e-multi-package.test.ts](monorepo/packages/plugin-esbuild-di/src/__tests__/e2e-multi-package.test.ts)
+  - Tests Counter from plugin-core + TodoList from local fixtures
+  - Verifies service discovery and interface resolution work across packages
+
+- ✅ **Service discovery** - Scans all scanDirs correctly
+- ✅ **Component transformation** - Transforms components in all scanDirs
+- ✅ **Interface resolution** - Resolves interfaces across all scanDirs
+
+#### ❌ Remaining Issues
+
+**HIGH Priority** 🔴:
+- ❌ **RecursiveInjectExtractor module resolution** - Only resolves non-relative imports from `scanDirs[0]`
+  - Location: [RecursiveInjectExtractor.ts:314](monorepo/packages/di-core/tools/shared/RecursiveInjectExtractor.ts#L314)
+  - Impact: Service in package B importing interface from package A will fail
+  - Fix: Loop through all scanDirs when resolving non-relative imports
+
+**MEDIUM Priority** 🟡:
+- ❌ **ConfigurationProcessor scanning** - Only scans `scanDirs[0]` for @Configuration classes
+  - Location: [functional-di-enhanced-transformer.ts:158](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.ts#L158)
+  - Impact: @Configuration/@Bean in secondary packages won't be discovered
+  - Fix: Update ConfigurationProcessor to accept and scan multiple directories
+
+- ❌ **Cross-package import test** - No test validating imports between packages
+  - Need: Test where component in package B imports interface from package A
+  - Need: Test where service in package B depends on service from package A
+
+**LOW Priority** 🟢:
+- ❌ **DebugFileGenerator paths** - Calculates paths relative to `scanDirs[0]` only
+  - Location: [debug-file-generator.ts:50](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L50)
+  - Impact: Debug files for secondary packages have wrong paths (not critical)
 
 ### ❌ other plugins
 

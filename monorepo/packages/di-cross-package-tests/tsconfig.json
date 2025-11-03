@@ -1,0 +1,21 @@
+{
+
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": ["vitest/globals", "node"]
+  },
+  "include": [
+    "fixtures/**/*",
+    "src/**/*",
+    "__tests__/**/*",
+    "*.ts",
+    "*.tsx"
+  ]
+}
