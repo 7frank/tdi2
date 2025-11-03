@@ -39,8 +39,9 @@
       "types": "./dist/context.d.ts"
     },
     "./tools": {
+      "types": "./dist/tools/index.d.ts",
       "import": "./dist/tools/index.js",
-      "types": "./dist/tools/index.d.ts"
+      "require": "./dist/tools/index.cjs"
     }
   },
   "files": [

@@ -52,7 +52,8 @@
   },
   "dependencies": {
     "@tdi2/di-core": "workspace:*",
-    "@tdi2/plugin-core": "workspace:*"
+    "@tdi2/plugin-core": "workspace:*",
+    "deasync": "^0.1.30"
   },
   "peerDependencies": {
     "ts-patch": "^3.0.0",

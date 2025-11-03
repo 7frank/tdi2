@@ -11,7 +11,7 @@ import {
   FunctionalDIEnhancedTransformer,
   EnhancedDITransformer,
 } from '@tdi2/di-core/tools';
-import { getDefaultConfig, validateConfig, shouldProcessFile } from '@tdi2/plugin-core';
+import { getDefaultConfig, validateConfig } from '@tdi2/plugin-core';
 import type { TransformOrchestratorOptions, TransformResult, TransformStats } from './types';
 
 export class TransformOrchestrator {
@@ -57,15 +57,11 @@ export class TransformOrchestrator {
   private async performInitialization(): Promise<void> {
     try {
       if (this.options.verbose) {
-        console.log('🔧 Initializing TDI2 TypeScript transformer...');
+        console.log('🔧 Initializing TDI2 TypeScript transformer (pre-transform mode)...');
         console.log(`📂 Scan directories: ${this.options.scanDirs?.join(', ')}`);
       }
 
-      // Step 1: Run class-based DI transformer for interface resolution
-      if (this.options.verbose) {
-        console.log('🔍 Building interface resolution map...');
-      }
-
+      // Step 1: Run interface resolution
       const classTransformer = new EnhancedDITransformer({
         scanDirs: this.options.scanDirs,
         outputDir: this.options.outputDir,
@@ -77,12 +73,8 @@ export class TransformOrchestrator {
       await classTransformer.transform();
       await classTransformer.save();
 
-      // Step 2: Run functional DI transformer
+      // Step 2: Run functional DI transformer and get transformed files
       if (this.options.enableFunctionalDI) {
-        if (this.options.verbose) {
-          console.log('🎯 Transforming functional components...');
-        }
-
         const functionalTransformer = new FunctionalDIEnhancedTransformer({
           scanDirs: this.options.scanDirs,
           outputDir: this.options.outputDir,
@@ -93,13 +85,13 @@ export class TransformOrchestrator {
           generateFallbacks: this.options.generateFallbacks,
         });
 
-        // This transforms ALL files and returns a Map<filePath, transformedContent>
+        // Transform all files and cache the results
         this.transformedFilesCache = await functionalTransformer.transformForBuild();
 
         this.stats.filesTransformed = this.transformedFilesCache.size;
 
         if (this.options.verbose) {
-          console.log(`✅ Transformed ${this.transformedFilesCache.size} files`);
+          console.log(`✅ Pre-transformed ${this.transformedFilesCache.size} files`);
         }
       }
 
@@ -141,73 +133,26 @@ export class TransformOrchestrator {
   }
 
   /**
-   * Transform a single source file (synchronous after initialization)
+   * Transform a single source file using cached transformations
+   *
+   * NOTE: We return the original sourceFile because TypeScript transformers
+   * cannot reliably create new SourceFiles without breaking symbol resolution.
+   *
+   * The actual transformation happens during initialization where di-core
+   * transformers modify the files. This plugin just manages the initialization.
    */
   transformSourceFile(sourceFile: ts.SourceFile): TransformResult {
     this.stats.filesProcessed++;
 
-    try {
-      const filePath = sourceFile.fileName;
-      const content = sourceFile.getFullText();
+    // We don't actually transform here - di-core already did it during init
+    // Just return the original sourceFile as-is
+    // TypeScript will read the already-transformed file from disk
 
-      // Use plugin-core's shouldProcessFile utility
-      if (!shouldProcessFile(filePath, this.options.advanced?.fileExtensions ?? ['.ts', '.tsx'])) {
-        this.stats.filesSkipped++;
-        return {
-          sourceFile,
-          wasTransformed: false,
-        };
-      }
-
-      // Skip generated files and node_modules
-      if (
-        filePath.includes('node_modules') ||
-        filePath.includes(this.options.outputDir!) ||
-        filePath.includes('.tdi2')
-      ) {
-        this.stats.filesSkipped++;
-        return {
-          sourceFile,
-          wasTransformed: false,
-        };
-      }
-
-      // Check if file was transformed during initialization
-      const transformedContent = this.getTransformedContent(filePath);
-
-      if (!transformedContent || transformedContent === content) {
-        this.stats.filesSkipped++;
-        return {
-          sourceFile,
-          wasTransformed: false,
-        };
-      }
-
-      if (this.options.verbose) {
-        console.log(`🔄 Using transformed version of ${filePath}`);
-      }
-
-      // Create new TypeScript source file with transformed content
-      const newSourceFile = this.options.tsInstance.createSourceFile(
-        sourceFile.fileName,
-        transformedContent,
-        sourceFile.languageVersion,
-        true // setParentNodes
-      );
-
-      return {
-        sourceFile: newSourceFile,
-        wasTransformed: true,
-      };
-    } catch (error) {
-      this.stats.errors++;
-      console.error(`❌ Unexpected error transforming ${sourceFile.fileName}:`, error);
-      return {
-        sourceFile,
-        wasTransformed: false,
-        diagnostics: [this.createDiagnostic(sourceFile, String(error))],
-      };
-    }
+    this.stats.filesSkipped++;
+    return {
+      sourceFile,
+      wasTransformed: false,
+    };
   }
 
   /**
@@ -218,18 +163,39 @@ export class TransformOrchestrator {
   }
 
   /**
-   * Create a TypeScript diagnostic for errors
+   * Synchronously wait for initialization to complete using deasync
+   * This is necessary because TypeScript transformers must be synchronous
    */
-  private createDiagnostic(sourceFile: ts.SourceFile, message: string): ts.Diagnostic {
-    return {
-      category: this.options.tsInstance.DiagnosticCategory.Error,
-      code: 9999,
-      file: sourceFile,
-      start: 0,
-      length: 0,
-      messageText: `TDI2 Transformer Error: ${message}`,
-    };
+  waitForInitialization(): void {
+    // If already initialized, return immediately
+    if (this.initialized) {
+      return;
+    }
+
+    const startTime = Date.now();
+
+    if (this.options.verbose) {
+      console.log('⏳ Waiting for TDI2 transformer initialization...');
+    }
+
+    // Use deasync to wait for the async initialization
+    const deasync = require('deasync');
+
+    // Wait for initializationPromise to resolve
+    if (this.initializationPromise) {
+      try {
+        deasync.loopWhile(() => !this.initialized);
+      } catch (error) {
+        console.error('❌ TDI2 transformer initialization failed:', error);
+        throw error;
+      }
+    }
+
+    if (this.options.verbose) {
+      console.log(`✅ TDI2 transformer initialization completed in ${Date.now() - startTime}ms`);
+    }
   }
+
 
   /**
    * Get transformation statistics

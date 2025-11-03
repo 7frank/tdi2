@@ -57,9 +57,11 @@ export default function tdi2Transformer(
   return (context: ts.TransformationContext): ts.Transformer<ts.SourceFile> => {
     /**
      * Visitor function for each source file
-     * NOTE: This is synchronous - we rely on the orchestrator being pre-initialized
+     * NOTE: We must wait for initialization before transforming
      */
     return (sourceFile: ts.SourceFile): ts.SourceFile => {
+      // Wait for initialization to complete (busy-wait)
+      orchestrator!.waitForInitialization();
       // Skip declaration files
       if (sourceFile.isDeclarationFile) {
         return sourceFile;

@@ -49,7 +49,7 @@ export default defineConfig([
   ...entries,
   {
     entry: ["tools/index.ts"],
-    format: ["esm"],
+    format: ["esm", "cjs"],
     dts: true,
     outDir: "dist/tools",
     clean: false,
