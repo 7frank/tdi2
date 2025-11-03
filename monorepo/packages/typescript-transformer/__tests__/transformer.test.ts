@@ -2,7 +2,7 @@
  * Integration tests for TDI2 TypeScript transformer
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach,vi } from 'vitest';
 import * as ts from 'typescript';
 import tdi2Transformer from '../src/transformer';
 import type { PluginConfig, TransformerExtras } from '../src/types';
