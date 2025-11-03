@@ -2,6 +2,15 @@
 
 ## ordered log (for production release)
 
+### plugins
+
+others and what about these
+
+Babel Plugin - Async/sync pipeline incompatibility (architectural issue)
+TypeScript Transformer - Complex TS compiler API integration
+
+### scanDis for many packages scanning
+
 ### merge or remove branches before additional features
 
 feature/attempt-at-streamlining-interfaces
@@ -105,6 +114,14 @@ for example librechat has a lot of hooks,
 either way having smaller working changes while refactoring should improve adoption
 
 ### [❌]fix di-debug
+
+#### [❌] some tests, more complex examples still would fail
+
+    neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/aliasing-with-rest-and-di.basic.transformed.snap.tsx
+        neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/defaults-with-rest-and-di.basic.transformed.snap.tsx
+        neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/dynamic-destructuring.basic.transformed.snap.tsx
+        neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/multiple-rest-mixed-di.basic.transformed.snap.tsx
+        neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/nested-destructuring-with-rest.basic.transformed.snap.tsx
 
 #### [❌] overhaul of line based approach commit b596e7b
 
