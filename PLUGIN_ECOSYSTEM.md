@@ -13,10 +13,10 @@ The plugin ecosystem follows a shared-core architecture:
      ↑
      ├── @tdi2/vite-plugin-di (Vite integration)
      ├── @tdi2/typescript-transformer (TypeScript compiler via ts-patch)
-     ├── @tdi2/rollup-plugin-di (Rollup integration)
-     ├── @tdi2/webpack-plugin-di (Webpack 5 integration)
-     ├── @tdi2/esbuild-plugin-di (esbuild integration)
-     └── @tdi2/babel-plugin-di (Babel integration)
+     ├── @tdi2/plugin-rollup-di (Rollup integration)
+     ├── @tdi2/plugin-webpack-di (Webpack 5 integration)
+     ├── @tdi2/plugin-esbuild-di (esbuild integration)
+     └── @tdi2/plugin-babel-di (Babel integration)
 ```
 
 ## Package Descriptions
@@ -110,18 +110,18 @@ npx ts-patch install
 
 ---
 
-#### @tdi2/rollup-plugin-di
+#### @tdi2/plugin-rollup-di
 **Status**: ⚠️ **Experimental** - E2E tests passing, needs production validation
 
 **Installation**:
 ```bash
-npm install --save-dev @tdi2/rollup-plugin-di
+npm install --save-dev @tdi2/plugin-rollup-di
 ```
 
 **Usage**:
 ```javascript
 // rollup.config.js
-import { tdi2Plugin } from '@tdi2/rollup-plugin-di';
+import { tdi2Plugin } from '@tdi2/plugin-rollup-di';
 import esbuild from 'rollup-plugin-esbuild';
 
 export default {
@@ -152,18 +152,18 @@ export default {
 
 ---
 
-#### @tdi2/webpack-plugin-di
+#### @tdi2/plugin-webpack-di
 **Status**: ⚠️ **Experimental** - E2E tests passing, needs production validation
 
 **Installation**:
 ```bash
-npm install --save-dev @tdi2/webpack-plugin-di
+npm install --save-dev @tdi2/plugin-webpack-di
 ```
 
 **Usage**:
 ```javascript
 // webpack.config.js
-const { TDI2WebpackPlugin } = require('@tdi2/webpack-plugin-di');
+const { TDI2WebpackPlugin } = require('@tdi2/plugin-webpack-di');
 
 module.exports = {
   module: {
@@ -201,18 +201,18 @@ module.exports = {
 
 ---
 
-#### @tdi2/esbuild-plugin-di
+#### @tdi2/plugin-esbuild-di
 **Status**: ⚠️ **Experimental** - E2E tests passing, needs production validation
 
 **Installation**:
 ```bash
-npm install --save-dev @tdi2/esbuild-plugin-di
+npm install --save-dev @tdi2/plugin-esbuild-di
 ```
 
 **Usage**:
 ```javascript
 // esbuild.config.js
-const { tdi2Plugin } = require('@tdi2/esbuild-plugin-di');
+const { tdi2Plugin } = require('@tdi2/plugin-esbuild-di');
 
 require('esbuild').build({
   entryPoints: ['src/index.ts'],
@@ -236,12 +236,12 @@ require('esbuild').build({
 
 ---
 
-#### @tdi2/babel-plugin-di
+#### @tdi2/plugin-babel-di
 **Status**: ❌ **Not Working** - Async/sync pipeline incompatibility
 
 **Installation**:
 ```bash
-npm install --save-dev @tdi2/babel-plugin-di
+npm install --save-dev @tdi2/plugin-babel-di
 ```
 
 **Usage**:
@@ -249,7 +249,7 @@ npm install --save-dev @tdi2/babel-plugin-di
 // .babelrc
 {
   "plugins": [
-    ["@tdi2/babel-plugin-di", {
+    ["@tdi2/plugin-babel-di", {
       "scanDirs": ["./src"],
       "verbose": true,
       "enableFunctionalDI": true,
@@ -351,10 +351,10 @@ All plugins include end-to-end tests that verify the complete transformation pip
 ### Test Coverage
 
 - ✅ `@tdi2/vite-plugin-di` - 21/21 tests passing (API tests, no E2E yet)
-- ✅ `@tdi2/rollup-plugin-di` - 2/2 E2E tests passing
-- ✅ `@tdi2/webpack-plugin-di` - 2/2 E2E tests passing
-- ✅ `@tdi2/esbuild-plugin-di` - 2/2 E2E tests passing
-- ❌ `@tdi2/babel-plugin-di` - E2E tests failing (async/sync incompatibility)
+- ✅ `@tdi2/plugin-rollup-di` - 2/2 E2E tests passing
+- ✅ `@tdi2/plugin-webpack-di` - 2/2 E2E tests passing
+- ✅ `@tdi2/plugin-esbuild-di` - 2/2 E2E tests passing
+- ❌ `@tdi2/plugin-babel-di` - E2E tests failing (async/sync incompatibility)
 - ❌ `@tdi2/typescript-transformer` - E2E tests failing (transformations not applied)
 
 ### Running Tests
@@ -405,14 +405,14 @@ If you're currently using `@tdi2/vite-plugin-di` and want to switch:
 
 2. **Switching to Rollup**:
    ```bash
-   npm install --save-dev @tdi2/rollup-plugin-di
+   npm install --save-dev @tdi2/plugin-rollup-di
    ```
 
    Update `rollup.config.js` with plugin (see above)
 
 3. **Switching to Webpack**:
    ```bash
-   npm install --save-dev @tdi2/webpack-plugin-di
+   npm install --save-dev @tdi2/plugin-webpack-di
    ```
 
    Update `webpack.config.js` with plugin (see above)

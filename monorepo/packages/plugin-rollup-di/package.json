@@ -1,5 +1,5 @@
 {
-  "name": "@tdi2/rollup-plugin-di",
+  "name": "@tdi2/plugin-rollup-di",
   "version": "1.0.0",
   "description": "Rollup plugin for TDI2 dependency injection",
   "main": "./dist/index.js",
@@ -29,7 +29,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/7frank/tdi2.git",
-    "directory": "packages/rollup-plugin-di"
+    "directory": "packages/plugin-rollup-di"
   },
   "bugs": {
     "url": "https://github.com/7frank/tdi2/issues"
