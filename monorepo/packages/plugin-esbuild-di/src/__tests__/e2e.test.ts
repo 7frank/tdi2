@@ -14,9 +14,8 @@ describe('esbuild Plugin E2E', () => {
   const tmpRoot = path.join(repoRoot, '.e2e-tmp');
   let outputFile: string;
 
-  // Locate fixtures without guessing a single layout
+  // Locate plugin-core fixtures (Counter/CounterService)
   const fixturesDir = firstExistingPath([
-    path.join(repoRoot, 'src', '__tests__', 'fixtures'),
     path.join(repoRoot, '..', 'plugin-core', 'src', '__tests__', 'fixtures'),
     path.join(repoRoot, 'plugin-core', 'src', '__tests__', 'fixtures'),
     path.join(repoRoot, 'packages', 'plugin-core', 'src', '__tests__', 'fixtures'),
