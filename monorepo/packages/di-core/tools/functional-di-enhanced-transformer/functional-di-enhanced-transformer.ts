@@ -82,11 +82,9 @@ export class FunctionalDIEnhancedTransformer {
   private configurations: ConfigurationMetadata[] = [];
 
   constructor(options: TransformerOptions = {}) {
-    // Support both scanDirs (new) and srcDir (backward compat)
-    const scanDirs = options.scanDirs || (options.srcDir ? [options.srcDir] : ['./src']);
+    const scanDirs = options.scanDirs || ['./src'];
 
     this.options = {
-      srcDir: scanDirs[0], // Keep for backward compat
       outputDir: './src/generated',
       verbose:  false,
       enableInterfaceResolution: true,
@@ -105,7 +103,7 @@ export class FunctionalDIEnhancedTransformer {
 
     // Initialize ConfigManager
     this.configManager = new ConfigManager({
-      srcDir: this.options.srcDir,
+      scanDirs: this.options.scanDirs,
       outputDir: this.options.outputDir,
       enableFunctionalDI: true,
       verbose: this.options.verbose,
@@ -115,7 +113,6 @@ export class FunctionalDIEnhancedTransformer {
     // Initialize InterfaceResolver with all scan directories
     this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir,
       scanDirs: scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
       enableStateDI: this.options.enableStateDI

@@ -2,15 +2,20 @@
 
 ## ordered log (for production release)
 
-### plugins
+### ### scanDir srcDir remove backward compatability
 
-others and what about these
+### ✅ plugins
+
 webpack rollup, esbuild, in addition to vite plugin
+
+### ✅ add scanDirs option for many packages scanning
+
+
+### ❌ other plugins
 
 Babel Plugin - Async/sync pipeline incompatibility (architectural issue)
 TypeScript Transformer - Complex TS compiler API integration
 
-### scanDis for many packages scanning
 
 ### merge or remove branches before additional features
 

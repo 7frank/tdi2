@@ -57,11 +57,9 @@ export class EnhancedDITransformer {
   private warnings: TransformationWarning[] = [];
 
   constructor(options: TransformerOptions = {}) {
-    // Support both scanDirs (new) and srcDir (backward compat)
-    const scanDirs = options.scanDirs || (options.srcDir ? [options.srcDir] : ['./src']);
+    const scanDirs = options.scanDirs || ['./src'];
 
     this.options = {
-      srcDir: scanDirs[0], // Keep for backward compat with internal APIs
       outputDir: options.outputDir || './src/generated',
       verbose: options.verbose || false,
       enableInterfaceResolution: options.enableInterfaceResolution !== false,
@@ -77,7 +75,7 @@ export class EnhancedDITransformer {
 
     // Initialize ConfigManager
     this.configManager = new ConfigManager({
-      srcDir: this.options.srcDir,
+      scanDirs: this.options.scanDirs,
       outputDir: this.options.outputDir,
       enableFunctionalDI: false, // This transformer focuses on class-based DI
       verbose: this.options.verbose,
@@ -87,7 +85,6 @@ export class EnhancedDITransformer {
     // Initialize InterfaceResolver with all scan directories
     this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir,
       scanDirs: scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
       enableStateDI: this.options.enableStateDI

@@ -6,7 +6,7 @@ import * as path from 'path';
 import { createRequire } from 'module';
 
 interface DIConfigOptions {
-  srcDir: string;
+  scanDirs: string[];
   outputDir: string;
   enableFunctionalDI: boolean;
   verbose: boolean;
@@ -30,8 +30,8 @@ export class ConfigManager {
     this.packageName = this.getPackageName();
     this.configHash = this.generateConfigHash();
     this.configDir = path.resolve(`node_modules/.tdi2/configs/${this.configHash}`);
-    this.bridgeDir = path.resolve(options.srcDir, '.tdi2');
-    
+    this.bridgeDir = path.resolve(options.scanDirs[0], '.tdi2');
+
     this.ensureDirectories();
   }
 
@@ -48,11 +48,13 @@ export class ConfigManager {
   private generateConfigHash(): string {
     // FIXED: Make hash generation more deterministic
     // Normalize paths to be consistent regardless of execution context
-    const normalizedSrcDir = path.resolve(this.options.srcDir).replace(/\\/g, '/');
-    
+    const normalizedScanDirs = this.options.scanDirs.map(dir =>
+      path.resolve(dir).replace(/\\/g, '/')
+    ).sort().join(',');
+
     // Only include essential configuration that affects DI behavior
     const hashInput = {
-      srcDir: normalizedSrcDir,
+      scanDirs: normalizedScanDirs,
       enableFunctionalDI: this.options.enableFunctionalDI,
       packageName: this.packageName,
       // Remove nodeEnv from hash unless it's explicitly different
@@ -169,7 +171,7 @@ export class ConfigManager {
       // FIXED: Add version tracking
       version: '2.0.0',
       hashInputs: {
-        srcDir: path.resolve(this.options.srcDir).replace(/\\/g, '/'),
+        scanDirs: this.options.scanDirs.map(dir => path.resolve(dir).replace(/\\/g, '/')),
         enableFunctionalDI: this.options.enableFunctionalDI,
         packageName: this.packageName,
         environment: this.options.nodeEnv === 'production' ? 'production' : 'development'
