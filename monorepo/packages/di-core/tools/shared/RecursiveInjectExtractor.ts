@@ -12,7 +12,6 @@ import * as path from "path";
 
 export interface RecursiveExtractOptions {
   verbose?: boolean;
-  srcDir?: string; // Deprecated: use scanDirs instead
   scanDirs?: string[]; // Preferred: array of directories to scan
 }
 
@@ -315,7 +314,7 @@ export class RecursiveInjectExtractor {
       }
 
       // Handle non-relative imports - try all scanDirs
-      const scanDirs = this.options.scanDirs || [this.options.srcDir || './src'];
+      const scanDirs = this.options.scanDirs || ['./src'];
 
       for (const scanDir of scanDirs) {
         const resolvedPath = path.resolve(scanDir, moduleSpecifier);
