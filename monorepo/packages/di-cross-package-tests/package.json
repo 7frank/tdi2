@@ -5,9 +5,9 @@
   "description": "Integration tests for cross-package DI functionality",
   "type": "module",
   "scripts": {
-    "test": "vitest",
-    "test:watch": "vitest --watch",
-    "test:ui": "vitest --ui",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui --open",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
@@ -27,7 +27,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.6.0",
-    "@vitest/ui": "^1.0.0",
+    "@vitest/ui": "^4.0.0",
     "happy-dom": "^20.0.10",
     "typescript": "~5.8.3",
     "vite": "^6.0.0",

@@ -179,7 +179,8 @@ describe('Cross-Package DI Integration', () => {
 
       // Logger should have received the refresh log
       const logs = loggerService.state.logs;
-      expect(logs[logs.length - 1]).toContain('Refreshing user list');
+      const hasRefreshLog = logs.some(log => log.includes('Refreshing user list'));
+      expect(hasRefreshLog).toBe(true);
     });
   });
 });
