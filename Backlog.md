@@ -51,19 +51,50 @@ in addition to vite plugin
     - [plugin.ts:60-66,125-131](monorepo/packages/vite-plugin-di/src/plugin.ts#L60-L66) - Updated Vite plugin
   - ✅ All 11 configuration bean tests passing
 
+- ✅ **Cross-package dependency injection container test** - COMPLETED with comprehensive integration tests
+  - Location: [full-di-integration.test.tsx](monorepo/packages/di-cross-package-tests/__tests__/full-di-integration.test.tsx)
+  - ✅ Tests `container.loadConfiguration(DI_CONFIG)` from auto-generated files
+  - ✅ Validates automatic dependency tree generation
+  - ✅ Verifies cross-package dependency resolution
+  - ✅ All 17 tests passing
+  - Key Finding: Constructor parameters require `@Inject()` decorator (like Spring's `@Autowired`)
 
-- ❌ **Cross-package dependency injection container test**
- our tests only test the DIContainer but not whether it workd with generating and importing the DI_CONFIG automatically
-
-
-- ❌ **Cross-package import test** - No test validating imports between packages
-  - Need: Test where component in package B imports interface from package A
-  - Need: Test where service in package B depends on service from package A
+- ✅ **Cross-package import test** - COMPLETED and validated
+  - Test Package: [di-cross-package-tests](monorepo/packages/di-cross-package-tests/)
+  - ✅ Component in package B (UserList) imports interface from package A (LoggerInterface)
+  - ✅ Service in package B (UserService) depends on interface from package A (LoggerInterface)
+  - ✅ Constructor injection with `@Inject()` decorator works across packages
+  - ✅ Factory generation includes `container.resolve()` for dependencies
+  - Documentation: [README.md](monorepo/packages/di-cross-package-tests/__tests__/README.md)
 
 **LOW Priority** 🟢:
-- ❌ **DebugFileGenerator paths** - Calculates paths relative to `scanDirs[0]` only
-  - Location: [debug-file-generator.ts:50](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L50)
-  - Impact: Debug files for secondary packages have wrong paths (not critical)
+- ❌ **srcDir backward compatibility usage** - Multiple files still use `scanDirs[0]` or `this.options.srcDir`
+  - **Issue 1: DebugFileGenerator paths** - Line 50 uses `this.options.srcDir` for relative path calculation
+    - Location: [debug-file-generator.ts:50,213](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L50)
+    - Impact: Debug files from secondary scanDirs have wrong relative paths
+
+  - **Issue 2: ImportManager** - Line 216 uses `this.options.srcDir` for DI markers import path
+    - Location: [import-manager.ts:216-217](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/import-manager.ts#L216)
+    - Impact: May generate wrong import paths for secondary packages
+
+  - **Issue 3: DependencyTreeBuilder** - Line 315 uses `this.options.srcDir` for relative path calculation
+    - Location: [dependency-tree-builder.ts:85,315](monorepo/packages/di-core/tools/dependency-tree-builder.ts#L85)
+    - Impact: Service paths may be calculated incorrectly for secondary packages
+
+  - **Issue 4: DIInjectMarkers** - Line 166 uses `this.options.srcDir` for module resolution
+    - Location: [di-inject-markers.ts:166](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts#L166)
+    - Comment already exists: `// FIXME where should that option come from, is this used at all?`
+    - Impact: Unknown - may affect module resolution
+
+  - **Issue 5: EnhancedDependencyExtractor** - Line 1109 uses `this.options.srcDir` for absolute imports
+    - Location: [enhanced-dependency-extractor.ts:1109](monorepo/packages/di-core/tools/interface-resolver/enhanced-dependency-extractor.ts#L1109)
+    - Impact: May fail to resolve absolute imports from secondary packages
+
+  - **Not Issues (Backward Compat)**:
+    - ✅ integrated-interface-resolver.ts:58 - Just sets `srcDir: scanDirs[0]` for backward compat, then uses `scanDirs` array (line 100)
+    - ✅ functional-di-enhanced-transformer.ts:147 - Passes to DebugFileGenerator/ImportManager (covered above)
+
+  - **Overall Impact**: LOW - Mostly affects debug output and edge cases. Core DI functionality uses `scanDirs` array correctly.
 
 ### ❌ other plugins
 
