@@ -155,7 +155,7 @@ export class FunctionalDIEnhancedTransformer {
     
     // Initialize configuration processing components
     this.configurationProcessor = new ConfigurationProcessor({
-      srcDir: this.options.scanDirs[0],
+      scanDirs: this.options.scanDirs,
       verbose: this.options.verbose
     });
     

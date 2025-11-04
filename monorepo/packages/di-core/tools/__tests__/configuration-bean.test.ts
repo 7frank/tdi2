@@ -30,7 +30,7 @@ describe('@Configuration and @Bean Integration', () => {
 
   beforeEach(() => {
     configProcessor = new ConfigurationProcessor({
-      srcDir: './test-src',
+      scanDirs: ['./test-src'],
       verbose: false
     });
     

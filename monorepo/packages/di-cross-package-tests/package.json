@@ -9,7 +9,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui --open",
     "dev": "vite",
-    "build": "vite build",
+    "build": "echo 'Test package - no build needed'",
     "preview": "vite preview"
   },
   "dependencies": {

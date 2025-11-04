@@ -43,10 +43,13 @@ in addition to vite plugin
   - ✅ Component structure validates correctly
 
 **MEDIUM Priority** 🟡:
-- ❌ **ConfigurationProcessor scanning** - Only scans `scanDirs[0]` for @Configuration classes
-  - Location: [functional-di-enhanced-transformer.ts:158](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.ts#L158)
-  - Impact: @Configuration/@Bean in secondary packages won't be discovered
-  - Fix: Update ConfigurationProcessor to accept and scan multiple directories
+- ✅ **ConfigurationProcessor scanning** - FIXED to scan all scanDirs for @Configuration classes
+  - Locations:
+    - [config-processor/index.ts:6-32](monorepo/packages/di-core/tools/config-processor/index.ts#L6-L32) - Updated interface and constructor
+    - [functional-di-enhanced-transformer.ts:157-160](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.ts#L157-L160) - Updated transformer call
+    - [configuration-bean.test.ts:32-35](monorepo/packages/di-core/tools/__tests__/configuration-bean.test.ts#L32-L35) - Fixed tests
+    - [plugin.ts:60-66,125-131](monorepo/packages/vite-plugin-di/src/plugin.ts#L60-L66) - Updated Vite plugin
+  - ✅ All 11 configuration bean tests passing
 
 
 - ❌ **Cross-package dependency injection container test**

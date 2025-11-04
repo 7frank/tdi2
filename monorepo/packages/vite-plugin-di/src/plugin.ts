@@ -58,7 +58,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
   const checkExistingConfig = (): boolean => {
     try {
       const tempConfigManager = new ConfigManager({
-        srcDir: options.scanDirs![0],
+        scanDirs: options.scanDirs!,
         outputDir: options.outputDir!,
         enableFunctionalDI: options.enableFunctionalDI!,
         verbose: false, // Don't spam logs during check
@@ -123,7 +123,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
 
       // Create config manager first to check for existing configs
       configManager = new ConfigManager({
-        srcDir: options.scanDirs![0],
+        scanDirs: options.scanDirs!,
         outputDir: options.outputDir!,
         enableFunctionalDI: options.enableFunctionalDI!,
         verbose: options.verbose!,
