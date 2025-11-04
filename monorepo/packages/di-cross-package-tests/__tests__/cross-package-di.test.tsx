@@ -34,7 +34,8 @@ describe('Cross-Package DI Integration', () => {
   describe('Service Dependencies', () => {
     it('should initialize UserService with LoggerInterface from Package A', () => {
       expect(userService).toBeDefined();
-      expect(loggerService.state.logs).toContain('UserService initialized');
+      expect(loggerService.state.logs.length).toBeGreaterThan(0);
+      expect(loggerService.state.logs[0]).toContain('UserService initialized');
     });
 
     it('should log when adding users via UserService', () => {

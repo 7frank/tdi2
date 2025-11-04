@@ -48,7 +48,7 @@ export class ConfigManager {
   private generateConfigHash(): string {
     // FIXED: Make hash generation more deterministic
     // Normalize paths to be consistent regardless of execution context
-    const normalizedScanDirs = this.options.scanDirs.map(dir =>
+    const normalizedScanDirs = (this.options.scanDirs || []).map(dir =>
       path.resolve(dir).replace(/\\/g, '/')
     ).sort().join(',');
 

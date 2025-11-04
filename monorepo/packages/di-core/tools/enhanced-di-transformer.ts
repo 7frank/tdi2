@@ -98,7 +98,7 @@ export class EnhancedDITransformer {
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
       verbose: this.options.verbose,
-       srcDir: this.options.scanDirs[0]
+      scanDirs: this.options.scanDirs
     });
 
     this.serviceRegistry = new SharedServiceRegistry(this.configManager, {

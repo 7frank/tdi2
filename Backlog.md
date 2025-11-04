@@ -35,10 +35,12 @@ in addition to vite plugin
 #### ❌ Remaining Issues
 
 **HIGH Priority** 🔴:
-- ❌ **RecursiveInjectExtractor module resolution** - Only resolves non-relative imports from `scanDirs[0]`
-  - Location: [RecursiveInjectExtractor.ts:314](monorepo/packages/di-core/tools/shared/RecursiveInjectExtractor.ts#L314)
-  - Impact: Service in package B importing interface from package A will fail
-  - Fix: Loop through all scanDirs when resolving non-relative imports
+- ✅ **RecursiveInjectExtractor module resolution** - FIXED to resolve from all scanDirs
+  - Location: [RecursiveInjectExtractor.ts:307-363](monorepo/packages/di-core/tools/shared/RecursiveInjectExtractor.ts#L307)
+  - Fix Applied: Loops through all scanDirs for non-relative imports
+  - Test Package: [di-cross-package-tests](monorepo/packages/di-cross-package-tests/)
+  - ✅ Service resolution works across packages
+  - ✅ Component structure validates correctly
 
 **MEDIUM Priority** 🟡:
 - ❌ **ConfigurationProcessor scanning** - Only scans `scanDirs[0]` for @Configuration classes
