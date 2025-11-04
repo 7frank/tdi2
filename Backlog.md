@@ -48,6 +48,11 @@ in addition to vite plugin
   - Impact: @Configuration/@Bean in secondary packages won't be discovered
   - Fix: Update ConfigurationProcessor to accept and scan multiple directories
 
+
+- ❌ **Cross-package dependency injection container test**
+ our tests only test the DIContainer but not whether it workd with generating and importing the DI_CONFIG automatically
+
+
 - ❌ **Cross-package import test** - No test validating imports between packages
   - Need: Test where component in package B imports interface from package A
   - Need: Test where service in package B depends on service from package A
