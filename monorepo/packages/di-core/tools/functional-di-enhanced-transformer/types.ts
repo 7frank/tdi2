@@ -8,7 +8,8 @@ export interface FunctionalDependency {
 }
 
 export interface TransformationOptions {
-  srcDir?: string; // Source directory for file resolution
+  srcDir?: string; // Source directory for file resolution (backward compat - use scanDirs)
+  scanDirs?: string[]; // Array of directories to scan (preferred over srcDir)
   verbose?: boolean; // Enable verbose logging
   outputDir?: string; // Output directory for transformed files
   preserveOriginal?: boolean; // Whether to preserve original files

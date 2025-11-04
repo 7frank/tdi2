@@ -54,6 +54,7 @@ export class DependencyTreeBuilder {
   private options: {
     verbose: boolean;
     srcDir: string;
+    scanDirs: string[];
     enableInheritanceDI: boolean;
   };
 
@@ -68,13 +69,15 @@ export class DependencyTreeBuilder {
     options: {
       verbose?: boolean;
       srcDir?: string;
+      scanDirs?: string[];
       enableInheritanceDI?: boolean;
     } = {}
   ) {
     this.configManager = configManager;
     this.options = {
       verbose: false,
-      srcDir: "./src",
+      srcDir: options.srcDir || "./src",
+      scanDirs: options.scanDirs || [options.srcDir || "./src"],
       enableInheritanceDI: true,
       ...options,
     };
@@ -82,7 +85,8 @@ export class DependencyTreeBuilder {
     // Initialize interface resolver
     this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir,
+      srcDir: this.options.srcDir, // Backward compat
+      scanDirs: this.options.scanDirs, // Preferred
       enableInheritanceDI: this.options.enableInheritanceDI,
     });
 
@@ -311,8 +315,16 @@ export class DependencyTreeBuilder {
 
     for (const [className, serviceClass] of this.serviceClasses) {
       const servicePath = serviceClass.filePath;
+
+      // Find which scanDir this file belongs to for correct relative path
+      const absolutePath = path.resolve(servicePath);
+      const matchingScanDir = this.options.scanDirs.find((dir: string) =>
+        absolutePath.startsWith(path.resolve(dir))
+      );
+      const baseDir = matchingScanDir ? path.resolve(matchingScanDir) : path.resolve(this.options.scanDirs[0]);
+
       const relativePath = path
-        .relative(this.options.srcDir, servicePath)
+        .relative(baseDir, servicePath)
         .replace(/\.(ts|tsx)$/, "")
         .replace(/\\/g, "/");
 

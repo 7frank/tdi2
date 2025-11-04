@@ -153,18 +153,19 @@ export class DiInjectMarkers {
 
   /**
    * Resolve imported file path
+   * Note: Only handles relative imports. Non-relative imports (like @tdi2/...)
+   * should be resolved by ts-morph's project.getSourceFile() or via module resolution.
    */
   resolveImportedFile(moduleSpecifier: string, sourceFile: SourceFile): any {
     try {
-      const currentDir = path.dirname(sourceFile.getFilePath());
-
-      let resolvedPath: string;
-      if (moduleSpecifier.startsWith(".")) {
-        resolvedPath = path.resolve(currentDir, moduleSpecifier);
-      } else {
-        // FIXME where should that option come from, is this used at all?
-        resolvedPath = path.resolve(this.options.srcDir, moduleSpecifier);
+      // Only handle relative imports (starting with . or ..)
+      if (!moduleSpecifier.startsWith(".")) {
+        // Non-relative imports should be resolved by ts-morph's project
+        return null;
       }
+
+      const currentDir = path.dirname(sourceFile.getFilePath());
+      const resolvedPath = path.resolve(currentDir, moduleSpecifier);
 
       const extensions = [".ts", ".tsx", "/index.ts", "/index.tsx"];
       for (const ext of extensions) {

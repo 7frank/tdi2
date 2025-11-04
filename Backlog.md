@@ -68,33 +68,32 @@ in addition to vite plugin
   - Documentation: [README.md](monorepo/packages/di-cross-package-tests/__tests__/README.md)
 
 **LOW Priority** 🟢:
-- ❌ **srcDir backward compatibility usage** - Multiple files still use `scanDirs[0]` or `this.options.srcDir`
-  - **Issue 1: DebugFileGenerator paths** - Line 50 uses `this.options.srcDir` for relative path calculation
+- ✅ **srcDir backward compatibility usage** - FIXED - All files now properly handle multiple scanDirs
+  - ✅ **Issue 1: DebugFileGenerator paths** - FIXED - Now finds matching scanDir for each file
     - Location: [debug-file-generator.ts:50,213](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L50)
-    - Impact: Debug files from secondary scanDirs have wrong relative paths
+    - Fix: Added logic to find which scanDir each file belongs to
 
-  - **Issue 2: ImportManager** - Line 216 uses `this.options.srcDir` for DI markers import path
+  - ✅ **Issue 2: ImportManager** - FIXED - Now finds matching scanDir for DI markers import path
     - Location: [import-manager.ts:216-217](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/import-manager.ts#L216)
-    - Impact: May generate wrong import paths for secondary packages
+    - Fix: Added `scanDirs` to TransformationOptions interface and logic to find matching scanDir
 
-  - **Issue 3: DependencyTreeBuilder** - Line 315 uses `this.options.srcDir` for relative path calculation
+  - ✅ **Issue 3: DependencyTreeBuilder** - FIXED - Now finds matching scanDir for service paths
     - Location: [dependency-tree-builder.ts:85,315](monorepo/packages/di-core/tools/dependency-tree-builder.ts#L85)
-    - Impact: Service paths may be calculated incorrectly for secondary packages
+    - Fix: Added `scanDirs` parameter and logic to find matching scanDir for each service
 
-  - **Issue 4: DIInjectMarkers** - Line 166 uses `this.options.srcDir` for module resolution
+  - ✅ **Issue 4: DIInjectMarkers** - FIXED - Removed broken absolute path handling
     - Location: [di-inject-markers.ts:166](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts#L166)
-    - Comment already exists: `// FIXME where should that option come from, is this used at all?`
-    - Impact: Unknown - may affect module resolution
+    - Fix: Removed broken `this.options.srcDir` usage, now only handles relative imports
 
-  - **Issue 5: EnhancedDependencyExtractor** - Line 1109 uses `this.options.srcDir` for absolute imports
+  - ✅ **Issue 5: EnhancedDependencyExtractor** - FIXED - Now finds matching scanDir for absolute imports
     - Location: [enhanced-dependency-extractor.ts:1109](monorepo/packages/di-core/tools/interface-resolver/enhanced-dependency-extractor.ts#L1109)
-    - Impact: May fail to resolve absolute imports from secondary packages
+    - Fix: Added logic to find matching scanDir for absolute imports
 
   - **Not Issues (Backward Compat)**:
     - ✅ integrated-interface-resolver.ts:58 - Just sets `srcDir: scanDirs[0]` for backward compat, then uses `scanDirs` array (line 100)
-    - ✅ functional-di-enhanced-transformer.ts:147 - Passes to DebugFileGenerator/ImportManager (covered above)
+    - ✅ functional-di-enhanced-transformer.ts:147 - Now passes both `srcDir` and `scanDirs`
 
-  - **Overall Impact**: LOW - Mostly affects debug output and edge cases. Core DI functionality uses `scanDirs` array correctly.
+  - **Overall Impact**: COMPLETE - All srcDir usage now properly handles multiple scanDirs. Tests passing.
 
 ### ❌ other plugins
 
