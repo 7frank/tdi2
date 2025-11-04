@@ -2,105 +2,6 @@
 
 ## ordered log (for production release)
 
-### ✅ plugins
-
-✅ webpack
-✅ rollup
-✅ esbuild
-
-in addition to vite plugin
-
-### ✅ add scanDirs option for many packages scanning
-
-### ✅ all plugings currently copy the files instead of leaving them in the package, which will problably not help in cprss package usability and
-
-### ⚠️ scanDirs[0] srcDir remove backward compatibility - PARTIAL
-
-#### ✅ Completed
-
-- ✅ **Bridge file generation** - Creates `.tdi2/` directories in ALL scanDirs (not just first)
-  - Location: [config-manager.ts:33](monorepo/packages/di-core/tools/config-manager.ts#L33)
-  - Each package can now import from its local `.tdi2/di-config.ts`
-  - All bridges point to same config source in `node_modules/.tdi2/configs/`
-
-- ✅ **Multi-package E2E test** - Validates transformation across multiple scanDirs
-  - Location: [e2e-multi-package.test.ts](monorepo/packages/plugin-esbuild-di/src/__tests__/e2e-multi-package.test.ts)
-  - Tests Counter from plugin-core + TodoList from local fixtures
-  - Verifies service discovery and interface resolution work across packages
-
-- ✅ **Service discovery** - Scans all scanDirs correctly
-- ✅ **Component transformation** - Transforms components in all scanDirs
-- ✅ **Interface resolution** - Resolves interfaces across all scanDirs
-
-#### ❌ Remaining Issues
-
-**HIGH Priority** 🔴:
-- ✅ **RecursiveInjectExtractor module resolution** - FIXED to resolve from all scanDirs
-  - Location: [RecursiveInjectExtractor.ts:307-363](monorepo/packages/di-core/tools/shared/RecursiveInjectExtractor.ts#L307)
-  - Fix Applied: Loops through all scanDirs for non-relative imports
-  - Test Package: [di-cross-package-tests](monorepo/packages/di-cross-package-tests/)
-  - ✅ Service resolution works across packages
-  - ✅ Component structure validates correctly
-
-**MEDIUM Priority** 🟡:
-- ✅ **ConfigurationProcessor scanning** - FIXED to scan all scanDirs for @Configuration classes
-  - Locations:
-    - [config-processor/index.ts:6-32](monorepo/packages/di-core/tools/config-processor/index.ts#L6-L32) - Updated interface and constructor
-    - [functional-di-enhanced-transformer.ts:157-160](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.ts#L157-L160) - Updated transformer call
-    - [configuration-bean.test.ts:32-35](monorepo/packages/di-core/tools/__tests__/configuration-bean.test.ts#L32-L35) - Fixed tests
-    - [plugin.ts:60-66,125-131](monorepo/packages/vite-plugin-di/src/plugin.ts#L60-L66) - Updated Vite plugin
-  - ✅ All 11 configuration bean tests passing
-
-- ✅ **Cross-package dependency injection container test** - COMPLETED with comprehensive integration tests
-  - Location: [full-di-integration.test.tsx](monorepo/packages/di-cross-package-tests/__tests__/full-di-integration.test.tsx)
-  - ✅ Tests `container.loadConfiguration(DI_CONFIG)` from auto-generated files
-  - ✅ Validates automatic dependency tree generation
-  - ✅ Verifies cross-package dependency resolution
-  - ✅ All 17 tests passing
-  - Key Finding: Constructor parameters require `@Inject()` decorator (like Spring's `@Autowired`)
-
-- ✅ **Cross-package import test** - COMPLETED and validated
-  - Test Package: [di-cross-package-tests](monorepo/packages/di-cross-package-tests/)
-  - ✅ Component in package B (UserList) imports interface from package A (LoggerInterface)
-  - ✅ Service in package B (UserService) depends on interface from package A (LoggerInterface)
-  - ✅ Constructor injection with `@Inject()` decorator works across packages
-  - ✅ Factory generation includes `container.resolve()` for dependencies
-  - Documentation: [README.md](monorepo/packages/di-cross-package-tests/__tests__/README.md)
-
-**LOW Priority** 🟢:
-- ✅ **srcDir removal** - COMPLETE - All srcDir backward compatibility removed, now uses scanDirs only
-  - ✅ **Issue 1: DebugFileGenerator paths** - FIXED - Removed srcDir, uses scanDirs
-    - Location: [debug-file-generator.ts:51,219](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L51)
-    - Fix: Finds matching scanDir for each file, fallback to ["./src"]
-
-  - ✅ **Issue 2: ImportManager** - FIXED - Removed srcDir, uses scanDirs
-    - Location: [import-manager.ts:218](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/import-manager.ts#L218)
-    - Fix: Removed srcDir from TransformationOptions, uses scanDirs with ["./src"] fallback
-
-  - ✅ **Issue 3: DependencyTreeBuilder** - FIXED - Removed srcDir, uses scanDirs
-    - Location: [dependency-tree-builder.ts:77,321](monorepo/packages/di-core/tools/dependency-tree-builder.ts#L77)
-    - Fix: Removed srcDir parameter, uses scanDirs with ["./src"] default
-
-  - ✅ **Issue 4: DIInjectMarkers** - FIXED - Removed broken absolute path handling
-    - Location: [di-inject-markers.ts:162](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts#L162)
-    - Fix: Removed broken srcDir usage, now only handles relative imports
-
-  - ✅ **Issue 5: EnhancedDependencyExtractor** - FIXED - Removed srcDir, uses scanDirs
-    - Location: [enhanced-dependency-extractor.ts:1109](monorepo/packages/di-core/tools/interface-resolver/enhanced-dependency-extractor.ts#L1109)
-    - Fix: Uses scanDirs with ["./src"] fallback for absolute imports
-
-  - ✅ **TransformationOptions** - Removed srcDir field completely
-  - ✅ **functional-di-enhanced-transformer.ts** - Removed srcDir from functionalOptions
-
-  - **Overall Impact**: COMPLETE - srcDir removed entirely, all code uses scanDirs. No backward compatibility overhead.
-
-### ❌ other plugins
-
-> well probably abandon them for now
-
-Babel Plugin - Async/sync pipeline incompatibility (architectural issue)
-TypeScript Transformer - Complex TS compiler API integration
-
 ### merge or remove branches before additional features
 
 feature/attempt-at-streamlining-interfaces
@@ -128,35 +29,35 @@ feature/refactor-di-debug-into-vite-react-app
 - any response on https://www.reddit.com/r/reactjs/comments/1o3e8uw/react_service_injection_bringing_spring/
 - PR or discussions?
 
-### [❌] update docs
+### [❌] update docs & compare to other solutions
 
-- https://chatgpt.com/c/68f29da3-15e8-8328-b75e-088908a5dfc1
-- what farmeworks try to achieve similar what we are doing
-- feature matrix, include zustandjs and container / state examples
-- self contained examples
+> examples/comparision
+
+- ❌ link to examples in documentation
+- ✅ https://chatgpt.com/c/68f29da3-15e8-8328-b75e-088908a5dfc1
+- ✅ what farmeworks try to achieve similar what we are doing
+  - https://www.reddit.com/r/react/comments/1f5yfp2/dependency_injection_in_react_framework/?sort=new
+  - https://github.com/wix-incubator/obsidian?tab=readme-ov-file
+  - https://github.com/wox-team/wox-inject
+  - https://github.com/AdiMarianMutu/x-injection-reactjs
+
+- ✅ feature matrix, include zustandjs and container / state examples
+  - autowiring
+  - interaface based
+  - scoped or other additional use cases
+  - inject into FC
+  - inject into hooks or other functions
+  - SSR
+  - react native
+  - ... other stuff that might be relevant
+
+- ✅ self contained examples
 
 ### [❌] write article that compare to other solutions
 
+> [examples/comparision](./examples/comparision/FeatureMatrix.md)
+
 - other di solutions other non di solutions streangths weaknesses and target audiences
-
-### [❌] compare to other solutions
-
-https://www.reddit.com/r/react/comments/1f5yfp2/dependency_injection_in_react_framework/?sort=new
-
-https://github.com/wix-incubator/obsidian?tab=readme-ov-file
-https://github.com/wox-team/wox-inject
-https://github.com/AdiMarianMutu/x-injection-reactjs
-
-Feature matrix
-
-- autowiring
-- interaface based
-- scoped or other additional use cases
-- inject into FC
-- inject into hooks or other functions
-- SSR
-- react native
-- ... other stuff that might be relevant
 
 ### add a option that wraps proxy at comile time with method bindings for additional convenience
 
@@ -345,6 +246,13 @@ evaluate scenarios
 
 from prod/PotentialProblems.md
 and prod/PostProductionRoadmap.md
+
+### ❌ Babel / TypeScript Transformer plugins
+
+> well probably abandon them for now
+
+Babel Plugin - Async/sync pipeline incompatibility (architectural issue)
+TypeScript Transformer - Complex TS compiler API integration
 
 ---
 
@@ -795,6 +703,101 @@ https://github.com/aleclarson/valtio-kit
 ---
 
 ## Done
+
+### ✅ plugins
+
+✅ webpack
+✅ rollup
+✅ esbuild
+
+in addition to vite plugin
+
+### ✅ add scanDirs option for many packages scanning
+
+### ✅ all plugings currently copy the files instead of leaving them in the package, which will problably not help in cprss package usability and
+
+### ⚠️ scanDirs[0] srcDir remove backward compatibility - PARTIAL
+
+#### ✅ Completed
+
+- ✅ **Bridge file generation** - Creates `.tdi2/` directories in ALL scanDirs (not just first)
+  - Location: [config-manager.ts:33](monorepo/packages/di-core/tools/config-manager.ts#L33)
+  - Each package can now import from its local `.tdi2/di-config.ts`
+  - All bridges point to same config source in `node_modules/.tdi2/configs/`
+
+- ✅ **Multi-package E2E test** - Validates transformation across multiple scanDirs
+  - Location: [e2e-multi-package.test.ts](monorepo/packages/plugin-esbuild-di/src/__tests__/e2e-multi-package.test.ts)
+  - Tests Counter from plugin-core + TodoList from local fixtures
+  - Verifies service discovery and interface resolution work across packages
+
+- ✅ **Service discovery** - Scans all scanDirs correctly
+- ✅ **Component transformation** - Transforms components in all scanDirs
+- ✅ **Interface resolution** - Resolves interfaces across all scanDirs
+
+#### ✅ Remaining Issues
+
+**HIGH Priority** 🔴:
+
+- ✅ **RecursiveInjectExtractor module resolution** - FIXED to resolve from all scanDirs
+  - Location: [RecursiveInjectExtractor.ts:307-363](monorepo/packages/di-core/tools/shared/RecursiveInjectExtractor.ts#L307)
+  - Fix Applied: Loops through all scanDirs for non-relative imports
+  - Test Package: [di-cross-package-tests](monorepo/packages/di-cross-package-tests/)
+  - ✅ Service resolution works across packages
+  - ✅ Component structure validates correctly
+
+**MEDIUM Priority** 🟡:
+
+- ✅ **ConfigurationProcessor scanning** - FIXED to scan all scanDirs for @Configuration classes
+  - Locations:
+    - [config-processor/index.ts:6-32](monorepo/packages/di-core/tools/config-processor/index.ts#L6-L32) - Updated interface and constructor
+    - [functional-di-enhanced-transformer.ts:157-160](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.ts#L157-L160) - Updated transformer call
+    - [configuration-bean.test.ts:32-35](monorepo/packages/di-core/tools/__tests__/configuration-bean.test.ts#L32-L35) - Fixed tests
+    - [plugin.ts:60-66,125-131](monorepo/packages/vite-plugin-di/src/plugin.ts#L60-L66) - Updated Vite plugin
+  - ✅ All 11 configuration bean tests passing
+
+- ✅ **Cross-package dependency injection container test** - COMPLETED with comprehensive integration tests
+  - Location: [full-di-integration.test.tsx](monorepo/packages/di-cross-package-tests/__tests__/full-di-integration.test.tsx)
+  - ✅ Tests `container.loadConfiguration(DI_CONFIG)` from auto-generated files
+  - ✅ Validates automatic dependency tree generation
+  - ✅ Verifies cross-package dependency resolution
+  - ✅ All 17 tests passing
+  - Key Finding: Constructor parameters require `@Inject()` decorator (like Spring's `@Autowired`)
+
+- ✅ **Cross-package import test** - COMPLETED and validated
+  - Test Package: [di-cross-package-tests](monorepo/packages/di-cross-package-tests/)
+  - ✅ Component in package B (UserList) imports interface from package A (LoggerInterface)
+  - ✅ Service in package B (UserService) depends on interface from package A (LoggerInterface)
+  - ✅ Constructor injection with `@Inject()` decorator works across packages
+  - ✅ Factory generation includes `container.resolve()` for dependencies
+  - Documentation: [README.md](monorepo/packages/di-cross-package-tests/__tests__/README.md)
+
+**LOW Priority** 🟢:
+
+- ✅ **srcDir removal** - COMPLETE - All srcDir backward compatibility removed, now uses scanDirs only
+  - ✅ **Issue 1: DebugFileGenerator paths** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [debug-file-generator.ts:51,219](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L51)
+    - Fix: Finds matching scanDir for each file, fallback to ["./src"]
+
+  - ✅ **Issue 2: ImportManager** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [import-manager.ts:218](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/import-manager.ts#L218)
+    - Fix: Removed srcDir from TransformationOptions, uses scanDirs with ["./src"] fallback
+
+  - ✅ **Issue 3: DependencyTreeBuilder** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [dependency-tree-builder.ts:77,321](monorepo/packages/di-core/tools/dependency-tree-builder.ts#L77)
+    - Fix: Removed srcDir parameter, uses scanDirs with ["./src"] default
+
+  - ✅ **Issue 4: DIInjectMarkers** - FIXED - Removed broken absolute path handling
+    - Location: [di-inject-markers.ts:162](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts#L162)
+    - Fix: Removed broken srcDir usage, now only handles relative imports
+
+  - ✅ **Issue 5: EnhancedDependencyExtractor** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [enhanced-dependency-extractor.ts:1109](monorepo/packages/di-core/tools/interface-resolver/enhanced-dependency-extractor.ts#L1109)
+    - Fix: Uses scanDirs with ["./src"] fallback for absolute imports
+
+  - ✅ **TransformationOptions** - Removed srcDir field completely
+  - ✅ **functional-di-enhanced-transformer.ts** - Removed srcDir from functionalOptions
+
+  - **Overall Impact**: COMPLETE - srcDir removed entirely, all code uses scanDirs. No backward compatibility overhead.
 
 ### [✅] changesets still published with workspace dependencies
 
