@@ -68,32 +68,31 @@ in addition to vite plugin
   - Documentation: [README.md](monorepo/packages/di-cross-package-tests/__tests__/README.md)
 
 **LOW Priority** 🟢:
-- ✅ **srcDir backward compatibility usage** - FIXED - All files now properly handle multiple scanDirs
-  - ✅ **Issue 1: DebugFileGenerator paths** - FIXED - Now finds matching scanDir for each file
-    - Location: [debug-file-generator.ts:50,213](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L50)
-    - Fix: Added logic to find which scanDir each file belongs to
+- ✅ **srcDir removal** - COMPLETE - All srcDir backward compatibility removed, now uses scanDirs only
+  - ✅ **Issue 1: DebugFileGenerator paths** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [debug-file-generator.ts:51,219](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L51)
+    - Fix: Finds matching scanDir for each file, fallback to ["./src"]
 
-  - ✅ **Issue 2: ImportManager** - FIXED - Now finds matching scanDir for DI markers import path
-    - Location: [import-manager.ts:216-217](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/import-manager.ts#L216)
-    - Fix: Added `scanDirs` to TransformationOptions interface and logic to find matching scanDir
+  - ✅ **Issue 2: ImportManager** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [import-manager.ts:218](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/import-manager.ts#L218)
+    - Fix: Removed srcDir from TransformationOptions, uses scanDirs with ["./src"] fallback
 
-  - ✅ **Issue 3: DependencyTreeBuilder** - FIXED - Now finds matching scanDir for service paths
-    - Location: [dependency-tree-builder.ts:85,315](monorepo/packages/di-core/tools/dependency-tree-builder.ts#L85)
-    - Fix: Added `scanDirs` parameter and logic to find matching scanDir for each service
+  - ✅ **Issue 3: DependencyTreeBuilder** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [dependency-tree-builder.ts:77,321](monorepo/packages/di-core/tools/dependency-tree-builder.ts#L77)
+    - Fix: Removed srcDir parameter, uses scanDirs with ["./src"] default
 
   - ✅ **Issue 4: DIInjectMarkers** - FIXED - Removed broken absolute path handling
-    - Location: [di-inject-markers.ts:166](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts#L166)
-    - Fix: Removed broken `this.options.srcDir` usage, now only handles relative imports
+    - Location: [di-inject-markers.ts:162](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts#L162)
+    - Fix: Removed broken srcDir usage, now only handles relative imports
 
-  - ✅ **Issue 5: EnhancedDependencyExtractor** - FIXED - Now finds matching scanDir for absolute imports
+  - ✅ **Issue 5: EnhancedDependencyExtractor** - FIXED - Removed srcDir, uses scanDirs
     - Location: [enhanced-dependency-extractor.ts:1109](monorepo/packages/di-core/tools/interface-resolver/enhanced-dependency-extractor.ts#L1109)
-    - Fix: Added logic to find matching scanDir for absolute imports
+    - Fix: Uses scanDirs with ["./src"] fallback for absolute imports
 
-  - **Not Issues (Backward Compat)**:
-    - ✅ integrated-interface-resolver.ts:58 - Just sets `srcDir: scanDirs[0]` for backward compat, then uses `scanDirs` array (line 100)
-    - ✅ functional-di-enhanced-transformer.ts:147 - Now passes both `srcDir` and `scanDirs`
+  - ✅ **TransformationOptions** - Removed srcDir field completely
+  - ✅ **functional-di-enhanced-transformer.ts** - Removed srcDir from functionalOptions
 
-  - **Overall Impact**: COMPLETE - All srcDir usage now properly handles multiple scanDirs. Tests passing.
+  - **Overall Impact**: COMPLETE - srcDir removed entirely, all code uses scanDirs. No backward compatibility overhead.
 
 ### ❌ other plugins
 

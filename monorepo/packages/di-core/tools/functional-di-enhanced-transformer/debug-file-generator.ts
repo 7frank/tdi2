@@ -48,7 +48,7 @@ export class DebugFileGenerator {
     transformedDir: string
   ): Promise<void> {
     // Find which scanDir this file belongs to for correct relative path
-    const scanDirs = this.options.scanDirs || [this.options.srcDir!];
+    const scanDirs = this.options.scanDirs || ["./src"];
     const absolutePath = path.resolve(originalPath);
     const matchingScanDir = scanDirs.find(dir => absolutePath.startsWith(path.resolve(dir)));
     const baseDir = matchingScanDir ? path.resolve(matchingScanDir) : path.resolve(scanDirs[0]);
@@ -216,7 +216,7 @@ ${analysis.warnings.map(warning => ` * - ${warning}`).join('\n')}
       totalServices += analysis.servicesCount;
 
       // Find which scanDir this file belongs to for correct relative path
-      const scanDirs = this.options.scanDirs || [this.options.srcDir!];
+      const scanDirs = this.options.scanDirs || ["./src"];
       const absolutePath = path.resolve(filePath);
       const matchingScanDir = scanDirs.find(dir => absolutePath.startsWith(path.resolve(dir)));
       const baseDir = matchingScanDir ? path.resolve(matchingScanDir) : path.resolve(scanDirs[0]);

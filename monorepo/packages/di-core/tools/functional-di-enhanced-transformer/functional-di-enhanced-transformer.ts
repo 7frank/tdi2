@@ -144,8 +144,7 @@ export class FunctionalDIEnhancedTransformer {
 
     // Initialize functional-specific components
     const functionalOptions = {
-      srcDir: this.options.scanDirs[0], // Backward compat
-      scanDirs: this.options.scanDirs,  // Preferred
+      scanDirs: this.options.scanDirs,
       outputDir: this.options.outputDir,
       generateDebugFiles: options.generateDebugFiles,
       verbose: this.options.verbose

@@ -215,7 +215,7 @@ export class ImportManager {
     const currentFilePath = sourceFile.getFilePath();
 
     // Find which scanDir this file belongs to for correct DI markers path
-    const scanDirs = this.options.scanDirs || [this.options.srcDir!];
+    const scanDirs = this.options.scanDirs || ["./src"];
     const absolutePath = path.resolve(currentFilePath);
     const matchingScanDir = scanDirs.find((dir: string) => absolutePath.startsWith(path.resolve(dir)));
     const srcDir = matchingScanDir ? path.resolve(matchingScanDir) : path.resolve(scanDirs[0]);

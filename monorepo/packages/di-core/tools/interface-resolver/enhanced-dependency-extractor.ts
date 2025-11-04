@@ -1106,7 +1106,7 @@ export class EnhancedDependencyExtractor {
         resolvedPath = path.resolve(currentDir, moduleSpecifier);
       } else {
         // Absolute import - try each scanDir to find the file
-        const scanDirs = this.options.scanDirs || [this.options.srcDir!];
+        const scanDirs = this.options.scanDirs || ["./src"];
         const currentFilePath = path.resolve(sourceFile.getFilePath());
         const matchingScanDir = scanDirs.find((dir: string) =>
           currentFilePath.startsWith(path.resolve(dir))

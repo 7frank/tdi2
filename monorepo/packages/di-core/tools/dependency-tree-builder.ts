@@ -53,7 +53,6 @@ export class DependencyTreeBuilder {
   private serviceClasses: Map<string, ServiceClass> = new Map();
   private options: {
     verbose: boolean;
-    srcDir: string;
     scanDirs: string[];
     enableInheritanceDI: boolean;
   };
@@ -68,7 +67,6 @@ export class DependencyTreeBuilder {
     configManager: ConfigManager,
     options: {
       verbose?: boolean;
-      srcDir?: string;
       scanDirs?: string[];
       enableInheritanceDI?: boolean;
     } = {}
@@ -76,8 +74,7 @@ export class DependencyTreeBuilder {
     this.configManager = configManager;
     this.options = {
       verbose: false,
-      srcDir: options.srcDir || "./src",
-      scanDirs: options.scanDirs || [options.srcDir || "./src"],
+      scanDirs: options.scanDirs || ["./src"],
       enableInheritanceDI: true,
       ...options,
     };
@@ -85,8 +82,7 @@ export class DependencyTreeBuilder {
     // Initialize interface resolver
     this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir, // Backward compat
-      scanDirs: this.options.scanDirs, // Preferred
+      scanDirs: this.options.scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
     });
 
