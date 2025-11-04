@@ -1,4 +1,4 @@
-import { Service } from '@tdi2/di-core';
+import { Service, Inject } from '@tdi2/di-core';
 import type { LoggerInterface } from '../package-a/LoggerService';
 
 /**
@@ -15,6 +15,8 @@ export interface UserServiceInterface {
 /**
  * User service implementation in Package B
  * DEPENDS ON LoggerInterface from Package A
+ *
+ * IMPORTANT: Constructor parameters need @Inject() decorator for DI to work
  */
 @Service()
 export class UserService implements UserServiceInterface {
@@ -22,7 +24,7 @@ export class UserService implements UserServiceInterface {
     users: [] as Array<{ id: number; name: string }>,
   };
 
-  constructor(private logger: LoggerInterface) {
+  constructor(@Inject() private logger: LoggerInterface) {
     this.logger.log('UserService initialized');
   }
 

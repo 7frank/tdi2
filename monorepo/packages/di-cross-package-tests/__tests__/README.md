@@ -104,28 +104,57 @@ const userService = container.get<UserServiceInterface>('UserServiceInterface__.
    - Singleton scope maintained
    - Interface-to-implementation mappings correct
 
-## Known Issues
+## Constructor Injection Requirements
 
-### Factory Generation Bug
-
-The generated factory in `di-config.ts` may be missing dependency resolution:
+**IMPORTANT**: Constructor parameters in `@Service()` classes **MUST** have `@Inject()` decorator:
 
 ```typescript
-// ❌ Current (broken)
-function createUserService(container: any) {
-  return () => new UserService(); // Missing logger!
-}
+import { Service, Inject } from '@tdi2/di-core';
 
-// ✅ Should be
-function createUserService(container: any) {
-  return () => {
-    const logger = container.get('LoggerInterface__...');
-    return new UserService(logger);
-  };
+@Service()
+export class UserService {
+  // ✅ CORRECT - @Inject() decorator required
+  constructor(@Inject() private logger: LoggerInterface) {}
+
+  // ❌ WRONG - Missing @Inject() decorator
+  // constructor(private logger: LoggerInterface) {}
 }
 ```
 
-**This test will catch this bug** by verifying that UserService operations log correctly.
+### Why @Inject() Is Required
+
+Unlike Spring Framework (Java), TypeScript doesn't preserve parameter type metadata at runtime by default. The `@Inject()` decorator marks parameters for dependency injection during the compile-time transformation.
+
+### What Happens Without @Inject()
+
+If you forget `@Inject()`, the factory generation will create:
+
+```typescript
+// ❌ Broken - No dependency resolution
+function createUserService(container: any) {
+  return () => new UserService(); // Missing logger parameter!
+}
+```
+
+This causes:
+```
+TypeError: Cannot read properties of undefined (reading 'log')
+❯ constructor(private logger: LoggerInterface)
+```
+
+### With @Inject() Decorator
+
+The factory correctly resolves dependencies:
+
+```typescript
+// ✅ Working - Dependency resolved from container
+function createUserService(container: any) {
+  return () => {
+    const dep0 = container.resolve('LoggerInterface__...');
+    return new UserService(dep0);
+  };
+}
+```
 
 ## Running Tests
 
