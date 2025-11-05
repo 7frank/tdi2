@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "vitest";
 import { Project, SourceFile } from "ts-morph";
 import { BaseNormalizer, NormalizationOptions, NormalizationResult } from "./BaseNormalizer";
 

@@ -1,5 +1,5 @@
 // tools/functional-di-enhanced-transformer/__tests__/transformation.test.ts
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import {
   TransformationTestFramework,
   defineTransformationTest,

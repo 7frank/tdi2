@@ -1,6 +1,6 @@
 // __tests__/scope-functionality.test.ts - Tests for @Scope decorator functionality
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "vitest";
 import { CompileTimeDIContainer } from "../../src/container";
 import { Service, Scope, Inject } from "../../src/decorators";
 

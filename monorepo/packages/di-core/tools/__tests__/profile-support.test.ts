@@ -1,6 +1,6 @@
 // tools/__tests__/profile-support.test.ts - Tests for @Profile runtime support
 
-import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { CompileTimeDIContainer, DIContainerOptions } from '../../src/container';
 import { ProfileManager } from '../../src/profile-manager';
 import type { ConfigurationMetadata, BeanMetadata, DIMap, ContainerConfiguration } from '../../src/types';
