@@ -15,6 +15,7 @@
 all three contain some value that we should see how we can merge
 
 - feature/attempt-at-streamlining-interfaces
+  - contains filepath:linenumber resolution of interfaces
 - feature/normalization
   - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
   - focus on syntax we support and log warnings for sytnax we dont support
