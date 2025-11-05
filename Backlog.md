@@ -4,6 +4,8 @@
 
 ### ❌ add warning if inject was detected n times but hooks couldnt be generated the same amount of times
 
+> we have this loginc partially in di-debug
+
 - this could be the most practical solution to typescript syntaxissues and different structures not being detected properly
 - we simply support a basic set of inject options
 - if we detect that something went wrong, we can check what exactly,
@@ -15,7 +17,8 @@
 all three contain some value that we should see how we can merge
 
 - feature/attempt-at-streamlining-interfaces
-  - contains filepath:linenumber resolution of interfaces
+  - contains filepath:linenumber resolution of interfaces or do we already have this? 
+    - https://github.com/7frank/tdi2/pull/57/commits/45c837d66ae295db98f3c203135c251b99172bf5
 - feature/normalization
   - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
   - focus on syntax we support and log warnings for sytnax we dont support
