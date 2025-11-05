@@ -12,7 +12,7 @@ import * as path from "path";
 
 export interface RecursiveExtractOptions {
   verbose?: boolean;
-  srcDir?: string;
+  scanDirs?: string[]; // Preferred: array of directories to scan
 }
 
 export interface ExtractedInjectMarker {
@@ -307,33 +307,54 @@ export class RecursiveInjectExtractor {
     try {
       const currentDir = path.dirname(sourceFile.getFilePath());
 
-      let resolvedPath: string;
+      // Handle relative imports (./foo, ../bar)
       if (moduleSpecifier.startsWith(".")) {
-        resolvedPath = path.resolve(currentDir, moduleSpecifier);
-      } else {
-        const srcDir = this.options.srcDir || './src';
-        resolvedPath = path.resolve(srcDir, moduleSpecifier);
+        const resolvedPath = path.resolve(currentDir, moduleSpecifier);
+        return this.tryResolveWithExtensions(resolvedPath, moduleSpecifier, sourceFile);
       }
 
-      const extensions = [".ts", ".tsx", "/index.ts", "/index.tsx"];
-      for (const ext of extensions) {
-        const fullPath = resolvedPath + ext;
-        const project = sourceFile.getProject();
-        const importedFile = project.getSourceFile(fullPath);
-        if (importedFile) {
-          if (this.options.verbose) {
-            console.log(`✅ Resolved import: ${moduleSpecifier} -> ${fullPath}`);
-          }
-          return importedFile;
+      // Handle non-relative imports - try all scanDirs
+      const scanDirs = this.options.scanDirs || ['./src'];
+
+      for (const scanDir of scanDirs) {
+        const resolvedPath = path.resolve(scanDir, moduleSpecifier);
+        const result = this.tryResolveWithExtensions(resolvedPath, moduleSpecifier, sourceFile);
+        if (result) {
+          return result;
         }
       }
 
       if (this.options.verbose) {
-        console.log(`❌ Could not resolve import: ${moduleSpecifier}`);
+        console.log(`❌ Could not resolve import: ${moduleSpecifier} (tried ${scanDirs.length} directories)`);
       }
     } catch (error) {
       if (this.options.verbose) {
         console.warn(`⚠️  Failed to resolve import: ${moduleSpecifier}`, error);
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Try to resolve a path with common TypeScript extensions
+   */
+  private tryResolveWithExtensions(
+    resolvedPath: string,
+    moduleSpecifier: string,
+    sourceFile: SourceFile
+  ): SourceFile | null {
+    const extensions = [".ts", ".tsx", "/index.ts", "/index.tsx"];
+    const project = sourceFile.getProject();
+
+    for (const ext of extensions) {
+      const fullPath = resolvedPath + ext;
+      const importedFile = project.getSourceFile(fullPath);
+      if (importedFile) {
+        if (this.options.verbose) {
+          console.log(`✅ Resolved import: ${moduleSpecifier} -> ${fullPath}`);
+        }
+        return importedFile;
       }
     }
 

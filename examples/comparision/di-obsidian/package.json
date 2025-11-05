@@ -1,0 +1,28 @@
+{
+  "name": "vanilla-state",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-obsidian": "^2.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.4",
+    "@vitejs/plugin-react-swc": "^3.11.0",
+    "globals": "^16.4.0",
+    "swc-plugin-obsidian": "^2.23.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.7"
+  }
+}

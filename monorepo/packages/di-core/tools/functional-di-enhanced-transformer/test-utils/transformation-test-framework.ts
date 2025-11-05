@@ -103,7 +103,7 @@ export class TransformationTestFramework {
 
     // Initialize transformer
     this.transformer = new FunctionalDIEnhancedTransformer({
-      srcDir: "./src",
+      scanDirs: ["./src"],
       outputDir: "./src/generated",
       verbose: this.options.verbose || false,
     });

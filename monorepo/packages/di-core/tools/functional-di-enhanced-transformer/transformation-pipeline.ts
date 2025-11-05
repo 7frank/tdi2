@@ -982,14 +982,18 @@ export class TransformationPipeline {
           const nameNode = declaration.getNameNode();
           const initializer = declaration.getInitializer();
 
-          if (
-            Node.isObjectBindingPattern(nameNode) &&
-            initializer &&
-            Node.isIdentifier(initializer)
-          ) {
+          if (Node.isObjectBindingPattern(nameNode) && initializer) {
             // Check if this destructuring tries to extract any DI service variables
+            // This handles all patterns:
+            // - const { api } = services
+            // - const { api } = props.services
+            // - const { api } = foo.bar.services
+            // - const { services: { api } } = props (nested destructuring handled recursively)
             if (
-              this.destructuringContainsDIServices(nameNode, diServiceVariables)
+              this.destructuringContainsDIServices(
+                nameNode,
+                diServiceVariables
+              )
             ) {
               statementsToRemove.push(statement);
 

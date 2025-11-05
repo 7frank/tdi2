@@ -30,7 +30,7 @@ import type {
 import { IntegratedInterfaceResolver } from './interface-resolver/integrated-interface-resolver';
 
 interface TransformerOptions {
-  srcDir?: string;
+  scanDirs?: string[];
   outputDir?: string;
   verbose?: boolean;
   generateRegistry?: boolean;
@@ -56,15 +56,19 @@ export class EnhancedDITransformer {
   private warnings: TransformationWarning[] = [];
 
   constructor(options: TransformerOptions = {}) {
+    if (!options.scanDirs || options.scanDirs.length === 0) {
+      throw new Error('EnhancedDITransformer requires scanDirs option with at least one directory');
+    }
+
     this.options = {
-      srcDir: options.srcDir || './src',
       outputDir: options.outputDir || './src/generated',
       verbose: options.verbose || false,
       enableInterfaceResolution: options.enableInterfaceResolution !== false,
       enableInheritanceDI: true,
       enableStateDI: true,
-      customSuffix: options.customSuffix
-    };
+      customSuffix: options.customSuffix,
+      scanDirs: options.scanDirs
+    } as any;
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json'
@@ -72,17 +76,17 @@ export class EnhancedDITransformer {
 
     // Initialize ConfigManager
     this.configManager = new ConfigManager({
-      srcDir: this.options.srcDir,
+      scanDirs: this.options.scanDirs,
       outputDir: this.options.outputDir,
       enableFunctionalDI: false, // This transformer focuses on class-based DI
       verbose: this.options.verbose,
       customSuffix: this.options.customSuffix
     });
 
-    // Initialize InterfaceResolver
+    // Initialize InterfaceResolver with all scan directories
     this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir,
+      scanDirs: this.options.scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
       enableStateDI: this.options.enableStateDI
     });
@@ -94,7 +98,7 @@ export class EnhancedDITransformer {
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
       verbose: this.options.verbose,
-       srcDir: this.options.srcDir
+      scanDirs: this.options.scanDirs
     });
 
     this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
@@ -195,8 +199,11 @@ export class EnhancedDITransformer {
       console.log('🔍 Finding transformation candidates...');
     }
 
-    // Add source files to project
-    this.project.addSourceFilesAtPaths(`${this.options.srcDir}/**/*.{ts,tsx}`);
+    // Add source files from all scan directories
+    const scanDirs = this.options.scanDirs;
+    for (const dir of scanDirs) {
+      this.project.addSourceFilesAtPaths(`${dir}/**/*.{ts,tsx}`);
+    }
 
     const sourceFiles = this.project.getSourceFiles();
 
@@ -555,19 +562,19 @@ export class EnhancedDITransformer {
   }
 }
 
-// CLI usage
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const transformer = new EnhancedDITransformer({ 
-    verbose: true,
-    srcDir: './src',
-    enableInterfaceResolution: true
-  });
+// // CLI usage
+// if (import.meta.url === `file://${process.argv[1]}`) {
+//   const transformer = new EnhancedDITransformer({ 
+//     verbose: true,
+//     scanDirs: ['./src'],
+//     enableInterfaceResolution: true
+//   });
   
-  transformer.transform()
-    .then(() => transformer.save())
-    .then(() => console.log('✅ Enhanced DI transformation completed successfully'))
-    .catch(error => {
-      console.error('❌ Enhanced DI transformation failed:', error);
-      process.exit(1);
-    });
-}
+//   transformer.transform()
+//     .then(() => transformer.save())
+//     .then(() => console.log('✅ Enhanced DI transformation completed successfully'))
+//     .catch(error => {
+//       console.error('❌ Enhanced DI transformation failed:', error);
+//       process.exit(1);
+//     });
+// }

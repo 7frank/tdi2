@@ -263,7 +263,7 @@ describe("FunctionalDIEnhancedTransformer", () => {
 
   beforeEach(() => {
     transformer = new FunctionalDIEnhancedTransformer({
-      srcDir: "./src",
+      scanDirs: ["./src"],
       outputDir: "./src/generated",
       verbose: false,
     });
@@ -707,7 +707,7 @@ export function MissingDependencies(props: {
       it("When transformation is complete, Then should generate debug info correctly", async () => {
         // Given - Configured for debug file generation
         const debugTransformer = new FunctionalDIEnhancedTransformer({
-          srcDir: "./src",
+          scanDirs: ["./src"],
           generateDebugFiles: true,
           verbose: true,
         });
@@ -856,7 +856,7 @@ export function ProblematicComponent(props: {
       it("When verbose mode is enabled, Then should provide detailed logging", async () => {
         // Given
         const verboseTransformer = new FunctionalDIEnhancedTransformer({
-          srcDir: "./src",
+          scanDirs: ["./src"],
           verbose: true,
         });
         (verboseTransformer as any).project = mockProject;
@@ -876,7 +876,7 @@ export function ProblematicComponent(props: {
       it("When debug files are enabled, Then should generate debug information", async () => {
         // Given
         const debugTransformer = new FunctionalDIEnhancedTransformer({
-          srcDir: "./src",
+          scanDirs: ["./src"],
           generateDebugFiles: true,
         });
 

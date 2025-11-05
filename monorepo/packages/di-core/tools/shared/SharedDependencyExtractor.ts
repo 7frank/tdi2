@@ -45,7 +45,7 @@ export interface DependencyExtractionContext {
 
 export interface SharedDependencyExtractorOptions {
   verbose?: boolean;
-  srcDir?: string;
+  scanDirs?: string[]; // Preferred: array of directories
 }
 
 export class SharedDependencyExtractor {
@@ -57,7 +57,7 @@ export class SharedDependencyExtractor {
   ) {
     this.recursiveExtractor = new RecursiveInjectExtractor({
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir
+      scanDirs: this.options.scanDirs
     });
   }
 

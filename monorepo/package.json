@@ -8,22 +8,20 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "bun run build && changeset publish",
-    "ci:version": "changeset version && bun install",
-    "ci:publish": "changeset publish",
-    "rm":"find . -maxdepth 3 -type d -name \"node_modules\" -exec rm -rf {} +",
+    "publish:packages": "turbo run publish:package && changeset tag",
+    "1-changeset": "changeset",
+    "2-version": "changeset version && bun update",
+    "3-release": "bun run build && bun run publish:packages && changeset tag",
+    "rm": "find . -maxdepth 3 -type d -name \"node_modules\" -exec rm -rf {} +",
     "docs:dev": "cd apps/docs-starlight && bun run dev",
     "docs:build": "cd apps/docs-starlight && bun run build",
     "docs:preview": "cd apps/docs-starlight && bun run preview"
-
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.7",
-    "prettier": "^3.6.0",
-    "turbo": "^2.5.4",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.8",
     "typescript": "5.8.2"
   },
   "engines": {

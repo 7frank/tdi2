@@ -1,17 +1,18 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
     "declaration": true,
     "emitDeclarationOnly": true,
     "noEmitOnError": false,
     "outDir": "./dist/examples",
     "rootDir": "tools/functional-di-enhanced-transformer/__tests__/__fixtures__",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "jsx": "react-jsx"
   },
-  "include": [
-    "tools/functional-di-enhanced-transformer/__tests__/__fixtures__"
-  ],
-  "exclude": [
-    "src"
-  ]
+  "include": ["tools/functional-di-enhanced-transformer/__tests__/__fixtures__/**/*"],
+  "exclude": ["src"]
 }

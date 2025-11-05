@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/di-testing",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "Testing utilities for TDI2 dependency injection framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -52,7 +52,8 @@
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",
     "publish:npm": "npm publish --access public",
-    "publish:jsr": "npx jsr publish"
+    "publish:jsr": "npx jsr publish",
+    "publish:package": "bun publish"
   },
   "keywords": [
     "dependency-injection",
