@@ -125,7 +125,7 @@ describe("Functional DI Transformation Tests", () => {
       defineTransformationTest("aliasing-with-rest-and-di", FIXTURES_DIR)
     );
 
-    it.skip(
+    it(
       "should handle multiple rest parameters with mixed DI and non-DI",
       defineTransformationTest("multiple-rest-mixed-di", FIXTURES_DIR)
     );
