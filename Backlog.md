@@ -2,11 +2,24 @@
 
 ## ordered log (for production release)
 
-### merge or remove branches before additional features
+### ❌ add warning if inject was detected n times but hooks couldnt be generated the same amount of times
 
-feature/attempt-at-streamlining-interfaces
-feature/normalization
-feature/refactor-di-debug-into-vite-react-app
+- this could be the most practical solution to typescript syntaxissues and different structures not being detected properly
+- we simply support a basic set of inject options
+- if we detect that something went wrong, we can check what exactly,
+- if Inject<Logger> and Inject<Foo> doesnt correspond twith both hooks of that name in the code we can warn about it
+  - "Inject<Foo> could not inject meta code see documentation <link to docmentation page showing proper pattern>"
+
+### ❌ merge or remove branches before additional features
+
+all three contain some value that we should see how we can merge
+
+- feature/attempt-at-streamlining-interfaces
+- feature/normalization
+  - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
+  - focus on syntax we support and log warnings for sytnax we dont support
+
+- feature/refactor-di-debug-into-vite-react-app
 
 ### [❌] make valtio transformations and reactivity optional
 
@@ -93,6 +106,10 @@ export function bindAllMethodsToProxy<T extends object>(p: T): T {
   return p;
 }
 ```
+
+### ❌ vite-plugin-inspect
+
+- evaluate where this could be helpful
 
 ### [❌] migration paths - hooks to services
 
