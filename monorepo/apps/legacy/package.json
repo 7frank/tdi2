@@ -12,7 +12,6 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
-    "clean": "rm -rf dist && rm -rf .next && rm -rf node_modules/.vite",
     "// === Enhanced DI Scripts ===": "",
     "di:build-prepare": "npm run di:enhanced",
     "di:transform": "tsx tools/di-transformer.ts",
