@@ -1,5 +1,5 @@
 // Auto-generated transformation snapshot for DeepDestructuring
-// Generated: 2025-08-17T08:21:50.630Z
+// Generated: 2025-08-25T11:50:04.285Z
 import React from 'react';
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 import { ApiInterface, LoggerInterface } from './shared-types';

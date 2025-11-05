@@ -1,7 +1,9 @@
 // tools/enhanced-di-transformer.test.ts - COMPLETELY FIXED VERSION
-import { describe, it, expect, beforeEach, mock, jest } from "bun:test";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { EnhancedDITransformer } from "./enhanced-di-transformer";
 import { Project } from "ts-morph";
+
+const mock=vi.fn
 
 // Mock dependencies
 const createMockConfigManager = () => ({
@@ -222,19 +224,19 @@ describe("EnhancedDITransformer", () => {
       it("When transforming, Then should use dependency tree builder", async () => {
         // Given - Interface resolution enabled
         // Mock the scanAndResolveInterfaces method to prevent file system access
-        const scanSpy = jest
+        const scanSpy = vi
           .spyOn(transformer as any, "scanAndResolveInterfaces")
           .mockResolvedValue(undefined);
-        const candidatesSpy = jest
+        const candidatesSpy = vi
           .spyOn(transformer as any, "findTransformationCandidates")
           .mockResolvedValue(undefined);
-        const extractSpy = jest
+        const extractSpy = vi
           .spyOn(transformer as any, "extractDependencies")
           .mockResolvedValue(undefined);
-        const registerSpy = jest
+        const registerSpy = vi
           .spyOn(transformer as any, "registerServices")
           .mockResolvedValue(undefined);
-        const generateSpy = jest
+        const generateSpy = vi
           .spyOn(transformer as any, "generateConfiguration")
           .mockResolvedValue(undefined);
 
@@ -259,23 +261,23 @@ describe("EnhancedDITransformer", () => {
 
       it("When transformation succeeds, Then should generate service registry", async () => {
         // Given
-        const generateRegistrySpy = jest
+        const generateRegistrySpy = vi
           .spyOn(
             (transformer as any).serviceRegistry,
             "generateServiceRegistry"
           )
           .mockResolvedValue(undefined);
 
-        const scanSpy = jest
+        const scanSpy = vi
           .spyOn(transformer as any, "scanAndResolveInterfaces")
           .mockResolvedValue(undefined);
-        const candidatesSpy = jest
+        const candidatesSpy = vi
           .spyOn(transformer as any, "findTransformationCandidates")
           .mockResolvedValue(undefined);
-        const extractSpy = jest
+        const extractSpy = vi
           .spyOn(transformer as any, "extractDependencies")
           .mockResolvedValue(undefined);
-        const registerSpy = jest
+        const registerSpy = vi
           .spyOn(transformer as any, "registerServices")
           .mockResolvedValue(undefined);
 
@@ -295,7 +297,7 @@ describe("EnhancedDITransformer", () => {
 
       it("When transformation fails, Then should handle errors gracefully", async () => {
         // Given
-        const scanSpy = jest
+        const scanSpy = vi
           .spyOn(transformer as any, "scanAndResolveInterfaces")
           .mockRejectedValue(new Error("Tree building failed"));
 
@@ -318,30 +320,30 @@ describe("EnhancedDITransformer", () => {
 
         // FIXED: Mock the interfaceResolver to simulate the check with all required methods
         (tokenTransformer as any).interfaceResolver = {
-          scanProject: jest.fn().mockResolvedValue(undefined),
-          validateDependencies: jest.fn().mockReturnValue({
+          scanProject: vi.fn().mockResolvedValue(undefined),
+          validateDependencies: vi.fn().mockReturnValue({
             isValid: false,
             missingImplementations: [],
             circularDependencies: [],
           }),
-          getInterfaceImplementations: jest.fn().mockReturnValue(new Map()),
-          getServiceDependencies: jest.fn().mockReturnValue(new Map()),
+          getInterfaceImplementations: vi.fn().mockReturnValue(new Map()),
+          getServiceDependencies: vi.fn().mockReturnValue(new Map()),
         };
 
         // Mock other required methods to prevent actual execution
-        const scanSpy = jest
+        const scanSpy = vi
           .spyOn(tokenTransformer as any, "scanAndResolveInterfaces")
           .mockResolvedValue(undefined);
-        const candidatesSpy = jest
+        const candidatesSpy = vi
           .spyOn(tokenTransformer as any, "findTransformationCandidates")
           .mockResolvedValue(undefined);
-        const extractSpy = jest
+        const extractSpy = vi
           .spyOn(tokenTransformer as any, "extractDependencies")
           .mockResolvedValue(undefined);
-        const registerSpy = jest
+        const registerSpy = vi
           .spyOn(tokenTransformer as any, "registerServices")
           .mockResolvedValue(undefined);
-        const generateSpy = jest
+        const generateSpy = vi
           .spyOn(tokenTransformer as any, "generateConfiguration")
           .mockResolvedValue(undefined);
 
@@ -365,7 +367,7 @@ describe("EnhancedDITransformer", () => {
         // Given
         // Mock the interfaceResolver methods to return expected data
         (transformer as any).interfaceResolver = {
-          getInterfaceImplementations: jest.fn().mockReturnValue(
+          getInterfaceImplementations: vi.fn().mockReturnValue(
             new Map([
               [
                 "TestInterface",
@@ -376,7 +378,7 @@ describe("EnhancedDITransformer", () => {
               ],
             ])
           ),
-          getServiceDependencies: jest
+          getServiceDependencies: vi
             .fn()
             .mockReturnValue(
               new Map([
@@ -386,7 +388,7 @@ describe("EnhancedDITransformer", () => {
                 ],
               ])
             ),
-          validateDependencies: jest.fn().mockReturnValue({
+          validateDependencies: vi.fn().mockReturnValue({
             isValid: true,
             missingImplementations: [],
             circularDependencies: [],
@@ -395,13 +397,13 @@ describe("EnhancedDITransformer", () => {
 
         // Mock serviceRegistry methods
         (transformer as any).serviceRegistry = {
-          validateRegistry: jest.fn().mockReturnValue({
+          validateRegistry: vi.fn().mockReturnValue({
             isValid: true,
             errors: [],
             warnings: [],
             stats: { totalServices: 0 },
           }),
-          getConfiguration: jest.fn().mockReturnValue({
+          getConfiguration: vi.fn().mockReturnValue({
             services: new Map(),
             interfaceMapping: new Map(),
             classMapping: new Map(),
@@ -424,23 +426,23 @@ describe("EnhancedDITransformer", () => {
         // Given
         // Mock the interfaceResolver and serviceRegistry validation methods
         (transformer as any).interfaceResolver = {
-          validateDependencies: jest.fn().mockReturnValue({
+          validateDependencies: vi.fn().mockReturnValue({
             isValid: true,
             missingImplementations: [],
             circularDependencies: [],
           }),
-          getInterfaceImplementations: jest.fn().mockReturnValue(new Map()),
-          getServiceDependencies: jest.fn().mockReturnValue(new Map()),
+          getInterfaceImplementations: vi.fn().mockReturnValue(new Map()),
+          getServiceDependencies: vi.fn().mockReturnValue(new Map()),
         };
 
         (transformer as any).serviceRegistry = {
-          validateRegistry: jest.fn().mockReturnValue({
+          validateRegistry: vi.fn().mockReturnValue({
             isValid: true,
             errors: [],
             warnings: [],
             stats: { totalServices: 0 },
           }),
-          getConfiguration: jest.fn().mockReturnValue({
+          getConfiguration: vi.fn().mockReturnValue({
             services: new Map(),
             interfaceMapping: new Map(),
             classMapping: new Map(),
@@ -460,7 +462,7 @@ describe("EnhancedDITransformer", () => {
         // Given
         // Mock the interfaceResolver to return expected data
         (transformer as any).interfaceResolver = {
-          getInterfaceImplementations: jest.fn().mockReturnValue(
+          getInterfaceImplementations: vi.fn().mockReturnValue(
             new Map([
               [
                 "TestInterface",
@@ -471,7 +473,7 @@ describe("EnhancedDITransformer", () => {
               ],
             ])
           ),
-          getServiceDependencies: jest
+          getServiceDependencies: vi
             .fn()
             .mockReturnValue(
               new Map([
@@ -481,7 +483,7 @@ describe("EnhancedDITransformer", () => {
                 ],
               ])
             ),
-          validateDependencies: jest.fn().mockReturnValue({
+          validateDependencies: vi.fn().mockReturnValue({
             isValid: true,
             missingImplementations: [],
             circularDependencies: [],
@@ -506,7 +508,7 @@ describe("EnhancedDITransformer", () => {
     describe("Given error conditions", () => {
       it("When interface resolver fails, Then should handle gracefully", async () => {
         // Given
-        const scanSpy = jest
+        const scanSpy = vi
           .spyOn(transformer as any, "scanAndResolveInterfaces")
           .mockRejectedValue(new Error("Interface resolution failed"));
 
@@ -533,7 +535,7 @@ describe("EnhancedDITransformer", () => {
 
       it("When save fails, Then should throw appropriate error", async () => {
         // Given
-        const mockSave = jest
+        const mockSave = vi
           .spyOn((transformer as any).project, "save")
           .mockRejectedValue(new Error("Save failed"));
 

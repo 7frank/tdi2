@@ -6,6 +6,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { glob } from "glob";
 import { diffLines, createTwoFilesPatch } from "diff";
+import {expect} from "vitest"
 
 export interface IgnorePattern {
   pattern: RegExp;

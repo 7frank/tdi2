@@ -1,6 +1,6 @@
 // tools/interface-resolver/enhanced-decorator.test.ts - COMPLETE with comprehensive coverage
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "ts-morph";
 import { EnhancedInterfaceExtractor } from "./enhanced-interface-extractor";
 import { EnhancedServiceValidator } from "./enhanced-service-validator";

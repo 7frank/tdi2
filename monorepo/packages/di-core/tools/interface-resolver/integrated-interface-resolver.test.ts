@@ -1,5 +1,5 @@
 // tests/unit/tools/interface-resolver.test.ts - FIXED VERSION
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach, mock } from "vitest";
 import { IntegratedInterfaceResolver } from "./integrated-interface-resolver";
 
 import { Project, SourceFile } from "ts-morph";

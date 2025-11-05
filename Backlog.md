@@ -2,6 +2,19 @@
 
 ## ordered log (for production release)
 
+
+### [❌] rather than optimize edge case document happy path and visualize changes in di-debug so that delveoper can see what they transform in realtime and can mitigate
+
+> [❌] ship prod with documentend quirks
+
+- for a first iteration that should be good enough
+- [❌] add "rules" to docs
+  - don't use destructuring too much
+  - don't use rest parameters
+  - don't use aliases should be good enough
+  - use di-debug to se when your di isnt working why
+- [❌] rendering the input and transformed in the di-debug with the same diff view di-test-harness has will allow dev to see what is breaking
+
 ### ❌ add warning if inject was detected n times but hooks couldnt be generated the same amount of times
 
 > we have this loginc partially in di-debug
@@ -229,29 +242,6 @@ something wrong with the setup and the dashboard build
 20: "TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14"
 21: "TodoService2"
 
-#### [❌] improper handling of rest parameters
-
-- functional-di-enhanced-transformer/**tests**/**fixtures**/complex-props-spreading.basic.
-
-> const { id, onClick, restProps } = props;
-> const { id, onClick, ...restProps } = props;
-
-- [❌] fix test
-- [❌] enable test in di-test-harness
-
-> ensure that there are no compilation errors by building after running tests
-
-- cd di-core
-- br test:update
-- br build
-
-#### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
-
-evaluate scenarios
-
-- to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
-- or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
-
 ### [❌] separate packages
 
 > important for prod for less disruptions in post-prod releases
@@ -283,7 +273,8 @@ TypeScript Transformer - Complex TS compiler API integration
 
 ## ordered log (for post-production)
 
-### [❌] (out of scope for prod )create separate files/classes that focus on normalizing a step at a time
+
+### [❌] create separate files/classes that focus on normalizing a step at a time
 
 > **separation of concern** from whats there extract/create logical parts of the pipeline for:
 
@@ -721,6 +712,15 @@ https://github.com/aleclarson/valtio-kit
 - This plugin also could be a standalone and would not necessarily have to be coupled to our code base
 - this compile step would leave us mostly with what svelte does (maybe still more effective)
 
+### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
+
+> by adding di-debug visual results of transformations and documenting happy path we might not need this for the forseeable future
+
+evaluate scenarios
+
+- to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
+- or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
+
 ---
 
 ## Done
@@ -850,6 +850,21 @@ conditional-rendering.basic.input
 multiple-components.basic.input
 
 ### DI bugs & side effects (part 1)
+
+#### [✅] improper handling of rest parameters
+
+- functional-di-enhanced-transformer/**tests**/**fixtures**/complex-props-spreading.basic.
+
+> const { id, onClick, restProps } = props;
+> const { id, onClick, ...restProps } = props;
+
+- [✅] fix test
+
+> ensure that there are no compilation errors by building after running tests
+
+- cd di-core
+- br test:update
+- br build
 
 #### [✅] Fixme: example which his generating invalid code
 

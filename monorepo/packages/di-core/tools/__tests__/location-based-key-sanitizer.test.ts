@@ -1,5 +1,5 @@
 // [DI Edge-Case] Location-Based Key Sanitizer Test
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "vitest";
 import { KeySanitizer } from "../interface-resolver/key-sanitizer";
 
 describe("[DI Edge-Case] Location-Based Key Generation", () => {
