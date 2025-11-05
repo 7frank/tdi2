@@ -1,6 +1,6 @@
-// src/logging/init.ts - Logging System Initialization
+// @tdi2/logging - Initialization and convenience functions
 
-import type { LoggerConfig, LogLevel, ConsoleMonkeyPatchConfig } from './types';
+import type { LoggerConfig, LogLevel, ConsoleMonkeyPatchConfig, LogContext } from './types';
 import { TDILoggerService } from './tdi-logger-service';
 
 // Environment detection
@@ -220,12 +220,12 @@ export const logging = {
  * Convenience functions for immediate logging without explicit logger instance
  */
 export const log = {
-  trace: (message: string, context?: any) => getLogger().trace(message, context),
-  debug: (message: string, context?: any) => getLogger().debug(message, context),
-  info: (message: string, context?: any) => getLogger().info(message, context),
-  warn: (message: string, context?: any) => getLogger().warn(message, context),
-  error: (message: string, error?: Error, context?: any) => getLogger().error(message, error, context),
-  fatal: (message: string, error?: Error, context?: any) => getLogger().fatal(message, error, context),
+  trace: (message: string, context?: LogContext) => getLogger().trace(message, context),
+  debug: (message: string, context?: LogContext) => getLogger().debug(message, context),
+  info: (message: string, context?: LogContext) => getLogger().info(message, context),
+  warn: (message: string, context?: LogContext) => getLogger().warn(message, context),
+  error: (message: string, error?: Error, context?: LogContext) => getLogger().error(message, error, context),
+  fatal: (message: string, error?: Error, context?: LogContext) => getLogger().fatal(message, error, context),
 
   // TDI2-specific logging
   diRegistration: (interfaceName: string, implementationClass: string, type: string) => 
@@ -259,7 +259,7 @@ export const devLog = {
   /**
    * Log with timing wrapper
    */
-  withTiming: <T>(operation: string, fn: () => T | Promise<T>, context?: any): T | Promise<T> => {
+  withTiming: <T>(operation: string, fn: () => T | Promise<T>, context?: LogContext): T | Promise<T> => {
     return getLogger().logWithTiming(operation, fn, context);
   },
 
@@ -288,10 +288,3 @@ export const errorLog = {
   transformationError: (type: string, fileName: string, message: string, error?: Error) =>
     getLogger().logTransformationError(type as any, fileName, message, error)
 };
-
-// Export logger service class for DI registration
-export { TDILoggerService } from './tdi-logger-service';
-export type { LoggerInterface } from './tdi-logger-service';
-
-// Re-export types for convenience
-export type { LogLevel, LogContext, LogEntry, LoggerConfig } from './types';

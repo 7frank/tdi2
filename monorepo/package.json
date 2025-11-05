@@ -6,9 +6,10 @@
     "dev": "turbo run dev",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "publish:packages": "turbo run publish:package && changeset tag",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "clean": "turbo run clean",
+    "clean:deps": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf apps/*/node_modules",
     "1-changeset": "changeset",
     "2-version": "changeset version && bun update",
     "3-release": "bun run build && bun run publish:packages && changeset tag",
@@ -16,6 +17,7 @@
     "docs:dev": "cd apps/docs-starlight && bun run dev",
     "docs:build": "cd apps/docs-starlight && bun run build",
     "docs:preview": "cd apps/docs-starlight && bun run preview"
+
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",

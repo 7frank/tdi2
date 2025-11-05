@@ -2,6 +2,13 @@
 
 ## ordered log (for production release)
 
+### ❌ auto discover packages
+
+> currently we can add scanDirs manually, while this is working it could be better to have a `autodiscover` packages flag
+
+- possible naive solution: autodiscover would check packages of current packageand check of the sub-package contains a dependency to di-core and inject or service markers
+
+test with logging service from newly merged logging package
 
 ### [❌] rather than optimize edge case document happy path and visualize changes in di-debug so that delveoper can see what they transform in realtime and can mitigate
 
@@ -17,7 +24,7 @@
 
 ### ❌ add warning if inject was detected n times but hooks couldnt be generated the same amount of times
 
-> we have this loginc partially in di-debug
+> we have this logic partially in di-debug
 
 - this could be the most practical solution to typescript syntaxissues and different structures not being detected properly
 - we simply support a basic set of inject options
@@ -30,7 +37,7 @@
 all three contain some value that we should see how we can merge
 
 - feature/attempt-at-streamlining-interfaces
-  - contains filepath:linenumber resolution of interfaces or do we already have this? 
+  - contains filepath:linenumber resolution of interfaces or do we already have this?
     - https://github.com/7frank/tdi2/pull/57/commits/45c837d66ae295db98f3c203135c251b99172bf5
 - feature/normalization
   - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
@@ -272,7 +279,6 @@ TypeScript Transformer - Complex TS compiler API integration
 ---
 
 ## ordered log (for post-production)
-
 
 ### [❌] create separate files/classes that focus on normalizing a step at a time
 
