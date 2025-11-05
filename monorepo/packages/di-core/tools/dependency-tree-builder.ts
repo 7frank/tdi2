@@ -1,13 +1,20 @@
-// tools/dependency-tree-builder.ts - FIXED with enhanced registration
+// tools/dependency-tree-builder.ts - REFACTORED to use shared logic
 
-import {
-  InterfaceResolver,
-  type InterfaceImplementation,
-  type ServiceDependency,
-} from "./interface-resolver/interface-resolver";
 import { ConfigManager } from "./config-manager";
 import * as path from "path";
 import * as fs from "fs";
+
+// Use shared components instead of local interface resolver
+import { SharedDependencyExtractor } from "./shared/SharedDependencyExtractor";
+import { SharedServiceRegistry } from "./shared/SharedServiceRegistry";
+import { SharedTypeResolver } from "./shared/SharedTypeResolver";
+import type { 
+  TransformationCandidate,
+  ServiceClassMetadata 
+} from "./shared/shared-types";
+
+import { IntegratedInterfaceResolver } from "./interface-resolver/integrated-interface-resolver";
+import type { InterfaceImplementation, ServiceDependency } from "./interface-resolver/interface-resolver-types";
 
 interface TreeNode {
   id: string;
@@ -41,81 +48,93 @@ interface ServiceClass {
 }
 
 export class DependencyTreeBuilder {
-  private interfaceResolver: InterfaceResolver;
   private configManager: ConfigManager;
   private configurations: Map<string, DIConfiguration> = new Map();
   private serviceClasses: Map<string, ServiceClass> = new Map();
   private options: {
     verbose: boolean;
-    srcDir: string;
+    scanDirs: string[];
     enableInheritanceDI: boolean;
   };
+
+  // Use shared components instead of local interface resolver
+  private interfaceResolver: IntegratedInterfaceResolver;
+  private dependencyExtractor: SharedDependencyExtractor;
+  private serviceRegistry: SharedServiceRegistry;
+  private typeResolver: SharedTypeResolver;
 
   constructor(
     configManager: ConfigManager,
     options: {
       verbose?: boolean;
-      srcDir?: string;
+      scanDirs?: string[];
       enableInheritanceDI?: boolean;
     } = {}
   ) {
     this.configManager = configManager;
     this.options = {
       verbose: false,
-      srcDir: "./src",
+      scanDirs: options.scanDirs || ["./src"],
       enableInheritanceDI: true,
       ...options,
     };
 
-    this.interfaceResolver = new InterfaceResolver({
+    // Initialize interface resolver
+    this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir,
+      scanDirs: this.options.scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
+    });
+
+    // Initialize shared components
+    this.typeResolver = new SharedTypeResolver(this.interfaceResolver, {
+      verbose: this.options.verbose
+    });
+
+    this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
+      verbose: this.options.verbose
+    });
+
+    this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
+      verbose: this.options.verbose
     });
   }
 
   async buildDependencyTree(): Promise<void> {
     if (this.options.verbose) {
-      console.log("🌳 Building dependency tree with inheritance support...");
+      console.log("🌳 Building dependency tree with shared logic and inheritance support...");
     }
 
-    // Scan project for interfaces, implementations, and inheritance
+    // Scan project for interfaces, implementations, and inheritance using shared logic
     await this.interfaceResolver.scanProject();
 
-    // Validate dependencies
+    // Validate dependencies using shared logic
     const validation = this.interfaceResolver.validateDependencies();
     if (!validation.isValid) {
       console.error("❌ Dependency validation failed:");
 
       // Show detailed information for debugging
-      const implementations =
-        this.interfaceResolver.getInterfaceImplementations();
+      const implementations = this.interfaceResolver.getInterfaceImplementations();
       console.log("Available implementations:", implementations);
 
       if (validation.missingImplementations.length > 0) {
-        console.error(
-          "Missing implementations:",
-          validation.missingImplementations
-        );
+        console.error("Missing implementations:", validation.missingImplementations);
       }
       if (validation.circularDependencies.length > 0) {
-        console.error(
-          "Circular dependencies:",
-          validation.circularDependencies
-        );
+        console.error("Circular dependencies:", validation.circularDependencies);
       }
       throw new Error(
         "Invalid dependency configuration. Fix the issues above before proceeding."
       );
     }
 
-    // Build configurations with deduplication
-    await this.buildConfigurationsWithDeduplication();
+    // Build configurations with deduplication using shared logic
+    await this.buildConfigurationsWithSharedLogic();
 
     // Generate DI configuration file
     await this.generateDIConfiguration();
 
-    // Generate import file (like di.generated.ts)
+    // Generate import file
     await this.generateImportFile();
 
     if (this.options.verbose) {
@@ -126,14 +145,11 @@ export class DependencyTreeBuilder {
     }
   }
 
-  // ENHANCED: Build configurations with proper AsyncState handling
-
-  private async buildConfigurationsWithDeduplication(): Promise<void> {
-    const implementations =
-      this.interfaceResolver.getInterfaceImplementations();
+  private async buildConfigurationsWithSharedLogic(): Promise<void> {
+    const implementations = this.interfaceResolver.getInterfaceImplementations();
     const dependencies = this.interfaceResolver.getServiceDependencies();
 
-    // Step 1: Group all implementations by service class to avoid duplicates
+    // Step 1: Group all implementations by service class using shared logic
     const serviceClassMap = new Map<
       string,
       {
@@ -164,7 +180,10 @@ export class DependencyTreeBuilder {
       serviceClassMap.get(className)!.implementations.push(implementation);
     }
 
-    // Step 2: Create service class entries and multiple token registrations
+    // Step 2: Create service class entries and register with shared registry
+    const allImplementations: InterfaceImplementation[] = [];
+    const dependencyMap = new Map<string, any[]>();
+
     for (const [className, serviceInfo] of serviceClassMap) {
       // Create the service class entry
       const serviceClass: ServiceClass = {
@@ -181,18 +200,16 @@ export class DependencyTreeBuilder {
         let type: "interface" | "class" | "inheritance" | "state";
 
         if (impl.isStateBased) {
-          // CRITICAL FIX: Use sanitized key instead of full service interface
           token = impl.sanitizedKey;
           type = "state";
         } else if (impl.isInheritanceBased) {
-          // CRITICAL FIX: Use sanitized key instead of base class generic
           token = impl.sanitizedKey;
           type = "inheritance";
         } else if (impl.isClassBased) {
-          token = impl.implementationClass; // Class name
+          token = impl.implementationClass;
           type = "class";
         } else {
-          token = impl.interfaceName; // Interface name
+          token = impl.interfaceName;
           type = "interface";
         }
 
@@ -217,17 +234,18 @@ export class DependencyTreeBuilder {
             },
           });
         }
+
+        allImplementations.push(impl);
       }
 
       this.serviceClasses.set(className, serviceClass);
 
       // Create DI configurations for each token
       for (const registration of serviceClass.registrations) {
-        // Use the first implementation for the configuration (they all point to the same class)
         const primaryImpl = serviceInfo.implementations[0];
 
         const config: DIConfiguration = {
-          token: registration.token, // This is now the sanitized key
+          token: registration.token,
           implementation: {
             ...primaryImpl,
             interfaceName: registration.interfaceName,
@@ -253,7 +271,14 @@ export class DependencyTreeBuilder {
           );
         }
       }
+
+      // Extract dependencies for this service class using shared extractor
+      const extractedDeps: any[] = []; // Would be populated by shared dependency extractor if needed
+      dependencyMap.set(className, extractedDeps);
     }
+
+    // Register all services with shared registry
+    this.serviceRegistry.registerServices(allImplementations, dependencyMap);
 
     // Log summary
     if (this.options.verbose) {
@@ -268,255 +293,16 @@ export class DependencyTreeBuilder {
   }
 
   private async generateDIConfiguration(): Promise<void> {
-    const imports: string[] = [];
-    const factories: string[] = [];
-    const diMapEntries: string[] = [];
-
-    // Use serviceClasses to avoid duplicate imports and factories
-    const processedClasses = new Set<string>();
-
-    // Generate unique imports and factories
-    for (const [className, serviceClass] of this.serviceClasses) {
-      if (processedClasses.has(className)) continue;
-      processedClasses.add(className);
-
-      // Generate import (only once per class)
-      const configDir = this.configManager.getConfigDir();
-      const servicePath = path.resolve(serviceClass.filePath);
-      const relativePath = path
-        .relative(configDir, servicePath)
-        .replace(/\.(ts|tsx)$/, "")
-        .replace(/\\/g, "/");
-
-      const importPath = relativePath.startsWith(".")
-        ? relativePath
-        : `./${relativePath}`;
-      imports.push(`import { ${className} } from '${importPath}';`);
-
-      // Generate factory function (only once per class)
-      const factoryCode = this.generateFactoryFunction(serviceClass);
-      factories.push(factoryCode);
+    if (this.options.verbose) {
+      console.log("📄 Generating DI configuration using shared registry...");
     }
 
-    // Generate DI map entries for all configurations
-    const sortedConfigs = this.topologicalSort();
-    for (const config of sortedConfigs) {
-      const serviceClass = this.serviceClasses.get(
-        config.implementation.implementationClass
-      )!;
-      const registration = serviceClass.registrations.find(
-        (reg) => reg.token === config.token
-      )!;
+    // Use shared registry to generate DI configuration
+    await this.serviceRegistry.generateDIConfiguration();
 
-      diMapEntries.push(`  '${config.token}': {
-    factory: ${config.factory},
-    scope: '${config.scope}',
-    dependencies: [${config.dependencies.map((dep) => `'${dep}'`).join(", ")}],
-    interfaceName: '${registration.interfaceName}',
-    implementationClass: '${config.implementation.implementationClass}',
-    isAutoResolved: true,
-    registrationType: '${registration.type}',
-    isClassBased: ${registration.type === "class"},
-    isInheritanceBased: ${registration.type === "inheritance"},
-    isStateBased: ${registration.type === "state"},
-    baseClass: ${
-      registration.metadata?.baseClass
-        ? `'${registration.metadata.baseClass}'`
-        : "null"
-    },
-    baseClassGeneric: ${
-      registration.metadata?.baseClassGeneric
-        ? `'${registration.metadata.baseClassGeneric}'`
-        : "null"
-    },
-    stateType: ${
-      registration.metadata?.stateType
-        ? `'${registration.metadata.stateType}'`
-        : "null"
-    },
-    serviceInterface: ${
-      registration.metadata?.serviceInterface
-        ? `'${registration.metadata.serviceInterface}'`
-        : "null"
-    },
-    inheritanceChain: [${(registration.metadata?.inheritanceChain || [])
-      .map((c: string) => `'${c}'`)
-      .join(", ")}]
-  }`);
+    if (this.options.verbose) {
+      console.log("✅ DI configuration generated successfully");
     }
-
-    // Generate the complete DI configuration file
-    const configContent = `// Auto-generated DI configuration - Enhanced with inheritance support
-// Do not edit this file manually
-// Config: ${this.configManager.getConfigHash()}
-// Generated: ${new Date().toISOString()}
-
-${imports.join("\n")}
-
-// Factory functions (one per service class)
-${factories.join("\n\n")}
-
-// DI Configuration Map
-export const DI_CONFIG = {
-${diMapEntries.join(",\n")}
-};
-
-// Service class to registrations mapping
-export const SERVICE_REGISTRATIONS = {
-${Array.from(this.serviceClasses.entries())
-  .map(
-    ([className, serviceClass]) =>
-      `  '${className}': [${serviceClass.registrations
-        .map((reg) => `'${reg.token}'`)
-        .join(", ")}]`
-  )
-  .join(",\n")}
-};
-
-// Registration type mappings (for debugging)
-export const INTERFACE_MAPPING = {
-${Array.from(this.configurations.values())
-  .filter((config) => {
-    const serviceClass = this.serviceClasses.get(
-      config.implementation.implementationClass
-    )!;
-    const registration = serviceClass.registrations.find(
-      (reg) => reg.token === config.token
-    )!;
-    return registration.type === "interface";
-  })
-  .map(
-    (config) =>
-      `  '${config.token}': '${config.implementation.implementationClass}'`
-  )
-  .join(",\n")}
-};
-
-export const CLASS_MAPPING = {
-${Array.from(this.configurations.values())
-  .filter((config) => {
-    const serviceClass = this.serviceClasses.get(
-      config.implementation.implementationClass
-    )!;
-    const registration = serviceClass.registrations.find(
-      (reg) => reg.token === config.token
-    )!;
-    return registration.type === "class";
-  })
-  .map(
-    (config) =>
-      `  '${config.token}': '${config.implementation.implementationClass}'`
-  )
-  .join(",\n")}
-};
-
-export const INHERITANCE_MAPPING = {
-${Array.from(this.configurations.values())
-  .filter((config) => {
-    const serviceClass = this.serviceClasses.get(
-      config.implementation.implementationClass
-    )!;
-    const registration = serviceClass.registrations.find(
-      (reg) => reg.token === config.token
-    )!;
-    return registration.type === "inheritance";
-  })
-  .map(
-    (config) =>
-      `  '${config.token}': '${config.implementation.implementationClass}'`
-  )
-  .join(",\n")}
-};
-
-export const STATE_MAPPING = {
-${Array.from(this.configurations.values())
-  .filter((config) => {
-    const serviceClass = this.serviceClasses.get(
-      config.implementation.implementationClass
-    )!;
-    const registration = serviceClass.registrations.find(
-      (reg) => reg.token === config.token
-    )!;
-    return registration.type === "state";
-  })
-  .map(
-    (config) =>
-      `  '${config.token}': '${config.implementation.implementationClass}'`
-  )
-  .join(",\n")}
-};
-
-// Enhanced helper functions
-export function getServicesByBaseClass(baseClass: string): string[] {
-  return Object.values(DI_CONFIG)
-    .filter(config => config.baseClass === baseClass)
-    .map(config => config.implementationClass);
-}
-
-export function getServicesByStateType(stateType: string): string[] {
-  return Object.values(DI_CONFIG)
-    .filter(config => config.stateType === stateType)
-    .map(config => config.implementationClass);
-}
-
-export function getTokensForService(serviceClass: string): string[] {
-  return SERVICE_REGISTRATIONS[serviceClass] || [];
-}
-
-export function getRegistrationType(token: string): 'interface' | 'class' | 'inheritance' | 'state' | null {
-  const config = DI_CONFIG[token];
-  return config?.registrationType || null;
-}
-
-// Container setup function (deprecated - use loadConfiguration instead)
-export function setupDIContainer(container: any) {
-  for (const [token, config] of Object.entries(DI_CONFIG)) {
-    container.register(token, config.factory, config.scope);
-  }
-}`;
-
-    // Write the configuration file
-    const configFilePath = path.join(
-      this.configManager.getConfigDir(),
-      "di-config.ts"
-    );
-    await fs.promises.writeFile(configFilePath, configContent, "utf8");
-  }
-
-  private generateFactoryFunction(serviceClass: ServiceClass): string {
-    const dependencies = this.interfaceResolver.getServiceDependencies();
-    const dependency = dependencies.get(serviceClass.className);
-
-    if (!dependency || dependency.constructorParams.length === 0) {
-      // No constructor dependencies
-      return `function ${serviceClass.factory}(container: any) {
-  return () => {
-    return new ${serviceClass.className}();
-  };
-}`;
-    }
-
-    // Generate dependency resolution code
-    const dependencyResolves = dependency.constructorParams
-      .map((param, index) => {
-        if (param.isOptional) {
-          return `    const dep${index} = container.has('${param.sanitizedKey}') ? container.resolve('${param.sanitizedKey}') : undefined;`;
-        } else {
-          return `    const dep${index} = container.resolve('${param.sanitizedKey}');`;
-        }
-      })
-      .join("\n");
-
-    const constructorArgs = dependency.constructorParams
-      .map((_, index) => `dep${index}`)
-      .join(", ");
-
-    return `function ${serviceClass.factory}(container: any) {
-  return () => {
-${dependencyResolves}
-    return new ${serviceClass.className}(${constructorArgs});
-  };
-}`;
   }
 
   private async generateImportFile(): Promise<void> {
@@ -525,8 +311,16 @@ ${dependencyResolves}
 
     for (const [className, serviceClass] of this.serviceClasses) {
       const servicePath = serviceClass.filePath;
+
+      // Find which scanDir this file belongs to for correct relative path
+      const absolutePath = path.resolve(servicePath);
+      const matchingScanDir = this.options.scanDirs.find((dir: string) =>
+        absolutePath.startsWith(path.resolve(dir))
+      );
+      const baseDir = matchingScanDir ? path.resolve(matchingScanDir) : path.resolve(this.options.scanDirs[0]);
+
       const relativePath = path
-        .relative(this.options.srcDir, servicePath)
+        .relative(baseDir, servicePath)
         .replace(/\.(ts|tsx)$/, "")
         .replace(/\\/g, "/");
 
@@ -595,7 +389,6 @@ export * from '${path
 
       const config = this.configurations.get(token);
       if (!config) {
-        // Better error message showing available configurations
         const availableTokens = Array.from(this.configurations.keys());
         console.error(
           `❌ Available configurations: ${availableTokens.join(", ")}`
@@ -611,13 +404,10 @@ export * from '${path
 
       // Visit dependencies first
       for (const depToken of config.dependencies) {
-        // Ensure dependency exists before visiting
         if (this.configurations.has(depToken)) {
           visit(depToken);
         } else {
-          // This is a missing dependency - should have been caught in validation
           console.warn(`⚠️  Dependency ${depToken} not found for ${token}`);
-          // For now, continue without this dependency (it might be optional)
         }
       }
 
@@ -641,7 +431,7 @@ export * from '${path
     return sorted;
   }
 
-  // Debug methods
+  // Debug methods - delegate to shared components
   getDependencyTree(): any[] {
     return this.interfaceResolver.getDependencyTree();
   }
@@ -650,12 +440,24 @@ export * from '${path
     return this.configurations;
   }
 
-  getInterfaceResolver(): InterfaceResolver {
+  getInterfaceResolver(): IntegratedInterfaceResolver {
     return this.interfaceResolver;
   }
 
   getServiceClasses(): Map<string, ServiceClass> {
     return this.serviceClasses;
+  }
+
+  getServiceRegistry(): SharedServiceRegistry {
+    return this.serviceRegistry;
+  }
+
+  getTypeResolver(): SharedTypeResolver {
+    return this.typeResolver;
+  }
+
+  getDependencyExtractor(): SharedDependencyExtractor {
+    return this.dependencyExtractor;
   }
 
   getInheritanceInfo(): {
@@ -694,6 +496,39 @@ export * from '${path
       baseClasses: Array.from(baseClasses),
       implementations,
       chains,
+    };
+  }
+
+  // Enhanced validation using shared logic
+  async validateDependencyTree(): Promise<{
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+    stats: any;
+  }> {
+    const interfaceValidation = this.interfaceResolver.validateDependencies();
+    const registryValidation = this.serviceRegistry.validateRegistry();
+
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Combine validation results
+    if (!interfaceValidation.isValid) {
+      errors.push(...interfaceValidation.missingImplementations.map(m => `Missing implementation: ${m}`));
+      errors.push(...interfaceValidation.circularDependencies.map(c => `Circular dependency: ${c}`));
+    }
+
+    if (!registryValidation.isValid) {
+      errors.push(...registryValidation.errors);
+    }
+
+    warnings.push(...registryValidation.warnings);
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+      stats: registryValidation.stats
     };
   }
 }

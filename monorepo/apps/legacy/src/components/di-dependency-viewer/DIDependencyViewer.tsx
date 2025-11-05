@@ -394,7 +394,7 @@ function DIDependencyViewerComponent({ diConfig }: DIDependencyViewerProps) {
   }
 
   return (
-    <div style={{ height: 968, width: 1200 }}>
+    <div style={{ height: 1200, width: 1600 }}>
       <FilterPanel filters={filters} onFiltersChange={setFilters} />
 
       <ReactFlow

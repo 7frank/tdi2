@@ -1,5 +1,19 @@
 // tools/interface-resolver-types.ts - Type definitions for interface resolution
 
+/**
+ * Common interface for all resolver implementations
+ */
+export interface InterfaceResolverInterface {
+  scanProject(): Promise<void>;
+  resolveImplementation(
+    interfaceType: string
+  ): InterfaceImplementation | undefined;
+  getInterfaceImplementations(): Map<string, InterfaceImplementation>;
+  getServiceDependencies(): Map<string, ServiceDependency>;
+  validateDependencies(): ValidationResult;
+  getDependencyTree(): DependencyNode[];
+}
+
 export interface InterfaceImplementation {
   interfaceName: string;
   implementationClass: string;
@@ -15,6 +29,7 @@ export interface InterfaceImplementation {
   baseClassGeneric?: string;
   stateType?: string; // NEW: The state type this service manages
   serviceInterface?: string; // NEW: The service interface (e.g., AsyncStateService<T>)
+  scope?: "singleton" | "transient" | "scoped"; // NEW: Scope extracted from @Service decorator
 }
 
 export interface ServiceDependency {
@@ -49,6 +64,9 @@ export interface InterfaceInfo {
   fullType: string;
   isGeneric: boolean;
   typeParameters: string[];
+  // Location information for unique key generation
+  sourceFilePath?: string;
+  lineNumber?: number;
 }
 
 export interface InheritanceInfo {

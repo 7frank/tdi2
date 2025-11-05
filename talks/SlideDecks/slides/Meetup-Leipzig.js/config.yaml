@@ -1,0 +1,34 @@
+# Leipzig.js Meetup Configuration
+# Local React Meetup - Accessible and Practical
+
+# Slide-specific configuration
+slides:
+  theme: Meetup-Leipzig.js/example-theme.css # Custom theme with Leipzig.js branding
+  # css file or one of https://highlightjs.org/examples
+  highlight_theme: atom-one-dark
+
+# Reveal.js configuration
+revealjs:
+
+  # Display settings
+  width: 1920 # Full HD standard
+  height: 1080
+
+  # Timing for 45-60 minute slot
+  defaultTiming: 90 # 1.5 minutes per slide average
+  autoSlide: 0 # Manual control for interactive elements
+  autoSlideStoppable: true
+
+  # Interactive presentation settings
+  controls: true
+  progress: true
+  fragments: true # Enable step-by-step reveals for complex examples
+  fragmentInURL: false
+
+  # Slide numbering for speaker reference
+  slideNumber: true
+  slideNumberFormat: "Act %current% / %total%"
+
+  # PDF export settings for handouts
+  pdfMaxPagesPerSlide: 1
+  pdfSeparateFragments: false

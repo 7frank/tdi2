@@ -1,4 +1,4 @@
-// tools/enhanced-di-transformer.ts - COMPLETELY FIXED VERSION with proper error handling
+// tools/enhanced-di-transformer.ts - REFACTORED to use shared logic
 
 import { 
   Project, 
@@ -12,10 +12,25 @@ import {
 import * as path from 'path';
 import * as fs from 'fs';
 import { ConfigManager } from './config-manager';
-import { DependencyTreeBuilder } from './dependency-tree-builder';
+
+// Use shared components
+import { SharedDependencyExtractor } from './shared/SharedDependencyExtractor';
+import { SharedServiceRegistry } from './shared/SharedServiceRegistry';
+import { SharedTypeResolver } from './shared/SharedTypeResolver';
+import type { 
+  SharedTransformationOptions,
+  TransformationCandidate,
+  TransformationResult,
+  TransformationSummary,
+  TransformationError,
+  TransformationWarning,
+  ServiceClassMetadata
+} from './shared/shared-types';
+
+import { IntegratedInterfaceResolver } from './interface-resolver/integrated-interface-resolver';
 
 interface TransformerOptions {
-  srcDir?: string;
+  scanDirs?: string[];
   outputDir?: string;
   verbose?: boolean;
   generateRegistry?: boolean;
@@ -25,19 +40,35 @@ interface TransformerOptions {
 
 export class EnhancedDITransformer {
   private project: Project;
-  private options: TransformerOptions;
+  private options: SharedTransformationOptions;
   private configManager: ConfigManager;
-  private treeBuilder: DependencyTreeBuilder;
+  private interfaceResolver: IntegratedInterfaceResolver;
+  
+  // Shared components
+  private dependencyExtractor: SharedDependencyExtractor;
+  private serviceRegistry: SharedServiceRegistry;
+  private typeResolver: SharedTypeResolver;
+  
+  // Transformation state
+  private transformationCandidates: TransformationCandidate[] = [];
+  private transformedFiles: Map<string, string> = new Map();
+  private errors: TransformationError[] = [];
+  private warnings: TransformationWarning[] = [];
 
   constructor(options: TransformerOptions = {}) {
+    if (!options.scanDirs || options.scanDirs.length === 0) {
+      throw new Error('EnhancedDITransformer requires scanDirs option with at least one directory');
+    }
+
     this.options = {
-      srcDir: './src',
-      outputDir: './src/generated', // Will be overridden by ConfigManager
-      verbose: false,
-      generateRegistry: true,
-      enableInterfaceResolution: true,
-      ...options
-    };
+      outputDir: options.outputDir || './src/generated',
+      verbose: options.verbose || false,
+      enableInterfaceResolution: options.enableInterfaceResolution !== false,
+      enableInheritanceDI: true,
+      enableStateDI: true,
+      customSuffix: options.customSuffix,
+      scanDirs: options.scanDirs
+    } as any;
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json'
@@ -45,335 +76,388 @@ export class EnhancedDITransformer {
 
     // Initialize ConfigManager
     this.configManager = new ConfigManager({
-      srcDir: this.options.srcDir!,
-      outputDir: this.options.outputDir!,
+      scanDirs: this.options.scanDirs,
+      outputDir: this.options.outputDir,
       enableFunctionalDI: false, // This transformer focuses on class-based DI
-      verbose: this.options.verbose!,
+      verbose: this.options.verbose,
       customSuffix: this.options.customSuffix
     });
 
-    // Initialize DependencyTreeBuilder
-    this.treeBuilder = new DependencyTreeBuilder(this.configManager, {
+    // Initialize InterfaceResolver with all scan directories
+    this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir
+      scanDirs: this.options.scanDirs,
+      enableInheritanceDI: this.options.enableInheritanceDI,
+      enableStateDI: this.options.enableStateDI
+    });
+
+    // Initialize shared components
+    this.typeResolver = new SharedTypeResolver(this.interfaceResolver, {
+      verbose: this.options.verbose
+    });
+
+    this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
+      verbose: this.options.verbose,
+      scanDirs: this.options.scanDirs
+    });
+
+    this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
+      verbose: this.options.verbose
     });
   }
 
-  async transform(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('🚀 Starting enhanced DI transformation with interface resolution...');
-    }
-
-    if (this.options.enableInterfaceResolution) {
-      // Use interface-based resolution
-      await this.transformWithInterfaceResolution();
-    } else {
-      // Fall back to token-based resolution
-      await this.transformWithTokenResolution();
-    }
-
-    // Generate bridge files
-    this.configManager.generateBridgeFiles();
+  async transform(): Promise<TransformationResult> {
+    const startTime = Date.now();
 
     if (this.options.verbose) {
-      console.log('✅ Enhanced DI transformation completed');
-      console.log(`🏗️  Config: ${this.configManager.getConfigHash()}`);
-      console.log(`📁 Config dir: ${this.configManager.getConfigDir()}`);
-      console.log(`🌉 Bridge dir: ${this.configManager.getBridgeDir()}`);
+      console.log('🚀 Starting enhanced DI transformation with shared logic...');
+    }
+
+    try {
+      // Phase 1: Scan and resolve interfaces
+      await this.scanAndResolveInterfaces();
+
+      // Phase 2: Find transformation candidates
+      await this.findTransformationCandidates();
+
+      // Phase 3: Extract dependencies using shared logic
+      await this.extractDependencies();
+
+      // Phase 4: Register services using shared registry
+      await this.registerServices();
+
+      // Phase 5: Generate configuration files
+      await this.generateConfiguration();
+
+      // Phase 6: Generate bridge files
+      this.configManager.generateBridgeFiles();
+
+      const endTime = Date.now();
+
+      if (this.options.verbose) {
+        console.log('✅ Enhanced DI transformation completed');
+        console.log(`🏗️  Config: ${this.configManager.getConfigHash()}`);
+        console.log(`📁 Config dir: ${this.configManager.getConfigDir()}`);
+        console.log(`🌉 Bridge dir: ${this.configManager.getBridgeDir()}`);
+        console.log(`⏱️  Duration: ${endTime - startTime}ms`);
+      }
+
+      return this.createTransformationResult(startTime, endTime);
+
+    } catch (error) {
+      this.errors.push({
+        type: 'configuration-error' as any, // FIXME: Type mismatch, should be fixed, it currenty breaks build
+        message: error instanceof Error ? error.message : 'Unknown transformation error',
+        details: error
+      });
+
+      throw error;
     }
   }
 
-  private async transformWithInterfaceResolution(): Promise<void> {
+  private async scanAndResolveInterfaces(): Promise<void> {
     if (this.options.verbose) {
-      console.log('🔍 Using interface-based dependency resolution...');
+      console.log('🔍 Scanning project for interfaces and implementations...');
     }
 
-    // Build dependency tree and generate configuration
-    await this.treeBuilder.buildDependencyTree();
+    await this.interfaceResolver.scanProject();
 
-    // Get resolved configurations
-    const configurations = this.treeBuilder.getConfigurations();
-    const interfaceResolver = this.treeBuilder.getInterfaceResolver();
+    // Validate dependencies
+    const validation = this.interfaceResolver.validateDependencies();
+    if (!validation.isValid) {
+      if (this.options.verbose) {
+        console.warn('⚠️  Some dependencies may not be resolvable:');
+        validation.missingImplementations.forEach(missing => {
+          console.warn(`  - Missing: ${missing}`);
+        });
+        validation.circularDependencies.forEach(circular => {
+          console.warn(`  - Circular: ${circular}`);
+        });
+      }
 
-    if (this.options.generateRegistry) {
-      await this.generateServiceRegistry(configurations, interfaceResolver);
+      // Add warnings for missing implementations
+      validation.missingImplementations.forEach(missing => {
+        this.warnings.push({
+          type: 'optional-missing',
+          message: `Missing implementation: ${missing}`,
+          suggestion: 'Ensure all required services are implemented and decorated with @Service'
+        });
+      });
+
+      // Add errors for circular dependencies
+      validation.circularDependencies.forEach(circular => {
+        this.errors.push({
+          type: 'resolution-error',
+          message: `Circular dependency detected: ${circular}`
+        });
+      });
+    }
+  }
+
+  private async findTransformationCandidates(): Promise<void> {
+    if (this.options.verbose) {
+      console.log('🔍 Finding transformation candidates...');
     }
 
-    if (this.options.verbose) {
-      console.log(`✅ Generated interface-based DI for ${configurations.size} services`);
-      
-      // FIXED: Enhanced error handling with proper method access checks
-      try {
-        // Ensure interfaceResolver exists and has the required methods
-        if (interfaceResolver && typeof interfaceResolver.getInterfaceImplementations === 'function') {
-          const implementations = interfaceResolver.getInterfaceImplementations();
-          if (implementations && implementations.size > 0) {
-            console.log('\n📋 Interface Mappings:');
-            let count = 0;
-            for (const [key, impl] of implementations) {
-              if (count < 10) { // Limit output for readability
-                console.log(`  ${impl.interfaceName} -> ${impl.implementationClass} (${key})`);
-                count++;
-              }
-            }
-            if (implementations.size > 10) {
-              console.log(`  ... and ${implementations.size - 10} more`);
-            }
-          }
-        } else {
-          if (this.options.verbose) {
-            console.warn('⚠️  Interface resolver getInterfaceImplementations method not available');
-          }
+    // Add source files from all scan directories
+    const scanDirs = this.options.scanDirs;
+    for (const dir of scanDirs) {
+      this.project.addSourceFilesAtPaths(`${dir}/**/*.{ts,tsx}`);
+    }
+
+    const sourceFiles = this.project.getSourceFiles();
+
+    for (const sourceFile of sourceFiles) {
+      if (this.shouldSkipFile(sourceFile)) continue;
+
+      const classes = sourceFile.getClasses();
+      for (const classDecl of classes) {
+        const candidate = this.createClassCandidate(classDecl, sourceFile);
+        if (candidate) {
+          this.transformationCandidates.push(candidate);
         }
+      }
+    }
 
-        if (interfaceResolver && typeof interfaceResolver.getServiceDependencies === 'function') {
-          const dependencies = interfaceResolver.getServiceDependencies();
-          if (dependencies && dependencies.size > 0) {
-            console.log('\n🔗 Service Dependencies:');
-            let count = 0;
-            for (const [service, deps] of dependencies) {
-              if (count < 10 && deps.constructorParams && deps.constructorParams.length > 0) {
-                const depList = deps.constructorParams.map((p: any) => 
-                  `${p.interfaceType}${p.isOptional ? '?' : ''}`
-                ).join(', ');
-                console.log(`  ${service}(${depList})`);
-                count++;
-              }
-            }
-            if (dependencies.size > 10) {
-              console.log(`  ... and ${dependencies.size - 10} more`);
+    if (this.options.verbose) {
+      console.log(`📋 Found ${this.transformationCandidates.length} transformation candidates`);
+    }
+  }
+
+  private createClassCandidate(
+    classDecl: ClassDeclaration, 
+    sourceFile: SourceFile
+  ): TransformationCandidate | null {
+    const className = classDecl.getName();
+    if (!className) return null;
+
+    // Check if class has service decorator
+    const hasServiceDecorator = this.hasServiceDecorator(classDecl);
+    if (!hasServiceDecorator) return null;
+
+    return {
+      type: 'class',
+      node: classDecl,
+      filePath: sourceFile.getFilePath(),
+      sourceFile,
+      metadata: {
+        hasServiceDecorator: true,
+        componentName: className
+      }
+    };
+  }
+
+  private async extractDependencies(): Promise<void> {
+    if (this.options.verbose) {
+      console.log('🔗 Extracting dependencies using shared logic...');
+    }
+
+    const dependencyMap = new Map<string, any[]>();
+
+    for (const candidate of this.transformationCandidates) {
+      if (candidate.type === 'class' && Node.isClassDeclaration(candidate.node)) {
+        try {
+          const dependencies = this.dependencyExtractor.extractFromClassConstructor(
+            candidate.node,
+            candidate.sourceFile
+          );
+
+          if (dependencies.length > 0) {
+            const className = candidate.node.getName()!;
+            dependencyMap.set(className, dependencies);
+
+            if (this.options.verbose) {
+              console.log(`🔗 ${className}: Found ${dependencies.length} dependencies`);
+              dependencies.forEach(dep => {
+                const status = dep.resolvedImplementation ? '✅' : (dep.isOptional ? '⚠️' : '❌');
+                console.log(`    ${status} ${dep.serviceKey}: ${dep.interfaceType}`);
+              });
             }
           }
-        } else {
-          if (this.options.verbose) {
-            console.warn('⚠️  Interface resolver getServiceDependencies method not available');
-          }
+        } catch (error) {
+          this.errors.push({
+            type: 'resolution-error',
+            message: `Failed to extract dependencies from ${candidate.metadata?.componentName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            candidate
+          });
+        }
+      }
+    }
+
+    // Store dependency map for service registration
+    (this as any).dependencyMap = dependencyMap;
+  }
+
+  private async registerServices(): Promise<void> {
+    if (this.options.verbose) {
+      console.log('📝 Registering services using shared registry...');
+    }
+
+    const implementations = this.interfaceResolver.getInterfaceImplementations();
+    const dependencyMap = (this as any).dependencyMap || new Map();
+
+    // Register all services with their dependencies
+    this.serviceRegistry.registerServices(
+      Array.from(implementations.values()),
+      dependencyMap
+    );
+
+    // Validate registry
+    const validation = this.serviceRegistry.validateRegistry();
+    if (!validation.isValid) {
+      validation.errors.forEach(error => {
+        this.errors.push({
+          type: 'validation-error',
+          message: error
+        });
+      });
+    }
+
+    validation.warnings.forEach(warning => {
+      this.warnings.push({
+        type: 'performance',
+        message: warning
+      });
+    });
+
+    if (this.options.verbose) {
+      console.log(`📊 Registry stats:`, validation.stats);
+    }
+  }
+
+  private async generateConfiguration(): Promise<void> {
+    if (this.options.verbose) {
+      console.log('📄 Generating configuration files...');
+    }
+
+    // Generate DI configuration using shared registry
+    await this.serviceRegistry.generateDIConfiguration();
+
+    // Generate service registry
+    await this.serviceRegistry.generateServiceRegistry();
+  }
+
+  private shouldSkipFile(sourceFile: SourceFile): boolean {
+    const filePath = sourceFile.getFilePath();
+    return filePath.includes('generated') || 
+           filePath.includes('node_modules') ||
+           filePath.includes('.d.ts') ||
+           filePath.includes('.tdi2');
+  }
+
+  private hasServiceDecorator(classDecl: ClassDeclaration): boolean {
+    return classDecl.getDecorators().some((decorator) => {
+      try {
+        const expression = decorator.getExpression();
+        if (Node.isCallExpression(expression)) {
+          const expressionText = expression.getExpression().getText();
+          return this.isServiceDecoratorName(expressionText);
+        } else if (Node.isIdentifier(expression)) {
+          const expressionText = expression.getText();
+          return this.isServiceDecoratorName(expressionText);
         }
       } catch (error) {
-        if (this.options.verbose) {
-          console.warn('⚠️  Error accessing interface resolver data:', error);
-        }
+        // Ignore malformed decorators
       }
-    }
+      return false;
+    });
   }
 
-  private async transformWithTokenResolution(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('🏷️  Using token-based dependency resolution...');
-    }
-
-    // This would be the fallback to the original token-based approach
-    // For now, we'll throw an error to encourage interface-based usage
-    throw new Error('Token-based resolution not implemented in enhanced transformer. Use enableInterfaceResolution: true');
+  private isServiceDecoratorName(decoratorName: string): boolean {
+    const serviceDecorators = [
+      'Service',
+      'Component',
+      'Injectable',
+      'Repository',
+      'Controller',
+      'Provider'
+    ];
+    
+    return serviceDecorators.some(name => 
+      decoratorName === name || decoratorName.includes(name)
+    );
   }
 
-  // FIXED: Enhanced error handling and safe method access for registry generation
-  private async generateServiceRegistry(configurations: any, interfaceResolver: any): Promise<void> {
-    // FIXED: Comprehensive method availability checks
-    if (!interfaceResolver) {
-      if (this.options.verbose) {
-        console.warn('⚠️  Interface resolver not available for registry generation');
+  private createTransformationResult(startTime: number, endTime: number): TransformationResult {
+    const successful = this.transformationCandidates.length - this.errors.filter(e => e.candidate).length;
+    const failed = this.errors.filter(e => e.candidate).length;
+
+    // Get resolution statistics from type resolver
+    const resolutionStats = this.getResolutionStatistics();
+
+    const summary: TransformationSummary = {
+      totalCandidates: this.transformationCandidates.length,
+      successfulTransformations: successful,
+      failedTransformations: failed,
+      skippedTransformations: 0,
+      dependenciesResolved: resolutionStats.successfulResolutions,
+      dependenciesUnresolved: resolutionStats.failedResolutions,
+      byType: {
+        class: this.transformationCandidates.filter(c => c.type === 'class').length,
+        function: 0,
+        arrowFunction: 0
+      },
+      byResolutionStrategy: resolutionStats.byStrategy as any,
+      performance: {
+        startTime,
+        endTime,
+        duration: endTime - startTime
       }
-      return;
-    }
+    };
 
-    let implementations: Map<string, any> = new Map();
-    let dependencies: Map<string, any> = new Map();
-
-    // FIXED: Safe method calls with comprehensive error handling
-    try {
-      // Check for getInterfaceImplementations method
-      if (typeof interfaceResolver.getInterfaceImplementations === 'function') {
-        try {
-          const result = interfaceResolver.getInterfaceImplementations();
-          implementations = result instanceof Map ? result : new Map();
-        } catch (methodError) {
-          if (this.options.verbose) {
-            console.warn('⚠️  Error calling getInterfaceImplementations:', methodError);
-          }
-          implementations = new Map();
-        }
-      } else {
-        if (this.options.verbose) {
-          console.warn('⚠️  getInterfaceImplementations method not available on interface resolver');
-          console.warn('⚠️  Available methods:', Object.getOwnPropertyNames(interfaceResolver).filter(name => typeof interfaceResolver[name] === 'function'));
-        }
-        implementations = new Map();
-      }
-
-      // Check for getServiceDependencies method
-      if (typeof interfaceResolver.getServiceDependencies === 'function') {
-        try {
-          const result = interfaceResolver.getServiceDependencies();
-          dependencies = result instanceof Map ? result : new Map();
-        } catch (methodError) {
-          if (this.options.verbose) {
-            console.warn('⚠️  Error calling getServiceDependencies:', methodError);
-          }
-          dependencies = new Map();
-        }
-      } else {
-        if (this.options.verbose) {
-          console.warn('⚠️  getServiceDependencies method not available on interface resolver');
-        }
-        dependencies = new Map();
-      }
-    } catch (error) {
-      if (this.options.verbose) {
-        console.warn('⚠️  General error accessing interface resolver methods:', error);
-      }
-      // Continue with empty maps
-      implementations = new Map();
-      dependencies = new Map();
-    }
-
-    // Generate imports for all service classes
-    const imports: string[] = [];
-    const serviceNames: string[] = [];
-    const interfaceMappings: string[] = [];
-
-    // Process implementations safely
-    try {
-      for (const [_, impl] of implementations) {
-        if (!impl || !impl.implementationClass || !impl.filePath) {
-          continue; // Skip invalid implementations
-        }
-
-        try {
-          const configDir = this.configManager.getConfigDir();
-          const servicePath = path.resolve(impl.filePath);
-          const relativePath = path.relative(configDir, servicePath)
-            .replace(/\.(ts|tsx)$/, '')
-            .replace(/\\/g, '/');
-          
-          const importPath = relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
-          imports.push(`import { ${impl.implementationClass} } from '${importPath}';`);
-          serviceNames.push(impl.implementationClass);
-          
-          // FIXED: Safe property access with defaults and validation
-          const typeParameters = Array.isArray(impl.typeParameters) ? impl.typeParameters : [];
-          const sanitizedKey = impl.sanitizedKey || impl.interfaceName || 'UnknownInterface';
-          const isGeneric = Boolean(impl.isGeneric);
-          const interfaceName = impl.interfaceName || 'UnknownInterface';
-          
-          interfaceMappings.push(`  '${interfaceName}': {
-    implementation: ${impl.implementationClass},
-    token: '${sanitizedKey}',
-    isGeneric: ${isGeneric},
-    typeParameters: [${typeParameters.map((t: string) => `'${t}'`).join(', ')}]
-  }`);
-        } catch (implError) {
-          if (this.options.verbose) {
-            console.warn(`⚠️  Error processing implementation ${impl.implementationClass}:`, implError);
-          }
-          continue; // Skip this implementation and continue
-        }
-      }
-    } catch (implementationsError) {
-      if (this.options.verbose) {
-        console.warn('⚠️  Error processing implementations:', implementationsError);
-      }
-    }
-
-    // FIXED: Safe dependency processing with comprehensive error handling
-    const serviceDependencies: string[] = [];
-    try {
-      for (const [service, deps] of dependencies) {
-        try {
-          if (deps && deps.constructorParams && Array.isArray(deps.constructorParams)) {
-            const paramStrings = deps.constructorParams.map((p: any) => {
-              try {
-                const interfaceType = p.interfaceType || 'unknown';
-                return `'${interfaceType}'`;
-              } catch (paramError) {
-                if (this.options.verbose) {
-                  console.warn(`⚠️  Error processing parameter:`, paramError);
-                }
-                return "'unknown'";
-              }
-            });
-            serviceDependencies.push(`  '${service}': [${paramStrings.join(', ')}]`);
-          } else {
-            serviceDependencies.push(`  '${service}': []`);
-          }
-        } catch (serviceError) {
-          if (this.options.verbose) {
-            console.warn(`⚠️  Error processing service dependencies for ${service}:`, serviceError);
-          }
-          serviceDependencies.push(`  '${service}': [] // Error processing dependencies`);
-        }
-      }
-    } catch (dependenciesError) {
-      if (this.options.verbose) {
-        console.warn('⚠️  Error processing service dependencies:', dependenciesError);
-      }
-    }
-
-    // Generate registry content with fallbacks for missing data
-    const registryContent = `// Auto-generated service registry - Interface-based
-// Config: ${this.configManager.getConfigHash()}
-// Generated: ${new Date().toISOString()}
-
-${imports.length > 0 ? imports.join('\n') : '// No imports generated'}
-
-export const SERVICE_CLASSES = [
-  ${serviceNames.length > 0 ? serviceNames.join(',\n  ') : '// No service classes found'}
-];
-
-export const INTERFACE_IMPLEMENTATIONS = {
-${interfaceMappings.length > 0 ? interfaceMappings.join(',\n') : '  // No interface implementations found'}
-};
-
-export const SERVICE_DEPENDENCIES = {
-${serviceDependencies.length > 0 ? serviceDependencies.join(',\n') : '  // No service dependencies found'}
-};
-
-// Helper function to get implementation for interface
-export function getImplementationForInterface(interfaceName: string): any {
-  const mapping = INTERFACE_IMPLEMENTATIONS[interfaceName];
-  return mapping ? mapping.implementation : null;
-}
-
-// Helper function to get all implementations
-export function getAllImplementations(): { [key: string]: any } {
-  const result: { [key: string]: any } = {};
-  for (const [interfaceName, mapping] of Object.entries(INTERFACE_IMPLEMENTATIONS)) {
-    result[interfaceName] = (mapping as any).implementation;
+    return {
+      transformedFiles: this.transformedFiles as any , // // FIXME: Type mismatch, should be fixed, it currenty breaks build
+      summary,
+      errors: this.errors,
+      warnings: this.warnings
+    };
   }
-  return result;
-}
 
-// FIXED: Additional helper functions for debugging
-export function getRegistryStats(): {
-  serviceCount: number;
-  interfaceCount: number;
-  dependencyCount: number;
-  hasErrors: boolean;
-} {
-  return {
-    serviceCount: SERVICE_CLASSES.length,
-    interfaceCount: Object.keys(INTERFACE_IMPLEMENTATIONS).length,
-    dependencyCount: Object.keys(SERVICE_DEPENDENCIES).length,
-    hasErrors: ${serviceNames.length === 0 && interfaceMappings.length === 0} // Basic error detection
-  };
-}`;
+  private getResolutionStatistics(): any {
+    // Get statistics from the shared type resolver
+    const implementations = this.interfaceResolver.getInterfaceImplementations();
+    const dependencies = this.interfaceResolver.getServiceDependencies();
 
-    try {
-      const registryFile = path.join(this.configManager.getConfigDir(), 'AutoGeneratedRegistry.ts');
-      await fs.promises.writeFile(registryFile, registryContent, 'utf8');
-      
-      if (this.options.verbose) {
-        console.log(`📝 Generated service registry: ${registryFile}`);
-        console.log(`   - ${serviceNames.length} service classes`);
-        console.log(`   - ${interfaceMappings.length} interface mappings`);
-        console.log(`   - ${serviceDependencies.length} service dependencies`);
-      }
-    } catch (writeError) {
-      if (this.options.verbose) {
-        console.error('❌ Failed to write service registry:', writeError);
-      }
-      throw writeError;
+    let successfulResolutions = 0;
+    let failedResolutions = 0;
+    const byStrategy: Record<string, number> = {
+      interface: 0,
+      inheritance: 0,
+      state: 0,
+      class: 0,
+      notFound: 0
+    };
+
+    for (const [, impl] of implementations) {
+      successfulResolutions++;
+      if (impl.isStateBased) byStrategy.state++;
+      else if (impl.isInheritanceBased) byStrategy.inheritance++;
+      else if (impl.isClassBased) byStrategy.class++;
+      else byStrategy.interface++;
     }
+
+    // Count missing dependencies
+    for (const [, dep] of dependencies) {
+      for (const depKey of dep.interfaceDependencies) {
+        let found = false;
+        for (const [, impl] of implementations) {
+          if (impl.sanitizedKey === depKey) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          failedResolutions++;
+          byStrategy.notFound++;
+        }
+      }
+    }
+
+    return {
+      successfulResolutions,
+      failedResolutions,
+      byStrategy
+    };
   }
 
   async save(): Promise<void> {
@@ -392,147 +476,53 @@ export function getRegistryStats(): {
     return this.configManager;
   }
 
-  getTreeBuilder(): DependencyTreeBuilder {
-    return this.treeBuilder;
+  getInterfaceResolver(): IntegratedInterfaceResolver {
+    return this.interfaceResolver;
   }
 
-  // FIXED: Enhanced debug methods with comprehensive error handling
+  getServiceRegistry(): SharedServiceRegistry {
+    return this.serviceRegistry;
+  }
+
+  getTypeResolver(): SharedTypeResolver {
+    return this.typeResolver;
+  }
+
+  // Enhanced debug methods using shared logic
   async getDebugInfo(): Promise<any> {
     try {
-      const interfaceResolver = this.treeBuilder.getInterfaceResolver();
-      
-      let implementations: Array<[string, any]> = [];
-      let dependencies: Array<[string, any]> = [];
-      let dependencyTree: any[] = [];
-      let validation: any = { isValid: true, missingImplementations: [], circularDependencies: [] };
-      let configurations: Array<[string, any]> = [];
-
-      // FIXED: Comprehensive method checks with detailed error handling
-      if (interfaceResolver) {
-        // Check getInterfaceImplementations
-        if (typeof interfaceResolver.getInterfaceImplementations === 'function') {
-          try {
-            const impls = interfaceResolver.getInterfaceImplementations();
-            if (impls instanceof Map) {
-              implementations = Array.from(impls.entries());
-            } else if (this.options.verbose) {
-              console.warn('⚠️  getInterfaceImplementations returned non-Map:', typeof impls);
-            }
-          } catch (error) {
-            if (this.options.verbose) {
-              console.warn('⚠️  Error calling getInterfaceImplementations:', error);
-            }
-          }
-        } else if (this.options.verbose) {
-          console.warn('⚠️  getInterfaceImplementations method not found on interface resolver');
-        }
-
-        // Check getServiceDependencies
-        if (typeof interfaceResolver.getServiceDependencies === 'function') {
-          try {
-            const deps = interfaceResolver.getServiceDependencies();
-            if (deps instanceof Map) {
-              dependencies = Array.from(deps.entries());
-            } else if (this.options.verbose) {
-              console.warn('⚠️  getServiceDependencies returned non-Map:', typeof deps);
-            }
-          } catch (error) {
-            if (this.options.verbose) {
-              console.warn('⚠️  Error calling getServiceDependencies:', error);
-            }
-          }
-        } else if (this.options.verbose) {
-          console.warn('⚠️  getServiceDependencies method not found on interface resolver');
-        }
-
-        // Check getDependencyTree
-        if (typeof interfaceResolver.getDependencyTree === 'function') {
-          try {
-            const tree = interfaceResolver.getDependencyTree();
-            if (Array.isArray(tree)) {
-              dependencyTree = tree;
-            } else if (this.options.verbose) {
-              console.warn('⚠️  getDependencyTree returned non-Array:', typeof tree);
-            }
-          } catch (error) {
-            if (this.options.verbose) {
-              console.warn('⚠️  Error calling getDependencyTree:', error);
-            }
-          }
-        } else if (this.options.verbose) {
-          console.warn('⚠️  getDependencyTree method not found on interface resolver');
-        }
-
-        // Check validateDependencies
-        if (typeof interfaceResolver.validateDependencies === 'function') {
-          try {
-            const validationResult = interfaceResolver.validateDependencies();
-            if (validationResult && typeof validationResult === 'object') {
-              validation = validationResult;
-            } else if (this.options.verbose) {
-              console.warn('⚠️  validateDependencies returned invalid result:', typeof validationResult);
-            }
-          } catch (error) {
-            if (this.options.verbose) {
-              console.warn('⚠️  Error calling validateDependencies:', error);
-            }
-          }
-        } else if (this.options.verbose) {
-          console.warn('⚠️  validateDependencies method not found on interface resolver');
-        }
-      } else if (this.options.verbose) {
-        console.warn('⚠️  Interface resolver is null or undefined');
-      }
-
-      // Get configurations from tree builder
-      try {
-        const configs = this.treeBuilder.getConfigurations();
-        if (configs instanceof Map) {
-          configurations = Array.from(configs.entries());
-        } else if (this.options.verbose) {
-          console.warn('⚠️  getConfigurations returned non-Map:', typeof configs);
-        }
-      } catch (error) {
-        if (this.options.verbose) {
-          console.warn('⚠️  Error getting configurations:', error);
-        }
-      }
+      const implementations = this.interfaceResolver.getInterfaceImplementations();
+      const dependencies = this.interfaceResolver.getServiceDependencies();
+      const validation = this.interfaceResolver.validateDependencies();
+      const registryConfig = this.serviceRegistry.getConfiguration();
 
       return {
         configHash: this.configManager.getConfigHash(),
-        implementations,
-        dependencies,
-        dependencyTree,
+        implementations: Array.from(implementations.entries()),
+        dependencies: Array.from(dependencies.entries()),
         validation,
-        configurations,
-        // Additional debug info
-        interfaceResolverAvailable: !!interfaceResolver,
-        interfaceResolverMethods: interfaceResolver ? Object.getOwnPropertyNames(interfaceResolver).filter(name => typeof (interfaceResolver as any)[name] === 'function') : [],
+        registryStats: this.serviceRegistry.validateRegistry().stats,
+        registryConfig,
+        transformationCandidates: this.transformationCandidates.length,
+        errors: this.errors,
+        warnings: this.warnings,
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      if (this.options.verbose) {
-        console.error('❌ Error generating debug info:', error);
-      }
-      // Return minimal debug info on error
       return {
         configHash: this.configManager.getConfigHash(),
-        implementations: [],
-        dependencies: [],
-        dependencyTree: [],
-        validation: { isValid: false, missingImplementations: [], circularDependencies: ['Debug info generation failed'] },
-        configurations: [],
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       };
     }
   }
 
-  // FIXED: Enhanced validation method with proper error handling
   async validateConfiguration(): Promise<boolean> {
     try {
-      const debugInfo = await this.getDebugInfo();
-      return debugInfo.validation && debugInfo.validation.isValid === true;
+      const interfaceValidation = this.interfaceResolver.validateDependencies();
+      const registryValidation = this.serviceRegistry.validateRegistry();
+      
+      return interfaceValidation.isValid && registryValidation.isValid;
     } catch (error) {
       if (this.options.verbose) {
         console.error('❌ Configuration validation failed:', error);
@@ -541,7 +531,6 @@ export function getRegistryStats(): {
     }
   }
 
-  // FIXED: Enhanced summary method with safe data access
   getTransformationSummary(): {
     configHash: string;
     implementationCount: number;
@@ -550,65 +539,18 @@ export function getRegistryStats(): {
     hasErrors: boolean;
   } {
     try {
-      const interfaceResolver = this.treeBuilder.getInterfaceResolver();
-      let implementationCount = 0;
-      let dependencyCount = 0;
-      let hasErrors = false;
-
-      if (interfaceResolver) {
-        // Safely get implementation count
-        if (typeof interfaceResolver.getInterfaceImplementations === 'function') {
-          try {
-            const implementations = interfaceResolver.getInterfaceImplementations();
-            implementationCount = implementations instanceof Map ? implementations.size : 0;
-          } catch (error) {
-            hasErrors = true;
-            if (this.options.verbose) {
-              console.warn('⚠️  Could not get implementations count:', error);
-            }
-          }
-        }
-
-        // Safely get dependency count
-        if (typeof interfaceResolver.getServiceDependencies === 'function') {
-          try {
-            const dependencies = interfaceResolver.getServiceDependencies();
-            dependencyCount = dependencies instanceof Map ? dependencies.size : 0;
-          } catch (error) {
-            hasErrors = true;
-            if (this.options.verbose) {
-              console.warn('⚠️  Could not get dependencies count:', error);
-            }
-          }
-        }
-      } else {
-        hasErrors = true;
-        if (this.options.verbose) {
-          console.warn('⚠️  Interface resolver not available for summary');
-        }
-      }
-
-      let hasValidConfiguration = false;
-      try {
-        hasValidConfiguration = this.configManager.isConfigValid();
-      } catch (error) {
-        hasErrors = true;
-        if (this.options.verbose) {
-          console.warn('⚠️  Could not check config validity:', error);
-        }
-      }
+      const implementations = this.interfaceResolver.getInterfaceImplementations();
+      const dependencies = this.interfaceResolver.getServiceDependencies();
+      const hasValidConfiguration = this.configManager.isConfigValid();
 
       return {
         configHash: this.configManager.getConfigHash(),
-        implementationCount,
-        dependencyCount,
+        implementationCount: implementations.size,
+        dependencyCount: dependencies.size,
         hasValidConfiguration,
-        hasErrors
+        hasErrors: this.errors.length > 0
       };
     } catch (error) {
-      if (this.options.verbose) {
-        console.error('❌ Error generating transformation summary:', error);
-      }
       return {
         configHash: 'error',
         implementationCount: 0,
@@ -620,19 +562,19 @@ export function getRegistryStats(): {
   }
 }
 
-// CLI usage
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const transformer = new EnhancedDITransformer({ 
-    verbose: true,
-    srcDir: './src',
-    enableInterfaceResolution: true
-  });
+// // CLI usage
+// if (import.meta.url === `file://${process.argv[1]}`) {
+//   const transformer = new EnhancedDITransformer({ 
+//     verbose: true,
+//     scanDirs: ['./src'],
+//     enableInterfaceResolution: true
+//   });
   
-  transformer.transform()
-    .then(() => transformer.save())
-    .then(() => console.log('✅ Enhanced DI transformation completed successfully'))
-    .catch(error => {
-      console.error('❌ Enhanced DI transformation failed:', error);
-      process.exit(1);
-    });
-}
+//   transformer.transform()
+//     .then(() => transformer.save())
+//     .then(() => console.log('✅ Enhanced DI transformation completed successfully'))
+//     .catch(error => {
+//       console.error('❌ Enhanced DI transformation failed:', error);
+//       process.exit(1);
+//     });
+// }

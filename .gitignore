@@ -1,2 +1,7 @@
 node_modules/
 monorepo/tmp.sh
+*.di-transformed.tsx
+.tdi2/
+talks/SlideDecks/quick-test/
+.env
+talks/SlideDecks/slides/site/

@@ -1,46 +1,94 @@
 {
   "name": "@tdi2/di-core",
-  "version": "0.1.0",
+  "version": "3.3.0",
   "description": "TypeScript Dependency Injection 2 - Core DI framework",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./decorators": "./src/decorators.ts",
-    "./types": "./src/types.ts",
-    "./markers": "./src/markers.ts",
-    "./container": "./src/container.ts",
-    "./context": "./src/context.tsx",
+    "./examples/*": {
+      "import": "./dist/examples/*.js",
+      "types": "./dist/examples/*.d.ts"
+    },
+    "./examples/*.js": "./dist/examples/*.js",
+    "./examples/*.d.ts": "./dist/examples/*.d.ts",
+    "./examples/sources/*": "./tools/functional-di-enhanced-transformer/__tests__/__fixtures__/*",
+    "./sources/*": "./tools/functional-di-enhanced-transformer/__tests__/__fixtures__/*",
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./decorators": {
+      "import": "./dist/decorators.js",
+      "types": "./dist/decorators.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "types": "./dist/types.d.ts"
+    },
+    "./markers": {
+      "import": "./dist/markers.js",
+      "types": "./dist/markers.d.ts"
+    },
+    "./container": {
+      "import": "./dist/container.js",
+      "types": "./dist/container.d.ts"
+    },
+    "./context": {
+      "import": "./dist/context.js",
+      "types": "./dist/context.d.ts"
+    },
     "./tools": {
+      "types": "./dist/tools/index.d.ts",
       "import": "./dist/tools/index.js",
-      "types": "./dist/tools/index.d.ts"
+      "require": "./dist/tools/index.cjs"
     }
   },
+  "files": [
+    "dist/",
+    "tools/functional-di-enhanced-transformer/__tests__/__fixtures__/",
+    "*.d.ts"
+  ],
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup",
-    "test": "bun test",
-    "lint": "echo 'No linting configured yet'"
+    "test:io": "bash -c 'select f in $(find . -type f -name \"*.test.ts\" ); do [ -n \"$f\" ] && exec bun test \"$f\"; done'",
+    "build": "tsup  && tsc -p tsconfig.dts.json || true",
+    "test": "NODE_OPTIONS='--max-old-space-size=8192' vitest --no-isolate --pool=threads --no-file-parallelism",
+    "test:ui": "NODE_OPTIONS='--max-old-space-size=8192'  vitest --ui --pool=threads --max-concurrency=2 --no-isolate  --no-file-parallelism",
+    "test:update": "UPDATE_SNAPSHOTS=1 vitest --updateSnapshots",
+    "test:fixture:update": " UPDATE_SNAPSHOTS=1 vitest tools/functional-di-enhanced-transformer/__tests__/code-transformation.test.ts",
+    "lint": "echo 'No linting configured yet'",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "publish:npm": "npm publish --access public",
+    "publish:jsr": "npx jsr publish",
+    "publish:package": "bun publish"
   },
   "keywords": [
     "dependency-injection",
-    "typescript"
+    "typescript",
+    "react",
+    "valtio",
+    "proxy-state"
   ],
   "author": "TDI2 Team",
   "license": "MIT",
+  "repository": {
+    "url": "https://github.com/7frank/tdi2"
+  },
   "dependencies": {
-    "ts-morph": "^21.0.1"
+    "ts-morph": "^21.0.1",
+    "valtio": "^2.1.2"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
     "@types/react": "^19.1.8",
-    "typescript": "~5.8.3",
-    "vite": "^6.3.5"
+    "typescript": "~5.8.3"
   },
   "peerDependencies": {
-    "vite": "^6.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "vite": "^4.0.0 || ^5.0.0 || ^6.0.0"
   },
   "engines": {
     "node": ">=18.0.0"

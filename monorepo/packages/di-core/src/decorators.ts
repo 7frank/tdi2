@@ -1,10 +1,11 @@
 // src/di/decorators.ts - Updated for interface-based DI
 
-import type { ServiceOptions } from "./types";
+import type { ServiceOptions, ConfigurationOptions } from "./types";
 
 /**
  * Service decorator - marks a class as injectable
  * Now uses automatic interface resolution instead of manual tokens
+ * Note: For scope management, use the separate @Scope decorator (Spring Boot convention)
  */
 export function Service(options: ServiceOptions = {}): ClassDecorator {
   return function (target: any) {
@@ -12,7 +13,7 @@ export function Service(options: ServiceOptions = {}): ClassDecorator {
     target.__di_service__ = {
       // Token is now optional - will be auto-generated from interface name
       token: options.token || null, // null means auto-resolve from interface
-      scope: options.scope || "singleton",
+      scope: "singleton", // Default scope - use @Scope decorator to override
       autoResolve: options.token === undefined, // true if no explicit token provided
       ...options,
     };
@@ -50,25 +51,6 @@ export function Inject(token?: string | symbol): any {
  */
 export const Autowired = Inject;
 
-/**
- * AutoWireService decorator - alias for Service with auto-resolution enabled
- * This matches the naming from your TDI proof-of-concept
- */
-export function AutoWireService(options: ServiceOptions = {}): ClassDecorator {
-  return Service({
-    ...options,
-    // Force auto-resolution for AutoWireService
-    token: options.token || undefined,
-  });
-}
-
-/**
- * AutoWireInject decorator - alias for Inject with auto-resolution
- * This matches the naming from your TDI proof-of-concept
- */
-export function AutoWireInject(token?: string | symbol): any {
-  return Inject(token);
-}
 
 /**
  * Profile decorator - marks a service for specific environments
@@ -84,7 +66,9 @@ export function Profile(...profiles: string[]): ClassDecorator {
 }
 
 /**
- * Scope decorator - sets the lifecycle scope for a service
+ * Scope decorator - sets the lifecycle scope for a service (Spring Boot convention)
+ * Use with @Service decorator: @Service @Scope("singleton|transient")
+ * Follows Spring Boot's separation of concerns pattern
  */
 export function Scope(
   scope: "singleton" | "transient" | "scoped"
@@ -157,6 +141,52 @@ export function Qualifier(qualifier: string): any {
     }
   };
 }
+
+/**
+ * Configuration decorator - marks a class as a configuration provider
+ * Configuration classes contain @Bean methods that define external service factories
+ * Integrates with existing interface resolution and scope management
+ */
+export function Configuration(options: ConfigurationOptions = {}): ClassDecorator {
+  return function (target: any) {
+    // Store metadata for compile-time processing
+    target.__di_configuration__ = {
+      profiles: options.profiles || [],
+      priority: options.priority || 0,
+      ...options,
+    };
+  };
+}
+
+/**
+ * Bean decorator - marks a method as a factory for external services
+ * Must be used inside @Configuration classes
+ * Works with existing decorators: @Primary, @Scope, @Qualifier
+ * Return type is automatically resolved to interface for DI registration
+ */
+export function Bean(
+  target: any,
+  propertyKey: string | symbol,
+  descriptor: PropertyDescriptor
+): void {
+  // Store metadata for compile-time processing
+  if (!target.__di_beans__) {
+    target.__di_beans__ = [];
+  }
+
+  target.__di_beans__.push({
+    methodName: propertyKey,
+    autoResolve: true, // Always use interface resolution for beans
+    // Additional metadata will be extracted at compile-time:
+    // - Return type interface
+    // - Parameter dependencies
+    // - Applied decorators (@Primary, @Scope, @Qualifier)
+  });
+}
+
+
+// Re-export lifecycle interfaces for easy access
+export type { OnInit, OnDestroy, OnMount, OnUnmount } from './types';
 
 // Legacy support - these will be deprecated in favor of interface resolution
 export {

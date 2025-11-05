@@ -7,7 +7,7 @@ import {
 } from "ts-morph";
 import { ServiceDependency, ConstructorParam } from "./interface-resolver-types";
 import { KeySanitizer } from "./key-sanitizer";
-import { ServiceValidator } from "./service-validator";
+import { EnhancedServiceValidator } from "./enhanced-service-validator";
 
 export class DependencyAnalyzer {
   constructor(
@@ -19,7 +19,7 @@ export class DependencyAnalyzer {
     classDecl: ClassDeclaration,
     sourceFile: SourceFile,
     dependencies: Map<string, ServiceDependency>,
-    serviceValidator: ServiceValidator
+    serviceValidator: EnhancedServiceValidator
   ): Promise<void> {
     const className = classDecl.getName();
     if (!className) return;

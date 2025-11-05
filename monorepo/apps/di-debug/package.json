@@ -1,0 +1,79 @@
+{
+  "name": "@tdi2/di-debug",
+  "version": "3.2.0",
+  "description": "TDI2 Debug Tools - CLI and Web Dashboard for DI Analysis",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "tdi2": "./bin/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./container-analytics": {
+      "import": "./dist/utils/container-analytics.js",
+      "types": "./dist/utils/container-analytics.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "bin/"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsup",
+    "build:cli": "tsup",
+    "build:dashboard": "vite build",
+    "preview": "vite preview",
+    "test": "echo 'No tests configured yet'",
+    "lint": "echo 'No linting configured yet'",
+    "clean": "rm -rf dist",
+    "tdi2": "./bin/cli.js",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "dependency-injection",
+    "typescript",
+    "debugging",
+    "analytics",
+    "cli"
+  ],
+  "author": "TDI2 Team",
+  "license": "MIT",
+  "dependencies": {
+    "@tdi2/di-core": "workspace:*",
+    "@types/diff": "^8.0.0",
+    "@types/express": "^4.17.21",
+    "chokidar": "^4.0.3",
+    "cmd-ts": "^0.13.0",
+    "diff": "^8.0.2",
+    "express": "^4.21.2",
+    "open": "^10.2.0",
+    "ts-morph": "^21.0.1",
+    "ws": "^8.18.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "valtio": "^2.1.2",
+    "d3": "^7.8.5",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@tdi2/vite-plugin-di": "workspace:*",
+    "@types/bun": "latest",
+    "@types/d3": "^7.4.3",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^4.4.1",
+    "tsup": "^8.5.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,204 @@
+name: CI/CD with GitHub Pages
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, develop]
+
+# Allow one concurrent deployment
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: |
+          cd monorepo
+          bun install
+
+      - name: Build with Turborepo
+        run: |
+          cd monorepo
+          bun run build
+
+      - name: Build documentation site
+        run: |
+          cd monorepo/apps/docs-starlight
+          bun install
+          bun run build
+
+      - name: Upload test harness for Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-harness-dist
+          path: monorepo/apps/di-test-harness/dist/
+
+      - name: Upload documentation for Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-dist
+          path: monorepo/apps/docs-starlight/dist/
+
+  # Deploy to GitHub Pages
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Download documentation build
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-dist
+          path: ./pages-site/docs
+
+      - name: Download test harness build
+        uses: actions/download-artifact@v4
+        with:
+          name: test-harness-dist
+          path: ./pages-site/test-harness
+
+      - name: Create root index page
+        run: |
+          cat > ./pages-site/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>TDI2 - TypeScript Dependency Injection for React</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 2rem;
+                line-height: 1.6;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                color: white;
+              }
+              .container {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                padding: 3rem;
+                border-radius: 20px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+              }
+              h1 {
+                text-align: center;
+                margin-bottom: 1rem;
+                font-size: 3rem;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+              }
+              .subtitle {
+                text-align: center;
+                font-size: 1.2rem;
+                margin-bottom: 3rem;
+                opacity: 0.9;
+              }
+              .links {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+                margin-top: 2rem;
+              }
+              .link-card {
+                background: rgba(255, 255, 255, 0.2);
+                padding: 2rem;
+                border-radius: 15px;
+                text-decoration: none;
+                color: white;
+                transition: transform 0.3s ease, background 0.3s ease;
+                text-align: center;
+              }
+              .link-card:hover {
+                transform: translateY(-5px);
+                background: rgba(255, 255, 255, 0.3);
+              }
+              .link-card h2 {
+                margin: 0 0 1rem 0;
+                font-size: 1.5rem;
+              }
+              .link-card p {
+                margin: 0;
+                opacity: 0.9;
+              }
+              .github-link {
+                text-align: center;
+                margin-top: 2rem;
+              }
+              .github-link a {
+                color: white;
+                text-decoration: none;
+                font-weight: bold;
+              }
+              .github-link a:hover {
+                text-decoration: underline;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>🚀 TDI2</h1>
+              <p class="subtitle">TypeScript Dependency Injection for React<br>
+              Transform React from component chaos to service-centric clarity</p>
+              
+              <div class="links">
+                <a href="./docs/" class="link-card">
+                  <h2>📚 Documentation</h2>
+                  <p>Complete guides, API reference, and architectural documentation</p>
+                </a>
+                <a href="./test-harness/" class="link-card">
+                  <h2>🧪 Interactive Examples</h2>
+                  <p>Live demos and transformations you can try right now</p>
+                </a>
+              </div>
+              
+              <div class="github-link">
+                <p><a href="https://github.com/7frank/tdi2">View on GitHub</a></p>
+              </div>
+            </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./pages-site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

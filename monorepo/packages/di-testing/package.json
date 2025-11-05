@@ -1,0 +1,82 @@
+{
+  "name": "@tdi2/di-testing",
+  "version": "3.3.0",
+  "description": "Testing utilities for TDI2 dependency injection framework",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./decorators": {
+      "import": "./dist/decorators.js",
+      "types": "./dist/decorators.d.ts"
+    },
+    "./test-container": {
+      "import": "./dist/test-container.js",
+      "types": "./dist/test-container.d.ts"
+    },
+    "./test-utils": {
+      "import": "./dist/test-utils.js",
+      "types": "./dist/test-utils.d.ts"
+    },
+    "./shared": {
+      "import": "./dist/shared-testing.js",
+      "types": "./dist/shared-testing.d.ts"
+    },
+    "./service": {
+      "import": "./dist/service-testing.js",
+      "types": "./dist/service-testing.d.ts"
+    },
+    "./react-service": {
+      "import": "./dist/react-service-testing.js",
+      "types": "./dist/react-service-testing.d.ts"
+    },
+    "./react-behavior": {
+      "import": "./dist/react-behavior-testing.js",
+      "types": "./dist/react-behavior-testing.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "*.d.ts"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "test:io": "bash -c 'select f in $(find . -type f -name \"*.test.ts\" ); do [ -n \"$f\" ] && exec bun test \"$f\"; done'",
+    "build": "tsup && tsc -p tsconfig.dts.json || true",
+    "test": "bun test",
+    "lint": "echo 'No linting configured yet'",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "publish:npm": "npm publish --access public",
+    "publish:jsr": "npx jsr publish",
+    "publish:package": "bun publish"
+  },
+  "keywords": [
+    "dependency-injection",
+    "testing",
+    "typescript",
+    "react",
+    "mocking"
+  ],
+  "author": "TDI2 Team",
+  "license": "MIT",
+  "dependencies": {
+    "@tdi2/di-core": "workspace:*",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^18.0.1",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@types/bun": "latest",
+    "@types/node": "^20.0.0",
+    "typescript": "~5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

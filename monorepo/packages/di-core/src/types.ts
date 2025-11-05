@@ -27,18 +27,64 @@ export interface DIContainer {
     interfaceName: string,
     implementation: () => T,
     scope?: "singleton" | "transient" | "scoped"
-  ): void 
+  ): void;
   resolveByInterface<T>(interfaceName: string): T;
   hasInterface(interfaceName: string): boolean;
+
+  // Helper methods for parent-child scope resolution
+  getScope(token: string | symbol): "singleton" | "transient" | "scoped" | undefined;
+  hasFactory(token: string | symbol): boolean;
+  getFactory(token: string | symbol): any;
+  hasService(token: string | symbol): boolean;
+  getService(token: string | symbol): any;
+
+  // Lifecycle methods
+  hasLifecycleHooks(instance: any): { onMount: boolean; onUnmount: boolean; onInit: boolean; onDestroy: boolean };
+  executeOnMountLifecycle<T>(instance: T, options?: { signal?: AbortSignal }): Promise<void>;
+  executeOnUnmountLifecycle<T>(instance: T): Promise<void>;
 }
 
 // Service decorator options - now supports interface resolution
 export interface ServiceOptions {
-  scope?: "singleton" | "transient" | "scoped";
   token?: string | symbol; // Optional - auto-resolved if not provided
   profiles?: string[]; // Environment profiles
   primary?: boolean; // Mark as primary implementation
   qualifier?: string; // Qualifier for disambiguation
+}
+
+// Configuration decorator options
+export interface ConfigurationOptions {
+  profiles?: string[]; // Environment profiles when configuration applies
+  priority?: number; // Loading priority when multiple configurations exist
+}
+
+// Configuration class metadata
+export interface ConfigurationMetadata {
+  profiles: string[];
+  priority: number;
+  beans: BeanMetadata[];
+  className: string;
+  filePath: string;
+}
+
+// Bean method metadata
+export interface BeanMetadata {
+  methodName: string | symbol;
+  returnType: string; // Interface name from return type
+  parameters: BeanParameterMetadata[];
+  scope: "singleton" | "transient" | "scoped";
+  primary: boolean;
+  qualifier?: string;
+  autoResolve: boolean;
+  profiles?: string[]; // Profiles specific to this bean method
+}
+
+// Bean method parameter metadata
+export interface BeanParameterMetadata {
+  parameterName: string;
+  parameterType: string; // Interface name from parameter type
+  isOptional: boolean;
+  qualifier?: string;
 }
 
 // Injection metadata - enhanced for interface resolution
@@ -52,19 +98,23 @@ export interface InjectMetadata {
   qualifier?: string; // Qualifier for disambiguation
 }
 
-// Generated service factory type
-export type ServiceFactory<T> = () => T;
+export type ServiceFactory<T> = (container?: any) => T;
+type ServiceFactoryFactory<T> = (container?: any) => () => T;
 
 // Enhanced dependency injection map with interface support
 export interface DIMap {
   [token: string]: {
-    factory: ServiceFactory<any>;
+    factory: ServiceFactory<any> | ServiceFactoryFactory<any>;
     scope: "singleton" | "transient" | "scoped";
     dependencies: string[];
     interfaceName?: string; // The interface this service implements
-    implementationClass: string; // The actual implementation class
+    implementationClass: string; // The actual implementation class or configuration class
     isAutoResolved: boolean; // True if resolved automatically from interface
     qualifier?: string; // Qualifier if multiple implementations exist
+    isBean?: boolean; // True if this service comes from @Bean method
+    beanMethodName?: string; // Method name if this is a bean
+    configurationClass?: string; // Configuration class name if this is a bean
+    profiles?: string[]; // Profiles required for this service
   };
 }
 
@@ -81,6 +131,7 @@ export interface InterfaceMapping {
 export interface ContainerConfiguration {
   diMap: DIMap;
   interfaceMapping: InterfaceMapping;
+  configurations: ConfigurationMetadata[]; // Configuration classes with @Bean methods
   profiles?: string[]; // Active profiles
   environment?: string; // Current environment (dev, test, prod)
 }
@@ -144,6 +195,30 @@ export interface EnvironmentConfig {
   profiles: string[];
   overrides: { [interfaceName: string]: string }; // Interface -> implementation overrides
   mocks: { [interfaceName: string]: any }; // Interface -> mock implementation
+}
+
+// Lifecycle Interfaces (Angular-style)
+// Service-level lifecycle hooks
+export interface OnInit {
+  onInit(): void | Promise<void>;
+}
+
+export interface OnDestroy {
+  onDestroy(): void | Promise<void>;
+}
+
+// Component-level lifecycle hooks  
+export interface OnMount {
+  onMount(options?: { signal?: AbortSignal }): void | Promise<void>;
+}
+
+export interface OnUnmount {
+  onUnmount(): void | Promise<void>;
+}
+
+// Lifecycle hook options for component-scoped services
+export interface ComponentLifecycleOptions {
+  signal?: AbortSignal; // For cancellation on unmount
 }
 
 // Debug information structure

@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
 
-// Import interfaces (not implementations!)
 import type { ExampleApiInterface } from "../services/ExampleApiInterface";
 import type {
   LoggerInterface,
   CacheInterface,
 } from "../services/UserApiServiceImpl";
+import { Service } from "@tdi2/di-core";
 
 // Enhanced UserProfile with interface-based dependencies
 function UserProfile(props: {
@@ -242,56 +242,4 @@ const DataList = (props: {
   );
 };
 
-// Generic interface example
-interface GenericServiceInterface<T> {
-  process(data: T): Promise<T>;
-  validate(data: T): boolean;
-}
-
-// Component using generic interface
-function GenericProcessor<T = any>(props: {
-  data: T;
-  services: {
-    processor: Inject<GenericServiceInterface<T>>;
-    logger?: InjectOptional<LoggerInterface>;
-  };
-}) {
-  const { data, services } = props;
-  const [result, setResult] = useState<T | null>(null);
-  const [isValid, setIsValid] = useState<boolean>(false);
-
-  useEffect(() => {
-    const validate = services.processor.validate(data);
-    setIsValid(validate);
-    services.logger?.log(`Data validation: ${validate}`);
-
-    if (validate) {
-      services.processor.process(data).then((processed) => {
-        setResult(processed);
-        services.logger?.log("Data processed successfully");
-      });
-    }
-  }, [data]);
-
-  return (
-    <div>
-      <h4>Generic Processor (Interface DI)</h4>
-      <div>
-        <strong>Valid:</strong> {isValid ? "✅" : "❌"}
-      </div>
-      {result && (
-        <div>
-          <strong>Result:</strong> {JSON.stringify(result)}
-        </div>
-      )}
-
-      <div style={{ marginTop: "8px", fontSize: "11px", color: "#999" }}>
-        Generic Interface:{" "}
-        {services.processor?.constructor.name || "Not resolved"}
-      </div>
-    </div>
-  );
-}
-
-export { UserProfile, DataList, GenericProcessor };
-export type { GenericServiceInterface };
+export { UserProfile, DataList };

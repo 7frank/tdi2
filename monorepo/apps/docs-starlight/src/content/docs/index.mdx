@@ -1,0 +1,119 @@
+---
+title: TDI2 Documentation
+description: React without prop drilling. Zero props, automatic state sync, pure dependency injection.
+template: splash
+hero:
+  tagline: Transform 15+ props per component to zero props. React with automatic dependency injection.
+  image:
+    file: ../../assets/houston.webp
+  actions:
+    - text: Try in 30 Seconds
+      link: ./examples/basic/
+      icon: rocket
+      variant: primary
+    - text: Quick Start Guide
+      link: ./getting-started/quick-start/
+      icon: right-arrow
+      variant: secondary
+    - text: View on GitHub
+      link: https://github.com/7frank/tdi2
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## The Problem: React Prop Hell
+
+```typescript
+// ❌ Your React components today
+function Dashboard({ 
+  user, setUser, 
+  products, setProducts, loading, setLoading,
+  cart, setCart, cartTotal, setCartTotal,
+  theme, setTheme, notifications, setNotifications,
+  permissions, preferences, onUpdate, onError,
+  /* ...and 10+ more props */
+}) {
+  // Complex useEffect chains, manual synchronization...
+}
+```
+
+## The Solution: Zero Props with TDI2
+
+```typescript
+// ✅ Your React components with TDI2
+function Dashboard({ 
+  userService,
+  productService,
+  cartService 
+}: {
+  userService: Inject<UserServiceInterface>;
+  productService: Inject<ProductServiceInterface>;
+  cartService: Inject<CartServiceInterface>;
+}) {
+  // Clean, focused, automatically synchronized
+  return <div>{userService.state.name} has {cartService.state.items.length} items</div>;
+}
+```
+
+**Result**: Zero prop drilling. Automatic state sync. Pure business logic separation.
+
+## Try TDI2 Right Now (30 Seconds)
+
+```bash
+npx degit 7frank/tdi2/examples/tdi2-basic-example my-di-app
+cd my-di-app && npm install && npm run dev
+```
+
+Open `http://localhost:5173` → **Working React app with zero prop drilling!**
+
+## How TDI2 Works
+
+<CardGrid stagger>
+	<Card title="🚫 Zero Prop Drilling" icon="setting">
+		Transform 15+ props per component to clean service injection. No more manual prop passing.
+	</Card>
+	<Card title="⚡ Automatic State Sync" icon="rocket">
+		Change service state anywhere → all components update automatically. No subscriptions needed.
+	</Card>
+	<Card title="🔧 Build-Time Magic" icon="puzzle">
+		TypeScript interfaces become DI tokens. Zero runtime overhead, perfect tree-shaking.
+	</Card>
+	<Card title="🧪 Simple Testing" icon="approve-check">
+		Mock services, not props. Test business logic separately from UI components.
+	</Card>
+</CardGrid>
+
+## The Dramatic Difference
+
+| Your React Code Today | With TDI2 |
+|----------------------|-----------|
+| **Props**: 15+ props per component | **Props**: Zero data props |
+| **State Sync**: Manual useEffect chains | **State Sync**: Automatic everywhere |
+| **Testing**: Mock dozens of props | **Testing**: Mock clean service interfaces |
+| **Architecture**: No clear boundaries | **Architecture**: Service → Component separation |
+| **Maintenance**: Prop drilling nightmare | **Maintenance**: Change service, all components update |
+
+**Real Impact**: TDI2 transforms React from "component framework with state chaos" to "service-oriented architecture with React rendering".
+
+## Your TDI2 Journey (3 Steps)
+
+1. 🚀 **[Try the Working Example](./examples/basic/)** - Experience TDI2 in 30 seconds (no setup required)
+2. 📖 **[Quick Start Guide](./getting-started/quick-start/)** - Build your first service from scratch
+3. 🏗️ **[Migration Guide](./guides/migration/strategy/)** - Transform your existing React apps
+
+**Next Level**: [Enterprise Implementation](./guides/enterprise/implementation/) • [Framework Comparisons](./comparison/redux-vs-tdi2/) • [Architecture Decisions](./adr/)
+
+## Enterprise Ready
+
+TDI2 is designed for large-scale React applications with:
+
+- **Team Coordination** - Clear service boundaries prevent teams from stepping on each other
+- **Testing Excellence** - Service unit tests run in milliseconds, no React rendering needed
+- **Performance Optimization** - Automatic reactive updates, no manual memoization
+- **Migration Strategy** - Incremental adoption alongside existing React patterns
+
+---
+
+*Ready to transform your React application architecture?*
