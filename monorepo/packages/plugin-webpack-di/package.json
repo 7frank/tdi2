@@ -1,0 +1,74 @@
+{
+  "name": "@tdi2/plugin-webpack-di",
+  "version": "1.0.0",
+  "description": "Webpack plugin for TDI2 dependency injection",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "webpack",
+    "plugin",
+    "loader",
+    "dependency-injection",
+    "di",
+    "tdi2",
+    "typescript",
+    "react"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/7frank/tdi2.git",
+    "directory": "packages/plugin-webpack-di"
+  },
+  "bugs": {
+    "url": "https://github.com/7frank/tdi2/issues"
+  },
+  "homepage": "https://github.com/7frank/tdi2#readme",
+  "license": "MIT",
+  "author": "7frank",
+  "scripts": {
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@tdi2/plugin-core": "workspace:*",
+    "@tdi2/di-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "webpack": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/webpack": "^5.28.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "ts-loader": "^9.5.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0",
+    "webpack": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -90,6 +90,11 @@ describe("Functional DI Transformation Tests", () => {
     );
 
     it(
+      "should handle body destructuring from props.services",
+      defineTransformationTest("body-destructuring-from-props-services", FIXTURES_DIR)
+    );
+
+    it(
       "should handle nested arrow functions",
       defineTransformationTest("nested-arrow-functions", FIXTURES_DIR)
     );

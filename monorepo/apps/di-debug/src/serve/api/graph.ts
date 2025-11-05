@@ -154,9 +154,13 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
         nodeType = 'class';
       }
 
+      // Get service config to extract implementationClass for cleaner labels
+      const serviceConfig = diConfig[serviceId];
+      const cleanLabel = serviceConfig?.implementationClass
+
       const node: GraphNode = {
         id: serviceId,
-        label: serviceId.replace(/Interface$/, '').replace(/Service$/, ''),
+        label: cleanLabel,
         type: nodeType,
         metadata: {
           dependencies: dependencyGraph.dependencies.get(serviceId) || [],
@@ -174,7 +178,13 @@ export function createGraphHandler(analytics: DIAnalytics, options: ServerOption
           })),
           scope: service?.scope || 'singleton',
           filePath: service?.filePath || undefined,
-          lifecycle: service?.lifecycle || []
+          lifecycle: service?.lifecycle || [],
+          // Add detailed service information for tooltips
+          fullToken: serviceId, // The full implementationClassPath token
+          implementationClass: serviceConfig?.implementationClass,
+          implementationClassPath: serviceConfig?.implementationClassPath,
+          interfaceName: serviceConfig?.interfaceName,
+          registrationType: serviceConfig?.registrationType
         },
         color: getNodeColor(serviceId, allIssues),
         size: getNodeSize(serviceId)

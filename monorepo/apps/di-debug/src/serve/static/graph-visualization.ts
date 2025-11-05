@@ -22,6 +22,12 @@ interface GraphNode {
     scope: string;
     filePath?: string;
     lifecycle: string[];
+    // Enhanced metadata for better tooltips
+    fullToken?: string;
+    implementationClass?: string;
+    implementationClassPath?: string;
+    interfaceName?: string;
+    registrationType?: string;
   };
   // D3 simulation properties
   x?: number;
@@ -524,6 +530,9 @@ export class GraphVisualization {
         { label: 'Dependencies', value: node.metadata.dependencies.length.toString() },
         { label: 'Dependents', value: node.metadata.dependents.length.toString() },
         { label: 'File', value: node.metadata.filePath || 'Unknown' },
+       
+          { label: 'Full Path', value: node.metadata.implementationClassPath??"not found" }
+        ,
         ...node.metadata.issues.map(issue => ({
           label: issue.type.toUpperCase(),
           value: issue.message,

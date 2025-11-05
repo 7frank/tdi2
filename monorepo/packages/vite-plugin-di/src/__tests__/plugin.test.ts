@@ -17,9 +17,9 @@ describe('diEnhancedPlugin', () => {
   it('should merge user options with defaults', () => {
     const userOptions: DIPluginOptions = {
       verbose: true,
-      srcDir: './custom-src',
+      scanDirs: ['./custom-src'],
     };
-    
+
     const plugin = diEnhancedPlugin(userOptions);
     expect(plugin).toBeDefined();
   });
@@ -28,8 +28,8 @@ describe('diEnhancedPlugin', () => {
 describe('getDIPluginDefaults', () => {
   it('should return correct default options', () => {
     const defaults = getDIPluginDefaults({});
-    
-    expect(defaults.srcDir).toBe('./src');
+
+    expect(defaults.scanDirs).toEqual(['./src']);
     expect(defaults.outputDir).toBe('./src/generated');
     expect(defaults.verbose).toBe(false);
     expect(defaults.watch).toBe(true);
@@ -41,14 +41,14 @@ describe('getDIPluginDefaults', () => {
   it('should merge user options with defaults', () => {
     const userOptions: DIPluginOptions = {
       verbose: true,
-      srcDir: './custom-src',
+      scanDirs: ['./custom-src'],
       keepConfigCount: 5,
     };
-    
+
     const merged = getDIPluginDefaults(userOptions);
-    
+
     expect(merged.verbose).toBe(true);
-    expect(merged.srcDir).toBe('./custom-src');
+    expect(merged.scanDirs).toEqual(['./custom-src']);
     expect(merged.keepConfigCount).toBe(5);
     expect(merged.watch).toBe(true); // Should keep default
   });
@@ -76,9 +76,9 @@ describe('validateDIPluginOptions', () => {
     expect(() => validateDIPluginOptions(validOptions)).not.toThrow();
   });
 
-  it('should throw for invalid srcDir', () => {
-    const invalidOptions = getDIPluginDefaults({ srcDir: '' });
-    expect(() => validateDIPluginOptions(invalidOptions)).toThrow('srcDir must be a non-empty string');
+  it('should throw for invalid scanDirs', () => {
+    const invalidOptions = getDIPluginDefaults({ scanDirs: [] });
+    expect(() => validateDIPluginOptions(invalidOptions)).toThrow('scanDirs cannot be empty');
   });
 
   it('should throw for invalid outputDir', () => {
