@@ -2,7 +2,6 @@
 
 ## ordered log (for production release)
 
-
 ### ❌ auto discover packages
 
 > currently we can add scanDirs manually, while this is working it could be better to have a `autodiscover` packages flag
@@ -46,7 +45,7 @@ all three contain some value that we should see how we can merge
   - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
   - focus on syntax we support and log warnings for sytnax we dont support
 
-- feature/refactor-di-debug-into-vite-react-app
+- ❌ feature/refactor-di-debug-into-vite-react-app
 
 ### [❌] make valtio transformations and reactivity optional
 
@@ -573,17 +572,12 @@ https://github.com/MartenBE/mkslides
 - 7frank/tdi2/monorepo/packages/di-core/tools/shared/RecursiveInjectExtractor.ts
 - 7frank/tdi2/monorepo/packages/di-core/tools/shared/SharedDependencyExtractor.ts
 
-### [❌] clean up & remove
+### [❌] fix or remove debug endpoints
 
-- [✅] useObservableState and its usage
-
-- [✅] useAsyncServiceInterface
-- [❌] remove AsyncState special cases, or fix them in di-core, they where never meant to be this specific in the first place
-- [❌] fix or remove debug endpoints
-  - http://localhost:5173/\_di_debug
-  - http://localhost:5173/\_di_interfaces
-  - http://localhost:5173/\_di_configs"
-  - if removed, remove middleware endpoints too
+- http://localhost:5173/\_di_debug
+- http://localhost:5173/\_di_interfaces
+- http://localhost:5173/\_di_configs"
+- if removed, remove middleware endpoints too
 
 ### [❌] create do's and don't for valtio proxies / document quirks
 
@@ -723,7 +717,12 @@ evaluate scenarios
 
 ## Done
 
+### [✅] clean up & remove
 
+- [✅] useObservableState and its usage
+
+- [✅] useAsyncServiceInterface
+- [✅] remove AsyncState special cases, or fix them in di-core, they where never meant to be this specific in the first place
 
 ### ✅ integrated interface resolver too cluttered
 
@@ -782,7 +781,6 @@ something wrong with the setup and the dashboard build
   - also we get warnings now which might be good
   - and the "Missing service dependency 'CacheInterface_any\_\_src_UserApiServiceImpl_ts_line_69' might actually work
   - we might need some tests actually
-
 
 ### ✅ plugins
 
