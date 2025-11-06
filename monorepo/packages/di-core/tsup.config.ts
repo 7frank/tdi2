@@ -1,5 +1,13 @@
 import { defineConfig, Format } from "tsup";
 
+const onSuccess =
+  (name: string, ms = 10000) =>
+  async () => {
+    console.log("Built", name, " waiting for workers to finish");
+    await new Promise((resolve) => setTimeout(resolve, ms));
+    console.log(name, "done waiting");
+  };
+
 const examples = {
   entry: [
     "tools/functional-di-enhanced-transformer/__tests__/__fixtures__/*.ts*",
@@ -22,6 +30,7 @@ const examples = {
     //   'process.env.NODE_ENV': '"development"'
     // };
   },
+  onSuccess: onSuccess("examples"),
 };
 
 const entries = [
@@ -44,9 +53,7 @@ export default defineConfig([
     skipNodeModulesBundle: true,
     external: ["react", "react-dom"],
     sourcemap: true,
-    async onSuccess() {
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    },
+    onSuccess: onSuccess("entries"),
   },
   examples,
   {
@@ -56,8 +63,6 @@ export default defineConfig([
     outDir: "dist/tools",
     clean: false,
     sourcemap: true,
-    async onSuccess() {
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    },
+    onSuccess: onSuccess("tools"),
   },
 ]);
