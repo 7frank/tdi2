@@ -219,8 +219,8 @@ export class IntegratedInterfaceResolver {
     // Use location-based key generation to prevent interface name collisions
     const sanitizedKey = this.keySanitizer.createLocationBasedKey(
       interfaceInfo.fullType,
-      interfaceInfo.sourceFilePath,
-      interfaceInfo.lineNumber
+      interfaceInfo.location?.filePath,
+      interfaceInfo.location?.lineNumber
     );
 
     // Extract scope from @Service decorator

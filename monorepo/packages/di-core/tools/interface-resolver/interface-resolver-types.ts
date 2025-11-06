@@ -272,9 +272,7 @@ export interface InterfaceInfo {
   fullType: string;
   isGeneric: boolean;
   typeParameters: string[];
-  // Location information for unique key generation
-  sourceFilePath?: string;
-  lineNumber?: number;
+
   location?: SourceLocation;
 }
 

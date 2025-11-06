@@ -198,8 +198,6 @@ export class EnhancedInterfaceExtractor {
         fullType,
         isGeneric,
         typeParameters,
-        sourceFilePath,
-        lineNumber,
         location
       };
     } catch (error) {
