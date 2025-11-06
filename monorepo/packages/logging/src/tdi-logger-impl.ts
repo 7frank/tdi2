@@ -136,20 +136,6 @@ export class TDILoggerImpl implements TDILogger {
     );
   }
 
-  isLevelEnabled(level: LogLevel): boolean {
-    const levelPriority = {
-      TRACE: 0,
-      DEBUG: 1,
-      INFO: 2,
-      WARN: 3,
-      ERROR: 4,
-      FATAL: 5
-    };
-
-    // For now, all levels are enabled for OpenTelemetry
-    // This could be made configurable in the future
-    return true;
-  }
 
   getContext(): LogContext {
     return { ...this.context };

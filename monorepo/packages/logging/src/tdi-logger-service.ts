@@ -1,6 +1,6 @@
 // src/logging/tdi-logger-service.ts - DI-integrated Logger Service
 
-import { Service } from '@tdi2/di-core/decorators';
+import { Service } from "@tdi2/di-core/decorators";
 import type { TDILogger, LoggerConfig, LogContext, LogLevel } from "./types";
 import { OTelLoggerProvider } from "./otel-logger-provider";
 
@@ -167,7 +167,6 @@ export class TDILoggerService implements LoggerInterface {
     const level = success ? "debug" : "warn";
     this[level](
       `DI Resolution: ${token} -> ${success ? resolvedClass : "FAILED"}`,
-      undefined,
       {
         ...context,
         token,
@@ -219,7 +218,7 @@ export class TDILoggerService implements LoggerInterface {
     context?: LogContext
   ): void {
     const level = implementationFound ? "debug" : "warn";
-    this[level](`Interface Resolution: ${interfaceType}`, undefined, {
+    this[level](`Interface Resolution: ${interfaceType}`, {
       ...context,
       interfaceType,
       implementationFound,
@@ -393,4 +392,142 @@ export class TDILoggerService implements LoggerInterface {
       processors: [{ type: "console" }],
     });
   }
+
+
+  /**
+   * FIXME below methods are duplicates
+   */
+
+
+  public logWithTiming<T>(
+    operation: string,
+    fn: () => T | Promise<T>,
+    context?: LogContext
+  ): T | Promise<T> {
+    const startTime = Date.now();
+    const operationId = Math.random().toString(36).substr(2, 9);
+    
+    this.debug(`Starting operation: ${operation}`, {
+      ...context,
+      operationId,
+      operation,
+      startTime
+    });
+
+    try {
+      const result = fn();
+      
+      if (result instanceof Promise) {
+        return result
+          .then((value) => {
+            const duration = Date.now() - startTime;
+            this.info(`Operation completed: ${operation}`, {
+              ...context,
+              operationId,
+              operation,
+              duration,
+              success: true
+            });
+            return value;
+          })
+          .catch((error) => {
+            const duration = Date.now() - startTime;
+            this.error(`Operation failed: ${operation}`, error, {
+              ...context,
+              operationId,
+              operation,
+              duration,
+              success: false
+            });
+            throw error;
+          });
+      } else {
+        const duration = Date.now() - startTime;
+        this.info(`Operation completed: ${operation}`, {
+          ...context,
+          operationId,
+          operation,
+          duration,
+          success: true
+        });
+        return result;
+      }
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.error(`Operation failed: ${operation}`, error as Error, {
+        ...context,
+        operationId,
+        operation,
+        duration,
+        success: false
+      });
+      throw error;
+    }
+  }
+
+  public logObjectDiff(
+    operation: string,
+    before: any,
+    after: any,
+    context?: LogContext
+  ): void {
+    this.debug(`Object diff for operation: ${operation}`, {
+      ...context,
+      operation,
+      before: JSON.stringify(before),
+      after: JSON.stringify(after),
+      changed: JSON.stringify(before) !== JSON.stringify(after)
+    });
+  }
+
+  public logPerformance(
+    metric: string,
+    value: number,
+    unit: string = 'ms',
+    context?: LogContext
+  ): void {
+    this.info(`Performance metric: ${metric}`, {
+      ...context,
+      metric,
+      value,
+      unit,
+      type: 'performance'
+    });
+  }
+
+  public logUserAction(
+    action: string,
+    userId?: string,
+    context?: LogContext
+  ): void {
+    this.info(`User action: ${action}`, {
+      ...context,
+      action,
+      userId,
+      type: 'user_action',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  public logAPICall(
+    method: string,
+    url: string,
+    statusCode?: number,
+    duration?: number,
+    context?: LogContext
+  ): void {
+    const level = statusCode && statusCode >= 400 ? 'error' : 'info';
+    
+    this[level](`API call: ${method} ${url}`, undefined, {
+      ...context,
+      method,
+      url,
+      statusCode,
+      duration,
+      type: 'api_call'
+    });
+  }
+
+
+
 }

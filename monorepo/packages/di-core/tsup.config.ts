@@ -33,20 +33,23 @@ const entries = [
   "context.tsx",
 ]
   .map((name) => "src/" + name)
-  .map((it) => ({
-    entry: [it],
+
+export default defineConfig([
+  {
+    entry: entries,
     format: ["esm"] as Format[],
     dts: true,
     outDir: "dist",
+    splitting: false,
     clean: true,
     skipNodeModulesBundle: true,
     external: ["react", "react-dom"],
     sourcemap: true,
-  }));
-
-export default defineConfig([
+    // esbuildOptions(options) {
+    //   options.bundle = true;
+    // },
+  },
   examples,
-  ...entries,
   {
     entry: ["tools/index.ts"],
     format: ["esm", "cjs"],
@@ -54,5 +57,8 @@ export default defineConfig([
     outDir: "dist/tools",
     clean: false,
     sourcemap: true,
+    // esbuildOptions(options) {
+    //   options.bundle = true;
+    // },
   },
 ]);

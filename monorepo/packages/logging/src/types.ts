@@ -68,7 +68,6 @@ export interface TDILogger {
   withContext(context: LogContext): TDILogger;
   
   // Utility methods
-  isLevelEnabled(level: LogLevel): boolean;
   getContext(): LogContext;
 }
 
