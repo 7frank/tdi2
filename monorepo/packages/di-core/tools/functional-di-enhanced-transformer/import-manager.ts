@@ -213,7 +213,13 @@ export class ImportManager {
    */
   private calculateDIMarkersImportPath(sourceFile: any): string {
     const currentFilePath = sourceFile.getFilePath();
-    const srcDir = path.resolve(this.options.srcDir!);
+
+    // Find which scanDir this file belongs to for correct DI markers path
+    const scanDirs = this.options.scanDirs || ["./src"];
+    const absolutePath = path.resolve(currentFilePath);
+    const matchingScanDir = scanDirs.find((dir: string) => absolutePath.startsWith(path.resolve(dir)));
+    const srcDir = matchingScanDir ? path.resolve(matchingScanDir) : path.resolve(scanDirs[0]);
+
     const diMarkersPath = path.join(srcDir, "di", "markers");
 
     // Calculate relative path

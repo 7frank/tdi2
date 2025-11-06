@@ -19,6 +19,10 @@
     },
     "test": {
       "dependsOn": ["^test"]
+    },
+    "publish:package": {
+      "dependsOn": ["build"],
+      "cache": false
     }
   }
 }

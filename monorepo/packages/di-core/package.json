@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/di-core",
-  "version": "3.1.2",
+  "version": "3.3.0",
   "description": "TypeScript Dependency Injection 2 - Core DI framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -39,8 +39,9 @@
       "types": "./dist/context.d.ts"
     },
     "./tools": {
+      "types": "./dist/tools/index.d.ts",
       "import": "./dist/tools/index.js",
-      "types": "./dist/tools/index.d.ts"
+      "require": "./dist/tools/index.cjs"
     }
   },
   "files": [
@@ -52,13 +53,16 @@
     "dev": "tsup --watch",
     "test:io": "bash -c 'select f in $(find . -type f -name \"*.test.ts\" ); do [ -n \"$f\" ] && exec bun test \"$f\"; done'",
     "build": "tsup  && tsc -p tsconfig.dts.json || true",
-    "test": "bun test",
-    "test:update": "UPDATE_SNAPSHOTS=1 bun test --updateSnapshots",
+    "test": "NODE_OPTIONS='--max-old-space-size=8192' vitest --no-isolate --pool=threads --no-file-parallelism",
+    "test:ui": "NODE_OPTIONS='--max-old-space-size=8192'  vitest --ui --pool=threads --max-concurrency=2 --no-isolate  --no-file-parallelism",
+    "test:update": "UPDATE_SNAPSHOTS=1 vitest --updateSnapshots",
+    "test:fixture:update": " UPDATE_SNAPSHOTS=1 vitest tools/functional-di-enhanced-transformer/__tests__/code-transformation.test.ts",
     "lint": "echo 'No linting configured yet'",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",
     "publish:npm": "npm publish --access public",
-    "publish:jsr": "npx jsr publish"
+    "publish:jsr": "npx jsr publish",
+    "publish:package": "bun publish"
   },
   "keywords": [
     "dependency-injection",
@@ -69,6 +73,9 @@
   ],
   "author": "TDI2 Team",
   "license": "MIT",
+  "repository": {
+    "url": "https://github.com/7frank/tdi2"
+  },
   "dependencies": {
     "ts-morph": "^21.0.1",
     "valtio": "^2.1.2"

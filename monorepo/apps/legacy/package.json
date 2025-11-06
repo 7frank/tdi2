@@ -11,6 +11,7 @@
     "clean": "rm -rf node_modules/.tdi2 src/.tdi2 node_modules/.vite node_modules/.vite-temp",
     "lint": "eslint .",
     "preview": "vite preview",
+    "check-types": "tsc --noEmit",
     "// === Enhanced DI Scripts ===": "",
     "di:build-prepare": "npm run di:enhanced",
     "di:transform": "tsx tools/di-transformer.ts",
@@ -41,6 +42,8 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@tdi2/di-core": "workspace:*",
+    "@tdi2/logging": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/api-logs": "^0.202.0",
     "@opentelemetry/resources": "^2.0.1",

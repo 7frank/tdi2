@@ -229,13 +229,13 @@ function TodoAppPage() {
     <div style={{ padding: "20px" }}>
       <DIExampleCard
         title="Complete Todo Application"
-        description="Full-featured todo app demonstrating TDI2 with IndexedDB persistence, AsyncState pattern, and interface-based DI"
+        description="Full-featured todo app demonstrating TDI2 with IndexedDB persistence, and interface-based DI"
         diPattern="Real-World Application"
         variant="interface"
       >
         <DICardBody
           pattern="TodoServiceType & TodoFormServiceType → Implementations"
-          explanation="This is a complete todo application showcasing TDI2's capabilities. It uses interface-based dependency injection with AsyncState services for reactive state management. The app demonstrates TodoRepository (IndexedDB persistence), TodoCache (memory caching), TodoNotificationService, and reactive form handling. All services are automatically resolved without manual token mapping."
+          explanation="This is a complete todo application showcasing TDI2's capabilities. It uses interface-based dependency injection with services for reactive state management. The app demonstrates TodoRepository (IndexedDB persistence), TodoCache (memory caching), TodoNotificationService, and reactive form handling. All services are automatically resolved without manual token mapping."
           dependencies={[
             {
               name: "TodoServiceType",
@@ -268,45 +268,7 @@ function TodoAppPage() {
               resolvedTo: "TodoLogger",
             },
           ]}
-          codeExample={`// Service interfaces combine AsyncState + Methods
-export interface TodoServiceType 
-  extends AsyncState<TodoServiceState>, TodoServiceMethods {}
-
-// Implementation with dependency injection
-@Service()
-export class TodoService 
-  extends AsyncState<TodoServiceState> 
-  implements TodoServiceType {
-  
-  constructor(
-    @Inject() private repository: TodoRepositoryInterface,
-    @Inject() private cache: TodoCacheInterface,
-    @Inject() private notifications: TodoNotificationInterface,
-    @Inject() private logger: LoggerInterface
-  ) { super(); }
-  
-  async addTodo(data: CreateTodoData): Promise<TodoServiceState> {
-    return this.execute(async () => {
-      const todo = await this.repository.create(data);
-      this.cache.setTodo(todo);
-      this.notifications.notifyTodoAdded(todo);
-      return this.buildState(await this.repository.getAll());
-    });
-  }
-}
-
-// Usage in React component
-function TodoApp(props: {
-  services: {
-    todoService: Inject<TodoServiceType>;
-    formService: Inject<TodoFormServiceType>;
-  };
-}) {
-  const todoState = useAsyncServiceInterface(props.services.todoService);
-  const formState = useAsyncServiceInterface(props.services.formService);
-  
-  // Reactive state management with automatic DI
-}`}
+          codeExample={`... TODO add code sample`}
           variant="interface"
         >
           {/* <TodoApp services={SERVICES} /> */}

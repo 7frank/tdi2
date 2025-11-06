@@ -12,11 +12,13 @@ import {
   InterfaceImplementation,
   ValidationResult,
 } from "./interface-resolver-types";
+import { LocationKeyGenerator } from "./location-key-generator";
 import type { DISourceConfiguration } from "./enhanced-interface-extractor";
 
 export class EnhancedServiceValidator {
   private sourceConfig: DISourceConfiguration;
   private validationCache = new Map<string, boolean>();
+  private locationKeyGenerator = new LocationKeyGenerator();
 
   constructor(
     private verbose: boolean = false,
@@ -316,7 +318,13 @@ export class EnhancedServiceValidator {
       for (const depKey of dependency.interfaceDependencies) {
         let found = false;
         for (const [key, implementation] of interfaces) {
-          if (implementation.sanitizedKey === depKey) {
+          // Use LocationKeyGenerator for robust key matching
+          if (this.locationKeyGenerator.keysEqual(implementation.sanitizedKey, depKey)) {
+            found = true;
+            break;
+          }
+          // Also check direct match with implementation class name
+          if (implementation.implementationClass === depKey) {
             found = true;
             break;
           }
@@ -372,7 +380,11 @@ export class EnhancedServiceValidator {
         for (const depKey of dependency.interfaceDependencies) {
           // Find implementation for this dependency
           for (const [key, implementation] of interfaces) {
-            if (implementation.sanitizedKey === depKey) {
+            // Use LocationKeyGenerator for robust matching
+            const matches = this.locationKeyGenerator.keysEqual(implementation.sanitizedKey, depKey) ||
+                           implementation.implementationClass === depKey;
+            
+            if (matches) {
               if (
                 hasCycle(implementation.implementationClass, [...path, node])
               ) {
@@ -683,4 +695,5 @@ export class EnhancedServiceValidator {
 
     return false;
   }
+
 }

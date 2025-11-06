@@ -1,5 +1,7 @@
 // tools/interface-resolver/key-sanitizer.ts - FIXED VERSION with enhanced type parameter handling
 
+import { SourceLocation } from "./interface-resolver-types";
+
 export class KeySanitizer {
   
   /**
@@ -7,14 +9,7 @@ export class KeySanitizer {
    */
   sanitizeKey(type: string): string {
     try {
-      // Step 1: Handle AsyncState pattern specifically
-      const asyncStateMatch = type.match(/^AsyncState<(.+)>$/);
-      if (asyncStateMatch) {
-        const stateType = asyncStateMatch[1];
-        return `AsyncState_${this.sanitizeKey(stateType)}`;
-      }
-
-      // Step 2: Handle array types specifically
+      // Step 1: Handle array types specifically
       if (type.endsWith('[]')) {
         const baseType = type.replace('[]', '');
         return `${this.sanitizeKey(baseType)}_Array`;
@@ -106,13 +101,6 @@ export class KeySanitizer {
    */
   sanitizeInheritanceKey(inheritanceType: string): string {
     try {
-      // Handle AsyncState<StateType> inheritance specifically
-      const asyncStateMatch = inheritanceType.match(/^AsyncState<(.+)>$/);
-      if (asyncStateMatch) {
-        const stateType = asyncStateMatch[1];
-        return `AsyncState_${this.sanitizeKey(stateType)}`;
-      }
-
       // Handle generics normally
       if (this.isGenericType(inheritanceType)) {
         return this.sanitizeKey(inheritanceType);
@@ -141,38 +129,6 @@ export class KeySanitizer {
     }
   }
 
-  /**
-   * Enhanced state key sanitization
-   */
-  sanitizeStateKey(stateType: string): string {
-    try {
-      // Handle complex generics first
-      if (this.isGenericType(stateType)) {
-        return this.sanitizeKey(stateType);
-      }
-
-      // For state types, we want to preserve semantic meaning
-      let sanitized = stateType
-        .replace(/State$/, '') // Remove trailing 'State'
-        .replace(/Interface$/, '') // Remove trailing 'Interface'
-        .replace(/Type$/, '') // Remove trailing 'Type'
-        .replace(/[^\w]/g, '_') // Replace special chars
-        .replace(/_+/g, '_') // Remove multiple underscores
-        .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
-
-      // Add 'State' suffix back if it doesn't end with a meaningful suffix
-      if (!sanitized.endsWith('State') && 
-          !sanitized.endsWith('Data') && 
-          !sanitized.endsWith('Model') &&
-          !sanitized.endsWith('Entity')) {
-        sanitized += 'State';
-      }
-
-      return sanitized || 'UnknownState';
-    } catch (error) {
-      return stateType.replace(/[^\w]/g, '_') + 'State';
-    }
-  }
 
   /**
    * Extract the base type name from a generic type
@@ -272,6 +228,113 @@ export class KeySanitizer {
     }
 
     return null;
+  }
+
+  /**
+   * Create a unique key with file path and line number to prevent interface name collisions
+   */
+  createLocationBasedKey(interfaceName: string, sourceFilePath?: string, lineNumber?: number): string {
+    // If no location info, fall back to standard sanitization
+    if (!sourceFilePath || lineNumber === undefined) {
+      return this.sanitizeKey(interfaceName);
+    }
+
+    // Encode file path to prevent filesystem path issues
+    const encodedPath = this.encodeFilePath(sourceFilePath);
+    
+    // Create location-based key: InterfaceName__path_to_file_ts_line_123
+    return `${this.sanitizeKey(interfaceName)}__${encodedPath}_line_${lineNumber}`;
+  }
+
+  /**
+   * Create a unique key using structured location info
+   */
+  createLocationBasedKeyFromLocation(interfaceName: string, location?: SourceLocation): string {
+    if (!location) {
+      return this.sanitizeKey(interfaceName);
+    }
+
+    return this.createLocationBasedKey(interfaceName, location.filePath, location.lineNumber);
+  }
+
+  /**
+   * Encode file path to be safe for use in keys
+   */
+  private encodeFilePath(filePath: string): string {
+    // Normalize path separators first
+    let normalized = filePath
+      .replace(/\\/g, '/') // Convert Windows paths to Unix-style
+      .replace(/^.*\/src\//, 'src/') // Start from src directory (preserve the slash temporarily)
+      .replace(/^.*\\src\\/, 'src/'); // Handle Windows style src paths
+    
+    // If we don't have an src/ prefix, add it
+    if (!normalized.startsWith('src/')) {
+      // Extract just the part after the last 'src' directory
+      const srcMatch = normalized.match(/.*\/src\/(.*)$/);
+      if (srcMatch) {
+        normalized = 'src/' + srcMatch[1];
+      } else {
+        // If no src found, use the whole path but prefix with src
+        normalized = 'src/' + normalized.replace(/^[/\\]+/, '');
+      }
+    }
+    
+    return normalized
+      .replace(/\//g, '_') // Replace path separators
+      .replace(/\./g, '_') // Replace dots  
+      .replace(/-/g, '_') // Replace hyphens
+      .replace(/[^\w_]/g, '_') // Replace any other special chars
+      .replace(/_+/g, '_') // Remove multiple underscores
+      .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
+  }
+
+  /**
+   * Check if a key is location-based (contains file path info)
+   */
+  isLocationBasedKey(key: string): boolean {
+    return key.includes('__') && key.includes('_line_');
+  }
+
+  /**
+   * Extract the original interface name from a location-based key
+   */
+  extractInterfaceNameFromLocationKey(key: string): string {
+    if (this.isLocationBasedKey(key)) {
+      return key.split('__')[0];
+    }
+    return key;
+  }
+
+  /**
+   * Extract location info from a location-based key
+   */
+  extractLocationFromKey(key: string): { filePath?: string, lineNumber?: number } {
+    if (!this.isLocationBasedKey(key)) {
+      return {};
+    }
+
+    const parts = key.split('__');
+    if (parts.length !== 2) return {};
+
+    const locationPart = parts[1];
+    const lineMatch = locationPart.match(/_line_(\d+)$/);
+    
+    if (!lineMatch) return {};
+
+    const lineNumber = parseInt(lineMatch[1]);
+    const pathPart = locationPart.replace(/_line_\d+$/, '');
+    
+    // Decode the file path (reverse the encoding)
+    const filePath = pathPart
+      .replace(/^src_/, 'src/')
+      .replace(/_/g, '/') // Convert underscores back to slashes
+      .replace(/\/ts$/, '.ts') // Fix file extensions - convert /ts back to .ts
+      .replace(/\/tsx$/, '.tsx')
+      .replace(/\/js$/, '.js')
+      .replace(/\/jsx$/, '.jsx')
+      .replace(/\/([a-zA-Z]+)$/, '.$1'); // Handle other file extensions
+
+    return { filePath, lineNumber };
   }
 
   /**

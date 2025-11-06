@@ -236,7 +236,7 @@ private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizati
   for (const [token, node] of graph.nodes.entries()) {
     if (!this.shouldIncludeNode(node, nodeTypes)) continue;
     if (node.metadata?.isInterface) interfaces.add(token);
-    else if (node.metadata?.isClass || (!node.metadata?.isInheritanceBased && !node.metadata?.isStateBased && !node.metadata?.isInterface)) {
+    else if (node.metadata?.isClass || (!node.metadata?.isInheritanceBased && !node.metadata?.isInterface)) {
       classes.add(token);
     }
   }
@@ -426,7 +426,6 @@ private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizati
       // Count by type
       if (node.metadata.isInterface) nodesByType.interface++;
       else if (node.metadata.isInheritanceBased) nodesByType.inheritance++;
-      else if (node.metadata.isStateBased) nodesByType.state++;
       else nodesByType.class++;
       
       // Count by scope
@@ -457,7 +456,6 @@ private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizati
         case 'interface': return node.metadata.isInterface;
         case 'class': return node.metadata.isClass;
         case 'inheritance': return node.metadata.isInheritanceBased;
-        case 'state': return node.metadata.isStateBased;
         default: return false;
       }
     });
@@ -466,7 +464,6 @@ private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizati
   private getNodeIcon(node: DependencyNode): string {
     if (node.metadata.isInterface) return '🔌';
     if (node.metadata.isInheritanceBased) return '🧬';
-    if (node.metadata.isStateBased) return '📊';
     if (node.metadata.isClass) return '📦';
     return '⚙️';
   }
@@ -474,7 +471,6 @@ private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizati
   private getNodeType(node: DependencyNode): string {
     if (node.metadata.isInterface) return 'interface';
     if (node.metadata.isInheritanceBased) return 'inheritance';
-    if (node.metadata.isStateBased) return 'state';
     if (node.metadata.isClass) return 'class';
     return 'unknown';
   }
@@ -482,7 +478,6 @@ private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizati
   private getNodeColor(node: DependencyNode): string {
     if (node.metadata.isInterface) return 'blue';
     if (node.metadata.isInheritanceBased) return 'green';
-    if (node.metadata.isStateBased) return 'orange';
     if (node.metadata.isClass) return 'purple';
     return 'black';
   }
@@ -490,7 +485,6 @@ private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizati
   private getNodeShape(node: DependencyNode): string {
     if (node.metadata.isInterface) return 'ellipse';
     if (node.metadata.isInheritanceBased) return 'diamond';
-    if (node.metadata.isStateBased) return 'hexagon';
     return 'box';
   }
   
@@ -498,7 +492,6 @@ private generateMermaidDiagram(graph: DependencyGraph, options: GraphVisualizati
     if (isHighlighted) return 'highlighted';
     if (node.metadata.isInterface) return 'interface';
     if (node.metadata.isInheritanceBased) return 'inheritance';
-    if (node.metadata.isStateBased) return 'state';
     return GraphVisualizer._class;
   }
   

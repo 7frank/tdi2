@@ -1,20 +1,333 @@
 # Backlog
 
-## ordered log
+## ordered log (for production release)
 
-### [❌] fix some more di issues & have more debugging support
 
-- [✅] tsup for cli and bin/cli.js support
-- [❌] publish cli to be available in the minor
-- [✅] test cli commands properly that they work with
-  - ecommerce example
-
+### somethingsomething di debug react app related
 - [✅] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
 - serve
 
-relations missing service => class => interfaces
+### ❌ auto discover packages
 
+> currently we can add scanDirs manually, while this is working it could be better to have a `autodiscover` packages flag
 
+- possible naive solution: autodiscover would check packages of current packageand check of the sub-package contains a dependency to di-core and inject or service markers
+
+test with logging service from newly merged logging package
+
+### [❌] rather than optimize edge case document happy path and visualize changes in di-debug so that delveoper can see what they transform in realtime and can mitigate
+
+> [❌] ship prod with documentend quirks
+
+- for a first iteration that should be good enough
+- [❌] add "rules" to docs
+  - don't use destructuring too much
+  - don't use rest parameters
+  - don't use aliases should be good enough
+  - use di-debug to se when your di isnt working why
+- [❌] rendering the input and transformed in the di-debug with the same diff view di-test-harness has will allow dev to see what is breaking
+
+### ❌ add warning if inject was detected n times but hooks couldnt be generated the same amount of times
+
+> we have this logic partially in di-debug
+
+- this could be the most practical solution to typescript syntaxissues and different structures not being detected properly
+- we simply support a basic set of inject options
+- if we detect that something went wrong, we can check what exactly,
+- if Inject<Logger> and Inject<Foo> doesnt correspond twith both hooks of that name in the code we can warn about it
+  - "Inject<Foo> could not inject meta code see documentation <link to docmentation page showing proper pattern>"
+
+### ❌ merge or remove branches before additional features 2/2
+
+- ❌ feature/refactor-di-debug-into-vite-react-app
+
+### [❌] make valtio transformations and reactivity optional
+
+- this would allow us to run with any reactivity approach that we like
+- valtio might for now be the best for our use case but maybe ppl do not like the approach
+- also we might want to go ssr where we then isntead could provide an implementation with a redis cache for state hydration
+
+### [❌] SSR
+
+- ssr is no only for certain quailty factors, for which react might actually not always be the best choice
+- if for example ssr is used for landing pages
+  - static pages
+  - astro& sveltekit
+  - caching and others might be a decent fit too
+
+- so for ssr although we are not focusing, we want to provide at least one "cache" & "session-token" implementation e.g. via redis, that allows us to have this kind of usage
+
+### [❌] check feedback
+
+- any response on https://www.reddit.com/r/reactjs/comments/1o3e8uw/react_service_injection_bringing_spring/
+- PR or discussions?
+
+### [❌] update docs & compare to other solutions
+
+> examples/comparision
+
+- ❌ link to examples in documentation
+- ✅ https://chatgpt.com/c/68f29da3-15e8-8328-b75e-088908a5dfc1
+- ✅ what farmeworks try to achieve similar what we are doing
+  - https://www.reddit.com/r/react/comments/1f5yfp2/dependency_injection_in_react_framework/?sort=new
+  - https://github.com/wix-incubator/obsidian?tab=readme-ov-file
+  - https://github.com/wox-team/wox-inject
+  - https://github.com/AdiMarianMutu/x-injection-reactjs
+
+- ✅ feature matrix, include zustandjs and container / state examples
+  - autowiring
+  - interaface based
+  - scoped or other additional use cases
+  - inject into FC
+  - inject into hooks or other functions
+  - SSR
+  - react native
+  - ... other stuff that might be relevant
+
+- ✅ self contained examples
+
+### [❌] write article that compare to other solutions
+
+> [examples/comparision](./examples/comparision/FeatureMatrix.md)
+
+- other di solutions other non di solutions streangths weaknesses and target audiences
+
+### add a option that wraps proxy at comile time with method bindings for additional convenience
+
+```ts
+// Binds all prototype methods to the given Valtio proxy instance.
+// - Skips constructor/getters/setters
+// - Preserves names, hides bound copies from enumeration
+// - Works with symbols
+export function bindAllMethodsToProxy<T extends object>(p: T): T {
+  const seen = new Set<PropertyKey>();
+  let proto = Reflect.getPrototypeOf(p);
+
+  while (proto && proto !== Object.prototype) {
+    for (const key of Reflect.ownKeys(proto)) {
+      if (key === "constructor" || seen.has(key)) continue;
+
+      const desc = Object.getOwnPropertyDescriptor(proto, key);
+      if (!desc) continue;
+      if (typeof desc.value !== "function") continue; // skip accessors
+
+      // Create an own, non-enumerable, writable, configurable bound method
+      Object.defineProperty(p, key, {
+        value: (desc.value as Function).bind(p),
+        writable: true,
+        configurable: true,
+        enumerable: false,
+      });
+
+      seen.add(key);
+    }
+    proto = Reflect.getPrototypeOf(proto);
+  }
+  return p;
+}
+```
+
+### ❌ vite-plugin-inspect
+
+- evaluate where this could be helpful
+
+### [❌] migration paths - hooks to services
+
+for example librechat has a lot of hooks,
+
+- it would be highly usefull if we could replace a wrapper hooks useCombinedThing with a service with the same interface
+  - this service internally would have to be able to use hooks, so that the PR change is not too big
+  - OR from bottom up a useCombineThing hook should be able to inject its services that previously where their useSimpleThingHook
+
+either way having smaller working changes while refactoring should improve adoption
+
+### [❌] mutable vs immutable
+
+- curretnly we only use the mutable from valtio
+- instead for passing values to other functions including jsx, we should use the immutable snap
+  - this would allow to pass objects "by value"
+  - and would remove the problem of passing objects "by reference"
+
+### [❌]fix di-debug
+
+#### [❌] stream line di debugging
+
+- below we ahve different approaches
+- re-revaluate them
+- we need one clear dependency tree in the core implementation
+  - which we should use as s.P.o.T.
+  - di-debug should rely/build on it
+
+#### [❌] some tests, more complex examples still would fail
+
+    neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/aliasing-with-rest-and-di.basic.transformed.snap.tsx
+        neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/defaults-with-rest-and-di.basic.transformed.snap.tsx
+        neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/dynamic-destructuring.basic.transformed.snap.tsx
+        neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/multiple-rest-mixed-di.basic.transformed.snap.tsx
+        neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/nested-destructuring-with-rest.basic.transformed.snap.tsx
+
+#### [❌] overhaul of line based approach commit b596e7b
+
+- extractInterfaceNameFromKey probably use implementationClass isntead
+- implementationClassPath is too brittle
+  - we should add file location {path,line} and have one method that generates a sanitied key from that, the location info should be available elsewhere too
+
+- [TBD] only after the generated DI-Config is properly readable
+  - then we should try to use **analyze** the graph or have a SPOT in **di-core** to **validate** the graph
+  - this validation and analysation logic can then be used to build the cli and web view on top
+
+#### [❌] di-debug; render actual transformed and source side by side the same was di-test-harness does
+
+- [❌] do something about the "build:dashboard" missing dashboard
+
+> this will allow us to debug di transformations and prevent edge cases to be too much in the way
+
+- rendering the input and transformed in the di-debug with the same diff view di-test-harness has will allow dev to see what is breaking
+
+### [❌] fix di-debug v2
+
+- [❌] dashboard resolution the way it is, is brittle and we should do something about it
+  - maybe use vite directly for the index.html copy operation
+- [❌] using ts-node to read config file is unnecessary overhead
+  - and will only work for "dev" not "built" graph rendering in di-debug
+
+- [❌] cli graph currently hard to read with addition of the file path and line
+
+- [❌] dashboard graph currently broken with addition of the file path and line
+
+### [❌] rather than optimize edge case document happy path and visualize changes in di-debug so that delveoper can see what they transform in realtime and can mitigate
+
+**OR** ship prod with documentend quirks
+
+- for a first iteration that should be good enough
+- don't use destructuring too much
+- don't use rest parameters
+- don't use aliases should be good enough
+
+### [❌] DI bugs & side effects (part 1)
+
+#### [❌] FIXME duplicated keys, see generated list of services in browser console of "legacy" app
+
+> this might still introduce collisions
+
+📋 Factories:
+0: "LoggerInterface**src_logging_tdi_logger_service_ts_line_16"
+1: "TDILoggerService"
+2: "LoggerService**src_services_ConsoleLoggerService_ts_line_7"
+3: "ConsoleLoggerService"
+4: "ExampleApiInterface**src_services_ExampleApiService_ts_line_12"
+5: "ExampleApiService"
+6: "LoggerInterface**src_services_UserApiServiceImpl_ts_line_21"
+7: "ConsoleLogger"
+8: "CacheInterface_T**src_services_UserApiServiceImpl_ts_line_37"
+9: "MemoryCache"
+10: "ExampleApiInterface**src_services_UserApiServiceImpl_ts_line_64"
+11: "UserApiServiceImpl"
+12: "ExampleApiInterface**src_services_UserApiServiceImpl_ts_line_157"
+13: "MockUserApiService"
+14: "AppStateServiceInterface**src_todo2_AppStateService_ts_line_5"
+15: "AppStateService"
+16: "NotificationServiceInterface**src_todo2_NotificationService_ts_line_5"
+17: "NotificationService"
+18: "TodoRepositoryInterface2**src_todo2_TodoRepository_ts_line_10"
+19: "TodoRepository"
+20: "TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14"
+21: "TodoService2"
+
+### [❌] separate packages
+
+> important for prod for less disruptions in post-prod releases
+> this would be beneficial for ppl using only the core features with other languages than react
+
+- [❌] di-core
+- [❌] di-react
+- [❌] di-debug (serve,(analytics),cli)
+
+### [❌] write state ownership docs section
+
+> the only one documentation piece missing form prod
+
+from prod/PotentialProblems.md
+and prod/PostProductionRoadmap.md
+
+### ❌ Babel / TypeScript Transformer plugins
+
+> well probably abandon them for now
+
+Babel Plugin - Async/sync pipeline incompatibility (architectural issue)
+TypeScript Transformer - Complex TS compiler API integration
+
+---
+
+---
+
+---
+
+## ordered log (for post-production)
+
+### [❌] create separate files/classes that focus on normalizing a step at a time
+
+> **separation of concern** from whats there extract/create logical parts of the pipeline for:
+
+> follow the plan in monorepo/packages/di-core/tools/functional-di-enhanced-transformer/normalizations/README.md for:
+
+- destructuring
+- rest parameters
+- aliases
+
+**OR** <del>HOC wrap implementation in wrapper and di ffrom the otuside...</del>
+**OR** <del>restrict services to be only second parameter unused in react</del>
+
+### [❌] see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned for debugging this
+
+### [❌] dead code elimination in di-core
+
+### [❌] profile.manager.ts process.env not set in di-test-harness
+
+- [❌] check that this doesnt have implications for passing profiles via env in other places too
+
+- [❌] import.meta.data vs process.env update documentation for less friction when using Profile
+
+### [❌] handle testing "basic and enterprise" examples locally so that we dont unnecessarily push versions
+
+> test with local instead of npm ?
+> maybe by setting these otions
+
+```
+"compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@tdi2/di-core/*": ["./src/*"]
+    },
+```
+
+### [❌] changeset publish
+
+- will not properly restore workspace:\*
+- also not every workspace:\* is replaced beforehand
+
+### [❌] harden di-test-harness fixtures tests
+
+- for one if any cant be imported curretny all fail
+- diff works but will not run examples but show errors for DI
+  - maybe this has to do with reeact bundling `useDI must be used within a DIProvider` maybe different contexts
+
+### [❌] add tsc type check to fixture tests
+
+> this way the test will show more meaningful errors and at least warn about them
+
+> actually we only need to run build afterwards which will show all errors regardless
+
+### [❌] reason about InjectOptional and remove it if not enough use cases speak for it
+
+- there seem to be some good reasons for
+  - doḱument them, write ADR
+
+### [❌] in di-debug serve graph
+
+> improve debugging capabilities
+
+- relations missing service => class => interfaces
 
 ### [❌] CacheInterface_any in legacy
 
@@ -83,25 +396,7 @@ Resolution Steps:
 - we might be able to determine the "closest" implementation
 - or check if there is a generic that is close to our naming and in which case tell that there is a compatible but not fully configured service
 
-### [❌] separate packages if code base grows
-
-> this would be beneficial for ppl using only the core features with other languages that react
-
-- di-core
-- di-shared
-- di-react
-- di-debug (serve,(analytics),cli)
-
-### [❌] di-debug cli and serve autodetect di-config
-
 ### [❌] sundown "legacy" app take whats there still valuable e.g. dependency viewer maybe (which we should move into di-debug package already)
-
-### [❌] create plan for "prod"
-
-from prod/PotentialProblems.md
-and prod/PostProductionRoadmap.md
-
-- update easy wins if any
 
 ### [❌] research claude code subscription schedulers
 
@@ -113,19 +408,6 @@ and prod/PostProductionRoadmap.md
   - fully automated tasks that are isolated
   - semi interactive tasks via telegram feedback channel
 
-### [❌] handle testing "basic and enterprise" examples locally before releasing so that we dont unnecessarily push versions
-
-> test with local instead of npm ?
-> maybe by setting these otions
-
-```
-"compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@tdi2/di-core/*": ["./src/*"]
-    },
-```
-
 ### [❌] focus on meaningful test cases and create snapshot tests for failing scenarios that we want to support
 
 > focus debugging, how can we easily provide info to developer with ladle or snapshot tests, to find out why things fail and what they can do
@@ -135,68 +417,6 @@ and prod/PostProductionRoadmap.md
 - both should provide similar experience
   - side by side comparision of source and generated
   - working DI (This might be still ahrd because 2 different packages)
-
-### [❌] transformed not writing to file system
-
-see if we can use https://www.npmjs.com/package/vite-plugin-debugger or the other mentioned
-
-### [❌] DI bugs & side effects (part 1)
-
-> create integration / snapshot tests for code generator
-
-#### [❌] FIXME TodoApp TodoService2 isnt properly injected
-
-- it was not properly injected in case there where two or more interface with the same name e.g. "TodoServiceInterface" and @Services that impplement them
-- Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
-
-#### [❌] FIXME having two different classes of the same name will one not be resolved properly
-
-e.g.:
-
-1 TodoService implements TodoServiceInterface
-2 TodoService implements TodoServiceType
-
-#### [❌] FIXME duplicated keys, see generated list of services
-
-- potential duplicate
-
-#### [❌] is DI scope using import path
-
-- potential duplicate
-- if say we have two "implements UserRepoInterface"
-
-#### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
-
-evaluate scenarios
-
-- to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
-- or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
-
-#### [❌] Fixme: example which his generating invalid code
-
-```typescript
-export function DemographicsForm(props: DemographicsFormProps) {
-  const { services, onComplete } = props;
-
-  const { demographicsForm } = services;
-}
-```
-
-#### [❌] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
-
-```typescript
-interface AppProps {
-  services: {
-    todoService: Inject<TodoServiceInterface>;
-    appState: Inject<AppStateServiceInterface>;
-    notifications: Inject<NotificationServiceInterface>;
-  };
-}
-
-export function TodoApp2({
-  services: { todoService, appState, notifications },
-}: AppProps) {}
-```
 
 ### [❌] potential use case, "contracts"
 
@@ -340,17 +560,12 @@ https://github.com/MartenBE/mkslides
 - 7frank/tdi2/monorepo/packages/di-core/tools/shared/RecursiveInjectExtractor.ts
 - 7frank/tdi2/monorepo/packages/di-core/tools/shared/SharedDependencyExtractor.ts
 
-### [❌] clean up & remove
+### [❌] fix or remove debug endpoints
 
-- [✅] useObservableState and its usage
-
-- [✅] useAsyncServiceInterface
-- [❌] remove AsyncState special cases, or fix them in di-core, they where never meant to be this specific in the first place
-- [❌] fix or remove debug endpoints
-  - http://localhost:5173/\_di_debug
-  - http://localhost:5173/\_di_interfaces
-  - http://localhost:5173/\_di_configs"
-  - if removed, remove middleware endpoints too
+- http://localhost:5173/\_di_debug
+- http://localhost:5173/\_di_interfaces
+- http://localhost:5173/\_di_configs"
+- if removed, remove middleware endpoints too
 
 ### [❌] create do's and don't for valtio proxies / document quirks
 
@@ -477,9 +692,316 @@ https://github.com/aleclarson/valtio-kit
 - This plugin also could be a standalone and would not necessarily have to be coupled to our code base
 - this compile step would leave us mostly with what svelte does (maybe still more effective)
 
+### [❌] in case of multiple unnamed generic interfaces we should throw an error or warning (Inject<AsyncState<{ name: string; email: string }>>;)
+
+> by adding di-debug visual results of transformations and documenting happy path we might not need this for the forseeable future
+
+evaluate scenarios
+
+- to make it easier we probably want to enforce a rule/warning that Inject interfaces need to contain inline types
+- or we have some rule that warns if the Inject is not a single type/interface Inject<Foo> where Foo can be any interfac/type but must be itself not generic or subtyped...
+
 ---
 
 ## Done
+
+### ✅ merge or remove branches before additional features 1/2
+
+all three contain some value that we should see how we can merge
+
+- ✅ feature/attempt-at-streamlining-interfaces
+  - contains filepath:linenumber resolution of interfaces or do we already have this?
+    - https://github.com/7frank/tdi2/pull/57/commits/45c837d66ae295db98f3c203135c251b99172bf5
+    - ✅ 2 tests are failing `di-cross-package-tests $ br test`
+    - ✅ test with legacy app
+- ✅ feature/normalization
+  - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
+  - focus on syntax we support and log warnings for sytnax we dont support
+
+### [✅] clean up & remove
+
+- [✅] useObservableState and its usage
+
+- [✅] useAsyncServiceInterface
+- [✅] remove AsyncState special cases, or fix them in di-core, they where never meant to be this specific in the first place
+
+### ✅ integrated interface resolver too cluttered
+
+- [✅] "AsyncState" "isStateBased"
+
+- [✅]instead
+  - if (implementation.isInheritanceBased) return 'inheritance';
+  - if (implementation.isClassBased) return 'class';
+  - have a inerhitanceType: 'inheritance' | 'class' |... or something totally else
+
+- [✅]what are these for , wouldnt the sanitizedKey work as the unique key already?
+
+  > const uniqueKey = isPrimary
+  > ? `${sanitizedKey}_${className}`
+  > : `${sanitizedKey}_${className}_direct`;
+  >
+  >     this.interfaces.set(uniqueKey, implementation);
+
+- [✅] "byStrategry" cant we unify the strategies
+
+> private determineStrategy(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'class' {
+> if (implementation.isInheritanceBased) return 'inheritance';
+> if (implementation.isClassBased) return 'class';
+> return 'interface';
+> }
+
+- cleanup di-core interfaces
+
+- InterfaceImplementation type is too unstructured we need something for di_config that contains the core info
+  - uniqueKey
+  - classNameFoo
+  - ....
+
+### [✅] regression broke main
+
+> adding file path and line number broke lookup
+
+useService('TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14')
+
+something wrong with the setup and the dashboard build
+
+// curent work flow
+
+> di-core dev (once)
+> br build (once)
+> br build:dashboard
+> bunx tdi2 serve --src ../legacy/src/
+
+- `br src/cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
+- `br src/cli.ts analyze --src ../legacy/src/`
+- `br src/cli.ts serve --src ../legacy/src/`
+- `bunx tdi2 serve --src ../legacy/src/`
+
+- [❌] 19 services detected vs 22 after regression
+  - ensure that they are not false positives, maybe we now actually detect more
+  - also we get warnings now which might be good
+  - and the "Missing service dependency 'CacheInterface_any\_\_src_UserApiServiceImpl_ts_line_69' might actually work
+  - we might need some tests actually
+
+### ✅ plugins
+
+✅ webpack
+✅ rollup
+✅ esbuild
+
+in addition to vite plugin
+
+### ✅ add scanDirs option for many packages scanning
+
+### ✅ all plugings currently copy the files instead of leaving them in the package, which will problably not help in cprss package usability and
+
+### ⚠️ scanDirs[0] srcDir remove backward compatibility - PARTIAL
+
+#### ✅ Completed
+
+- ✅ **Bridge file generation** - Creates `.tdi2/` directories in ALL scanDirs (not just first)
+  - Location: [config-manager.ts:33](monorepo/packages/di-core/tools/config-manager.ts#L33)
+  - Each package can now import from its local `.tdi2/di-config.ts`
+  - All bridges point to same config source in `node_modules/.tdi2/configs/`
+
+- ✅ **Multi-package E2E test** - Validates transformation across multiple scanDirs
+  - Location: [e2e-multi-package.test.ts](monorepo/packages/plugin-esbuild-di/src/__tests__/e2e-multi-package.test.ts)
+  - Tests Counter from plugin-core + TodoList from local fixtures
+  - Verifies service discovery and interface resolution work across packages
+
+- ✅ **Service discovery** - Scans all scanDirs correctly
+- ✅ **Component transformation** - Transforms components in all scanDirs
+- ✅ **Interface resolution** - Resolves interfaces across all scanDirs
+
+#### ✅ Remaining Issues
+
+**HIGH Priority** 🔴:
+
+- ✅ **RecursiveInjectExtractor module resolution** - FIXED to resolve from all scanDirs
+  - Location: [RecursiveInjectExtractor.ts:307-363](monorepo/packages/di-core/tools/shared/RecursiveInjectExtractor.ts#L307)
+  - Fix Applied: Loops through all scanDirs for non-relative imports
+  - Test Package: [di-cross-package-tests](monorepo/packages/di-cross-package-tests/)
+  - ✅ Service resolution works across packages
+  - ✅ Component structure validates correctly
+
+**MEDIUM Priority** 🟡:
+
+- ✅ **ConfigurationProcessor scanning** - FIXED to scan all scanDirs for @Configuration classes
+  - Locations:
+    - [config-processor/index.ts:6-32](monorepo/packages/di-core/tools/config-processor/index.ts#L6-L32) - Updated interface and constructor
+    - [functional-di-enhanced-transformer.ts:157-160](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.ts#L157-L160) - Updated transformer call
+    - [configuration-bean.test.ts:32-35](monorepo/packages/di-core/tools/__tests__/configuration-bean.test.ts#L32-L35) - Fixed tests
+    - [plugin.ts:60-66,125-131](monorepo/packages/vite-plugin-di/src/plugin.ts#L60-L66) - Updated Vite plugin
+  - ✅ All 11 configuration bean tests passing
+
+- ✅ **Cross-package dependency injection container test** - COMPLETED with comprehensive integration tests
+  - Location: [full-di-integration.test.tsx](monorepo/packages/di-cross-package-tests/__tests__/full-di-integration.test.tsx)
+  - ✅ Tests `container.loadConfiguration(DI_CONFIG)` from auto-generated files
+  - ✅ Validates automatic dependency tree generation
+  - ✅ Verifies cross-package dependency resolution
+  - ✅ All 17 tests passing
+  - Key Finding: Constructor parameters require `@Inject()` decorator (like Spring's `@Autowired`)
+
+- ✅ **Cross-package import test** - COMPLETED and validated
+  - Test Package: [di-cross-package-tests](monorepo/packages/di-cross-package-tests/)
+  - ✅ Component in package B (UserList) imports interface from package A (LoggerInterface)
+  - ✅ Service in package B (UserService) depends on interface from package A (LoggerInterface)
+  - ✅ Constructor injection with `@Inject()` decorator works across packages
+  - ✅ Factory generation includes `container.resolve()` for dependencies
+  - Documentation: [README.md](monorepo/packages/di-cross-package-tests/__tests__/README.md)
+
+**LOW Priority** 🟢:
+
+- ✅ **srcDir removal** - COMPLETE - All srcDir backward compatibility removed, now uses scanDirs only
+  - ✅ **Issue 1: DebugFileGenerator paths** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [debug-file-generator.ts:51,219](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L51)
+    - Fix: Finds matching scanDir for each file, fallback to ["./src"]
+
+  - ✅ **Issue 2: ImportManager** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [import-manager.ts:218](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/import-manager.ts#L218)
+    - Fix: Removed srcDir from TransformationOptions, uses scanDirs with ["./src"] fallback
+
+  - ✅ **Issue 3: DependencyTreeBuilder** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [dependency-tree-builder.ts:77,321](monorepo/packages/di-core/tools/dependency-tree-builder.ts#L77)
+    - Fix: Removed srcDir parameter, uses scanDirs with ["./src"] default
+
+  - ✅ **Issue 4: DIInjectMarkers** - FIXED - Removed broken absolute path handling
+    - Location: [di-inject-markers.ts:162](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts#L162)
+    - Fix: Removed broken srcDir usage, now only handles relative imports
+
+  - ✅ **Issue 5: EnhancedDependencyExtractor** - FIXED - Removed srcDir, uses scanDirs
+    - Location: [enhanced-dependency-extractor.ts:1109](monorepo/packages/di-core/tools/interface-resolver/enhanced-dependency-extractor.ts#L1109)
+    - Fix: Uses scanDirs with ["./src"] fallback for absolute imports
+
+  - ✅ **TransformationOptions** - Removed srcDir field completely
+  - ✅ **functional-di-enhanced-transformer.ts** - Removed srcDir from functionalOptions
+
+  - **Overall Impact**: COMPLETE - srcDir removed entirely, all code uses scanDirs. No backward compatibility overhead.
+
+### [✅] changesets still published with workspace dependencies
+
+https://www.npmjs.com/package/@tdi2/vite-plugin-di?activeTab=code
+
+it appears we have some regresssion where we still publish stuff wrong which breaks examples...
+
+https://github.com/oven-sh/bun/issues/16074
+https://github.com/CodeForBreakfast/eventsourcing/pull/57
+https://github.com/CodeForBreakfast/eventsourcing/pull/57
+
+### [✅] transformed code not written to file system
+
+> variables werent passed properly
+
+> easier to check if something went wrong
+> also easier to add to di-debug
+
+### [✅] missing fixtures tests for edge cases
+
+service-lifecycle-decorators.basic.input
+separate-interface.interfaces
+non-di-services.basic.input
+no-services.basic.input.tsx
+nested-arrow-functions.basic.input
+empty-services.basic.input
+conditional-rendering.basic.input
+
+multiple-components.basic.input
+
+### DI bugs & side effects (part 1)
+
+#### [✅] improper handling of rest parameters
+
+- functional-di-enhanced-transformer/**tests**/**fixtures**/complex-props-spreading.basic.
+
+> const { id, onClick, restProps } = props;
+> const { id, onClick, ...restProps } = props;
+
+- [✅] fix test
+
+> ensure that there are no compilation errors by building after running tests
+
+- cd di-core
+- br test:update
+- br build
+
+#### [✅] Fixme: example which his generating invalid code
+
+> secondary destructurings fails
+
+> [✅]but our current normalization attempts seem brittle and might add more problems than solving things
+
+> we might need something like **@babel/plugin-transform-destructuring** which normalizes the code to something that does not contain destructuring
+
+- [✅] we have a **potential solution** but that checks for jsx and types which might not be needed at all
+  - e330dfa74ef635cee217d9273f1472197055824a
+  - and the next
+
+- [✅] check that we have a unified view in di-test-harness app for all snapshot tests to better see if things change
+- [✅] double and tripple check the changes
+
+```typescript
+export function DemographicsForm(props: DemographicsFormProps) {
+  const { services, onComplete } = props;
+
+  const { demographicsForm } = services;
+}
+```
+
+#### [✅] normalizing destructured function arguments is only applied to "Inject"ed not all variables
+
+see :
+
+- destructured-services-params.basic.input.tsx
+- destructured-services-params.basic.transformed.snap.tsx
+
+#### [✅] FIXME this type of destructuring requires a test and a fix as it is not properly transformed
+
+```typescript
+interface AppProps {
+  services: {
+    todoService: Inject<TodoServiceInterface>;
+    appState: Inject<AppStateServiceInterface>;
+    notifications: Inject<NotificationServiceInterface>;
+  };
+}
+
+export function TodoApp2({
+  services: { todoService, appState, notifications },
+}: AppProps) {}
+```
+
+#### [✅] FIXME TodoApp TodoService2 isnt properly injected
+
+- [✅] there is a missing interface in a test that does nothing currently we can savely remove it
+  - monorepo/apps/legacy/src/di.integration.test.tsx
+  - import type { TodoServiceType } from "../src/todo/interfaces/TodoInterfaces";
+
+- it was not properly injected in case there where two or more interface (in different files ) with the same name e.g. "TodoServiceInterface" and @Services that impplement them
+- Fix or use monorepo/apps/legacy/src/di.integration.test.tsx for this scenario
+
+#### [✅] FIXME having two different classes of the same name will one not be resolved properly
+
+e.g.:
+
+1 TodoService implements TodoServiceInterface
+2 TodoService implements TodoServiceType
+
+#### [✅] is DI scope using import path
+
+- potential duplicate
+- if say we have two "implements UserRepoInterface"
+
+### [✅] fix some more di issues & have more debugging support
+
+- [✅] tsup for cli and bin/cli.js support
+- [❌] publish cli to be available in the minor
+- [✅] test cli commands properly that they work with
+  - ecommerce example
+
+- [✅] move ./analytics and cli and dependency view into separate @tdi2/di-debug package
+- serve
+
+### [✅] di-debug cli and serve autodetect di-config
 
 ### [✅] ⚠️ interfaces still not working with generic any
 
