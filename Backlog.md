@@ -32,18 +32,7 @@ test with logging service from newly merged logging package
 - if Inject<Logger> and Inject<Foo> doesnt correspond twith both hooks of that name in the code we can warn about it
   - "Inject<Foo> could not inject meta code see documentation <link to docmentation page showing proper pattern>"
 
-### ❌ merge or remove branches before additional features
-
-all three contain some value that we should see how we can merge
-
-- ❌ feature/attempt-at-streamlining-interfaces
-  - contains filepath:linenumber resolution of interfaces or do we already have this?
-    - https://github.com/7frank/tdi2/pull/57/commits/45c837d66ae295db98f3c203135c251b99172bf5
-    - ❌ 2 tests are failing `di-cross-package-tests $ br test`
-    - ❌ test with legacy app
-- ✅ feature/normalization
-  - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
-  - focus on syntax we support and log warnings for sytnax we dont support
+### ❌ merge or remove branches before additional features 2/2
 
 - ❌ feature/refactor-di-debug-into-vite-react-app
 
@@ -716,6 +705,19 @@ evaluate scenarios
 ---
 
 ## Done
+
+### ✅ merge or remove branches before additional features 1/2
+
+all three contain some value that we should see how we can merge
+
+- ✅ feature/attempt-at-streamlining-interfaces
+  - contains filepath:linenumber resolution of interfaces or do we already have this?
+    - https://github.com/7frank/tdi2/pull/57/commits/45c837d66ae295db98f3c203135c251b99172bf5
+    - ✅ 2 tests are failing `di-cross-package-tests $ br test`
+    - ✅ test with legacy app
+- ✅ feature/normalization
+  - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
+  - focus on syntax we support and log warnings for sytnax we dont support
 
 ### [✅] clean up & remove
 
