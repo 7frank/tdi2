@@ -2,13 +2,16 @@
 
 ## ordered log (for production release)
 
-### ❌ auto discover packages
+### [❌] FIXME could not fast refrest useDi export incompatible
 
-> currently we can add scanDirs manually, while this is working it could be better to have a `autodiscover` packages flag
+### [❌] write state ownership docs section
 
-- possible naive solution: autodiscover would check packages of current packageand check of the sub-package contains a dependency to di-core and inject or service markers
+> the only one documentation piece missing form prod
 
-test with logging service from newly merged logging package
+from prod/PotentialProblems.md
+and prod/PostProductionRoadmap.md
+
+- ❌ decide what to do about the docs in the folder
 
 ### [❌] rather than optimize edge case document happy path and visualize changes in di-debug so that delveoper can see what they transform in realtime and can mitigate
 
@@ -32,9 +35,56 @@ test with logging service from newly merged logging package
 - if Inject<Logger> and Inject<Foo> doesnt correspond twith both hooks of that name in the code we can warn about it
   - "Inject<Foo> could not inject meta code see documentation <link to docmentation page showing proper pattern>"
 
-### ❌ merge or remove branches before additional features 2/2
+### add a option that wraps proxy at comile time with method bindings for additional convenience
 
-- ❌ feature/refactor-di-debug-into-vite-react-app
+```ts
+// Binds all prototype methods to the given Valtio proxy instance.
+// - Skips constructor/getters/setters
+// - Preserves names, hides bound copies from enumeration
+// - Works with symbols
+export function bindAllMethodsToProxy<T extends object>(p: T): T {
+  const seen = new Set<PropertyKey>();
+  let proto = Reflect.getPrototypeOf(p);
+
+  while (proto && proto !== Object.prototype) {
+    for (const key of Reflect.ownKeys(proto)) {
+      if (key === "constructor" || seen.has(key)) continue;
+
+      const desc = Object.getOwnPropertyDescriptor(proto, key);
+      if (!desc) continue;
+      if (typeof desc.value !== "function") continue; // skip accessors
+
+      // Create an own, non-enumerable, writable, configurable bound method
+      Object.defineProperty(p, key, {
+        value: (desc.value as Function).bind(p),
+        writable: true,
+        configurable: true,
+        enumerable: false,
+      });
+
+      seen.add(key);
+    }
+    proto = Reflect.getPrototypeOf(proto);
+  }
+  return p;
+}
+```
+
+---
+
+---
+
+---
+
+## ordered log (post production release v1)
+
+### ❌ auto discover packages
+
+> currently we can add scanDirs manually, while this is working it could be better to have a `autodiscover` packages flag
+
+- possible naive solution: autodiscover would check packages of current packageand check of the sub-package contains a dependency to di-core and inject or service markers
+
+test with logging service from newly merged logging package
 
 ### [❌] make valtio transformations and reactivity optional
 
@@ -86,41 +136,6 @@ test with logging service from newly merged logging package
 > [examples/comparision](./examples/comparision/FeatureMatrix.md)
 
 - other di solutions other non di solutions streangths weaknesses and target audiences
-
-### add a option that wraps proxy at comile time with method bindings for additional convenience
-
-```ts
-// Binds all prototype methods to the given Valtio proxy instance.
-// - Skips constructor/getters/setters
-// - Preserves names, hides bound copies from enumeration
-// - Works with symbols
-export function bindAllMethodsToProxy<T extends object>(p: T): T {
-  const seen = new Set<PropertyKey>();
-  let proto = Reflect.getPrototypeOf(p);
-
-  while (proto && proto !== Object.prototype) {
-    for (const key of Reflect.ownKeys(proto)) {
-      if (key === "constructor" || seen.has(key)) continue;
-
-      const desc = Object.getOwnPropertyDescriptor(proto, key);
-      if (!desc) continue;
-      if (typeof desc.value !== "function") continue; // skip accessors
-
-      // Create an own, non-enumerable, writable, configurable bound method
-      Object.defineProperty(p, key, {
-        value: (desc.value as Function).bind(p),
-        writable: true,
-        configurable: true,
-        enumerable: false,
-      });
-
-      seen.add(key);
-    }
-    proto = Reflect.getPrototypeOf(proto);
-  }
-  return p;
-}
-```
 
 ### ❌ vite-plugin-inspect
 
@@ -238,27 +253,13 @@ either way having smaller working changes while refactoring should improve adopt
 - [❌] di-react
 - [❌] di-debug (serve,(analytics),cli)
 
-### [❌] write state ownership docs section
-
-> the only one documentation piece missing form prod
-
-from prod/PotentialProblems.md
-and prod/PostProductionRoadmap.md
-
-### ❌ Babel / TypeScript Transformer plugins
-
-> well probably abandon them for now
-
-Babel Plugin - Async/sync pipeline incompatibility (architectural issue)
-TypeScript Transformer - Complex TS compiler API integration
-
 ---
 
 ---
 
 ---
 
-## ordered log (for post-production)
+## ordered log (post production release v2)
 
 ### [❌] create separate files/classes that focus on normalizing a step at a time
 
@@ -296,22 +297,13 @@ TypeScript Transformer - Complex TS compiler API integration
     },
 ```
 
-### [❌] changeset publish
-
-- will not properly restore workspace:\*
-- also not every workspace:\* is replaced beforehand
+maybe `bun link` is enough
 
 ### [❌] harden di-test-harness fixtures tests
 
 - for one if any cant be imported curretny all fail
 - diff works but will not run examples but show errors for DI
   - maybe this has to do with reeact bundling `useDI must be used within a DIProvider` maybe different contexts
-
-### [❌] add tsc type check to fixture tests
-
-> this way the test will show more meaningful errors and at least warn about them
-
-> actually we only need to run build afterwards which will show all errors regardless
 
 ### [❌] reason about InjectOptional and remove it if not enough use cases speak for it
 
@@ -509,20 +501,6 @@ maybe normalization could help
 https://github.com/quarto-dev
 https://github.com/MartenBE/mkslides
 
-### [❌] useObservable
-
-- what is RSI structurally (something else?, MVC,MVVM, MVP .. it can be all of them if implemented in a certain way)
-  - with proxy state
-  - with observables
-- see [comparision](./docs/misc/view-logic-pattern.md)
-
-- establish / evaluate rrecipe and establish dos and donts
-  - **maybe** dont subscribe manually oin FC only use state of pbservasbalble and create functions that trigger changes but dont make them subscribable
-  - **maybe** use robservables for interservice communication
-  - **maybe** but then again maybe we dont need that
-  - **...** explore what are good and bad patterns here by looking what is out there
-  - TBA
-
 ### [❌] evaluate composability of DI
 
 - we could create @Services(scope="dev")
@@ -533,9 +511,9 @@ https://github.com/MartenBE/mkslides
   - maybe a global and one for a certain subtree e.g. multiple forms or pages
 - in essence we would have freedom to combine them as we want which could give us opportunites when injecting
 
-### [❌] FIXME could not fast refrest useDi export incompatible
-
 ### [❌] Lazy decorator and marker
+
+> do we really want this?
 
 ### [❌] cli
 
@@ -545,16 +523,6 @@ https://github.com/MartenBE/mkslides
 "faster" what causes this? **and** alternative to dependency viewer
 
 - it must be clear why a certain component doesnt work
-
-### [❌] test mobx in favor of valtio
-
-> maybe the opproblem with valtio is more a hot reloading problem than actually valtios fault
-
-- https://www.npmjs.com/package/mobx-react-lite
-- valtio needs a "proxy" state and a "snap" for reactivity
-- mobx might be able to only use one "state-proxy"
-  - there is this makeAutoObservable which we might be able to inject into the class constructor of new "@Service" annotated classes at compile time
-  - there also is the Observer FC that we need to inject into FC that use "Inject" - Marker for observablility to work
 
 ### [❌] check for shared logic in these two and generate unit tests
 
@@ -706,9 +674,48 @@ evaluate scenarios
 
 ## Done
 
+### ✅ useObservable (deprecated)
+
+- what is RSI structurally (something else?, MVC,MVVM, MVP .. it can be all of them if implemented in a certain way)
+  - with proxy state
+  - with observables
+- see [comparision](./docs/misc/view-logic-pattern.md)
+
+- establish / evaluate rrecipe and establish dos and donts
+  - **maybe** dont subscribe manually oin FC only use state of pbservasbalble and create functions that trigger changes but dont make them subscribable
+  - **maybe** use robservables for interservice communication
+  - **maybe** but then again maybe we dont need that
+  - **...** explore what are good and bad patterns here by looking what is out there
+  - TBA
+
+### ✅ test mobx in favor of valtio
+
+> maybe the opproblem with valtio is more a hot reloading problem than actually valtios fault
+
+- https://www.npmjs.com/package/mobx-react-lite
+- valtio needs a "proxy" state and a "snap" for reactivity
+- mobx might be able to only use one "state-proxy"
+  - there is this makeAutoObservable which we might be able to inject into the class constructor of new "@Service" annotated classes at compile time
+  - there also is the Observer FC that we need to inject into FC that use "Inject" - Marker for observablility to work
+
+### ✅ changeset publish
+
+> probably fixed now
+
+- will not properly restore workspace:\*
+- also not every workspace:\* is replaced beforehand
+
+### ✅ add tsc type check to fixture tests
+
+> this way the test will show more meaningful errors and at least warn about them
+
+> actually we only need to run build afterwards which will show all errors regardless
+
 ### ✅ merge or remove branches before additional features 1/2
 
 all three contain some value that we should see how we can merge
+
+- ✅ feature/refactor-di-debug-into-vite-react-app
 
 - ✅ feature/attempt-at-streamlining-interfaces
   - contains filepath:linenumber resolution of interfaces or do we already have this?
