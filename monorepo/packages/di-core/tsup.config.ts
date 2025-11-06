@@ -31,8 +31,7 @@ const entries = [
   "markers.ts",
   "container.ts",
   "context.tsx",
-]
-  .map((name) => "src/" + name)
+].map((name) => "src/" + name);
 
 export default defineConfig([
   {
@@ -45,9 +44,9 @@ export default defineConfig([
     skipNodeModulesBundle: true,
     external: ["react", "react-dom"],
     sourcemap: true,
-    // esbuildOptions(options) {
-    //   options.bundle = true;
-    // },
+    async onSuccess() {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    },
   },
   examples,
   {
@@ -57,8 +56,8 @@ export default defineConfig([
     outDir: "dist/tools",
     clean: false,
     sourcemap: true,
-    // esbuildOptions(options) {
-    //   options.bundle = true;
-    // },
+    async onSuccess() {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    },
   },
 ]);
