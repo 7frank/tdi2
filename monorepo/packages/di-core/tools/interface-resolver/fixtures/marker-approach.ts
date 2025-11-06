@@ -314,39 +314,6 @@ export function Component(
 }
   `,
 
-  ASYNC_STATE_MARKERS: `
-import React from 'react';
-import type { Inject, InjectOptional } from "@tdi2/di-core/markers";
-
-export interface UserServiceState {
-  userId: string;
-  isLoggedIn: boolean;
-  profile?: any;
-}
-
-export interface ProductServiceState {
-  products: any[];
-  loading: boolean;
-}
-
-export function Component(props: {
-  services: {
-    userState: Inject<AsyncState<UserServiceState>>;
-    productState?: InjectOptional<AsyncState<ProductServiceState>>;
-  };
-}) {
-  const { services } = props;
-  
-  React.useEffect(() => {
-    const userState = services.userState.getState();
-    const productState = services.productState?.getState();
-    
-    console.log({ userState, productState });
-  }, []);
-  
-  return <div>State-based DI</div>;
-}
-  `,
 
   INHERITANCE_MARKERS: `
 import React from 'react';
@@ -359,8 +326,8 @@ export interface NotificationData {
 
 export function Component(props: {
   services: {
-    notifications: Inject<AsyncState<NotificationData[]>>;
-    userService: Inject<BaseService<UserServiceState>>;
+    notifications: Inject<NotificationService<NotificationData[]>>;
+    userService: Inject<BaseService<UserData>>;
   };
 }) {
   const { services } = props;

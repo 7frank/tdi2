@@ -1,5 +1,7 @@
 // tools/interface-resolver/key-sanitizer.ts - FIXED VERSION with enhanced type parameter handling
 
+import { SourceLocation } from "./interface-resolver-types";
+
 export class KeySanitizer {
   
   /**
@@ -7,14 +9,7 @@ export class KeySanitizer {
    */
   sanitizeKey(type: string): string {
     try {
-      // Step 1: Handle AsyncState pattern specifically
-      const asyncStateMatch = type.match(/^AsyncState<(.+)>$/);
-      if (asyncStateMatch) {
-        const stateType = asyncStateMatch[1];
-        return `AsyncState_${this.sanitizeKey(stateType)}`;
-      }
-
-      // Step 2: Handle array types specifically
+      // Step 1: Handle array types specifically
       if (type.endsWith('[]')) {
         const baseType = type.replace('[]', '');
         return `${this.sanitizeKey(baseType)}_Array`;
@@ -106,13 +101,6 @@ export class KeySanitizer {
    */
   sanitizeInheritanceKey(inheritanceType: string): string {
     try {
-      // Handle AsyncState<StateType> inheritance specifically
-      const asyncStateMatch = inheritanceType.match(/^AsyncState<(.+)>$/);
-      if (asyncStateMatch) {
-        const stateType = asyncStateMatch[1];
-        return `AsyncState_${this.sanitizeKey(stateType)}`;
-      }
-
       // Handle generics normally
       if (this.isGenericType(inheritanceType)) {
         return this.sanitizeKey(inheritanceType);
@@ -141,38 +129,6 @@ export class KeySanitizer {
     }
   }
 
-  /**
-   * Enhanced state key sanitization
-   */
-  sanitizeStateKey(stateType: string): string {
-    try {
-      // Handle complex generics first
-      if (this.isGenericType(stateType)) {
-        return this.sanitizeKey(stateType);
-      }
-
-      // For state types, we want to preserve semantic meaning
-      let sanitized = stateType
-        .replace(/State$/, '') // Remove trailing 'State'
-        .replace(/Interface$/, '') // Remove trailing 'Interface'
-        .replace(/Type$/, '') // Remove trailing 'Type'
-        .replace(/[^\w]/g, '_') // Replace special chars
-        .replace(/_+/g, '_') // Remove multiple underscores
-        .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
-
-      // Add 'State' suffix back if it doesn't end with a meaningful suffix
-      if (!sanitized.endsWith('State') && 
-          !sanitized.endsWith('Data') && 
-          !sanitized.endsWith('Model') &&
-          !sanitized.endsWith('Entity')) {
-        sanitized += 'State';
-      }
-
-      return sanitized || 'UnknownState';
-    } catch (error) {
-      return stateType.replace(/[^\w]/g, '_') + 'State';
-    }
-  }
 
   /**
    * Extract the base type name from a generic type
@@ -288,6 +244,17 @@ export class KeySanitizer {
     
     // Create location-based key: InterfaceName__path_to_file_ts_line_123
     return `${this.sanitizeKey(interfaceName)}__${encodedPath}_line_${lineNumber}`;
+  }
+
+  /**
+   * Create a unique key using structured location info
+   */
+  createLocationBasedKeyFromLocation(interfaceName: string, location?: SourceLocation): string {
+    if (!location) {
+      return this.sanitizeKey(interfaceName);
+    }
+
+    return this.createLocationBasedKey(interfaceName, location.filePath, location.lineNumber);
   }
 
   /**

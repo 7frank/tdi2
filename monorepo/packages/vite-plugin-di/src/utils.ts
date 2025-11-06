@@ -17,6 +17,7 @@ import type {
   ConfigInfo,
   DIBuildContext,
 } from './types';
+import { EnhancedDITransformer } from '@tdi2/di-core/tools';
 
 /**
  * Get default plugin options with sensible defaults (wraps plugin-core)
@@ -153,7 +154,7 @@ export function createDebugEndpoints(
   server: ViteDevServer,
   context: {
     options: Required<DIPluginOptions>;
-    getClassTransformer: () => any;
+    getClassTransformer: () => EnhancedDITransformer;
     getFunctionalTransformer: () => any;
     getConfigManager: () => any;
     getTransformedFiles: () => Map<string, string>;
@@ -211,9 +212,7 @@ export function createDebugEndpoints(
                       ? 'class' 
                       : impl.isInheritanceBased 
                         ? 'inheritance' 
-                        : impl.isStateBased 
-                          ? 'state' 
-                          : 'interface',
+                        : 'interface',
                   })
                 ),
                 dependencies: debugInfo.dependencies.map(
@@ -232,7 +231,7 @@ export function createDebugEndpoints(
                   isValid: false,
                   missingImplementations: [],
                   circularDependencies: [],
-                  warnings: [],
+                 // warnings: [],
                 },
                 stats: {
                   totalInterfaces: debugInfo.implementations.length,
@@ -243,9 +242,7 @@ export function createDebugEndpoints(
                       ? 'class' 
                       : impl.isInheritanceBased 
                         ? 'inheritance' 
-                        : impl.isStateBased 
-                          ? 'state' 
-                          : 'interface';
+                        : 'interface';
                     acc[type] = (acc[type] || 0) + 1;
                     return acc;
                   }, {} as Record<string, number>),
@@ -292,9 +289,7 @@ export function createDebugEndpoints(
                   ? 'class' 
                   : impl.isInheritanceBased 
                     ? 'inheritance' 
-                    : impl.isStateBased 
-                      ? 'state' 
-                      : 'interface',
+                    : 'interface',
               }))
             : [],
           dependencies: debugInfo

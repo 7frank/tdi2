@@ -430,8 +430,7 @@ export class EnhancedDITransformer {
 
     for (const [, impl] of implementations) {
       successfulResolutions++;
-      if (impl.isStateBased) byStrategy.state++;
-      else if (impl.isInheritanceBased) byStrategy.inheritance++;
+      if (impl.isInheritanceBased) byStrategy.inheritance++;
       else if (impl.isClassBased) byStrategy.class++;
       else byStrategy.interface++;
     }
@@ -489,7 +488,7 @@ export class EnhancedDITransformer {
   }
 
   // Enhanced debug methods using shared logic
-  async getDebugInfo(): Promise<any> {
+  async getDebugInfo() {
     try {
       const implementations = this.interfaceResolver.getInterfaceImplementations();
       const dependencies = this.interfaceResolver.getServiceDependencies();

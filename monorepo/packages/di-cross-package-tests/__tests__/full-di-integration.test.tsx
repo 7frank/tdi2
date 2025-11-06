@@ -49,13 +49,14 @@ describe('Full Cross-Package DI Integration', () => {
     it('should register services from both packages', () => {
       const tokens = container.getRegisteredTokens();
 
+      console.log('tokens',tokens)
       // Package A services
-      expect(tokens).toContain('LoggerService');
-      expect(tokens.some(t => t.includes('LoggerInterface'))).toBe(true);
+      expect(tokens.some(t => t.startsWith('LoggerService__'))).toBe(true);
+      expect(tokens.some(t => t.startsWith('LoggerInterface__'))).toBe(true);
 
       // Package B services
-      expect(tokens).toContain('UserService');
-      expect(tokens.some(t => t.includes('UserServiceInterface'))).toBe(true);
+      expect(tokens.some(t => t.startsWith('UserService__'))).toBe(true);
+       expect(tokens.some(t => t.startsWith('UserServiceInterface__'))).toBe(true);
     });
 
     it('should have at least 4 service registrations (2 interfaces + 2 classes)', () => {
@@ -349,14 +350,14 @@ describe('Full Cross-Package DI Integration', () => {
       const tokens = container.getRegisteredTokens();
 
       // LoggerInterface -> LoggerService
-      const loggerInterfaceToken = tokens.find(t => t.includes('LoggerInterface'));
-      const loggerClassToken = tokens.find(t => t === 'LoggerService');
+      const loggerInterfaceToken = tokens.find(t => t.startsWith('LoggerInterface__'));
+      const loggerClassToken = tokens.find(t => t.startsWith('LoggerService__'));
       expect(loggerInterfaceToken).toBeDefined();
       expect(loggerClassToken).toBeDefined();
 
       // UserServiceInterface -> UserService
-      const userInterfaceToken = tokens.find(t => t.includes('UserServiceInterface'));
-      const userClassToken = tokens.find(t => t === 'UserService');
+      const userInterfaceToken = tokens.find(t => t.startsWith('UserServiceInterface__'));
+      const userClassToken = tokens.find(t => t.startsWith('UserService__'));
       expect(userInterfaceToken).toBeDefined();
       expect(userClassToken).toBeDefined();
     });

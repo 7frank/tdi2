@@ -197,12 +197,9 @@ export class DependencyTreeBuilder {
       // Add all the different ways this service can be accessed
       for (const impl of serviceInfo.implementations) {
         let token: string;
-        let type: "interface" | "class" | "inheritance" | "state";
+        let type: "interface" | "class" | "inheritance";
 
-        if (impl.isStateBased) {
-          token = impl.sanitizedKey;
-          type = "state";
-        } else if (impl.isInheritanceBased) {
+        if (impl.isInheritanceBased) {
           token = impl.sanitizedKey;
           type = "inheritance";
         } else if (impl.isClassBased) {
@@ -226,9 +223,6 @@ export class DependencyTreeBuilder {
               baseClass: impl.baseClass,
               baseClassGeneric: impl.baseClassGeneric,
               inheritanceChain: impl.inheritanceChain,
-              stateType: impl.stateType,
-              serviceInterface: impl.serviceInterface,
-              isStateBased: impl.isStateBased,
               isInheritanceBased: impl.isInheritanceBased,
               isClassBased: impl.isClassBased,
             },

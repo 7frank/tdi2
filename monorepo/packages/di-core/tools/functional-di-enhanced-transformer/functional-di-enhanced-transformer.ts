@@ -623,15 +623,13 @@ export class FunctionalDIEnhancedTransformer {
     const byStrategy: Record<string, number> = {
       interface: 0,
       inheritance: 0,
-      state: 0,
       class: 0,
       notFound: 0
     };
 
     for (const [, impl] of implementations) {
       successfulResolutions++;
-      if (impl.isStateBased) byStrategy.state++;
-      else if (impl.isInheritanceBased) byStrategy.inheritance++;
+      if (impl.isInheritanceBased) byStrategy.inheritance++;
       else if (impl.isClassBased) byStrategy.class++;
       else byStrategy.interface++;
     }

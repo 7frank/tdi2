@@ -32,18 +32,9 @@ test with logging service from newly merged logging package
 - if Inject<Logger> and Inject<Foo> doesnt correspond twith both hooks of that name in the code we can warn about it
   - "Inject<Foo> could not inject meta code see documentation <link to docmentation page showing proper pattern>"
 
-### ❌ merge or remove branches before additional features
+### ❌ merge or remove branches before additional features 2/2
 
-all three contain some value that we should see how we can merge
-
-- feature/attempt-at-streamlining-interfaces
-  - contains filepath:linenumber resolution of interfaces or do we already have this?
-    - https://github.com/7frank/tdi2/pull/57/commits/45c837d66ae295db98f3c203135c251b99172bf5
-- feature/normalization
-  - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
-  - focus on syntax we support and log warnings for sytnax we dont support
-
-- feature/refactor-di-debug-into-vite-react-app
+- ❌ feature/refactor-di-debug-into-vite-react-app
 
 ### [❌] make valtio transformations and reactivity optional
 
@@ -145,7 +136,22 @@ for example librechat has a lot of hooks,
 
 either way having smaller working changes while refactoring should improve adoption
 
+### [❌] mutable vs immutable
+
+- curretnly we only use the mutable from valtio
+- instead for passing values to other functions including jsx, we should use the immutable snap
+  - this would allow to pass objects "by value"
+  - and would remove the problem of passing objects "by reference"
+
 ### [❌]fix di-debug
+
+#### [❌] stream line di debugging
+
+- below we ahve different approaches
+- re-revaluate them
+- we need one clear dependency tree in the core implementation
+  - which we should use as s.P.o.T.
+  - di-debug should rely/build on it
 
 #### [❌] some tests, more complex examples still would fail
 
@@ -164,32 +170,6 @@ either way having smaller working changes while refactoring should improve adopt
 - [TBD] only after the generated DI-Config is properly readable
   - then we should try to use **analyze** the graph or have a SPOT in **di-core** to **validate** the graph
   - this validation and analysation logic can then be used to build the cli and web view on top
-
-#### [✅] regression broke main
-
-> adding file path and line number broke lookup
-
-useService('TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14')
-
-something wrong with the setup and the dashboard build
-
-// curent work flow
-
-> di-core dev (once)
-> br build (once)
-> br build:dashboard
-> bunx tdi2 serve --src ../legacy/src/
-
-- `br src/cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
-- `br src/cli.ts analyze --src ../legacy/src/`
-- `br src/cli.ts serve --src ../legacy/src/`
-- `bunx tdi2 serve --src ../legacy/src/`
-
-- [❌] 19 services detected vs 22 after regression
-  - ensure that they are not false positives, maybe we now actually detect more
-  - also we get warnings now which might be good
-  - and the "Missing service dependency 'CacheInterface_any\_\_src_UserApiServiceImpl_ts_line_69' might actually work
-  - we might need some tests actually
 
 #### [❌] di-debug; render actual transformed and source side by side the same was di-test-harness does
 
@@ -581,17 +561,12 @@ https://github.com/MartenBE/mkslides
 - 7frank/tdi2/monorepo/packages/di-core/tools/shared/RecursiveInjectExtractor.ts
 - 7frank/tdi2/monorepo/packages/di-core/tools/shared/SharedDependencyExtractor.ts
 
-### [❌] clean up & remove
+### [❌] fix or remove debug endpoints
 
-- [✅] useObservableState and its usage
-
-- [✅] useAsyncServiceInterface
-- [❌] remove AsyncState special cases, or fix them in di-core, they where never meant to be this specific in the first place
-- [❌] fix or remove debug endpoints
-  - http://localhost:5173/\_di_debug
-  - http://localhost:5173/\_di_interfaces
-  - http://localhost:5173/\_di_configs"
-  - if removed, remove middleware endpoints too
+- http://localhost:5173/\_di_debug
+- http://localhost:5173/\_di_interfaces
+- http://localhost:5173/\_di_configs"
+- if removed, remove middleware endpoints too
 
 ### [❌] create do's and don't for valtio proxies / document quirks
 
@@ -730,6 +705,84 @@ evaluate scenarios
 ---
 
 ## Done
+
+### ✅ merge or remove branches before additional features 1/2
+
+all three contain some value that we should see how we can merge
+
+- ✅ feature/attempt-at-streamlining-interfaces
+  - contains filepath:linenumber resolution of interfaces or do we already have this?
+    - https://github.com/7frank/tdi2/pull/57/commits/45c837d66ae295db98f3c203135c251b99172bf5
+    - ✅ 2 tests are failing `di-cross-package-tests $ br test`
+    - ✅ test with legacy app
+- ✅ feature/normalization
+  - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
+  - focus on syntax we support and log warnings for sytnax we dont support
+
+### [✅] clean up & remove
+
+- [✅] useObservableState and its usage
+
+- [✅] useAsyncServiceInterface
+- [✅] remove AsyncState special cases, or fix them in di-core, they where never meant to be this specific in the first place
+
+### ✅ integrated interface resolver too cluttered
+
+- [✅] "AsyncState" "isStateBased"
+
+- [✅]instead
+  - if (implementation.isInheritanceBased) return 'inheritance';
+  - if (implementation.isClassBased) return 'class';
+  - have a inerhitanceType: 'inheritance' | 'class' |... or something totally else
+
+- [✅]what are these for , wouldnt the sanitizedKey work as the unique key already?
+
+  > const uniqueKey = isPrimary
+  > ? `${sanitizedKey}_${className}`
+  > : `${sanitizedKey}_${className}_direct`;
+  >
+  >     this.interfaces.set(uniqueKey, implementation);
+
+- [✅] "byStrategry" cant we unify the strategies
+
+> private determineStrategy(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'class' {
+> if (implementation.isInheritanceBased) return 'inheritance';
+> if (implementation.isClassBased) return 'class';
+> return 'interface';
+> }
+
+- cleanup di-core interfaces
+
+- InterfaceImplementation type is too unstructured we need something for di_config that contains the core info
+  - uniqueKey
+  - classNameFoo
+  - ....
+
+### [✅] regression broke main
+
+> adding file path and line number broke lookup
+
+useService('TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14')
+
+something wrong with the setup and the dashboard build
+
+// curent work flow
+
+> di-core dev (once)
+> br build (once)
+> br build:dashboard
+> bunx tdi2 serve --src ../legacy/src/
+
+- `br src/cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
+- `br src/cli.ts analyze --src ../legacy/src/`
+- `br src/cli.ts serve --src ../legacy/src/`
+- `bunx tdi2 serve --src ../legacy/src/`
+
+- [❌] 19 services detected vs 22 after regression
+  - ensure that they are not false positives, maybe we now actually detect more
+  - also we get warnings now which might be good
+  - and the "Missing service dependency 'CacheInterface_any\_\_src_UserApiServiceImpl_ts_line_69' might actually work
+  - we might need some tests actually
 
 ### ✅ plugins
 
