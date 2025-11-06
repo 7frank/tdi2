@@ -2,11 +2,6 @@
 
 ## ordered log (for production release)
 
-### decide what to do with debug endpoints monorepo/packages/vite-plugin-di/src/utils.ts
-
-currently we dont use them
-
-server.middlewares.use('/\_di_interfaces',
 
 ### ❌ auto discover packages
 
@@ -42,10 +37,12 @@ test with logging service from newly merged logging package
 
 all three contain some value that we should see how we can merge
 
-- feature/attempt-at-streamlining-interfaces
+- ❌ feature/attempt-at-streamlining-interfaces
   - contains filepath:linenumber resolution of interfaces or do we already have this?
     - https://github.com/7frank/tdi2/pull/57/commits/45c837d66ae295db98f3c203135c251b99172bf5
-- feature/normalization
+    - ❌ 2 tests are failing `di-cross-package-tests $ br test`
+    - ❌ test with legacy app
+- ✅ feature/normalization
   - https://chatgpt.com/c/690b00a9-93bc-8333-ab67-978179e1af87
   - focus on syntax we support and log warnings for sytnax we dont support
 
@@ -168,38 +165,6 @@ either way having smaller working changes while refactoring should improve adopt
   - which we should use as s.P.o.T.
   - di-debug should rely/build on it
 
-#### ❌ integrated interface resolver too cluttered
-
-- [✅] "AsyncState" "isStateBased"
-
-- [✅]instead
-  - if (implementation.isInheritanceBased) return 'inheritance';
-  - if (implementation.isClassBased) return 'class';
-  - have a inerhitanceType: 'inheritance' | 'class' |... or something totally else
-
-- [❌]what are these for , wouldnt the sanitizedKey work as the unique key already?
-
-  > const uniqueKey = isPrimary
-  > ? `${sanitizedKey}_${className}`
-  > : `${sanitizedKey}_${className}_direct`;
-  >
-  >     this.interfaces.set(uniqueKey, implementation);
-
-- [✅] "byStrategry" cant we unify the strategies
-
-> private determineStrategy(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'class' {
-> if (implementation.isInheritanceBased) return 'inheritance';
-> if (implementation.isClassBased) return 'class';
-> return 'interface';
-> }
-
-- cleanup di-core interfaces
-
-- InterfaceImplementation type is too unstructured we need something for di_config that contains the core info
-  - uniqueKey
-  - classNameFoo
-  - ....
-
 #### [❌] some tests, more complex examples still would fail
 
     neue Datei:     ../di-core/tools/functional-di-enhanced-transformer/__tests__/__fixtures__/aliasing-with-rest-and-di.basic.transformed.snap.tsx
@@ -217,32 +182,6 @@ either way having smaller working changes while refactoring should improve adopt
 - [TBD] only after the generated DI-Config is properly readable
   - then we should try to use **analyze** the graph or have a SPOT in **di-core** to **validate** the graph
   - this validation and analysation logic can then be used to build the cli and web view on top
-
-#### [✅] regression broke main
-
-> adding file path and line number broke lookup
-
-useService('TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14')
-
-something wrong with the setup and the dashboard build
-
-// curent work flow
-
-> di-core dev (once)
-> br build (once)
-> br build:dashboard
-> bunx tdi2 serve --src ../legacy/src/
-
-- `br src/cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
-- `br src/cli.ts analyze --src ../legacy/src/`
-- `br src/cli.ts serve --src ../legacy/src/`
-- `bunx tdi2 serve --src ../legacy/src/`
-
-- [❌] 19 services detected vs 22 after regression
-  - ensure that they are not false positives, maybe we now actually detect more
-  - also we get warnings now which might be good
-  - and the "Missing service dependency 'CacheInterface_any\_\_src_UserApiServiceImpl_ts_line_69' might actually work
-  - we might need some tests actually
 
 #### [❌] di-debug; render actual transformed and source side by side the same was di-test-harness does
 
@@ -783,6 +722,67 @@ evaluate scenarios
 ---
 
 ## Done
+
+
+
+### ✅ integrated interface resolver too cluttered
+
+- [✅] "AsyncState" "isStateBased"
+
+- [✅]instead
+  - if (implementation.isInheritanceBased) return 'inheritance';
+  - if (implementation.isClassBased) return 'class';
+  - have a inerhitanceType: 'inheritance' | 'class' |... or something totally else
+
+- [✅]what are these for , wouldnt the sanitizedKey work as the unique key already?
+
+  > const uniqueKey = isPrimary
+  > ? `${sanitizedKey}_${className}`
+  > : `${sanitizedKey}_${className}_direct`;
+  >
+  >     this.interfaces.set(uniqueKey, implementation);
+
+- [✅] "byStrategry" cant we unify the strategies
+
+> private determineStrategy(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'class' {
+> if (implementation.isInheritanceBased) return 'inheritance';
+> if (implementation.isClassBased) return 'class';
+> return 'interface';
+> }
+
+- cleanup di-core interfaces
+
+- InterfaceImplementation type is too unstructured we need something for di_config that contains the core info
+  - uniqueKey
+  - classNameFoo
+  - ....
+
+### [✅] regression broke main
+
+> adding file path and line number broke lookup
+
+useService('TodoServiceInterface\_\_src_todo2_TodoService_ts_line_14')
+
+something wrong with the setup and the dashboard build
+
+// curent work flow
+
+> di-core dev (once)
+> br build (once)
+> br build:dashboard
+> bunx tdi2 serve --src ../legacy/src/
+
+- `br src/cli.ts analyze --src ../../../examples/tdi2-basic-example/src`
+- `br src/cli.ts analyze --src ../legacy/src/`
+- `br src/cli.ts serve --src ../legacy/src/`
+- `bunx tdi2 serve --src ../legacy/src/`
+
+- [❌] 19 services detected vs 22 after regression
+  - ensure that they are not false positives, maybe we now actually detect more
+  - also we get warnings now which might be good
+  - and the "Missing service dependency 'CacheInterface_any\_\_src_UserApiServiceImpl_ts_line_69' might actually work
+  - we might need some tests actually
+
 
 ### ✅ plugins
 

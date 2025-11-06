@@ -28,7 +28,7 @@ import type {
 
 export interface IntegratedResolverOptions {
   verbose?: boolean;
-  srcDir?: string; // Deprecated - use scanDirs
+
   scanDirs?: string[];
   enableInheritanceDI?: boolean;
   enableStateDI?: boolean;
@@ -50,7 +50,7 @@ export class IntegratedInterfaceResolver {
 
   constructor(options: IntegratedResolverOptions = {}) {
     // Support both scanDirs (new) and srcDir (backward compat)
-    const scanDirs = options.scanDirs || (options.srcDir ? [options.srcDir] : ['./src']);
+    const scanDirs = options.scanDirs || ['./src'];
 
     this.options = {
       verbose: false,
@@ -95,7 +95,7 @@ export class IntegratedInterfaceResolver {
 
     try {
       // Add source files from all scan directories
-      const scanDirs = this.options.scanDirs || [this.options.srcDir];
+      const scanDirs = this.options.scanDirs;
       for (const dir of scanDirs) {
         this.project.addSourceFilesAtPaths(`${dir}/**/*.{ts,tsx}`);
       }
@@ -241,8 +241,8 @@ export class IntegratedInterfaceResolver {
       scope,
     };
 
-    const uniqueKey = `${sanitizedKey}_${className}`;
-    this.interfaces.set(uniqueKey, implementation);
+
+    this.interfaces.set(sanitizedKey, implementation);
 
     if (this.options.verbose) {
       console.log(
@@ -286,8 +286,7 @@ export class IntegratedInterfaceResolver {
       scope,
     };
 
-    const uniqueKey = `${sanitizedKey}_${className}`;
-    this.interfaces.set(uniqueKey, implementation);
+    this.interfaces.set(sanitizedKey, implementation);
 
     if (this.options.verbose) {
       console.log(
@@ -328,11 +327,7 @@ export class IntegratedInterfaceResolver {
       scope,
     };
 
-    const uniqueKey = isPrimary 
-      ? `${sanitizedKey}_${className}`
-      : `${sanitizedKey}_${className}_direct`;
-    
-    this.interfaces.set(uniqueKey, implementation);
+    this.interfaces.set(sanitizedKey, implementation);
 
     if (this.options.verbose) {
       console.log(
