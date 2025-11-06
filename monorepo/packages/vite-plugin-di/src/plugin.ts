@@ -58,7 +58,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
   const checkExistingConfig = (): boolean => {
     try {
       const tempConfigManager = new ConfigManager({
-        srcDir: options.srcDir!,
+        scanDirs: options.scanDirs!,
         outputDir: options.outputDir!,
         enableFunctionalDI: options.enableFunctionalDI!,
         verbose: false, // Don't spam logs during check
@@ -123,7 +123,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
 
       // Create config manager first to check for existing configs
       configManager = new ConfigManager({
-        srcDir: options.srcDir!,
+        scanDirs: options.scanDirs!,
         outputDir: options.outputDir!,
         enableFunctionalDI: options.enableFunctionalDI!,
         verbose: options.verbose!,
@@ -144,7 +144,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         // Still run functional transformation as it doesn't persist
         if (options.enableFunctionalDI) {
           functionalTransformer = new FunctionalDIEnhancedTransformer({
-            srcDir: options.srcDir,
+            scanDirs: options.scanDirs,
             outputDir: options.outputDir,
             generateDebugFiles: options.generateDebugFiles,
             verbose: options.verbose,
@@ -175,7 +175,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       // Run class-based DI transformation with interface resolution
       performanceTracker.startScan();
       classTransformer = new EnhancedDITransformer({
-        srcDir: options.srcDir,
+        scanDirs: options.scanDirs,
         outputDir: options.outputDir,
         verbose: options.verbose,
         enableInterfaceResolution: options.enableInterfaceResolution,
@@ -192,7 +192,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       // Run functional DI transformation with interface resolution
       if (options.enableFunctionalDI) {
         functionalTransformer = new FunctionalDIEnhancedTransformer({
-          srcDir: options.srcDir,
+          scanDirs: options.scanDirs,
           outputDir: options.outputDir,
           generateDebugFiles: options.generateDebugFiles,
           verbose: options.verbose,
@@ -347,8 +347,9 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     async handleHotUpdate({ file, server }) {
       if (!options.watch) return;
 
+      const isInScanDir = options.scanDirs!.some(dir => file.includes(dir));
       if (
-        file.includes(options.srcDir!) &&
+        isInScanDir &&
         (file.endsWith(".ts") || file.endsWith(".tsx"))
       ) {
         try {

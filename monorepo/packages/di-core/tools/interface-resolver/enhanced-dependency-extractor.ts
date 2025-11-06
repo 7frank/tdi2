@@ -1099,14 +1099,20 @@ export class EnhancedDependencyExtractor {
     try {
       const currentDir = path.dirname(sourceFile.getFilePath());
       const project = sourceFile.getProject();
-      
+
       let resolvedPath: string;
       if (moduleSpecifier.startsWith('.')) {
         // Relative import
         resolvedPath = path.resolve(currentDir, moduleSpecifier);
       } else {
-        // Absolute import (from src root)
-        resolvedPath = path.resolve(this.options.srcDir!, moduleSpecifier);
+        // Absolute import - try each scanDir to find the file
+        const scanDirs = this.options.scanDirs || ["./src"];
+        const currentFilePath = path.resolve(sourceFile.getFilePath());
+        const matchingScanDir = scanDirs.find((dir: string) =>
+          currentFilePath.startsWith(path.resolve(dir))
+        );
+        const baseDir = matchingScanDir ? path.resolve(matchingScanDir) : path.resolve(scanDirs[0]);
+        resolvedPath = path.resolve(baseDir, moduleSpecifier);
       }
 
       // Try different extensions

@@ -21,10 +21,7 @@ export interface InterfaceImplementation {
   sanitizedKey: string;
   isClassBased?: boolean;
   isInheritanceBased?: boolean;
-  isStateBased?: boolean;
   baseClass?: string;
-  stateType?: string;
-  serviceInterface?: string;
   inheritanceChain?: string[];
 }
 

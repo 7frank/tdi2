@@ -1,6 +1,13 @@
 import type { ViteDevServer } from 'vite';
 import * as fs from 'fs';
 import * as path from 'path';
+import {
+  getDefaultConfig as getCoreDefaults,
+  validateConfig as validateCoreConfig,
+  detectDIPatterns,
+  createPerformanceTracker as coreCreatePerformanceTracker,
+  type PluginConfig,
+} from '@tdi2/plugin-core';
 
 import type {
   DIPluginOptions,
@@ -10,87 +17,39 @@ import type {
   ConfigInfo,
   DIBuildContext,
 } from './types';
+import { EnhancedDITransformer } from '@tdi2/di-core/tools';
 
 /**
- * Get default plugin options with sensible defaults
+ * Get default plugin options with sensible defaults (wraps plugin-core)
  */
 export function getDIPluginDefaults(userOptions: DIPluginOptions): Required<DIPluginOptions> {
-  const defaultAdvanced = {
-    fileExtensions: ['.ts', '.tsx'],
-    diPatterns: {
-      serviceDecorator: /@Service\s*\(/,
-      injectDecorator: /@Inject\s*\(/,
-      interfaceMarker: /Inject<|InjectOptional</,
-    },
-    performance: {
-      parallel: true,
-      maxConcurrency: 10,
-      enableCache: true,
-    },
-  };
+  // Get base config from plugin-core
+  const baseConfig = getCoreDefaults(userOptions as PluginConfig);
 
+  // Add Vite-specific defaults
   return {
-    srcDir: './src',
-    outputDir: './src/generated',
-    verbose: false,
-    watch: true,
-    enableFunctionalDI: true,
-    enableInterfaceResolution: true,
-    generateDebugFiles: false,
-    customSuffix: '',
-    cleanOldConfigs: true,
-    keepConfigCount: 3,
-    reuseExistingConfig: true,
-    ...userOptions,
-    advanced: {
-      ...defaultAdvanced,
-      ...userOptions.advanced,
-      diPatterns: {
-        ...defaultAdvanced.diPatterns,
-        ...userOptions.advanced?.diPatterns,
-      },
-      performance: {
-        ...defaultAdvanced.performance,
-        ...userOptions.advanced?.performance,
-      },
-    },
-  };
+    ...baseConfig,
+    watch: userOptions.watch ?? true,
+    cleanOldConfigs: userOptions.cleanOldConfigs ?? true,
+    keepConfigCount: userOptions.keepConfigCount ?? 3,
+    reuseExistingConfig: userOptions.reuseExistingConfig ?? true,
+  } as Required<DIPluginOptions>;
 }
 
 /**
- * Validate plugin options and throw errors for invalid configurations
+ * Validate plugin options (wraps plugin-core validation)
  */
 export function validateDIPluginOptions(options: Required<DIPluginOptions>): void {
-  if (!options.srcDir || typeof options.srcDir !== 'string') {
-    throw new Error('DIPlugin: srcDir must be a non-empty string');
-  }
+  // Use core validation
+  validateCoreConfig(options as any);
 
-  if (!options.outputDir || typeof options.outputDir !== 'string') {
-    throw new Error('DIPlugin: outputDir must be a non-empty string');
-  }
-
-  if (typeof options.verbose !== 'boolean') {
-    throw new Error('DIPlugin: verbose must be a boolean');
-  }
-
-  if (typeof options.enableFunctionalDI !== 'boolean') {
-    throw new Error('DIPlugin: enableFunctionalDI must be a boolean');
-  }
-
-  if (typeof options.enableInterfaceResolution !== 'boolean') {
-    throw new Error('DIPlugin: enableInterfaceResolution must be a boolean');
+  // Add Vite-specific validation
+  if (typeof options.watch !== 'boolean') {
+    throw new Error('DIPlugin: watch must be a boolean');
   }
 
   if (options.keepConfigCount < 1) {
     throw new Error('DIPlugin: keepConfigCount must be at least 1');
-  }
-
-  if (!Array.isArray(options.advanced.fileExtensions)) {
-    throw new Error('DIPlugin: advanced.fileExtensions must be an array');
-  }
-
-  if (options.advanced.performance.maxConcurrency < 1) {
-    throw new Error('DIPlugin: advanced.performance.maxConcurrency must be at least 1');
   }
 }
 
@@ -178,114 +137,14 @@ export function createDIPluginPresets(): Record<string, DIPluginPreset> {
   };
 }
 
-/**
- * Detect DI patterns in source code
- */
-export function detectDIPatterns(
-  content: string,
-  options: Required<DIPluginOptions>
-): { hasDI: boolean; patterns: string[] } {
-  const patterns: string[] = [];
-  let hasDI = false;
-
-  // Check for service decorators
-  if (options.advanced.diPatterns.serviceDecorator?.test(content)) {
-    patterns.push('@Service');
-    hasDI = true;
-  }
-
-  // Check for inject decorators
-  if (options.advanced.diPatterns.injectDecorator?.test(content)) {
-    patterns.push('@Inject');
-    hasDI = true;
-  }
-
-  // Check for interface markers
-  if (options.advanced.diPatterns.interfaceMarker?.test(content)) {
-    patterns.push('Inject<T>');
-    hasDI = true;
-  }
-
-  // Additional patterns
-  if (content.includes('@Autowired') || content.includes('@AutoWire')) {
-    patterns.push('@Autowired');
-    hasDI = true;
-  }
-
-  if (content.includes('implements ') && content.includes('Interface')) {
-    patterns.push('Interface implementation');
-    hasDI = true;
-  }
-
-  return { hasDI, patterns };
-}
+// Export detectDIPatterns directly from plugin-core
+export { detectDIPatterns };
 
 /**
- * Create performance tracking utilities
+ * Create performance tracking utilities (wraps plugin-core)
  */
 export function createPerformanceTracker() {
-  const stats = {
-    transformationTime: 0,
-    scanTime: 0,
-    cacheHits: 0,
-    cacheMisses: 0,
-    errors: 0,
-  };
-
-  let transformationStart = 0;
-  let scanStart = 0;
-
-  return {
-    startTransformation() {
-      transformationStart = Date.now();
-    },
-
-    endTransformation() {
-      if (transformationStart > 0) {
-        stats.transformationTime += Date.now() - transformationStart;
-        transformationStart = 0;
-      }
-    },
-
-    startScan() {
-      scanStart = Date.now();
-    },
-
-    endScan() {
-      if (scanStart > 0) {
-        stats.scanTime += Date.now() - scanStart;
-        scanStart = 0;
-      }
-    },
-
-    recordCacheHit() {
-      stats.cacheHits++;
-    },
-
-    recordCacheMiss() {
-      stats.cacheMisses++;
-    },
-
-    recordError() {
-      stats.errors++;
-    },
-
-    getStats() {
-      return { ...stats };
-    },
-
-    reset() {
-      Object.assign(stats, {
-        transformationTime: 0,
-        scanTime: 0,
-        cacheHits: 0,
-        cacheMisses: 0,
-        errors: 0,
-      });
-      transformationStart = 0;
-      scanStart = 0;
-    },
-  };
+  return coreCreatePerformanceTracker();
 }
 
 /**
@@ -295,7 +154,7 @@ export function createDebugEndpoints(
   server: ViteDevServer,
   context: {
     options: Required<DIPluginOptions>;
-    getClassTransformer: () => any;
+    getClassTransformer: () => EnhancedDITransformer;
     getFunctionalTransformer: () => any;
     getConfigManager: () => any;
     getTransformedFiles: () => Map<string, string>;
@@ -353,9 +212,7 @@ export function createDebugEndpoints(
                       ? 'class' 
                       : impl.isInheritanceBased 
                         ? 'inheritance' 
-                        : impl.isStateBased 
-                          ? 'state' 
-                          : 'interface',
+                        : 'interface',
                   })
                 ),
                 dependencies: debugInfo.dependencies.map(
@@ -374,7 +231,7 @@ export function createDebugEndpoints(
                   isValid: false,
                   missingImplementations: [],
                   circularDependencies: [],
-                  warnings: [],
+                 // warnings: [],
                 },
                 stats: {
                   totalInterfaces: debugInfo.implementations.length,
@@ -385,9 +242,7 @@ export function createDebugEndpoints(
                       ? 'class' 
                       : impl.isInheritanceBased 
                         ? 'inheritance' 
-                        : impl.isStateBased 
-                          ? 'state' 
-                          : 'interface';
+                        : 'interface';
                     acc[type] = (acc[type] || 0) + 1;
                     return acc;
                   }, {} as Record<string, number>),
@@ -434,9 +289,7 @@ export function createDebugEndpoints(
                   ? 'class' 
                   : impl.isInheritanceBased 
                     ? 'inheritance' 
-                    : impl.isStateBased 
-                      ? 'state' 
-                      : 'interface',
+                    : 'interface',
               }))
             : [],
           dependencies: debugInfo

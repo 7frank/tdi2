@@ -1,6 +1,6 @@
 // tools/functional-di-enhanced-transformer/enhanced-marker.test.ts - ENHANCED marker tests with AST validation
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "ts-morph";
 import { EnhancedDependencyExtractor } from "./enhanced-dependency-extractor";
 import {
@@ -524,44 +524,7 @@ export function Component(props: { service: Inject<FooInterface> }) {
   });
 
   describe("Feature: State-Based and Inheritance Patterns", () => {
-    describe("Given components using state-based DI", () => {
-      it("When using AsyncState markers, Then should handle state types", () => {
-        // Given
-        const sourceFile = mockProject.createSourceFile(
-          "src/AsyncStateMarkers.tsx",
-          MARKER_FIXTURES.ASYNC_STATE_MARKERS
-        );
-        const func = sourceFile.getFunctions()[0];
-        const param = func.getParameters()[0];
-
-        // When
-        const dependencies =
-          dependencyExtractor.extractDependenciesFromParameter(
-            param,
-            sourceFile
-          );
-
-        // Then
-        expect(dependencies).toHaveLength(2);
-
-        const userState = dependencies.find(
-          (d) => d.serviceKey === "userState"
-        );
-        expect(userState?.interfaceType).toBe("AsyncState<UserServiceState>");
-        expect(userState?.sanitizedKey).toBe("AsyncState_UserServiceState");
-        expect(userState?.isOptional).toBe(false);
-
-        const productState = dependencies.find(
-          (d) => d.serviceKey === "productState"
-        );
-        expect(productState?.interfaceType).toBe(
-          "AsyncState<ProductServiceState>"
-        );
-        expect(productState?.sanitizedKey).toBe(
-          "AsyncState_ProductServiceState"
-        );
-        expect(productState?.isOptional).toBe(true);
-      });
+    describe("Given components using inheritance-based DI", () => {
 
       it("When using inheritance markers, Then should handle base class types", () => {
         // Given
@@ -586,19 +549,19 @@ export function Component(props: { service: Inject<FooInterface> }) {
           (d) => d.serviceKey === "notifications"
         );
         expect(notifications?.interfaceType).toBe(
-          "AsyncState<NotificationData[]>"
+          "NotificationService<NotificationData[]>"
         );
         expect(notifications?.sanitizedKey).toBe(
-          "AsyncState_NotificationData_Array"
+          "NotificationService_NotificationData_Array"
         );
 
         const userService = dependencies.find(
           (d) => d.serviceKey === "userService"
         );
         expect(userService?.interfaceType).toBe(
-          "BaseService<UserServiceState>"
+          "BaseService<UserData>"
         );
-        expect(userService?.sanitizedKey).toBe("BaseService_UserServiceState");
+        expect(userService?.sanitizedKey).toBe("BaseService_UserData");
       });
     });
   });

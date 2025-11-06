@@ -1,5 +1,5 @@
 // Test for lifecycle-aware transformation (no code generation)
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import { TransformationTestFramework, defineTransformationTest } from '../test-utils/transformation-test-framework';
 import * as path from "path";
 

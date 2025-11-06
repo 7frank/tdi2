@@ -20,7 +20,6 @@ export interface DependencyNode {
     isInterface: boolean;
     isClass: boolean;
     isInheritanceBased: boolean;
-    isStateBased: boolean;
     profiles?: string[];
   };
 }

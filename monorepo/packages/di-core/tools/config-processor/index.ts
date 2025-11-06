@@ -4,7 +4,7 @@ import { Project, SourceFile, ClassDeclaration, MethodDeclaration, Decorator } f
 import type { ConfigurationMetadata, BeanMetadata, BeanParameterMetadata } from '../../src/types';
 
 export interface ConfigProcessorOptions {
-  srcDir: string;
+  scanDirs: string[];
   verbose?: boolean;
 }
 
@@ -22,6 +22,14 @@ export class ConfigurationProcessor {
       tsConfigFilePath: './tsconfig.json',
       useInMemoryFileSystem: false
     });
+
+    // Add source files from ALL scan directories
+    for (const dir of options.scanDirs) {
+      this.project.addSourceFilesAtPaths(`${dir}/**/*.{ts,tsx}`);
+      if (options.verbose) {
+        console.log(`📂 ConfigurationProcessor: Added source files from ${dir}`);
+      }
+    }
   }
 
   /**

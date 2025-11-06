@@ -20,3 +20,19 @@ We have a quick list of common questions to get you started engaging with this p
 
 - Publish to npm
   bun changeset publish
+
+**OR** with the new and fixed approach it should be
+
+```
+cd monorepo
+bun run 1-changeset
+bun run 2-version
+bun run 3-release
+```
+
+if unsure before publishing you can check whats built after running step 2 in each package
+
+```
+bun pm pack
+tar -xOf *.tgz package/package.json
+```

@@ -1,6 +1,6 @@
 // tools/__tests__/configuration-bean.test.ts - Tests for @Configuration and @Bean decorators
 
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Project } from 'ts-morph';
 import { ConfigurationProcessor } from '../config-processor/index';
 import { BeanFactoryGenerator } from '../config-processor/bean-factory-generator';
@@ -30,7 +30,7 @@ describe('@Configuration and @Bean Integration', () => {
 
   beforeEach(() => {
     configProcessor = new ConfigurationProcessor({
-      srcDir: './test-src',
+      scanDirs: ['./test-src'],
       verbose: false
     });
     

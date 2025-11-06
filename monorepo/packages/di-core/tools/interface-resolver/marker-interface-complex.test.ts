@@ -1,6 +1,6 @@
 // tools/functional-di-enhanced-transformer/enhanced-marker.test.ts - ENHANCED marker tests with AST validation
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "ts-morph";
 import { EnhancedDependencyExtractor } from "./enhanced-dependency-extractor";
 import { ADDITIONAL_MARKER_FIXTURES } from "./fixtures/marker-approach";

@@ -14,20 +14,28 @@ import {
 import type { SharedTypeResolver, TypeResolutionRequest } from './SharedTypeResolver';
 import type { 
   InterfaceImplementation,
-  InterfaceResolverInterface
+  InterfaceResolverInterface,
+  DependencyBase
 } from '../interface-resolver/interface-resolver-types';
 import { RecursiveInjectExtractor, ExtractedInjectMarker } from './RecursiveInjectExtractor';
 import * as path from 'path';
 
-export interface ExtractedDependency {
-  serviceKey: string;           // Parameter/property name
-  interfaceType: string;        // Original interface type string
-  sanitizedKey: string;         // Sanitized key for DI lookup
-  isOptional: boolean;
+/**
+ * Extended dependency information used during extraction and resolution.
+ * Extends DependencyBase with extraction-specific metadata.
+ */
+export interface ExtractedDependency extends DependencyBase {
+  /** Parameter/property name in the source code */
+  serviceKey: string;
+  /** Resolved implementation if available */
   resolvedImplementation?: InterfaceImplementation;
+  /** How this dependency was discovered */
   extractionSource: 'decorator' | 'marker-type' | 'parameter-type';
-  sourceLocation: string;       // For debugging
-  propertyPath?: string[];      // Path to nested property (e.g., ['services', 'api'])
+  /** Source location for debugging */
+  sourceLocation: string;
+  /** Path to nested property (e.g., ['services', 'api']) */
+  propertyPath?: string[];
+  /** Additional extraction metadata */
   metadata?: {
     parameterIndex?: number;
     propertyName?: string;
@@ -45,7 +53,7 @@ export interface DependencyExtractionContext {
 
 export interface SharedDependencyExtractorOptions {
   verbose?: boolean;
-  srcDir?: string;
+  scanDirs?: string[]; // Preferred: array of directories
 }
 
 export class SharedDependencyExtractor {
@@ -57,7 +65,7 @@ export class SharedDependencyExtractor {
   ) {
     this.recursiveExtractor = new RecursiveInjectExtractor({
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir
+      scanDirs: this.options.scanDirs
     });
   }
 
@@ -473,8 +481,6 @@ export class SharedDependencyExtractor {
     for (const dep of dependencies) {
       if (!dep.resolvedImplementation) {
         groups.notFound.push(dep);
-      } else if (dep.resolvedImplementation.isStateBased) {
-        groups.state.push(dep);
       } else if (dep.resolvedImplementation.isInheritanceBased) {
         groups.inheritance.push(dep);
       } else if (dep.resolvedImplementation.isClassBased) {

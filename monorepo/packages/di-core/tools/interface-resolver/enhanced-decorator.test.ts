@@ -1,6 +1,6 @@
 // tools/interface-resolver/enhanced-decorator.test.ts - COMPLETE with comprehensive coverage
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "ts-morph";
 import { EnhancedInterfaceExtractor } from "./enhanced-interface-extractor";
 import { EnhancedServiceValidator } from "./enhanced-service-validator";
@@ -294,80 +294,7 @@ describe("Enhanced Decorator Approach - Comprehensive Tests", () => {
     });
   });
 
-  describe("Feature: AsyncState Inheritance Pattern", () => {
-    describe("Given class extending AsyncState with state type", () => {
-      it("When AsyncState pattern detected, Then should extract state information via AST", () => {
-        // Given
-        const sourceFile = mockProject.createSourceFile(
-          "src/AsyncStateInheritance.ts",
-          DECORATOR_FIXTURES.ASYNC_STATE_INHERITANCE
-        );
-        const classDecl = sourceFile.getClasses()[1]; // UserService
 
-        // When
-        const extendedClasses = interfaceExtractor.getExtendedClasses(classDecl);
-
-        // Then
-        expect(extendedClasses).toHaveLength(1);
-        expect(extendedClasses[0].name).toBe("AsyncState");
-        expect(extendedClasses[0].fullType).toBe("AsyncState<UserServiceState>");
-        expect(extendedClasses[0].isGeneric).toBe(true);
-        expect(extendedClasses[0].typeParameters).toEqual(["UserServiceState"]);
-      });
-
-      it("When sanitizing AsyncState key, Then should handle state type correctly", () => {
-        // Given
-        const asyncStateType = "AsyncState<UserServiceState>";
-
-        // When
-        const sanitizedKey = keySanitizer.sanitizeKey(asyncStateType);
-
-        // Then
-        expect(sanitizedKey).toBe("AsyncState_UserServiceState");
-      });
-
-      it("When checking for AsyncState pattern, Then should match via pattern matching", () => {
-        // Given
-        const sourceFile = mockProject.createSourceFile(
-          "src/AsyncStateInheritance.ts",
-          DECORATOR_FIXTURES.ASYNC_STATE_INHERITANCE
-        );
-        const classDecl = sourceFile.getClasses()[1]; // UserService
-
-        // When
-        const matchesAsyncState = interfaceExtractor.matchesInterfacePattern(
-          interfaceExtractor.getExtendedClasses(classDecl)[0],
-          ["AsyncState*", "*State*"]
-        );
-
-        // Then
-        expect(matchesAsyncState).toBe(true);
-      });
-    });
-  });
-
-  describe("Feature: Complex State Service Pattern", () => {
-    describe("Given state service with complex state types", () => {
-      it("When state type contains object structures, Then should handle via AST", () => {
-        // Given
-        const sourceFile = mockProject.createSourceFile(
-          "src/ComplexStateService.ts",
-          DECORATOR_FIXTURES.COMPLEX_STATE_SERVICE
-        );
-        const classDecl = sourceFile.getClasses()[1]; // CartService
-
-        // When
-        const extendedClasses = interfaceExtractor.getExtendedClasses(classDecl);
-
-        // Then
-        expect(extendedClasses).toHaveLength(1);
-        expect(extendedClasses[0].name).toBe("AsyncState");
-        expect(extendedClasses[0].fullType).toBe("AsyncState<CartState>");
-        expect(extendedClasses[0].isGeneric).toBe(true);
-        expect(extendedClasses[0].typeParameters).toEqual(["CartState"]);
-      });
-    });
-  });
 
   describe("Feature: Service Dependencies with @Inject", () => {
     describe("Given constructor parameters with @Inject decorators", () => {
@@ -724,7 +651,7 @@ export class ExtractorConfigTestService {}
         const testCases = [
           { input: "FooInterface", expected: "FooInterface" },
           { input: "FooInterface<string, number>", expected: "FooInterface_string_number" },
-          { input: "AsyncState<UserServiceState>", expected: "AsyncState_UserServiceState" },
+          { input: "BaseService<UserServiceState>", expected: "BaseService_UserServiceState" },
           { input: "Repository<User>", expected: "Repository_User" },
           { input: "CacheInterface<Map<string, Data>>", expected: "CacheInterface_Map_string_Data" }
         ];
@@ -739,7 +666,7 @@ export class ExtractorConfigTestService {}
       it("When handling inheritance keys, Then should use appropriate sanitization", () => {
         // Given
         const testCases = [
-          "AsyncState<UserServiceState>",
+          "BaseService<UserServiceState>",
           "BaseService<ConfigData>",
           "Repository<ProductEntity>"
         ];
@@ -793,14 +720,14 @@ export class ExtractorConfigTestService {}
         // Given
         const sourceFile = mockProject.createSourceFile(
           "src/RegexPatternTest.ts",
-          DECORATOR_FIXTURES.ASYNC_STATE_INHERITANCE
+          DECORATOR_FIXTURES.BASE_SERVICE_INHERITANCE
         );
         const classDecl = sourceFile.getClasses()[1]; // UserService
         const extendedClasses = interfaceExtractor.getExtendedClasses(classDecl);
 
         // When & Then
-        expect(interfaceExtractor.matchesInterfacePattern(extendedClasses[0], ["^Async.*State.*$"])).toBe(true);
-        expect(interfaceExtractor.matchesInterfacePattern(extendedClasses[0], ["^Base.*$"])).toBe(false);
+        expect(interfaceExtractor.matchesInterfacePattern(extendedClasses[0], ["^Base.*Service.*$"])).toBe(true);
+        expect(interfaceExtractor.matchesInterfacePattern(extendedClasses[0], ["^Async.*$"])).toBe(false);
       });
     });
   });
@@ -1316,24 +1243,24 @@ export class UserRepository implements Repository<UserEntity> {
         expect(serviceValidator.hasInjectDecorator(params[0])).toBe(true);
       });
 
-      it("When using Factory pattern with AsyncState, Then should handle complex state inheritance", () => {
+      it("When using Factory pattern with BaseService, Then should handle complex service inheritance", () => {
         // Given
         const sourceFile = mockProject.createSourceFile(
-          "src/FactoryWithState.ts",
+          "src/FactoryWithService.ts",
           `
 import { Service, Inject } from "@tdi2/di-core/decorators";
 
-export class AsyncState<T> {
-  protected state: T | null = null;
-  getState(): T | null { return this.state; }
-  setState(newState: T): void { this.state = newState; }
+export class BaseService<T> {
+  protected data: T | null = null;
+  getData(): T | null { return this.data; }
+  setData(newData: T): void { this.data = newData; }
 }
 
 export interface Factory<T> {
   create(...args: any[]): T;
 }
 
-export interface ProductState {
+export interface ProductData {
   products: any[];
   loading: boolean;
   error?: string;
@@ -1344,7 +1271,7 @@ export interface ProductFactory extends Factory<any> {
 }
 
 @Service()
-export class ProductService extends AsyncState<ProductState> implements ProductFactory {
+export class ProductService extends BaseService<ProductData> implements ProductFactory {
   constructor(@Inject() private logger: any) {
     super();
   }
@@ -1363,8 +1290,8 @@ export class ProductService extends AsyncState<ProductState> implements ProductF
 
         // Then
         expect(extendedClasses).toHaveLength(1);
-        expect(extendedClasses[0].name).toBe("AsyncState");
-        expect(extendedClasses[0].typeParameters).toEqual(["ProductState"]);
+        expect(extendedClasses[0].name).toBe("BaseService");
+        expect(extendedClasses[0].typeParameters).toEqual(["ProductData"]);
         
         expect(implementedInterfaces).toHaveLength(1);
         expect(implementedInterfaces[0].name).toBe("ProductFactory");
@@ -1441,17 +1368,17 @@ export class UserCommandHandler implements Command<string> {
 
   describe("Feature: Cross-Feature Integration Tests", () => {
     describe("Given services using all DI features together", () => {
-      it("When service combines interfaces, inheritance, state, and dependencies, Then should handle complete integration", () => {
+      it("When service combines interfaces, inheritance, and dependencies, Then should handle complete integration", () => {
         // Given
         const sourceFile = mockProject.createSourceFile(
           "src/FullIntegration.ts",
           `
 import { Service, Inject } from "@tdi2/di-core/decorators";
 
-export class AsyncState<T> {
-  protected state: T | null = null;
-  getState(): T | null { return this.state; }
-  setState(newState: T): void { this.state = newState; }
+export class BaseService<T> {
+  protected data: T | null = null;
+  getData(): T | null { return this.data; }
+  setData(newData: T): void { this.data = newData; }
 }
 
 export interface Repository<T> {
@@ -1474,7 +1401,7 @@ export interface UserData {
   email: string;
 }
 
-export interface UserServiceState {
+export interface UserServiceData {
   currentUser?: UserData;
   users: UserData[];
   loading: boolean;
@@ -1482,7 +1409,7 @@ export interface UserServiceState {
 
 @Service()
 export class UserService 
-  extends AsyncState<UserServiceState> 
+  extends BaseService<UserServiceData> 
   implements Repository<UserData> {
   
   constructor(
@@ -1490,7 +1417,7 @@ export class UserService
     @Inject() private notifications: NotificationInterface
   ) {
     super();
-    this.setState({
+    this.setData({
       users: [],
       loading: false
     });
@@ -1520,8 +1447,8 @@ export class UserService
         expect(validation.hasServiceDecorator).toBe(true);
         
         expect(heritage.extends).toHaveLength(1);
-        expect(heritage.extends[0].name).toBe("AsyncState");
-        expect(heritage.extends[0].typeParameters).toEqual(["UserServiceState"]);
+        expect(heritage.extends[0].name).toBe("BaseService");
+        expect(heritage.extends[0].typeParameters).toEqual(["UserServiceData"]);
         
         expect(heritage.implements).toHaveLength(1);
         expect(heritage.implements[0].name).toBe("Repository");
