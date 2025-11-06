@@ -488,7 +488,7 @@ export class EnhancedDITransformer {
   }
 
   // Enhanced debug methods using shared logic
-  async getDebugInfo(): Promise<any> {
+  async getDebugInfo() {
     try {
       const implementations = this.interfaceResolver.getInterfaceImplementations();
       const dependencies = this.interfaceResolver.getServiceDependencies();

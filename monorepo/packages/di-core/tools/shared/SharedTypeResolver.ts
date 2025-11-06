@@ -1,6 +1,6 @@
 // tools/shared/SharedTypeResolver.ts
 
-import type { InterfaceImplementation,InterfaceResolverInterface } from "../interface-resolver/interface-resolver-types";
+import type { InterfaceImplementation,InterfaceResolverInterface, RegistrationType } from "../interface-resolver/interface-resolver-types";
 
 
 import { KeySanitizer } from "../interface-resolver/key-sanitizer";
@@ -17,7 +17,7 @@ export interface TypeResolutionResult {
   interfaceType: string;        // Original type
   implementation?: InterfaceImplementation;
   sanitizedKey: string;         // "Bar_Baz" 
-  resolutionStrategy: 'interface' | 'inheritance' | 'state' | 'class' | 'not-found';
+  resolutionStrategy: RegistrationType | 'not-found';
   error?: string;
 }
 
@@ -84,7 +84,7 @@ export class SharedTypeResolver {
           interfaceType,
           implementation,
           sanitizedKey,
-          resolutionStrategy: this.determineStrategy(implementation)
+          resolutionStrategy: implementation.registrationType
         };
       }
 
@@ -106,14 +106,6 @@ export class SharedTypeResolver {
     }
   }
 
-  /**
-   * Determine which strategy was used for resolution
-   */
-  private determineStrategy(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'class' {
-    if (implementation.isInheritanceBased) return 'inheritance';
-    if (implementation.isClassBased) return 'class';
-    return 'interface';
-  }
 
   /**
    * Check if a type is resolvable without actually resolving it

@@ -2,6 +2,12 @@
 
 ## ordered log (for production release)
 
+### decide what to do with debug endpoints monorepo/packages/vite-plugin-di/src/utils.ts
+
+currently we dont use them
+
+server.middlewares.use('/\_di_interfaces',
+
 ### ❌ auto discover packages
 
 > currently we can add scanDirs manually, while this is working it could be better to have a `autodiscover` packages flag
@@ -162,11 +168,11 @@ either way having smaller working changes while refactoring should improve adopt
   - which we should use as s.P.o.T.
   - di-debug should rely/build on it
 
-#### integrated interface resolver too cluttered
+#### ❌ integrated interface resolver too cluttered
 
 - [✅] "AsyncState" "isStateBased"
 
-- [❌]instead
+- [✅]instead
   - if (implementation.isInheritanceBased) return 'inheritance';
   - if (implementation.isClassBased) return 'class';
   - have a inerhitanceType: 'inheritance' | 'class' |... or something totally else
@@ -179,7 +185,7 @@ either way having smaller working changes while refactoring should improve adopt
   >
   >     this.interfaces.set(uniqueKey, implementation);
 
-- [❌] "byStrategry" cant we unify the strategies
+- [✅] "byStrategry" cant we unify the strategies
 
 > private determineStrategy(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'class' {
 > if (implementation.isInheritanceBased) return 'inheritance';

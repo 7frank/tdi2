@@ -421,7 +421,7 @@ export class IntegratedInterfaceResolver {
       // Check for exact stored key match
       if (storedKey === sanitizedKey || storedKey === interfaceType) {
         if (this.options.verbose) {
-          console.log(`✅ Exact stored key match: ${implementation.implementationClass} (${this.getRegistrationType(implementation)})`);
+          console.log(`✅ Exact stored key match: ${implementation.implementationClass} (${implementation.registrationType})`);
         }
         return implementation;
       }
@@ -429,7 +429,7 @@ export class IntegratedInterfaceResolver {
       // For location-based keys, check if the stored key starts with the requested location-based key
       if (isLocationBasedRequest && storedKey.startsWith(sanitizedKey + '_')) {
         if (this.options.verbose) {
-          console.log(`✅ Location-based key prefix match: ${implementation.implementationClass} (${this.getRegistrationType(implementation)})`);
+          console.log(`✅ Location-based key prefix match: ${implementation.implementationClass} (${implementation.registrationType})`);
         }
         return implementation;
       }
@@ -437,7 +437,7 @@ export class IntegratedInterfaceResolver {
       // Check sanitizedKey match (for backward compatibility)
       if (implementation.sanitizedKey === sanitizedKey || implementation.sanitizedKey === interfaceType) {
         if (this.options.verbose) {
-          console.log(`✅ Sanitized key match: ${implementation.implementationClass} (${this.getRegistrationType(implementation)})`);
+          console.log(`✅ Sanitized key match: ${implementation.implementationClass} (${implementation.registrationType})`);
         }
         return implementation;
       }
@@ -513,12 +513,6 @@ export class IntegratedInterfaceResolver {
     }
 
     return undefined;
-  }
-
-  private getRegistrationType(implementation: InterfaceImplementation): string {
-    if (implementation.isInheritanceBased) return 'inheritance';
-    if (implementation.isClassBased) return 'class';
-    return 'interface';
   }
 
   // Enhanced validation with comprehensive checks
@@ -625,7 +619,7 @@ export class IntegratedInterfaceResolver {
     };
 
     for (const [, impl] of this.interfaces) {
-      const type = this.getRegistrationType(impl);
+      const type = impl.registrationType;
       (registrationTypes as any)[type]++;
     }
 

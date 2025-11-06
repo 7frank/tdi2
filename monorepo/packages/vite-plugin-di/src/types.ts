@@ -80,7 +80,8 @@ export interface ValidationResult {
   isValid: boolean;
   missingImplementations: string[];
   circularDependencies: string[];
-  warnings: string[];
+ // TODO do we want to show warnings
+ // warnings: string[];
 }
 
 export interface InterfaceResolutionInfo {

@@ -270,7 +270,7 @@ export class SharedServiceRegistry {
       dependencies: filteredDependencies,
       factory: this.generateFactoryName(implementation.implementationClass),
       filePath: implementation.filePath,
-      registrationType: this.determineRegistrationType(implementation),
+      registrationType: implementation.registrationType,
       metadata: {
         isGeneric: implementation.isGeneric,
         typeParameters: implementation.typeParameters,
@@ -304,14 +304,6 @@ export class SharedServiceRegistry {
     this.dependencyGraph.set(registration.token, registration.dependencies);
   }
 
-  /**
-   * Determine registration type from implementation
-   */
-  private determineRegistrationType(implementation: InterfaceImplementation): 'interface' | 'inheritance' | 'class' {
-    if (implementation.isInheritanceBased) return 'inheritance';
-    if (implementation.isClassBased) return 'class';
-    return 'interface';
-  }
 
   /**
    * Generate factory function name
