@@ -1,5 +1,11 @@
 # @tdi2/di-core
 
+## 3.3.0
+
+### Minor Changes
+
+- fix regression that prevents proper workspace dependency resolution when publishing package
+
 ## 3.2.0
 
 ### Minor Changes

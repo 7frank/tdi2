@@ -38,7 +38,7 @@ export function MultipleRestMixedDI(
       <h1>{id} v{version}</h1>
       <p>Theme: {theme}</p>
       <p>Cache TTL: {ttl}</p>
-      <div>Other services: {JSON.stringify(otherServices)}</div>
+      <div>Rest Props: {Object.keys(restProps).length} additional props</div>
       <div>UI Rest: {JSON.stringify(uiRest)}</div>
       <div>Cache Rest: {JSON.stringify(cacheRest)}</div>
       <div>Config Rest: {JSON.stringify(configRest)}</div>

@@ -1,5 +1,5 @@
 // [DI Edge-Case] Interface Name Collision Integration Test
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "vitest";
 import { IntegratedInterfaceResolver } from "../interface-resolver/integrated-interface-resolver";
 import { Project } from "ts-morph";
 

@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { diEnhancedPlugin } from "@tdi2/vite-plugin-di";
+import Inspect from 'vite-plugin-inspect'
+
 
 // this is actually required for class based @Inject decroator to work properly with vite
 // the basic example does not require it in its current state though
@@ -19,6 +21,7 @@ export default defineConfig({
       keepConfigCount: 3,
     }),
     react(),
+    Inspect()
   ],
 
   optimizeDeps: {

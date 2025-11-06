@@ -1,5 +1,60 @@
 # 7.11. reactjs meeup leipzig
 
+lets ahve these as one liners before we talk about the focus
+
+> just one more hook
+> just one more framework, u"ll see functional is much more composable
+
+## agenda
+
+- first "show dont tell"
+- then reasons why i think this is good
+- short break
+- then later again coding session
+
+## Focus of the presentation
+
+!!! we need to show that it is simple and compatible to existing react stuff otherwise the buy in and sceptisism will prevail despite the architectural benetifs
+
+!!! what also would work is something where code needs to be reusable like with astro where you ssr some stuff in language A for speed and use react somewhere else
+
+
+> Note
+> classes are a vehicle for DI not the reason
+> reducing boilerplate for some characters and trading that with increase in cognitive load ... is "copium" of the react ecosystem (we are so modern / we are functional)
+> react helps new developers to get small things done easily, but doesnt help them when things get harder, but instead teaches the "GIT good" and leaving developers alone with the cognitive load and uncertainty
+
+### multiple disclaimers
+
+- this talk is not about classes vs functions
+- ...
+
+### decoupling => [feature matrix](../../examples/comparision/FeatureMatrix.md)
+
+### cognitive load
+
+https://chatgpt.com/c/68fc8d5d-be14-8333-b9ea-32c7744b110d
+
+#### items that react trades
+
+https://chatgpt.com/c/68fc8d5d-be14-8333-b9ea-32c7744b110d
+
+#### boiler plate reduction ad absurdum
+
+we trade some token with cognitive load
+
+https://chatgpt.com/c/68fc8d5d-be14-8333-b9ea-32c7744b110d
+
+#### compare classical vs react comprehension of new code example
+
+https://chatgpt.com/c/68fc8d5d-be14-8333-b9ea-32c7744b110d
+
+Compare comprehension steps for an auth/authorization utility implemented as a React Hook versus a classical class. Focus: what to read, where to jump, which invariants to verify, typical traps.
+
+Target question to resolve
+
+#
+
 https://www.meetup.com/de-DE/reactjs-meetup-leipzig/
 
 ##

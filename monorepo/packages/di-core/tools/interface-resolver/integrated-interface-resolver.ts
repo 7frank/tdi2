@@ -28,7 +28,8 @@ import type {
 
 export interface IntegratedResolverOptions {
   verbose?: boolean;
-  srcDir?: string;
+  srcDir?: string; // Deprecated - use scanDirs
+  scanDirs?: string[];
   enableInheritanceDI?: boolean;
   enableStateDI?: boolean;
   sourceConfig?: Partial<DISourceConfiguration>;
@@ -48,14 +49,18 @@ export class IntegratedInterfaceResolver {
   private keySanitizer: KeySanitizer;
 
   constructor(options: IntegratedResolverOptions = {}) {
+    // Support both scanDirs (new) and srcDir (backward compat)
+    const scanDirs = options.scanDirs || (options.srcDir ? [options.srcDir] : ['./src']);
+
     this.options = {
       verbose: false,
-      srcDir: "./src",
+      srcDir: scanDirs[0], // Keep for backward compat
+      scanDirs: scanDirs,
       enableInheritanceDI: true,
       enableStateDI: true,
       sourceConfig: {},
       ...options,
-    };
+    } as Required<IntegratedResolverOptions>;
 
     this.project = new Project({
       tsConfigFilePath: "./tsconfig.json",
@@ -89,10 +94,11 @@ export class IntegratedInterfaceResolver {
     this.dependencies.clear();
 
     try {
-      // Add source files
-      this.project.addSourceFilesAtPaths(
-        `${this.options.srcDir}/**/*.{ts,tsx}`
-      );
+      // Add source files from all scan directories
+      const scanDirs = this.options.scanDirs || [this.options.srcDir];
+      for (const dir of scanDirs) {
+        this.project.addSourceFilesAtPaths(`${dir}/**/*.{ts,tsx}`);
+      }
 
       // First pass: collect all interface implementations with enhanced extraction
       await this.collectInterfaceImplementationsEnhanced();

@@ -43,11 +43,17 @@ export class DebugFileGenerator {
    * Generate debug file for a single transformed component
    */
   private async generateSingleDebugFile(
-    originalPath: string, 
-    transformedContent: string, 
+    originalPath: string,
+    transformedContent: string,
     transformedDir: string
   ): Promise<void> {
-    const relativePath = path.relative(path.resolve(this.options.srcDir!), originalPath);
+    // Find which scanDir this file belongs to for correct relative path
+    const scanDirs = this.options.scanDirs || ["./src"];
+    const absolutePath = path.resolve(originalPath);
+    const matchingScanDir = scanDirs.find(dir => absolutePath.startsWith(path.resolve(dir)));
+    const baseDir = matchingScanDir ? path.resolve(matchingScanDir) : path.resolve(scanDirs[0]);
+
+    const relativePath = path.relative(baseDir, originalPath);
     const debugPath = path.join(transformedDir, relativePath.replace(/\.(ts|tsx)$/, '.di-transformed.$1'));
     
     const debugDir = path.dirname(debugPath);
@@ -208,9 +214,15 @@ ${analysis.warnings.map(warning => ` * - ${warning}`).join('\n')}
       const analysis = this.analyzeTransformedContent(content);
       totalHooks += analysis.diHooksCount;
       totalServices += analysis.servicesCount;
-      
+
+      // Find which scanDir this file belongs to for correct relative path
+      const scanDirs = this.options.scanDirs || ["./src"];
+      const absolutePath = path.resolve(filePath);
+      const matchingScanDir = scanDirs.find(dir => absolutePath.startsWith(path.resolve(dir)));
+      const baseDir = matchingScanDir ? path.resolve(matchingScanDir) : path.resolve(scanDirs[0]);
+
       fileAnalyses.push({
-        file: path.relative(this.options.srcDir!, filePath),
+        file: path.relative(baseDir, filePath),
         analysis
       });
     }

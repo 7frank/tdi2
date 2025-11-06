@@ -1,5 +1,5 @@
 // [DI Edge-Case] Interface Name Collision Test
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "vitest";
 import { CompileTimeDIContainer } from "../../src/container";
 import { Project } from "ts-morph";
 

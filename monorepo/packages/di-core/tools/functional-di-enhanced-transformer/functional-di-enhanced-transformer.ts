@@ -41,7 +41,7 @@ import { BeanFactoryGenerator } from '../config-processor/bean-factory-generator
 import type { ConfigurationMetadata } from '../../src/types';
 
 interface TransformerOptions {
-  srcDir?: string;
+  scanDirs?: string[];
   outputDir?: string;
   generateDebugFiles?: boolean;
   verbose?: boolean;
@@ -81,8 +81,11 @@ export class FunctionalDIEnhancedTransformer {
   private configurations: ConfigurationMetadata[] = [];
 
   constructor(options: TransformerOptions = {}) {
+    if (!options.scanDirs || options.scanDirs.length === 0) {
+      throw new Error('FunctionalDIEnhancedTransformer requires scanDirs option with at least one directory');
+    }
+
     this.options = {
-      srcDir: './src',
       outputDir: './src/generated',
       verbose:  false,
       enableInterfaceResolution: true,
@@ -90,8 +93,9 @@ export class FunctionalDIEnhancedTransformer {
       enableStateDI: true,
       customSuffix: undefined,
       generateDebugFiles: false,
-      ...options
-    };
+      ...options,
+      scanDirs: options.scanDirs
+    } as any;
 
     this.project = new Project({
       tsConfigFilePath: './tsconfig.json',
@@ -100,17 +104,17 @@ export class FunctionalDIEnhancedTransformer {
 
     // Initialize ConfigManager
     this.configManager = new ConfigManager({
-      srcDir: this.options.srcDir,
+      scanDirs: this.options.scanDirs,
       outputDir: this.options.outputDir,
       enableFunctionalDI: true,
       verbose: this.options.verbose,
       customSuffix: this.options.customSuffix
     });
 
-    // Initialize InterfaceResolver
+    // Initialize InterfaceResolver with all scan directories
     this.interfaceResolver = new IntegratedInterfaceResolver({
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir,
+      scanDirs: this.options.scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
       enableStateDI: this.options.enableStateDI
     });
@@ -122,7 +126,7 @@ export class FunctionalDIEnhancedTransformer {
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
       verbose: this.options.verbose,
-      srcDir: this.options.srcDir
+      scanDirs: this.options.scanDirs
     });
 
     this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
@@ -140,7 +144,7 @@ export class FunctionalDIEnhancedTransformer {
 
     // Initialize functional-specific components
     const functionalOptions = {
-      srcDir: this.options.srcDir,
+      scanDirs: this.options.scanDirs,
       outputDir: this.options.outputDir,
       generateDebugFiles: options.generateDebugFiles,
       verbose: this.options.verbose
@@ -151,7 +155,7 @@ export class FunctionalDIEnhancedTransformer {
     
     // Initialize configuration processing components
     this.configurationProcessor = new ConfigurationProcessor({
-      srcDir: this.options.srcDir,
+      scanDirs: this.options.scanDirs,
       verbose: this.options.verbose
     });
     
@@ -296,10 +300,15 @@ export class FunctionalDIEnhancedTransformer {
     }
 
     const pattern = "/**/*.{ts,tsx}";
-    this.project.addSourceFilesAtPaths(`${this.options.srcDir}${pattern}`);
+
+    // Add source files from all scan directories
+    const scanDirs = this.options.scanDirs
+    for (const dir of scanDirs) {
+      this.project.addSourceFilesAtPaths(`${dir}${pattern}`);
+    }
 
     if (this.options.verbose) {
-      console.log(`📂 Scanned source files in ${this.options.srcDir} with pattern: ${pattern}`);
+      console.log(`📂 Scanned source files in ${scanDirs.join(', ')} with pattern: ${pattern}`);
       console.log(`🔍 Total source files: ${this.project.getSourceFiles().length}`);
     }
 

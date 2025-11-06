@@ -1,10 +1,10 @@
-import { defineConfig } from "tsup";
+import { defineConfig, Format } from "tsup";
 
 const examples = {
   entry: [
     "tools/functional-di-enhanced-transformer/__tests__/__fixtures__/*.ts*",
   ],
-  format: ["esm"],
+  format: ["esm"] as Format[],
   dts: false,
   outDir: "dist/examples",
   splitting: false,
@@ -21,7 +21,7 @@ const examples = {
     // options.define = {
     //   'process.env.NODE_ENV': '"development"'
     // };
-  }
+  },
 };
 
 const entries = [
@@ -35,7 +35,7 @@ const entries = [
   .map((name) => "src/" + name)
   .map((it) => ({
     entry: [it],
-    format: ["esm"],
+    format: ["esm"] as Format[],
     dts: true,
     outDir: "dist",
     clean: true,
@@ -49,10 +49,10 @@ export default defineConfig([
   ...entries,
   {
     entry: ["tools/index.ts"],
-    format: ["esm"],
+    format: ["esm", "cjs"],
     dts: true,
     outDir: "dist/tools",
     clean: false,
-    sourcemap: true
+    sourcemap: true,
   },
 ]);

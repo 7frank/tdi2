@@ -6,6 +6,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { glob } from "glob";
 import { diffLines, createTwoFilesPatch } from "diff";
+import {expect} from "vitest"
 
 export interface IgnorePattern {
   pattern: RegExp;
@@ -103,7 +104,7 @@ export class TransformationTestFramework {
 
     // Initialize transformer
     this.transformer = new FunctionalDIEnhancedTransformer({
-      srcDir: "./src",
+      scanDirs: ["./src"],
       outputDir: "./src/generated",
       verbose: this.options.verbose || false,
     });
