@@ -1,11 +1,30 @@
 import { defineConfig, Format } from "tsup";
+import { promises as fs } from "fs";
+import { join } from "path";
 
-const onSuccess =
-  (name: string, ms = 10000) =>
+async function waitFor(file: string, timeoutMs = 30000, intervalMs = 100) {
+  const start = Date.now();
+  for (;;) {
+    try {
+      console.log("exists?",file)
+      await fs.access(file);
+      return;
+    } catch {}
+    if (Date.now() - start > timeoutMs) {
+      throw new Error(`Timeout waiting for ${file}`);
+    }
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+}
+
+const onSuccessWaitFor =
+  (name: string, files: string[], timeoutMs = 30000) =>
   async () => {
-    console.log("Built", name, " waiting for workers to finish");
-    await new Promise((resolve) => setTimeout(resolve, ms));
-    console.log(name, "done waiting");
+    console.log("Built", name, "waiting for declaration files");
+    for (const f of files) {
+      await waitFor(f, timeoutMs);
+    }
+    console.log(name, "declaration files ready");
   };
 
 const examples = {
@@ -25,12 +44,7 @@ const examples = {
     // Modify esbuild config here
     //options.minify = false;
     options.bundle = true;
-    // options.external = ['react', 'react-dom'];
-    // options.define = {
-    //   'process.env.NODE_ENV': '"development"'
-    // };
-  },
-  onSuccess: onSuccess("examples"),
+  }
 };
 
 const entries = [
@@ -53,7 +67,9 @@ export default defineConfig([
     skipNodeModulesBundle: true,
     external: ["react", "react-dom"],
     sourcemap: true,
-    onSuccess: onSuccess("entries"),
+    onSuccess: onSuccessWaitFor("entries", [
+      join(process.cwd(), "dist", "index.d.ts"),
+    ]),
   },
   examples,
   {
@@ -63,6 +79,8 @@ export default defineConfig([
     outDir: "dist/tools",
     clean: false,
     sourcemap: true,
-    onSuccess: onSuccess("tools"),
+    onSuccess: onSuccessWaitFor("tools", [
+      join(process.cwd(), "dist", "tools", "index.d.ts"),
+    ]),
   },
 ]);
