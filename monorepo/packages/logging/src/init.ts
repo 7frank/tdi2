@@ -1,93 +1,101 @@
 // @tdi2/logging - Initialization and convenience functions
 
-import type { LoggerConfig, LogLevel, ConsoleMonkeyPatchConfig, LogContext } from './types';
-import { TDILoggerService } from './tdi-logger-service';
+import type {
+  LoggerConfig,
+  LogLevel,
+  ConsoleMonkeyPatchConfig,
+  LogContext,
+} from "./types";
+import { TDILoggerService, type LoggerInterface } from "./tdi-logger-service";
 
 // Environment detection
-const getEnvironment = (): 'development' | 'production' | 'test' => {
-  if (typeof process !== 'undefined') {
-    if (process.env.NODE_ENV === 'production') return 'production';
-    if (process.env.NODE_ENV === 'test') return 'test';
+const getEnvironment = (): "development" | "production" | "test" => {
+  if (typeof process !== "undefined") {
+    if (process.env.NODE_ENV === "production") return "production";
+    if (process.env.NODE_ENV === "test") return "test";
   }
-  
+
   // Browser detection
-  if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost' || window.location.hostname.includes('dev')) {
-      return 'development';
+  if (typeof window !== "undefined") {
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname.includes("dev")
+    ) {
+      return "development";
     }
   }
-  
-  return 'development';
+
+  return "development";
 };
 
 // Configuration presets by environment
 const ENV_CONFIGS: Record<string, LoggerConfig> = {
   development: {
-    serviceName: 'tdi2-dev',
-    serviceVersion: '1.0.0-dev',
+    serviceName: "tdi2-dev",
+    serviceVersion: "1.0.0-dev",
     enableDiagnostics: true,
-    diagnosticLevel: 'DEBUG',
+    diagnosticLevel: "DEBUG",
     consoleMonkeyPatch: {
-      log: 'otel',
-      debug: 'otel',
-      info: 'otel',
-      warn: 'both',
-      error: 'both',
-      table: 'otel'
+      log: "otel",
+      debug: "otel",
+      info: "otel",
+      warn: "both",
+      error: "both",
+      table: "otel",
     },
     resource: {
-      'deployment.environment': 'development',
-      'service.namespace': 'tdi2',
-      'service.instance.id': `dev-${Date.now()}`
+      "deployment.environment": "development",
+      "service.namespace": "tdi2",
+      "service.instance.id": `dev-${Date.now()}`,
     },
-    processors: [{ type: 'console' }]
+    processors: [{ type: "console" }],
   },
-  
+
   production: {
-    serviceName: 'tdi2-prod',
-    serviceVersion: '1.0.0',
+    serviceName: "tdi2-prod",
+    serviceVersion: "1.0.0",
     enableDiagnostics: false,
-    diagnosticLevel: 'ERROR',
+    diagnosticLevel: "ERROR",
     consoleMonkeyPatch: {
-      log: 'otel',
-      debug: 'otel',
-      info: 'otel',
-      warn: 'both',
-      error: 'both',
-      table: 'otel'
+      log: "otel",
+      debug: "otel",
+      info: "otel",
+      warn: "both",
+      error: "both",
+      table: "otel",
     },
     resource: {
-      'deployment.environment': 'production',
-      'service.namespace': 'tdi2',
-      'service.instance.id': `prod-${Date.now()}`
+      "deployment.environment": "production",
+      "service.namespace": "tdi2",
+      "service.instance.id": `prod-${Date.now()}`,
     },
-    processors: [{ type: 'console' }]
+    processors: [{ type: "console" }],
   },
-  
+
   test: {
-    serviceName: 'tdi2-test',
-    serviceVersion: '1.0.0-test',
+    serviceName: "tdi2-test",
+    serviceVersion: "1.0.0-test",
     enableDiagnostics: false,
-    diagnosticLevel: 'NONE',
+    diagnosticLevel: "NONE",
     consoleMonkeyPatch: {
-      log: 'otel',
-      debug: 'otel',
-      info: 'otel',
-      warn: 'otel',
-      error: 'otel',
-      table: 'otel'
+      log: "otel",
+      debug: "otel",
+      info: "otel",
+      warn: "otel",
+      error: "otel",
+      table: "otel",
     },
     resource: {
-      'deployment.environment': 'test',
-      'service.namespace': 'tdi2',
-      'service.instance.id': `test-${Date.now()}`
+      "deployment.environment": "test",
+      "service.namespace": "tdi2",
+      "service.instance.id": `test-${Date.now()}`,
     },
-    processors: [{ type: 'console' }]
-  }
+    processors: [{ type: "console" }],
+  },
 };
 
 export interface InitOptions {
-  environment?: 'development' | 'production' | 'test' | 'auto';
+  environment?: "development" | "production" | "test" | "auto";
   serviceName?: string;
   serviceVersion?: string;
   consoleMonkeyPatch?: ConsoleMonkeyPatchConfig;
@@ -96,16 +104,17 @@ export interface InitOptions {
   autoDetectEnvironment?: boolean;
 }
 
-let globalLogger: TDILoggerService | null = null;
+let globalLogger: LoggerInterface | null = null;
 
 /**
  * Initialize the TDI2 logging system with environment-specific defaults
  */
-export function initLogging(options: InitOptions = {}): TDILoggerService {
+export function initLogging(options: InitOptions = {}): LoggerInterface {
   // Determine environment
-  const environment = options.environment === 'auto' || options.autoDetectEnvironment !== false
-    ? getEnvironment()
-    : options.environment || 'development';
+  const environment =
+    options.environment === "auto" || options.autoDetectEnvironment !== false
+      ? getEnvironment()
+      : options.environment || "development";
 
   // Get base configuration for environment
   const baseConfig = ENV_CONFIGS[environment] || ENV_CONFIGS.development;
@@ -116,15 +125,15 @@ export function initLogging(options: InitOptions = {}): TDILoggerService {
     ...options.customConfig,
     ...(options.serviceName && { serviceName: options.serviceName }),
     ...(options.serviceVersion && { serviceVersion: options.serviceVersion }),
-    ...(options.enableDiagnostics !== undefined && { 
-      enableDiagnostics: options.enableDiagnostics 
-    })
+    ...(options.enableDiagnostics !== undefined && {
+      enableDiagnostics: options.enableDiagnostics,
+    }),
   };
 
   if (options.consoleMonkeyPatch) {
     finalConfig.consoleMonkeyPatch = {
       ...finalConfig.consoleMonkeyPatch,
-      ...options.consoleMonkeyPatch
+      ...options.consoleMonkeyPatch,
     };
   }
 
@@ -132,11 +141,11 @@ export function initLogging(options: InitOptions = {}): TDILoggerService {
   globalLogger = TDILoggerService.create(finalConfig);
 
   // Log initialization
-  globalLogger.info('TDI2 Logging System Initialized', {
+  globalLogger.info("TDI2 Logging System Initialized", {
     environment,
     serviceName: finalConfig.serviceName,
     consoleMonkeyPatch: finalConfig.consoleMonkeyPatch,
-    enableDiagnostics: finalConfig.enableDiagnostics
+    enableDiagnostics: finalConfig.enableDiagnostics,
   });
 
   return globalLogger;
@@ -145,146 +154,9 @@ export function initLogging(options: InitOptions = {}): TDILoggerService {
 /**
  * Get the global logger instance
  */
-export function getLogger(): TDILoggerService {
+export function getLogger(): LoggerInterface {
   if (!globalLogger) {
     globalLogger = initLogging();
   }
   return globalLogger;
 }
-
-/**
- * Shutdown the logging system gracefully
- */
-export async function shutdownLogging(): Promise<void> {
-  if (globalLogger) {
-    await globalLogger.shutdown();
-    globalLogger = null;
-  }
-}
-
-/**
- * Quick setup functions for common scenarios
- */
-export const logging = {
-  /**
-   * Initialize with development settings (verbose logging, console monkey-patch)
-   */
-  forDevelopment: (customConfig?: Partial<LoggerConfig>) => {
-    return initLogging({
-      environment: 'development',
-      customConfig
-    });
-  },
-
-  /**
-   * Initialize with production settings (minimal logging, error-only console)
-   */
-  forProduction: (customConfig?: Partial<LoggerConfig>) => {
-    return initLogging({
-      environment: 'production',
-      customConfig
-    });
-  },
-
-  /**
-   * Initialize with test settings (silent logging, no console monkey-patch)
-   */
-  forTesting: (customConfig?: Partial<LoggerConfig>) => {
-    return initLogging({
-      environment: 'test',
-      customConfig
-    });
-  },
-
-  /**
-   * Initialize with fine-grained console monkey patch control
-   */
-  withConsoleMonkeyPatch: (config: ConsoleMonkeyPatchConfig) => {
-    return initLogging({
-      consoleMonkeyPatch: config
-    });
-  },
-
-  /**
-   * Auto-detect environment and use appropriate settings
-   */
-  auto: (customConfig?: Partial<LoggerConfig>) => {
-    return initLogging({
-      environment: 'auto',
-      customConfig
-    });
-  }
-};
-
-/**
- * Convenience functions for immediate logging without explicit logger instance
- */
-export const log = {
-  trace: (message: string, context?: LogContext) => getLogger().trace(message, context),
-  debug: (message: string, context?: LogContext) => getLogger().debug(message, context),
-  info: (message: string, context?: LogContext) => getLogger().info(message, context),
-  warn: (message: string, context?: LogContext) => getLogger().warn(message, context),
-  error: (message: string, error?: Error, context?: LogContext) => getLogger().error(message, error, context),
-  fatal: (message: string, error?: Error, context?: LogContext) => getLogger().fatal(message, error, context),
-
-  // TDI2-specific logging
-  diRegistration: (interfaceName: string, implementationClass: string, type: string) => 
-    getLogger().logDIRegistration(interfaceName, implementationClass, type as any),
-  
-  diResolution: (token: string, resolvedClass: string, success: boolean, duration?: number) =>
-    getLogger().logDIResolution(token, resolvedClass, success, duration),
-
-  serviceCreation: (serviceClass: string, dependencies: string[], duration?: number) =>
-    getLogger().logServiceCreation(serviceClass, dependencies, duration),
-
-  componentTransformation: (componentName: string, type: 'functional' | 'class', dependencies: string[]) =>
-    getLogger().logComponentTransformation(componentName, type, dependencies),
-
-  performance: (metric: string, value: number, unit: string = 'ms') =>
-    getLogger().logPerformance(metric, value, unit),
-
-  memoryUsage: () => getLogger().logMemoryUsage(),
-
-  userAction: (action: string, userId?: string) =>
-    getLogger().logUserAction(action, userId),
-
-  apiCall: (method: string, url: string, statusCode?: number, duration?: number) =>
-    getLogger().logAPICall(method, url, statusCode, duration)
-};
-
-/**
- * Development helpers
- */
-export const devLog = {
-  /**
-   * Log with timing wrapper
-   */
-  withTiming: <T>(operation: string, fn: () => T | Promise<T>, context?: LogContext): T | Promise<T> => {
-    return getLogger().logWithTiming(operation, fn, context);
-  },
-
-  /**
-   * Log object differences
-   */
-  diff: (operation: string, before: any, after: any) => {
-    getLogger().logObjectDiff(operation, before, after);
-  },
-
-  /**
-   * Debug information logging
-   */
-  debugInfo: (category: string, info: Record<string, any>) => {
-    getLogger().logDebugInfo(category, info);
-  }
-};
-
-/**
- * Error helpers with categorization
- */
-export const errorLog = {
-  diError: (type: string, message: string, error?: Error) =>
-    getLogger().logDIError(type as any, message, error),
-
-  transformationError: (type: string, fileName: string, message: string, error?: Error) =>
-    getLogger().logTransformationError(type as any, fileName, message, error)
-};
