@@ -45,6 +45,7 @@
   "author": "TDI2 Team",
   "license": "MIT",
   "dependencies": {
+    "@tdi2/di-core": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/api-logs": "^0.202.0",
     "@opentelemetry/resources": "^2.0.1",
