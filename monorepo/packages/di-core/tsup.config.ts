@@ -6,7 +6,7 @@ async function waitFor(file: string, timeoutMs = 30000, intervalMs = 100) {
   const start = Date.now();
   for (;;) {
     try {
-      console.log("exists?",file)
+      console.log("exists?", file);
       await fs.access(file);
       return;
     } catch {}
@@ -44,7 +44,7 @@ const examples = {
     // Modify esbuild config here
     //options.minify = false;
     options.bundle = true;
-  }
+  },
 };
 
 const entries = [
@@ -55,6 +55,15 @@ const entries = [
   "container.ts",
   "context.tsx",
 ].map((name) => "src/" + name);
+
+const expectedDtsFiles = entries
+  .map((it) =>
+    it
+      .replace("src/", "dist/")
+      .replace(".ts", ".d.ts")
+      .replace(".d.tsx", ".d.ts")
+  )
+  .map((it) => join(process.cwd(), it));
 
 export default defineConfig([
   {
@@ -67,9 +76,7 @@ export default defineConfig([
     skipNodeModulesBundle: true,
     external: ["react", "react-dom"],
     sourcemap: true,
-    onSuccess: onSuccessWaitFor("entries", [
-      join(process.cwd(), "dist", "index.d.ts"),
-    ]),
+    onSuccess: onSuccessWaitFor("entries", expectedDtsFiles),
   },
   examples,
   {
