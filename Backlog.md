@@ -674,6 +674,14 @@ evaluate scenarios
 
 ## Done
 
+### ✅ fix build
+
+- clean up logger from that ai slop generated
+- test legacy where logger was used
+- logger should simply have a small surface area. console.log behaviour & scope
+
+  thats for lasses but what about FC or hooks where we inject it
+
 ### ✅ useObservable (deprecated)
 
 - what is RSI structurally (something else?, MVC,MVVM, MVP .. it can be all of them if implemented in a certain way)
