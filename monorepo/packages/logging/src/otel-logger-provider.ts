@@ -25,8 +25,8 @@ import {
 } from "@opentelemetry/semantic-conventions";
 
 export class OTelLoggerProvider {
-  private loggerProvider: LoggerProvider;
-  private resource: Resource;
+  private loggerProvider!: LoggerProvider;
+  private resource!: Resource;
   private config: Required<LoggerConfig>;
   private originalConsole: ConsolePatch | null = null;
   private isInitialized = false;
@@ -289,21 +289,7 @@ export class OTelLoggerProvider {
       .join(" ");
   }
 
-  private shouldLogToConsole(messageLevel: LogLevel): boolean {
-    const levelPriority = {
-      TRACE: 0,
-      DEBUG: 1,
-      INFO: 2,
-      WARN: 3,
-      ERROR: 4,
-      FATAL: 5,
-    };
 
-    const configLevel = levelPriority[this.config.consoleLogLevel];
-    const msgLevel = levelPriority[messageLevel];
-
-    return msgLevel >= configLevel;
-  }
 
   public getLogger(name: string = "default", context?: LogContext): TDILogger {
     const cacheKey = `${name}:${JSON.stringify(context || {})}`;

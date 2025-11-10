@@ -23,25 +23,9 @@ export { OTelLoggerProvider } from "./otel-logger-provider";
 export { TDILoggerImpl } from "./tdi-logger-impl";
 
 // Initialization and convenience functions
-import {
-  initLogging,
-  getLogger,
-  shutdownLogging,
-  logging,
-  log,
-  devLog,
-  errorLog,
-} from "./init";
+import { initLogging, getLogger } from "./init";
 
-export {
-  initLogging,
-  getLogger,
-  shutdownLogging,
-  logging,
-  log,
-  devLog,
-  errorLog,
-};
+export { initLogging, getLogger };
 
 // Console monkey patch utilities
 import {
@@ -63,48 +47,3 @@ export {
   withOriginalConsole,
   withConsoleContext,
 };
-
-// Convenience re-exports for common patterns
-export const Logger = {
-  // Quick initialization
-  init: initLogging,
-  auto: logging.auto,
-  forDev: logging.forDevelopment,
-  forProd: logging.forProduction,
-  forTest: logging.forTesting,
-
-  // Quick logging
-  trace: log.trace,
-  debug: log.debug,
-  info: log.info,
-  warn: log.warn,
-  error: log.error,
-  fatal: log.fatal,
-
-  // DI-specific logging
-  diRegistration: log.diRegistration,
-  diResolution: log.diResolution,
-  serviceCreation: log.serviceCreation,
-  componentTransformation: log.componentTransformation,
-
-  // Performance logging
-  performance: log.performance,
-  memory: log.memoryUsage,
-
-  // User and API logging
-  userAction: log.userAction,
-  apiCall: log.apiCall,
-
-  // Development helpers
-  withTiming: devLog.withTiming,
-  diff: devLog.diff,
-  debugInfo: devLog.debugInfo,
-
-  // Console monkey patch
-  patchConsole,
-  unpatchConsole,
-  updateConsoleConfig,
-};
-
-// Default export for easy importing
-export default Logger;
