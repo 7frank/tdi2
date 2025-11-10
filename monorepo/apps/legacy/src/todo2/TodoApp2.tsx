@@ -8,10 +8,12 @@ import type {
 } from "./types";
 
 import "./styles.css";
-
+import type { AppLangInterface } from "../services/I18nService";
+ 
 // ===== ROOT APP COMPONENT - ZERO PROPS =====
 interface AppProps {
   services: {
+    // i18n: Inject<AppLangInterface>; 
     todoService: Inject<TodoServiceInterface>;
     appState: Inject<AppStateServiceInterface>;
     notifications: Inject<NotificationServiceInterface>;
