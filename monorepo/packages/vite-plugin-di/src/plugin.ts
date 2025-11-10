@@ -10,7 +10,6 @@ import * as path from "path";
 
 import type {
   DIPluginOptions,
-  DIHotUpdateContext,
   DIBuildContext,
 } from './types';
 
@@ -81,6 +80,9 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     return false;
   };
 
+  // Normalize scanDirs to absolute paths for HMR matching
+  const absoluteScanDirs = options.scanDirs!.map(dir => path.resolve(dir));
+
   /**
    * Main transformation function
    */
@@ -90,16 +92,17 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     const startTime = Date.now();
     performanceTracker.startTransformation();
 
-    // Check if we should reuse existing config
+    // Check if we should reuse existing config (but always transform on force for HMR)
     const now = Date.now();
     if (
       !force &&
       options.reuseExistingConfig &&
-      now - lastConfigCheck < CONFIG_CHECK_INTERVAL
+      now - lastConfigCheck < CONFIG_CHECK_INTERVAL &&
+      transformedFiles.size > 0  // Only skip if we already have transformed files
     ) {
       if (checkExistingConfig()) {
         if (options.verbose) {
-          console.log("🔄 Reusing existing DI configuration");
+          console.log("🔄 Reusing existing DI configuration (cache hit)");
         }
         performanceTracker.recordCacheHit();
         return;
@@ -131,7 +134,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       });
 
       // Check if config is already valid and we should reuse it
-      if (options.reuseExistingConfig && configManager.isConfigValid()) {
+      if (options.reuseExistingConfig && configManager.isConfigValid() && !force) {
         if (options.verbose) {
           console.log(
             `♻️  Reusing valid config: ${configManager.getConfigHash()}`
@@ -141,7 +144,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         // Generate bridge files to ensure they're up to date
         configManager.generateBridgeFiles();
 
-        // Still run functional transformation as it doesn't persist
+        // Still run functional transformation as it doesn't persist (and for HMR updates)
         if (options.enableFunctionalDI) {
           functionalTransformer = new FunctionalDIEnhancedTransformer({
             scanDirs: options.scanDirs,
@@ -152,6 +155,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           });
 
           try {
+            // IMPORTANT: Always refresh transformedFiles map for HMR to work
             transformedFiles = await functionalTransformer.transformForBuild();
 
             if (options.verbose) {
@@ -270,31 +274,6 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     }
   };
 
-  /**
-   * Handle hot module replacement for DI files
-   */
-  const handleDIHotUpdate = async (context: DIHotUpdateContext) => {
-    if (!options.watch) return null
-
-    if (context.hasDIPatterns) {
-      if (options.verbose) {
-        console.log(
-          `🔄 DI change detected in ${path.relative(process.cwd(), context.file)}`
-        );
-      }
-
-      // Force transformation on file changes
-      await transformDI(true);
-
-      return {
-        requiresFullReload: context.requiresFullReload,
-        affectedModules: context.affectedModules,
-      };
-    }
-
-    return null;
-  };
-
   return {
     name: "vite-plugin-di-enhanced",
 
@@ -314,17 +293,36 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       // Check if this file was transformed by functional DI
       const absolutePath = path.resolve(id);
 
+      if (options.verbose && id.includes('TodoApp2')) {
+        console.log(`\n📥 load() called for: ${path.basename(id)}`);
+        console.log(`   id: ${id}`);
+        console.log(`   absolutePath: ${absolutePath}`);
+        console.log(`   transformedFiles.size: ${transformedFiles.size}`);
+        console.log(`   transformedFiles keys:`, Array.from(transformedFiles.keys()).map(k => path.basename(k)));
+      }
+
       for (const [originalPath, transformedContent] of transformedFiles) {
         const absoluteOriginal = path.resolve(originalPath);
 
         if (absolutePath === absoluteOriginal) {
           if (options.verbose) {
             console.log(
-              `🔄 Loading transformed version of ${path.basename(id)}`
+              `✅ Loading transformed version of ${path.basename(id)} (${transformedContent.length} chars)`
             );
           }
-          return transformedContent;
+
+          // Return with code and optional map for better HMR support
+          return {
+            code: transformedContent,
+            // Note: We could add source map generation here in the future
+            // for now, returning just the code is sufficient for HMR
+            map: null,
+          };
         }
+      }
+
+      if (options.verbose && id.includes('TodoApp2')) {
+        console.log(`❌ No transformed version found, returning null`);
       }
 
       return null;
@@ -344,10 +342,22 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       return null;
     },
 
-    async handleHotUpdate({ file, server }) {
-      if (!options.watch) return;
+    async handleHotUpdate({ file, server, modules }) {
+      if (!options.watch) return undefined;
 
-      const isInScanDir = options.scanDirs!.some(dir => file.includes(dir));
+      if (options.verbose) {
+        console.log(`\n🔔 handleHotUpdate called for: ${path.basename(file)}`);
+        console.log(`   Full path: ${file}`);
+        console.log(`   scanDirs:`, options.scanDirs);
+        console.log(`   absoluteScanDirs:`, absoluteScanDirs);
+      }
+
+      const isInScanDir = absoluteScanDirs.some(dir => file.startsWith(dir));
+
+      if (options.verbose) {
+        console.log(`   isInScanDir: ${isInScanDir}`);
+      }
+
       if (
         isInScanDir &&
         (file.endsWith(".ts") || file.endsWith(".tsx"))
@@ -355,33 +365,79 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         try {
           const content = fs.readFileSync(file, "utf-8");
           const diPatterns = detectDIPatterns(content, options);
-          
-          if (diPatterns.hasDI) {
-            const context: DIHotUpdateContext = {
-              file,
-              hasDIPatterns: true,
-              affectedModules: [file],
-              requiresFullReload: false,
-            };
 
-            const result = await handleDIHotUpdate(context);
-            
-            if (result) {
-              const absoluteFile = path.resolve(file);
-              if (transformedFiles.has(absoluteFile)) {
-                const mod = server.moduleGraph.getModuleById(file);
-                if (mod) {
-                  server.reloadModule(mod);
-                } else {
-                  context.requiresFullReload = true;
+          if (options.verbose) {
+            console.log(`   hasDI: ${diPatterns.hasDI}`);
+          }
+
+          if (diPatterns.hasDI) {
+            const absoluteFile = path.resolve(file);
+
+            if (options.verbose) {
+              console.log(`🔍 HMR Debug:`);
+              console.log(`   File changed: ${absoluteFile}`);
+              console.log(`   transformedFiles has ${transformedFiles.size} entries`);
+            }
+
+            // Re-read and retransform just this one file
+            const wasTransformed = transformedFiles.has(absoluteFile);
+            if (wasTransformed) {
+              try {
+                if (options.verbose) {
+                  console.log(`   Re-transforming for HMR (creating fresh transformer)...`);
+                }
+
+                // Create a fresh transformer instance to pick up file changes
+                const freshTransformer = new FunctionalDIEnhancedTransformer({
+                  scanDirs: options.scanDirs,
+                  outputDir: options.outputDir,
+                  generateDebugFiles: options.generateDebugFiles,
+                  verbose: options.verbose,
+                  customSuffix: options.customSuffix,
+                });
+
+                // Re-run transformation with fresh instance
+                const newTransformed = await freshTransformer.transformForBuild();
+
+                if (options.verbose) {
+                  console.log(`   Transformer returned ${newTransformed.size} files`);
+                }
+
+                // Update our cache with all the new transformations
+                transformedFiles.clear();
+                for (const [path, content] of newTransformed.entries()) {
+                  transformedFiles.set(path, content);
+                }
+
+                if (options.verbose) {
+                  console.log(`   Updated transformedFiles cache (${transformedFiles.size} files)`);
+                }
+              } catch (error) {
+                console.error('Error retransforming file during HMR:', error);
+              }
+            }
+
+            // Find all modules associated with this file
+            const affectedModules = modules.filter(mod => {
+              const modFile = mod.file;
+              return modFile === file || modFile === absoluteFile;
+            });
+
+            if (affectedModules.length > 0) {
+              if (options.verbose) {
+                console.log(`🔥 HMR: Invalidating ${affectedModules.length} module(s) for ${path.basename(file)}`);
+              }
+
+              // Invalidate modules so they reload with the updated transformed content
+              for (const mod of affectedModules) {
+                server.moduleGraph.invalidateModule(mod);
+                if (options.verbose) {
+                  console.log(`   Invalidated: ${mod.id || mod.url}`);
                 }
               }
 
-              if (context.requiresFullReload) {
-                server.ws.send({
-                  type: "full-reload",
-                });
-              }
+              // Return the affected modules to trigger HMR update
+              return affectedModules;
             }
           }
         } catch (error) {
@@ -401,8 +457,12 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           server.ws.send({
             type: "full-reload",
           });
+          return [];
         }
       }
+
+      // Return undefined to let Vite handle HMR normally
+      return undefined;
     },
 
     configureServer(server) {
