@@ -13,16 +13,16 @@ import type { AppLangInterface } from "../services/I18nService";
 // ===== ROOT APP COMPONENT - ZERO PROPS =====
 interface AppProps {
   services: {
-    // i18n: Inject<AppLangInterface>; 
+     i18n: Inject<AppLangInterface>; 
     todoService: Inject<TodoServiceInterface>;
     appState: Inject<AppStateServiceInterface>;
     notifications: Inject<NotificationServiceInterface>;
   };
 }
-
+ 
 export function TodoApp2(props: AppProps) {
   const {
-    services: { todoService, appState, notifications },
+    services: { todoService, appState, notifications,i18n },
   } = props;
 
   const todos = todoService.state.todos;
@@ -34,7 +34,7 @@ export function TodoApp2(props: AppProps) {
   return (
     <div className={`app theme-${theme}`}>
       <header className="app-header">
-        <h1>TDI2 Todo App</h1>
+        <h1>{i18n.t("title")}</h1>
         <div className="header-controls">
           <ViewToggle />
           <ThemeToggle />

@@ -8,19 +8,18 @@ type AppLangConfig = typeof test;
 
 export interface I18nInterface<T> {
   data: T;
-  t(s: string): string;
+  t(s: keyof T): string;
 }
 
 export 
 interface AppLangInterface extends I18nInterface<AppLangConfig> {}
 
-// export 
+ export 
+@Service()
+class I18n implements AppLangInterface {
+  data: AppLangConfig = test;
 
-// @Service()
-// class I18n implements AppLangInterface {
-//   data: AppLangConfig = test;
-
-//   t(s: string): string {
-//     return s;
-//   }
-// }
+  t(s: keyof AppLangConfig): string {
+    return this.data[s];
+  }
+}
