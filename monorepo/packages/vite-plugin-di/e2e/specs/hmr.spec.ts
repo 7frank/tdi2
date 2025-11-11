@@ -234,7 +234,7 @@ test.describe('Vite Plugin DI - HMR Tests', () => {
     const modifiedAppPath = path.join(__dirname, '..', 'fixtures', 'modifications', 'App-v2.tsx');
 
     // First read current content, then modify just the h1
-    const fs = await import('fs-extra');
+    const { promises: fs } = await import('fs');
     let content = await fs.readFile(appPath2, 'utf-8');
     content = content.replace('<h1>Hello World</h1>', '<h1>Hello HMR</h1>');
     await fs.writeFile(appPath2, content, 'utf-8');

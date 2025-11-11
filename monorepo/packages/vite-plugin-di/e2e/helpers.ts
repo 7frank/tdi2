@@ -1,7 +1,55 @@
 import { Page } from '@playwright/test';
 import { createServer, ViteDevServer } from 'vite';
-import fs from 'fs-extra';
-import path from 'path';
+import { promises as fsPromises } from 'fs';
+import * as pathModule from 'path';
+
+// Create fs and path references
+const fs = fsPromises;
+const path = pathModule;
+
+// Use a different approach - get __dirname from the current working directory
+// In Playwright's CommonJS context, __dirname should be available globally
+declare const __dirname: string;
+
+/**
+ * Helper to check if a path exists
+ */
+async function pathExists(p: string): Promise<boolean> {
+  try {
+    await fs.access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Helper to recursively copy a directory
+ */
+async function copyDir(src: string, dest: string): Promise<void> {
+  await fs.mkdir(dest, { recursive: true });
+  const entries = await fs.readdir(src, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    if (entry.isDirectory()) {
+      await copyDir(srcPath, destPath);
+    } else {
+      await fs.copyFile(srcPath, destPath);
+    }
+  }
+}
+
+/**
+ * Helper to recursively remove a directory
+ */
+async function removeDir(dir: string): Promise<void> {
+  if (await pathExists(dir)) {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+}
 
 /**
  * Start a Vite dev server programmatically
@@ -32,33 +80,37 @@ export async function stopDevServer(server: ViteDevServer): Promise<void> {
 }
 
 /**
- * Copy the fixture test app to a temporary directory and install dependencies
+ * Copy the fixture test app to a temporary directory and set up dependencies
  */
 export async function setupTestApp(tempDir: string): Promise<void> {
   const fixtureDir = path.join(__dirname, 'fixtures', 'test-app');
 
   // Clean temp directory if it exists
-  if (await fs.pathExists(tempDir)) {
-    await fs.remove(tempDir);
+  if (await pathExists(tempDir)) {
+    await removeDir(tempDir);
   }
 
   // Copy fixture to temp directory
-  await fs.copy(fixtureDir, tempDir);
+  await copyDir(fixtureDir, tempDir);
 
-  // Install dependencies using bun
-  const { execSync } = await import('child_process');
-  execSync('bun install', {
-    cwd: tempDir,
-    stdio: 'ignore', // Suppress output
-  });
+  // Symlink node_modules from monorepo root to temp directory
+  // This gives access to all workspace packages
+  const monorepoRoot = path.resolve(__dirname, '../../..');
+  const monorepoNodeModules = path.join(monorepoRoot, 'node_modules');
+  const tempNodeModules = path.join(tempDir, 'node_modules');
+
+  // Create symlink to monorepo node_modules
+  if (await pathExists(monorepoNodeModules)) {
+    await fs.symlink(monorepoNodeModules, tempNodeModules, 'dir');
+  }
 }
 
 /**
  * Clean up the temporary test directory
  */
 export async function cleanupTestApp(tempDir: string): Promise<void> {
-  if (await fs.pathExists(tempDir)) {
-    await fs.remove(tempDir);
+  if (await pathExists(tempDir)) {
+    await removeDir(tempDir);
   }
 }
 
@@ -69,7 +121,7 @@ export async function replaceFile(
   sourcePath: string,
   targetPath: string
 ): Promise<void> {
-  await fs.copy(sourcePath, targetPath, { overwrite: true });
+  await fs.copyFile(sourcePath, targetPath);
 
   // Small delay to ensure file system change is detected
   await new Promise(resolve => setTimeout(resolve, 100));
@@ -111,7 +163,7 @@ export async function addFile(
   sourcePath: string,
   targetPath: string
 ): Promise<void> {
-  await fs.copy(sourcePath, targetPath);
+  await fs.copyFile(sourcePath, targetPath);
 
   // Small delay to ensure file system change is detected
   await new Promise(resolve => setTimeout(resolve, 100));
