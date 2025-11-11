@@ -32,7 +32,7 @@ export async function stopDevServer(server: ViteDevServer): Promise<void> {
 }
 
 /**
- * Copy the fixture test app to a temporary directory
+ * Copy the fixture test app to a temporary directory and install dependencies
  */
 export async function setupTestApp(tempDir: string): Promise<void> {
   const fixtureDir = path.join(__dirname, 'fixtures', 'test-app');
@@ -44,6 +44,13 @@ export async function setupTestApp(tempDir: string): Promise<void> {
 
   // Copy fixture to temp directory
   await fs.copy(fixtureDir, tempDir);
+
+  // Install dependencies using bun
+  const { execSync } = await import('child_process');
+  execSync('bun install', {
+    cwd: tempDir,
+    stdio: 'ignore', // Suppress output
+  });
 }
 
 /**
