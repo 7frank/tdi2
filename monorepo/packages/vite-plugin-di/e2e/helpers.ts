@@ -54,22 +54,32 @@ async function removeDir(dir: string): Promise<void> {
 /**
  * Start a Vite dev server programmatically
  */
-export async function startDevServer(testAppDir: string): Promise<ViteDevServer> {
+export async function startDevServer(testAppDir: string): Promise<{ server: ViteDevServer; port: number }> {
+  // Use random port to avoid conflicts when tests run in parallel
+  const port = 3000 + Math.floor(Math.random() * 1000);
+
   const server = await createServer({
     root: testAppDir,
     configFile: path.join(testAppDir, 'vite.config.ts'),
     server: {
-      port: 3000,
-      strictPort: true,
+      port,
+      strictPort: false, // Allow fallback to another port
       hmr: {
-        port: 3000,
+        port,
       },
     },
     logLevel: 'error', // Reduce noise in test output
   });
 
   await server.listen();
-  return server;
+
+  // Get the actual port (might be different if strictPort is false)
+  const actualPort = (server.config.server.port || port) as number;
+
+  // Give the plugin time to generate di-config
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  return { server, port: actualPort };
 }
 
 /**
@@ -290,8 +300,28 @@ export async function expectTextContent(
  * Wait for the test app to be fully loaded and initialized
  */
 export async function waitForAppReady(page: Page): Promise<void> {
+  // Capture console errors
+  const errors: string[] = [];
+  page.on('pageerror', err => {
+    errors.push(err.message);
+    console.error('Browser error:', err.message);
+  });
+  page.on('console', msg => {
+    if (msg.type() === 'error') {
+      console.error('Browser console error:', msg.text());
+    }
+  });
+
   // Wait for React root to render
-  await page.waitForSelector('#root > *', { timeout: 10000 });
+  try {
+    await page.waitForSelector('#root > *', { timeout: 10000 });
+  } catch (error) {
+    console.error('Failed to find #root > *, page errors:', errors);
+    // Check if there's anything in the root at all
+    const rootHTML = await page.$eval('#root', el => el.innerHTML).catch(() => 'Could not read root');
+    console.error('Root HTML:', rootHTML);
+    throw error;
+  }
 
   // Wait for network to be idle
   await page.waitForLoadState('networkidle');

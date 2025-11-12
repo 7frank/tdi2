@@ -18,8 +18,9 @@ import {
 } from '../helpers';
 import { ViteDevServer } from 'vite';
 
-let server: ViteDevServer;
+let server: ViteDevServer | null = null;
 let testAppDir: string;
+let serverPort: number;
 
 test.beforeEach(async () => {
   // Create a unique temp directory for this test
@@ -42,10 +43,12 @@ test.afterEach(async () => {
 test.describe('Vite Plugin DI - HMR Tests', () => {
   test('Scenario 1: Component file change triggers HMR without full reload', async ({ page }) => {
     // Start Vite dev server
-    server = await startDevServer(testAppDir);
+    const result = await startDevServer(testAppDir);
+    server = result.server;
+    serverPort = result.port;
 
     // Open browser
-    await page.goto('http://localhost:3000');
+    await page.goto(`http://localhost:${serverPort}`);
     await waitForAppReady(page);
 
     // Verify initial state
@@ -73,10 +76,12 @@ test.describe('Vite Plugin DI - HMR Tests', () => {
 
   test('Scenario 2: Service file change triggers full reload', async ({ page }) => {
     // Start Vite dev server
-    server = await startDevServer(testAppDir);
+    const result = await startDevServer(testAppDir);
+    server = result.server;
+    serverPort = result.port;
 
     // Open browser
-    await page.goto('http://localhost:3000');
+    await page.goto(`http://localhost:${serverPort}`);
     await waitForAppReady(page);
 
     // Click increment to set counter to 1
@@ -125,10 +130,12 @@ test.describe('Vite Plugin DI - HMR Tests', () => {
 
   test('Scenario 3: Add new service triggers full reload and registration', async ({ page }) => {
     // Start Vite dev server
-    server = await startDevServer(testAppDir);
+    const result = await startDevServer(testAppDir);
+    server = result.server;
+    serverPort = result.port;
 
     // Open browser
-    await page.goto('http://localhost:3000');
+    await page.goto(`http://localhost:${serverPort}`);
     await waitForAppReady(page);
 
     // Verify initial state - no logger UI
@@ -190,10 +197,12 @@ test.describe('Vite Plugin DI - HMR Tests', () => {
 
   test('Scenario 5: Component uses new service then HMRs properly', async ({ page }) => {
     // Start Vite dev server
-    server = await startDevServer(testAppDir);
+    const result = await startDevServer(testAppDir);
+    server = result.server;
+    serverPort = result.port;
 
     // Open browser
-    await page.goto('http://localhost:3000');
+    await page.goto(`http://localhost:${serverPort}`);
     await waitForAppReady(page);
 
     // Step 1: Add new service (triggers full reload)

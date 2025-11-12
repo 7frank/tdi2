@@ -1,13 +1,19 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { DI_CONFIG } from './.tdi2/di-config';
-import { App } from './App';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { DIProvider } from "@tdi2/di-core/context";
+import { CompileTimeDIContainer } from "@tdi2/di-core";
+import { DI_CONFIG } from "./.tdi2/di-config";
+import { App } from "./App";
 
 // Initialize DI container
-DI_CONFIG.init();
+const container = new CompileTimeDIContainer();
+container.loadConfiguration(DI_CONFIG);
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+// The App component will be transformed to handle DI automatically
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <DIProvider container={container}>
+      <App />
+    </DIProvider>
   </React.StrictMode>
 );

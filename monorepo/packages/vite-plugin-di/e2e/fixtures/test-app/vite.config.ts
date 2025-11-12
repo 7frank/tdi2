@@ -1,12 +1,22 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { diEnhancedPlugin } from '@tdi2/vite-plugin-di';
+import path from 'path';
+
+
+
+
+const scanDirs = [path.resolve(__dirname, './src')];
+const outputDir = path.resolve(__dirname, './.tdi2');
+
+console.log("scanDirs",scanDirs)
+console.log("outputDir",outputDir)
 
 export default defineConfig({
   plugins: [
     diEnhancedPlugin({
-      scanDirs: ['./src'],
-      outputDir: './.tdi2',
+      scanDirs,
+      outputDir,
       verbose: true,
       enableFunctionalDI: true,
       enableInterfaceResolution: true,
