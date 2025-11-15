@@ -125,12 +125,14 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       }
 
       // Create config manager first to check for existing configs
+      // If forcing regeneration (e.g., new service added), use timestamp suffix to create new config
+      const configSuffix = force ? `hmr-${Date.now()}` : options.customSuffix;
       configManager = new ConfigManager({
         scanDirs: options.scanDirs!,
         outputDir: options.outputDir!,
         enableFunctionalDI: options.enableFunctionalDI!,
         verbose: options.verbose!,
-        customSuffix: options.customSuffix,
+        customSuffix: configSuffix,
       });
 
       // Check if config is already valid and we should reuse it
@@ -151,7 +153,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
             outputDir: options.outputDir,
             generateDebugFiles: options.generateDebugFiles,
             verbose: options.verbose,
-            customSuffix: options.customSuffix,
+            customSuffix: configSuffix,
           });
 
           try {
@@ -183,7 +185,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         outputDir: options.outputDir,
         verbose: options.verbose,
         enableInterfaceResolution: options.enableInterfaceResolution,
-        customSuffix: options.customSuffix,
+        customSuffix: configSuffix,
       });
 
       await classTransformer.transform();
@@ -200,7 +202,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           outputDir: options.outputDir,
           generateDebugFiles: options.generateDebugFiles,
           verbose: options.verbose,
-          customSuffix: options.customSuffix,
+          customSuffix: configSuffix,
         });
 
         try {
@@ -331,6 +333,10 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     async handleHotUpdate({ file, server, modules }) {
       if (!options.watch) return undefined;
 
+      if (options.verbose) {
+        console.log(`🔥 handleHotUpdate called for: ${file}`);
+      }
+
       const isInScanDir = absoluteScanDirs.some(dir => file.startsWith(dir));
 
       if (
@@ -400,6 +406,43 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         }
       }
 
+      // Handle service file additions/changes - check if file has @Service decorator
+      if (
+        isInScanDir &&
+        (file.endsWith(".ts") || file.endsWith(".tsx")) &&
+        !file.endsWith(".test.ts") &&
+        !file.endsWith(".test.tsx") &&
+        !file.endsWith(".spec.ts") &&
+        !file.endsWith(".spec.tsx")
+      ) {
+        try {
+          const content = fs.readFileSync(file, "utf-8");
+          const hasServiceDecorator = /@Service\s*\(/.test(content);
+
+          if (hasServiceDecorator) {
+            if (options.verbose) {
+              console.log(`🔄 Service file detected: ${path.basename(file)} - regenerating config`);
+            }
+
+            // Regenerate the entire DI configuration
+            await transformDI(true);
+
+            // Trigger full page reload so new service gets registered
+            server.ws.send({
+              type: "full-reload",
+              path: "*",
+            });
+
+            return [];
+          }
+        } catch (error) {
+          // File might not exist yet or be unreadable
+          if (options.verbose) {
+            console.log(`Could not read file for service detection: ${file}`, error);
+          }
+        }
+      }
+
       // Handle bridge file changes
       if (file.includes(".tdi2") && configManager) {
         const relativePath = path.relative(configManager.getBridgeDir(), file);
@@ -431,6 +474,58 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         getPerformanceTracker: () => performanceTracker,
         transformDI,
       });
+
+      // Watch for new service files being added
+      if (options.watch) {
+        server.watcher.on('add', async (file) => {
+          const isInScanDir = absoluteScanDirs.some(dir => file.startsWith(dir));
+
+          if (
+            isInScanDir &&
+            (file.endsWith(".ts") || file.endsWith(".tsx")) &&
+            !file.endsWith(".test.ts") &&
+            !file.endsWith(".test.tsx") &&
+            !file.endsWith(".spec.ts") &&
+            !file.endsWith(".spec.tsx")
+          ) {
+            try {
+              const content = fs.readFileSync(file, "utf-8");
+              const hasServiceDecorator = /@Service\s*\(/.test(content);
+
+              if (hasServiceDecorator) {
+                if (options.verbose) {
+                  console.log(`🆕 New service file detected: ${path.basename(file)} - regenerating config`);
+                }
+
+                // Regenerate the entire DI configuration
+                await transformDI(true);
+
+                // Invalidate all bridge files and config modules so they reload
+                const moduleGraph = server.moduleGraph;
+                const bridgeDir = configManager?.getBridgeDir();
+                if (bridgeDir) {
+                  // Invalidate all modules in the bridge directory
+                  for (const [id, mod] of moduleGraph.idToModuleMap) {
+                    if (id.includes('.tdi2')) {
+                      moduleGraph.invalidateModule(mod);
+                    }
+                  }
+                }
+
+                // Trigger full page reload so new service gets registered
+                server.ws.send({
+                  type: "full-reload",
+                  path: "*",
+                });
+              }
+            } catch (error) {
+              if (options.verbose) {
+                console.log(`Could not read new file for service detection: ${file}`, error);
+              }
+            }
+          }
+        });
+      }
     },
 
     async generateBundle() {
