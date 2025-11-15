@@ -62,3 +62,7 @@ pnpm-lock.yaml
 # Local development
 .local/
 .temp/
+
+# playwright
+/test-results
+/playwright-report

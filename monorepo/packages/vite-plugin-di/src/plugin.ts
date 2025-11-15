@@ -10,7 +10,6 @@ import * as path from "path";
 
 import type {
   DIPluginOptions,
-  DIHotUpdateContext,
   DIBuildContext,
 } from './types';
 
@@ -81,6 +80,9 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     return false;
   };
 
+  // Normalize scanDirs to absolute paths for HMR matching
+  const absoluteScanDirs = options.scanDirs!.map(dir => path.resolve(dir));
+
   /**
    * Main transformation function
    */
@@ -90,16 +92,17 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     const startTime = Date.now();
     performanceTracker.startTransformation();
 
-    // Check if we should reuse existing config
+    // Check if we should reuse existing config (but always transform on force for HMR)
     const now = Date.now();
     if (
       !force &&
       options.reuseExistingConfig &&
-      now - lastConfigCheck < CONFIG_CHECK_INTERVAL
+      now - lastConfigCheck < CONFIG_CHECK_INTERVAL &&
+      transformedFiles.size > 0  // Only skip if we already have transformed files
     ) {
       if (checkExistingConfig()) {
         if (options.verbose) {
-          console.log("🔄 Reusing existing DI configuration");
+          console.log("🔄 Reusing existing DI configuration (cache hit)");
         }
         performanceTracker.recordCacheHit();
         return;
@@ -118,20 +121,22 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
 
       // Clean old configs periodically (but not if reusing)
       if (options.cleanOldConfigs && !options.reuseExistingConfig) {
-        ConfigManager.cleanOldConfigs(options.keepConfigCount);
+        ConfigManager.cleanOldConfigs(options.keepConfigCount, options.outputDir);
       }
 
       // Create config manager first to check for existing configs
+      // If forcing regeneration (e.g., new service added), use timestamp suffix to create new config
+      const configSuffix = force ? `hmr-${Date.now()}` : options.customSuffix;
       configManager = new ConfigManager({
         scanDirs: options.scanDirs!,
         outputDir: options.outputDir!,
         enableFunctionalDI: options.enableFunctionalDI!,
         verbose: options.verbose!,
-        customSuffix: options.customSuffix,
+        customSuffix: configSuffix,
       });
 
       // Check if config is already valid and we should reuse it
-      if (options.reuseExistingConfig && configManager.isConfigValid()) {
+      if (options.reuseExistingConfig && configManager.isConfigValid() && !force) {
         if (options.verbose) {
           console.log(
             `♻️  Reusing valid config: ${configManager.getConfigHash()}`
@@ -141,17 +146,18 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         // Generate bridge files to ensure they're up to date
         configManager.generateBridgeFiles();
 
-        // Still run functional transformation as it doesn't persist
+        // Still run functional transformation as it doesn't persist (and for HMR updates)
         if (options.enableFunctionalDI) {
           functionalTransformer = new FunctionalDIEnhancedTransformer({
             scanDirs: options.scanDirs,
             outputDir: options.outputDir,
             generateDebugFiles: options.generateDebugFiles,
             verbose: options.verbose,
-            customSuffix: options.customSuffix,
+            customSuffix: configSuffix,
           });
 
           try {
+            // IMPORTANT: Always refresh transformedFiles map for HMR to work
             transformedFiles = await functionalTransformer.transformForBuild();
 
             if (options.verbose) {
@@ -179,7 +185,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         outputDir: options.outputDir,
         verbose: options.verbose,
         enableInterfaceResolution: options.enableInterfaceResolution,
-        customSuffix: options.customSuffix,
+        customSuffix: configSuffix,
       });
 
       await classTransformer.transform();
@@ -196,7 +202,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           outputDir: options.outputDir,
           generateDebugFiles: options.generateDebugFiles,
           verbose: options.verbose,
-          customSuffix: options.customSuffix,
+          customSuffix: configSuffix,
         });
 
         try {
@@ -270,31 +276,6 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     }
   };
 
-  /**
-   * Handle hot module replacement for DI files
-   */
-  const handleDIHotUpdate = async (context: DIHotUpdateContext) => {
-    if (!options.watch) return null
-
-    if (context.hasDIPatterns) {
-      if (options.verbose) {
-        console.log(
-          `🔄 DI change detected in ${path.relative(process.cwd(), context.file)}`
-        );
-      }
-
-      // Force transformation on file changes
-      await transformDI(true);
-
-      return {
-        requiresFullReload: context.requiresFullReload,
-        affectedModules: context.affectedModules,
-      };
-    }
-
-    return null;
-  };
-
   return {
     name: "vite-plugin-di-enhanced",
 
@@ -323,7 +304,12 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
               `🔄 Loading transformed version of ${path.basename(id)}`
             );
           }
-          return transformedContent;
+
+          // Return with code and optional map for better HMR support
+          return {
+            code: transformedContent,
+            map: null,
+          };
         }
       }
 
@@ -344,10 +330,15 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       return null;
     },
 
-    async handleHotUpdate({ file, server }) {
-      if (!options.watch) return;
+    async handleHotUpdate({ file, server, modules }) {
+      if (!options.watch) return undefined;
 
-      const isInScanDir = options.scanDirs!.some(dir => file.includes(dir));
+      if (options.verbose) {
+        console.log(`🔥 handleHotUpdate called for: ${file}`);
+      }
+
+      const isInScanDir = absoluteScanDirs.some(dir => file.startsWith(dir));
+
       if (
         isInScanDir &&
         (file.endsWith(".ts") || file.endsWith(".tsx"))
@@ -355,38 +346,122 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         try {
           const content = fs.readFileSync(file, "utf-8");
           const diPatterns = detectDIPatterns(content, options);
-          
+
           if (diPatterns.hasDI) {
-            const context: DIHotUpdateContext = {
-              file,
-              hasDIPatterns: true,
-              affectedModules: [file],
-              requiresFullReload: false,
-            };
+            const absoluteFile = path.resolve(file);
 
-            const result = await handleDIHotUpdate(context);
-            
-            if (result) {
-              const absoluteFile = path.resolve(file);
-              if (transformedFiles.has(absoluteFile)) {
-                const mod = server.moduleGraph.getModuleById(file);
-                if (mod) {
-                  server.reloadModule(mod);
-                } else {
-                  context.requiresFullReload = true;
-                }
-              }
+            if (options.verbose) {
+              console.log(`🔄 HMR: Re-transforming ${path.basename(file)}`);
+            }
 
-              if (context.requiresFullReload) {
-                server.ws.send({
-                  type: "full-reload",
+            // Re-transform if this file was previously transformed
+            const wasTransformed = transformedFiles.has(absoluteFile);
+            if (wasTransformed) {
+              try {
+                // Create a fresh transformer instance to pick up file changes
+                const freshTransformer = new FunctionalDIEnhancedTransformer({
+                  scanDirs: options.scanDirs,
+                  outputDir: options.outputDir,
+                  generateDebugFiles: options.generateDebugFiles,
+                  verbose: false, // Suppress transformer logs during HMR
+                  customSuffix: options.customSuffix,
                 });
+
+                // Re-run transformation with fresh instance
+                const newTransformed = await freshTransformer.transformForBuild();
+
+                // Update our cache with all the new transformations
+                transformedFiles.clear();
+                for (const [path, content] of newTransformed.entries()) {
+                  transformedFiles.set(path, content);
+                }
+
+                if (options.verbose) {
+                  console.log(`   Updated ${transformedFiles.size} transformed file(s)`);
+                }
+              } catch (error) {
+                console.error('Error retransforming file during HMR:', error);
               }
+            }
+
+            // Find all modules associated with this file
+            const affectedModules = modules.filter(mod => {
+              const modFile = mod.file;
+              return modFile === file || modFile === absoluteFile;
+            });
+
+            if (affectedModules.length > 0) {
+              // Invalidate modules so they reload with the updated transformed content
+              for (const mod of affectedModules) {
+                server.moduleGraph.invalidateModule(mod);
+              }
+
+              // Return the affected modules to trigger HMR update
+              return affectedModules;
             }
           }
         } catch (error) {
           console.error("Error checking file for DI changes:", error);
           buildContext.errors.push(`Hot update: ${error}`);
+        }
+      }
+
+      // Handle service file additions/changes - check if file has @Service decorator
+      if (
+        isInScanDir &&
+        (file.endsWith(".ts") || file.endsWith(".tsx")) &&
+        !file.endsWith(".test.ts") &&
+        !file.endsWith(".test.tsx") &&
+        !file.endsWith(".spec.ts") &&
+        !file.endsWith(".spec.tsx")
+      ) {
+        try {
+          const content = fs.readFileSync(file, "utf-8");
+          const hasServiceDecorator = /@Service\s*\(/.test(content);
+
+          if (hasServiceDecorator) {
+            if (options.verbose) {
+              console.log(`🔄 Service file detected: ${path.basename(file)} - regenerating config`);
+            }
+
+            // Regenerate the entire DI configuration
+            await transformDI(true);
+
+            // Invalidate all bridge files, config modules, AND transformed components
+            const moduleGraph = server.moduleGraph;
+            const bridgeDir = configManager?.getBridgeDir();
+            if (bridgeDir) {
+              // Invalidate all modules in the bridge directory
+              for (const [id, mod] of moduleGraph.idToModuleMap) {
+                if (id.includes('.tdi2')) {
+                  moduleGraph.invalidateModule(mod);
+                }
+              }
+            }
+
+            // Also invalidate all transformed component files so they get re-transformed with new service registry
+            for (const transformedPath of transformedFiles.keys()) {
+              const mods = moduleGraph.getModulesByFile(transformedPath);
+              if (mods) {
+                for (const mod of mods) {
+                  moduleGraph.invalidateModule(mod);
+                }
+              }
+            }
+
+            // Trigger full page reload so new service gets registered
+            server.ws.send({
+              type: "full-reload",
+              path: "*",
+            });
+
+            return [];
+          }
+        } catch (error) {
+          // File might not exist yet or be unreadable
+          if (options.verbose) {
+            console.log(`Could not read file for service detection: ${file}`, error);
+          }
         }
       }
 
@@ -401,8 +476,12 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           server.ws.send({
             type: "full-reload",
           });
+          return [];
         }
       }
+
+      // Return undefined to let Vite handle HMR normally
+      return undefined;
     },
 
     configureServer(server) {
@@ -417,6 +496,68 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         getPerformanceTracker: () => performanceTracker,
         transformDI,
       });
+
+      // Watch for new service files being added
+      if (options.watch) {
+        server.watcher.on('add', async (file) => {
+          const isInScanDir = absoluteScanDirs.some(dir => file.startsWith(dir));
+
+          if (
+            isInScanDir &&
+            (file.endsWith(".ts") || file.endsWith(".tsx")) &&
+            !file.endsWith(".test.ts") &&
+            !file.endsWith(".test.tsx") &&
+            !file.endsWith(".spec.ts") &&
+            !file.endsWith(".spec.tsx")
+          ) {
+            try {
+              const content = fs.readFileSync(file, "utf-8");
+              const hasServiceDecorator = /@Service\s*\(/.test(content);
+
+              if (hasServiceDecorator) {
+                if (options.verbose) {
+                  console.log(`🆕 New service file detected: ${path.basename(file)} - regenerating config`);
+                }
+
+                // Regenerate the entire DI configuration
+                await transformDI(true);
+
+                // Invalidate all bridge files, config modules, AND transformed components
+                const moduleGraph = server.moduleGraph;
+                const bridgeDir = configManager?.getBridgeDir();
+                if (bridgeDir) {
+                  // Invalidate all modules in the bridge directory
+                  for (const [id, mod] of moduleGraph.idToModuleMap) {
+                    if (id.includes('.tdi2')) {
+                      moduleGraph.invalidateModule(mod);
+                    }
+                  }
+                }
+
+                // Also invalidate all transformed component files so they get re-transformed with new service registry
+                for (const transformedPath of transformedFiles.keys()) {
+                  const mods = moduleGraph.getModulesByFile(transformedPath);
+                  if (mods) {
+                    for (const mod of mods) {
+                      moduleGraph.invalidateModule(mod);
+                    }
+                  }
+                }
+
+                // Trigger full page reload so new service gets registered
+                server.ws.send({
+                  type: "full-reload",
+                  path: "*",
+                });
+              }
+            } catch (error) {
+              if (options.verbose) {
+                console.log(`Could not read new file for service detection: ${file}`, error);
+              }
+            }
+          }
+        });
+      }
     },
 
     async generateBundle() {
