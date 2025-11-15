@@ -318,4 +318,46 @@ test.describe('Vite Plugin DI - HMR Tests', () => {
     await page.click('[data-testid="reset-data-btn"]');
     await expect(dataContent).toHaveText('Hello from DataService');
   });
+
+  test('Scenario 7: Uncommenting service implementation in existing file triggers reload', async ({ page }) => {
+    test.setTimeout(40000); // Complex multi-step test needs more time
+
+    // Step 1: Create I18nService file with commented out service implementation
+    const i18nServicePath = path.join(testAppDir, 'src', 'services', 'I18nService.ts');
+    const commentedServicePath = path.join(__dirname, '..', 'fixtures', 'modifications', 'scenario6', 'I18nService-commented.ts');
+    await replaceFile(commentedServicePath, i18nServicePath);
+
+    // Step 2: Update App.tsx to reference I18nServiceInterface (but implementation is commented)
+    const appPath = path.join(testAppDir, 'src', 'App.tsx');
+    const appWithI18nPath = path.join(__dirname, '..', 'fixtures', 'modifications', 'scenario6', 'App-with-i18n.tsx');
+    await replaceFile(appWithI18nPath, appPath);
+
+    // Give file system time to settle
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Start Vite dev server (I18nService exists but @Service is commented out)
+    const result = await startDevServer(testAppDir);
+    server = result.server;
+    serverPort = result.port;
+
+    // Try to open browser - it will error because I18nService implementation is commented
+    await page.goto(`http://localhost:${serverPort}`, { waitUntil: 'domcontentloaded' });
+
+    // Wait a bit to let initial load attempt happen
+    await page.waitForTimeout(3000);
+
+    // Step 3: NOW uncomment the service implementation (simulating your exact scenario)
+    const uncommentedServicePath = path.join(__dirname, '..', 'fixtures', 'modifications', 'scenario6', 'I18nService-uncommented.ts');
+    await replaceFile(uncommentedServicePath, i18nServicePath);
+
+    // Wait for full reload (plugin should detect service decorator and reload)
+    await waitForFullReload(page);
+
+    // Verify app now renders successfully with I18nService
+    await waitForAppReady(page);
+
+    // Verify I18nService is working
+    const i18nMessage = page.locator('[data-testid="i18n-message"]');
+    await expect(i18nMessage).toHaveText('Hello from I18n Service');
+  });
 });

@@ -427,6 +427,28 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
             // Regenerate the entire DI configuration
             await transformDI(true);
 
+            // Invalidate all bridge files, config modules, AND transformed components
+            const moduleGraph = server.moduleGraph;
+            const bridgeDir = configManager?.getBridgeDir();
+            if (bridgeDir) {
+              // Invalidate all modules in the bridge directory
+              for (const [id, mod] of moduleGraph.idToModuleMap) {
+                if (id.includes('.tdi2')) {
+                  moduleGraph.invalidateModule(mod);
+                }
+              }
+            }
+
+            // Also invalidate all transformed component files so they get re-transformed with new service registry
+            for (const transformedPath of transformedFiles.keys()) {
+              const mods = moduleGraph.getModulesByFile(transformedPath);
+              if (mods) {
+                for (const mod of mods) {
+                  moduleGraph.invalidateModule(mod);
+                }
+              }
+            }
+
             // Trigger full page reload so new service gets registered
             server.ws.send({
               type: "full-reload",
