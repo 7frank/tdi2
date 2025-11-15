@@ -25,4 +25,5 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  cacheDir: path.resolve(__dirname, 'node_modules/.vite'),
 });

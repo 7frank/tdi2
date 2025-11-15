@@ -255,14 +255,92 @@ export async function expectNoFullReload(
 }
 
 /**
+ * Find the actual di-config.ts file - check multiple possible locations
+ */
+async function findDiConfig(testAppDir: string): Promise<string | null> {
+  // Resolve the actual node_modules path (might be a symlink)
+  const nodeModulesPath = path.join(testAppDir, 'node_modules');
+  let resolvedNodeModules = nodeModulesPath;
+
+  try {
+    const stats = await fs.lstat(nodeModulesPath);
+    if (stats.isSymbolicLink()) {
+      resolvedNodeModules = await fs.readlink(nodeModulesPath);
+      console.log(`[findDiConfig] node_modules is a symlink to: ${resolvedNodeModules}`);
+    }
+  } catch (err) {
+    console.log(`[findDiConfig] Error checking node_modules symlink:`, err);
+  }
+
+  // Possible locations for di-config
+  const possibleLocations = [
+    path.join(testAppDir, 'node_modules', '.tdi2', 'configs'),
+    path.join(resolvedNodeModules, '.tdi2', 'configs'),
+    path.join(testAppDir, '.tdi2'),
+  ];
+
+  for (const location of possibleLocations) {
+    console.log(`[findDiConfig] Checking location: ${location}`);
+
+    if (!await pathExists(location)) {
+      console.log(`[findDiConfig] Location does not exist: ${location}`);
+      continue;
+    }
+
+    // Check if di-config.ts is directly in this directory
+    const directConfigPath = path.join(location, 'di-config.ts');
+    if (await pathExists(directConfigPath)) {
+      console.log(`[findDiConfig] Found di-config.ts at: ${directConfigPath}`);
+      return directConfigPath;
+    }
+
+    // Check if there are subdirectories (configs/* pattern)
+    try {
+      const entries = await fs.readdir(location, { withFileTypes: true });
+      const dirs = entries.filter(e => e.isDirectory());
+      console.log(`[findDiConfig] Found subdirs in ${location}:`, dirs.map(d => d.name));
+
+      for (const dir of dirs) {
+        const diConfigPath = path.join(location, dir.name, 'di-config.ts');
+        console.log(`[findDiConfig] Checking for di-config at: ${diConfigPath}`);
+        if (await pathExists(diConfigPath)) {
+          console.log(`[findDiConfig] Found di-config.ts at: ${diConfigPath}`);
+          return diConfigPath;
+        }
+      }
+    } catch (err) {
+      console.log(`[findDiConfig] Error reading directory ${location}:`, err);
+    }
+  }
+
+  console.log(`[findDiConfig] No di-config.ts found in any location`);
+  return null;
+}
+
+/**
  * Check if a service is registered in di-config
+ * The configPath can be either the test app directory or the actual config file path
  */
 export async function expectServiceRegistered(
   configPath: string,
   serviceName: string
 ): Promise<boolean> {
-  const content = await fs.readFile(configPath, 'utf-8');
-  return content.includes(serviceName);
+  try {
+    // If configPath doesn't end with .ts, treat it as test app directory
+    let actualConfigPath = configPath;
+    if (!configPath.endsWith('.ts')) {
+      const foundPath = await findDiConfig(configPath);
+      if (!foundPath) {
+        return false;
+      }
+      actualConfigPath = foundPath;
+    }
+
+    const content = await fs.readFile(actualConfigPath, 'utf-8');
+    return content.includes(serviceName);
+  } catch {
+    return false;
+  }
 }
 
 /**
