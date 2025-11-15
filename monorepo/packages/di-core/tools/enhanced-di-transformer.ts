@@ -1,10 +1,10 @@
 // tools/enhanced-di-transformer.ts - REFACTORED to use shared logic
 
-import { 
-  Project, 
-  SourceFile, 
-  ClassDeclaration, 
-  PropertyDeclaration, 
+import {
+  Project,
+  SourceFile,
+  ClassDeclaration,
+  PropertyDeclaration,
   ParameterDeclaration,
   SyntaxKind,
   Node
@@ -12,6 +12,9 @@ import {
 import * as path from 'path';
 import * as fs from 'fs';
 import { ConfigManager } from './config-manager';
+import { consoleFor } from './logger';
+
+const console = consoleFor('di-core:enhanced-transformer');
 
 // Use shared components
 import { SharedDependencyExtractor } from './shared/SharedDependencyExtractor';

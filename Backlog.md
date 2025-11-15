@@ -2,15 +2,21 @@
 
 ## ordered log (for production release)
 
-### console log in di-core and vite-plugin
+### ❌ console log in di-core and vite-plugin
 
-### [❌] FIXME could not fast refrest useDi export incompatible
+make it less noisy
+
+### ❌ hot reload fixes added path issue
+
+see `src/generated` 
+
+### [✅] FIXME could not fast refrest useDi export incompatible
 
 > maybe in case this becomes too complex, reload full DiContainer
 
 - ✅ vite plugin hot reload tsx file => update text in source code => componentn renders properly
-- ❌ vite plugin hot reload service => update service, tsx file that is using service updates similarly to how hooks would behave
-- ❌ vite plugin add new service and update tsx file interface and use new service and render properly
+- ✅ vite plugin hot reload service => update service, tsx file that is using service updates similarly to how hooks would behave
+- ✅ vite plugin add new service and update tsx file interface and use new service and render properly
 
 ### [❌] playground
 

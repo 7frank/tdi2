@@ -120,11 +120,13 @@
       "name": "@tdi2/di-core",
       "version": "3.3.0",
       "dependencies": {
+        "debug": "^4.4.3",
         "ts-morph": "^21.0.1",
         "valtio": "^2.1.2",
       },
       "devDependencies": {
         "@types/bun": "latest",
+        "@types/debug": "^4.1.12",
         "@types/node": "^20.0.0",
         "@types/react": "^19.1.8",
         "typescript": "~5.8.3",
@@ -310,9 +312,11 @@
       "dependencies": {
         "@tdi2/di-core": "workspace:*",
         "@tdi2/plugin-core": "workspace:*",
+        "debug": "^4.4.3",
       },
       "devDependencies": {
         "@playwright/test": "^1.56.1",
+        "@types/debug": "^4.1.12",
         "@types/fs-extra": "^11.0.4",
         "@types/node": "^20.0.0",
         "@typescript-eslint/eslint-plugin": "^7.0.0",

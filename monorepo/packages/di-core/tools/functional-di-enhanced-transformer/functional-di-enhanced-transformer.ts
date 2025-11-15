@@ -1,8 +1,8 @@
 // tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.ts - UPDATED to use TransformationPipeline
 
-import { 
-  Project, 
-  SourceFile, 
+import {
+  Project,
+  SourceFile,
   FunctionDeclaration,
   VariableDeclaration,
   ArrowFunction,
@@ -11,6 +11,9 @@ import {
 } from 'ts-morph';
 import * as path from 'path';
 import { ConfigManager } from '../config-manager';
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:functional-transformer');
 import type { TransformedContent } from '../shared/shared-types';
 
 // Use shared components

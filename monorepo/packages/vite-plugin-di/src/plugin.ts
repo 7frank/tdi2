@@ -3,10 +3,13 @@ import {
   EnhancedDITransformer,
   FunctionalDIEnhancedTransformer,
   ConfigManager,
+  consoleFor,
 } from "@tdi2/di-core/tools";
 
 import * as fs from "fs";
 import * as path from "path";
+
+const console = consoleFor('vite-plugin-di:plugin');
 
 import type {
   DIPluginOptions,

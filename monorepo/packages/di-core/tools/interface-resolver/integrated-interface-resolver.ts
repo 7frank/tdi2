@@ -13,6 +13,9 @@ import { EnhancedInterfaceExtractor, type DISourceConfiguration } from "./enhanc
 import { EnhancedServiceValidator } from "./enhanced-service-validator";
 import { InheritanceAnalyzer } from "./inheritance-analyzer";
 import { DependencyAnalyzer } from "./dependency-analyzer";
+import { consoleFor } from "../logger";
+
+const console = consoleFor('di-core:interface-resolver');
 import { KeySanitizer } from "./key-sanitizer";
 
 // Import types

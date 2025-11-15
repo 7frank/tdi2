@@ -60,13 +60,15 @@
   },
   "dependencies": {
     "@tdi2/di-core": "workspace:*",
-    "@tdi2/plugin-core": "workspace:*"
+    "@tdi2/plugin-core": "workspace:*",
+    "debug": "^4.4.3"
   },
   "peerDependencies": {
     "vite": "^4.0.0 || ^5.0.0 || ^6.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
+    "@types/debug": "^4.1.12",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",

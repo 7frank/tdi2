@@ -4,6 +4,9 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { createRequire } from 'module';
+import { consoleFor } from './logger';
+
+const console = consoleFor('di-core:config-manager');
 
 interface DIConfigOptions {
   scanDirs: string[];

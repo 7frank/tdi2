@@ -11,6 +11,9 @@ import {
 import { PropertyAccessUpdater } from "./property-access-updater";
 import { ExtractedDependency } from "../shared/SharedDependencyExtractor";
 import type { IntegratedInterfaceResolver } from "../interface-resolver/integrated-interface-resolver";
+import { consoleFor } from "../logger";
+
+const console = consoleFor('di-core:transformation-pipeline');
 
 export interface TransformationPipelineOptions {
   verbose?: boolean;

@@ -77,11 +77,13 @@
     "url": "https://github.com/7frank/tdi2"
   },
   "dependencies": {
+    "debug": "^4.4.3",
     "ts-morph": "^21.0.1",
     "valtio": "^2.1.2"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/debug": "^4.1.12",
     "@types/node": "^20.0.0",
     "@types/react": "^19.1.8",
     "typescript": "~5.8.3"
