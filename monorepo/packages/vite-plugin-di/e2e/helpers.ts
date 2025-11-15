@@ -114,7 +114,12 @@ export async function setupTestApp(tempDir: string): Promise<void> {
   if (await pathExists(monorepoNodeModules)) {
     // Remove existing symlink/directory if it exists
     if (await pathExists(tempNodeModules)) {
-      await removeDir(tempNodeModules);
+      const stats = await fs.lstat(tempNodeModules);
+      if (stats.isSymbolicLink()) {
+        await fs.unlink(tempNodeModules);
+      } else {
+        await removeDir(tempNodeModules);
+      }
     }
     await fs.symlink(monorepoNodeModules, tempNodeModules, 'dir');
   }

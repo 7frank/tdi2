@@ -123,7 +123,7 @@ test.describe('Vite Plugin DI - HMR Tests', () => {
     );
 
     // Verify di-config was regenerated
-    const diConfigPath = path.join(testAppDir, 'src', '.tdi2', 'di-config.ts');
+    const diConfigPath = path.join(testAppDir, '.tdi2', 'di-config.ts');
     const serviceRegistered = await expectServiceRegistered(diConfigPath, 'CounterService');
     expect(serviceRegistered).toBe(true);
   });
@@ -160,7 +160,7 @@ test.describe('Vite Plugin DI - HMR Tests', () => {
     await page.waitForTimeout(2000);
 
     // Verify di-config includes new service
-    const diConfigPath = path.join(testAppDir, 'src', '.tdi2', 'di-config.ts');
+    const diConfigPath = path.join(testAppDir, '.tdi2', 'di-config.ts');
     const loggerRegistered = await expectServiceRegistered(diConfigPath, 'LoggerService');
     expect(loggerRegistered).toBe(true);
 
