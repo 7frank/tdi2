@@ -2,6 +2,8 @@
 
 ## ordered log (for production release)
 
+### console log in di-core and vite-plugin
+
 ### [❌] FIXME could not fast refrest useDi export incompatible
 
 > maybe in case this becomes too complex, reload full DiContainer

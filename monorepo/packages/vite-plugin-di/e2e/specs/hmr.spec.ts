@@ -197,6 +197,8 @@ test.describe('Vite Plugin DI - HMR Tests', () => {
   });
 
   test('Scenario 5: Component uses new service then HMRs properly', async ({ page }) => {
+    test.setTimeout(40000); // Complex multi-step test needs more time
+
     // Start Vite dev server
     const result = await startDevServer(testAppDir);
     server = result.server;
@@ -248,6 +250,9 @@ test.describe('Vite Plugin DI - HMR Tests', () => {
     let content = await fs.readFile(appPath2, 'utf-8');
     content = content.replace('<h1>Hello World</h1>', '<h1>Hello HMR</h1>');
     await fs.writeFile(appPath2, content, 'utf-8');
+
+    // Give file system watcher time to detect the change
+    await page.waitForTimeout(300);
 
     // Wait for HMR (not full reload)
     await waitForHMR(page);

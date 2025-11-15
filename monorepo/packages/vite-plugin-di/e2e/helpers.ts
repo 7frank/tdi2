@@ -143,8 +143,8 @@ export async function replaceFile(
 ): Promise<void> {
   await fs.copyFile(sourcePath, targetPath);
 
-  // Small delay to ensure file system change is detected
-  await new Promise(resolve => setTimeout(resolve, 100));
+  // Delay to ensure file system change is detected (longer for parallel tests)
+  await new Promise(resolve => setTimeout(resolve, 300));
 }
 
 /**
@@ -195,7 +195,7 @@ export async function addFile(
 export async function waitForHMR(page: Page, timeout = 5000): Promise<void> {
   try {
     await page.waitForEvent('console', {
-      predicate: msg => msg.text().includes('[vite] hmr update'),
+      predicate: msg => msg.text().includes('[vite] hmr update') || msg.text().includes('[vite] hot updated'),
       timeout,
     });
 

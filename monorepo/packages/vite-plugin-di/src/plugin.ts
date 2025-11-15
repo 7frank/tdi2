@@ -121,7 +121,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
 
       // Clean old configs periodically (but not if reusing)
       if (options.cleanOldConfigs && !options.reuseExistingConfig) {
-        ConfigManager.cleanOldConfigs(options.keepConfigCount);
+        ConfigManager.cleanOldConfigs(options.keepConfigCount, options.outputDir);
       }
 
       // Create config manager first to check for existing configs
