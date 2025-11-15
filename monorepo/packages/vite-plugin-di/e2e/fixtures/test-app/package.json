@@ -13,6 +13,7 @@
     "@tdi2/di-core": "workspace:*"
   },
   "devDependencies": {
+    "@tdi2/vite-plugin-di": "workspace:*",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.0",

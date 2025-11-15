@@ -68,7 +68,8 @@ export async function startDevServer(testAppDir: string): Promise<{ server: Vite
         port,
       },
     },
-    logLevel: 'error', // Reduce noise in test output
+    logLevel: 'silent', // Suppress all Vite logs during tests
+    clearScreen: false,
   });
 
   await server.listen();

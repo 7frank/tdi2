@@ -9,15 +9,12 @@ import path from 'path';
 const scanDirs = [path.resolve(__dirname, './src')];
 const outputDir = path.resolve(__dirname, './.tdi2');
 
-console.log("scanDirs",scanDirs)
-console.log("outputDir",outputDir)
-
 export default defineConfig({
   plugins: [
     diEnhancedPlugin({
       scanDirs,
       outputDir,
-      verbose: true,
+      verbose: false,
       enableFunctionalDI: true,
       enableInterfaceResolution: true,
       generateDebugFiles: false,
