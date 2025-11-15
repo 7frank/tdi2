@@ -268,4 +268,54 @@ test.describe('Vite Plugin DI - HMR Tests', () => {
     await page.click('[data-testid="decrement-btn"]');
     await expect(page.locator('[data-testid="logs"]')).toContainText('Decremented counter');
   });
+
+  test('Scenario 6: Add service implementation for existing interface reference', async ({ page }) => {
+    test.setTimeout(40000); // Complex multi-step test needs more time
+
+    // Step 1: Update interfaces file to include DataServiceInterface
+    const interfacesPath = path.join(testAppDir, 'src', 'types', 'interfaces.ts');
+    const dataInterfacePath = path.join(__dirname, '..', 'fixtures', 'modifications', 'scenario6', 'interfaces-with-data.ts');
+    await replaceFile(dataInterfacePath, interfacesPath);
+
+    // Step 2: Update App.tsx to reference DataServiceInterface (but no implementation yet)
+    const appPath = path.join(testAppDir, 'src', 'App.tsx');
+    const appWithDataPath = path.join(__dirname, '..', 'fixtures', 'modifications', 'scenario6', 'App-with-data-interface.tsx');
+    await replaceFile(appWithDataPath, appPath);
+
+    // Give file system time to settle
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Start Vite dev server (App.tsx references DataServiceInterface but no implementation exists)
+    const result = await startDevServer(testAppDir);
+    server = result.server;
+    serverPort = result.port;
+
+    // Try to open browser - it will error because DataService doesn't exist
+    await page.goto(`http://localhost:${serverPort}`, { waitUntil: 'domcontentloaded' });
+
+    // Wait a bit to let initial load attempt happen
+    await page.waitForTimeout(3000);
+
+    // Step 3: NOW add DataService implementation while server is running (real HMR scenario)
+    const dataServicePath = path.join(testAppDir, 'src', 'services', 'DataService.ts');
+    const dataServiceSourcePath = path.join(__dirname, '..', 'fixtures', 'modifications', 'scenario6', 'DataService.ts');
+    await replaceFile(dataServiceSourcePath, dataServicePath);
+
+    // Wait for full reload (plugin should detect new service and reload)
+    await waitForFullReload(page);
+
+    // Verify app now renders successfully with DataService
+    await waitForAppReady(page);
+
+    // Verify DataService is working
+    const dataContent = page.locator('[data-testid="data-content"]');
+    await expect(dataContent).toHaveText('Hello from DataService');
+
+    // Test DataService functionality
+    await page.click('[data-testid="load-data-btn"]');
+    await expect(dataContent).toHaveText('Data loaded!');
+
+    await page.click('[data-testid="reset-data-btn"]');
+    await expect(dataContent).toHaveText('Hello from DataService');
+  });
 });
