@@ -276,7 +276,7 @@ export class TransformationPipeline {
       nonDIDestructuring
     );
 
-    if (this.options.verbose && nonDIDestructuring.length > 0) {
+    if (nonDIDestructuring.length > 0) {
       console.log(
         `🔒 Extracted ${nonDIDestructuring.length} non-DI parameter destructuring statements:`,
         nonDIDestructuring
@@ -786,7 +786,7 @@ export class TransformationPipeline {
       statement.remove();
     }
 
-    if (this.options.verbose && toRemove.length > 0) {
+    if (toRemove.length > 0) {
       console.log(
         `🗑️  Removed ${toRemove.length} original destructuring statements`
       );
@@ -970,7 +970,7 @@ export class TransformationPipeline {
       statement.remove();
     }
 
-    if (this.options.verbose && statementsToRemove.length > 0) {
+    if (statementsToRemove.length > 0) {
       console.log(
         `🗑️  Removed ${statementsToRemove.length} conflicting destructuring statements`
       );
@@ -1046,7 +1046,7 @@ export class TransformationPipeline {
       statement.remove();
     }
 
-    if (this.options.verbose && toRemove.length > 0) {
+    if (toRemove.length > 0) {
       console.log(`🗑️  Removed ${toRemove.length} duplicate destructuring statements`);
     }
   }

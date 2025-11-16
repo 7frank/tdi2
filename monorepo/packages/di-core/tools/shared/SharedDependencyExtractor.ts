@@ -94,7 +94,7 @@ export class SharedDependencyExtractor {
       }
     }
 
-    if (this.options.verbose && dependencies.length > 0) {
+    if (dependencies.length > 0) {
       console.log(`🔍 Found ${dependencies.length} constructor dependencies in ${classDecl.getName()}`);
     }
 
@@ -200,7 +200,7 @@ export class SharedDependencyExtractor {
     // Use recursive extraction to find all Inject markers in the type structure
     const injectMarkers = this.recursiveExtractor.extractFromTypeNode(typeNode, sourceFile);
     
-    if (this.options.verbose && injectMarkers.length > 0) {
+    if (injectMarkers.length > 0) {
       console.log(`🎯 Found ${injectMarkers.length} inject markers in parameter type`);
       injectMarkers.forEach(marker => {
         console.log(`  - ${marker.propertyPath.join('.')} -> ${marker.interfaceType} (${marker.isOptional ? 'optional' : 'required'})`);

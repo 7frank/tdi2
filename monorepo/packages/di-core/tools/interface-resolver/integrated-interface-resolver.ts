@@ -68,20 +68,18 @@ export class IntegratedInterfaceResolver {
 
     // Initialize components with source configuration
     this.keySanitizer = new KeySanitizer();
-    
+
     this.interfaceExtractor = new EnhancedInterfaceExtractor(
-      this.keySanitizer, 
-      this.options.verbose, 
+      this.keySanitizer,
       this.options.sourceConfig
     );
-    
+
     this.serviceValidator = new EnhancedServiceValidator(
-      this.options.verbose, 
       this.options.sourceConfig
     );
-    
-    this.inheritanceAnalyzer = new InheritanceAnalyzer(this.keySanitizer, this.options.verbose);
-    this.dependencyAnalyzer = new DependencyAnalyzer(this.keySanitizer, this.options.verbose);
+
+    this.inheritanceAnalyzer = new InheritanceAnalyzer(this.keySanitizer);
+    this.dependencyAnalyzer = new DependencyAnalyzer(this.keySanitizer);
   }
 
   async scanProject(): Promise<void> {

@@ -16,7 +16,6 @@ describe('diEnhancedPlugin', () => {
 
   it('should merge user options with defaults', () => {
     const userOptions: DIPluginOptions = {
-      verbose: true,
       scanDirs: ['./custom-src'],
     };
 
@@ -31,7 +30,6 @@ describe('getDIPluginDefaults', () => {
 
     expect(defaults.scanDirs).toEqual(['./src']);
     expect(defaults.outputDir).toBe('./src/generated');
-    expect(defaults.verbose).toBe(false);
     expect(defaults.watch).toBe(true);
     expect(defaults.enableFunctionalDI).toBe(true);
     expect(defaults.enableInterfaceResolution).toBe(true);
@@ -40,14 +38,12 @@ describe('getDIPluginDefaults', () => {
 
   it('should merge user options with defaults', () => {
     const userOptions: DIPluginOptions = {
-      verbose: true,
       scanDirs: ['./custom-src'],
       keepConfigCount: 5,
     };
 
     const merged = getDIPluginDefaults(userOptions);
 
-    expect(merged.verbose).toBe(true);
     expect(merged.scanDirs).toEqual(['./custom-src']);
     expect(merged.keepConfigCount).toBe(5);
     expect(merged.watch).toBe(true); // Should keep default

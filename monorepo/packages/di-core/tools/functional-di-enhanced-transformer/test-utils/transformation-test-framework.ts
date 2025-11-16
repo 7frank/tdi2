@@ -17,7 +17,6 @@ export interface IgnorePattern {
 export interface TransformationTestOptions {
   fixtureDir: string;
   outputDir?: string;
-  verbose?: boolean;
   updateSnapshots?: boolean;
   ignorePatterns?: IgnorePattern[];
   validateSyntax?: boolean; // Whether to validate TypeScript syntax
@@ -106,7 +105,6 @@ export class TransformationTestFramework {
     this.transformer = new FunctionalDIEnhancedTransformer({
       scanDirs: ["./src"],
       outputDir: "./src/generated",
-      verbose: this.options.verbose || false,
     });
 
     // Inject mocked dependencies
@@ -888,7 +886,6 @@ export function defineTransformationTest(
 ): () => Promise<void> {
   const framework = new TransformationTestFramework({
     fixtureDir,
-    verbose: false, // Disable verbose now that lifecycle is working
     updateSnapshots: [
       "1",
       "true",

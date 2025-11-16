@@ -901,11 +901,11 @@ export class EnhancedDependencyExtractor {
       const paramRegex = new RegExp(`\\b${param}\\b`, 'g');
       resolved = resolved.replace(paramRegex, value);
     }
-    
-    if (this.options.verbose && resolved !== interfaceType) {
-      console.log(`🔧 Resolved type parameters: ${interfaceType} -> ${resolved}`);
+
+    if (resolved !== interfaceType) {
+      console.debug(`🔧 Resolved type parameters: ${interfaceType} -> ${resolved}`);
     }
-    
+
     return resolved;
   }
 

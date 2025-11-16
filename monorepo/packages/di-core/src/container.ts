@@ -205,7 +205,7 @@ export class CompileTimeDIContainer implements DIContainer {
 
         // NEW: Check if service should be loaded based on profiles
         if (!this.profileManager.shouldLoadService(config.profiles)) {
-          if (this.verbose && this.profileManager.getActiveProfiles().length > 0) {
+          if (this.profileManager.getActiveProfiles().length > 0) {
             console.log(
               `⏭️  Skipping ${token} - Profile mismatch: ${this.profileManager.getProfileMatchReason(config.profiles)}`
             );
@@ -232,7 +232,7 @@ export class CompileTimeDIContainer implements DIContainer {
       }
     }
 
-    if (this.verbose || skipped > 0) {
+    if (skipped > 0) {
       console.log(`✅ DI configuration loaded: ${loaded} services registered, ${skipped} skipped by profiles`);
     }
   }
@@ -291,7 +291,7 @@ export class CompileTimeDIContainer implements DIContainer {
       }
     }
 
-    if (this.verbose || skipped > 0) {
+    if (skipped > 0) {
       console.log(`🏗️  Configuration loading complete: ${loaded} loaded, ${skipped} skipped by profiles`);
     }
   }

@@ -5,16 +5,11 @@ import { Project } from "ts-morph";
 import { EnhancedDependencyExtractor } from "./enhanced-dependency-extractor";
 import { ADDITIONAL_MARKER_FIXTURES } from "./fixtures/marker-approach";
 
-const verbose = false;
 describe("Enhanced Marker Approach Tests", () => {
   let mockProject: Project;
   let dependencyExtractor: EnhancedDependencyExtractor;
 
   beforeEach(() => {
-    if (verbose) {
-      console.log("\n ---- Next Test\n");
-    }
-
     mockProject = new Project({
       useInMemoryFileSystem: true,
       compilerOptions: {
@@ -25,8 +20,8 @@ describe("Enhanced Marker Approach Tests", () => {
     });
 
     dependencyExtractor = new EnhancedDependencyExtractor({
-      srcDir: "./src",
-      verbose,
+      scanDirs: ["./src"],
+      outputDir: "./src/generated",
     });
   });
 
@@ -348,8 +343,8 @@ describe("Enhanced Marker Approach Tests", () => {
           // Given - Configure for aggressive circular protection in tests
           const testExtractor = new EnhancedDependencyExtractor(
             {
-              srcDir: "./src",
-              verbose: false, // Turn off verbose for cleaner test output
+              scanDirs: ["./src"],
+              outputDir: "./src/generated",
             },
             undefined, // Use default source config
             {
@@ -392,8 +387,9 @@ describe("Enhanced Marker Approach Tests", () => {
           // Given - Configure with very low max depth for testing
           const testExtractor = new EnhancedDependencyExtractor(
             {
-              srcDir: "./src",
-              verbose: false,
+              scanDirs: ["./src"],
+              outputDir: "./src/generated",
+              
             },
             undefined,
             {
@@ -438,8 +434,9 @@ describe("Enhanced Marker Approach Tests", () => {
           // Given - Configure with circular detection disabled
           const testExtractor = new EnhancedDependencyExtractor(
             {
-              srcDir: "./src",
-              verbose: false,
+              scanDirs: ["./src"],
+              outputDir: "./src/generated",
+              
             },
             undefined,
             {
@@ -481,8 +478,9 @@ describe("Enhanced Marker Approach Tests", () => {
         it("When updating circular protection config, Then should use new settings", () => {
           // Given
           const testExtractor = new EnhancedDependencyExtractor({
-            srcDir: "./src",
-            verbose: false,
+            scanDirs: ["./src"],
+              outputDir: "./src/generated",
+            
           });
 
           // When - Update config
@@ -531,8 +529,9 @@ describe("Enhanced Marker Approach Tests", () => {
         it("When extraction stats are reset, Then should clear all counters", () => {
           // Given
           const testExtractor = new EnhancedDependencyExtractor({
-            srcDir: "./src",
-            verbose: false,
+            scanDirs: ["./src"],
+              outputDir: "./src/generated",
+            
           });
 
           const sourceFile = mockProject.createSourceFile(

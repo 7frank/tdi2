@@ -25,7 +25,6 @@ export class EnhancedInterfaceExtractor {
 
   constructor(
     private keySanitizer: KeySanitizer,
-    private verbose: boolean = false,
     sourceConfig?: Partial<DISourceConfiguration>
   ) {
     this.sourceConfig = {
@@ -251,11 +250,11 @@ export class EnhancedInterfaceExtractor {
       
       // Cache result
       this.sourceValidationCache.set(cacheKey, isValid);
-      
-      if (this.verbose && !isValid) {
-        console.warn(`⚠️  Decorator ${decoratorName} not from valid source`);
+
+      if (!isValid) {
+        console.debug(`⚠️  Decorator ${decoratorName} not from valid source`);
       }
-      
+
       return isValid;
     } catch (error) {
       console.warn(`⚠️  Failed to validate decorator source:`, error);
@@ -287,13 +286,13 @@ export class EnhancedInterfaceExtractor {
       // Find import declaration
       const imports = sourceFile.getImportDeclarations();
       const isValid = this.isMarkerFromValidSource(markerName, imports);
-      
+
       this.sourceValidationCache.set(cacheKey, isValid);
-      
-      if (this.verbose && !isValid) {
-        console.warn(`⚠️  Marker ${markerName} not from valid source`);
+
+      if (!isValid) {
+        console.debug(`⚠️  Marker ${markerName} not from valid source`);
       }
-      
+
       return isValid;
     } catch (error) {
       console.warn(`⚠️  Failed to validate marker source:`, error);

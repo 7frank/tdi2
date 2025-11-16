@@ -95,7 +95,6 @@ describe('Webpack Plugin E2E', () => {
         new TDI2WebpackPlugin({
           scanDirs: [fixturesDir],
           outputDir: path.join(tmpRoot, 'generated'),
-          verbose: false,
           enableFunctionalDI: true,
           enableInterfaceResolution: true,
         }),

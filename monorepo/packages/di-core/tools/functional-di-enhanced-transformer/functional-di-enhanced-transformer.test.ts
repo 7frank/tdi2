@@ -267,7 +267,6 @@ describe("FunctionalDIEnhancedTransformer", () => {
     transformer = new FunctionalDIEnhancedTransformer({
       scanDirs: ["./src"],
       outputDir: "./src/generated",
-      verbose: false,
     });
 
     mockProject = createMockProject();

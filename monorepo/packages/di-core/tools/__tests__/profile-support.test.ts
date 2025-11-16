@@ -23,9 +23,9 @@ describe('@Profile Runtime Support', () => {
     delete process.env.ACTIVE_PROFILES;
     delete process.env.PROFILES;
     delete process.env.NODE_ENV;
-    
-    container = new CompileTimeDIContainer(undefined, { verbose: false });
-    profileManager = new ProfileManager({ verbose: false });
+
+    container = new CompileTimeDIContainer(undefined, {});
+    profileManager = new ProfileManager({});
   });
 
   afterEach(() => {
@@ -147,8 +147,7 @@ describe('@Profile Runtime Support', () => {
 
     it('should initialize container with active profiles', () => {
       const containerWithProfiles = new CompileTimeDIContainer(undefined, {
-        activeProfiles: ['dev', 'test'],
-        verbose: false
+        activeProfiles: ['dev', 'test']
       });
       
       expect(containerWithProfiles.getActiveProfiles()).toEqual(['dev', 'test']);
@@ -351,7 +350,7 @@ describe('@Profile Runtime Support', () => {
       const originalEnv = process.env.TDI2_PROFILES;
       process.env.TDI2_PROFILES = 'dev,test,debug';
       
-      const envProfileManager = new ProfileManager({ verbose: false });
+      const envProfileManager = new ProfileManager({});
       const profiles = envProfileManager.getActiveProfiles();
       
       expect(profiles).toContain('dev');
@@ -405,7 +404,7 @@ describe('@Profile Runtime Support', () => {
     });
 
     it('should handle services with no profiles when default profile is active', () => {
-      const defaultProfileManager = new ProfileManager({ verbose: false });
+      const defaultProfileManager = new ProfileManager({});
       // Should have 'default' profile active by default
       
       expect(defaultProfileManager.shouldLoadService(undefined)).toBe(true);
@@ -436,7 +435,7 @@ describe('@Profile Runtime Support', () => {
     });
 
     it('should handle default profile behavior like Spring Boot', () => {
-      const emptyProfileManager = new ProfileManager({ verbose: false });
+      const emptyProfileManager = new ProfileManager({});
       
       // When no profiles are explicitly set, should use default
       expect(emptyProfileManager.getActiveProfiles()).toEqual(['default']);

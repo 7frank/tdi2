@@ -59,7 +59,6 @@ describe('esbuild Plugin E2E - Multi-Package (Multiple scanDirs)', () => {
         tdi2Plugin({
           scanDirs: [pluginCoreFixtures, localFixtures], // 🎯 Multiple directories
           outputDir: path.join(tmpRoot, 'generated'),
-          verbose: true, // Enable to see multi-package scanning
           enableFunctionalDI: true,
           enableInterfaceResolution: true,
         }),

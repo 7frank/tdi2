@@ -119,13 +119,13 @@ export class FunctionalDIEnhancedTransformer {
     });
 
     // Initialize shared components
-    this.typeResolver = new SharedTypeResolver(this.interfaceResolver, {});
+    this.typeResolver = new SharedTypeResolver(this.interfaceResolver);
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
       scanDirs: this.options.scanDirs
     });
 
-    this.serviceRegistry = new SharedServiceRegistry(this.configManager, {});
+    this.serviceRegistry = new SharedServiceRegistry(this.configManager);
 
     // Initialize transformation pipeline with enhanced options
     const pipelineOptions: TransformationPipelineOptions = {
@@ -470,7 +470,7 @@ export class FunctionalDIEnhancedTransformer {
                      filePath.includes('.d.ts') ||
                      filePath.includes('.tdi2');
     
-    if (this.options.verbose && shouldSkip) {
+    if (shouldSkip) {
       console.log(`🔍 Skipping file due to ignore pattern: ${filePath}`);
     }
     return shouldSkip;

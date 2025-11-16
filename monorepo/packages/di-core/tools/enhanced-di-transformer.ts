@@ -91,13 +91,13 @@ export class EnhancedDITransformer {
     });
 
     // Initialize shared components
-    this.typeResolver = new SharedTypeResolver(this.interfaceResolver, {});
+    this.typeResolver = new SharedTypeResolver(this.interfaceResolver);
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
       scanDirs: this.options.scanDirs
     });
 
-    this.serviceRegistry = new SharedServiceRegistry(this.configManager, {});
+    this.serviceRegistry = new SharedServiceRegistry(this.configManager);
   }
 
   async transform(): Promise<TransformationResult> {

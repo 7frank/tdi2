@@ -24,7 +24,6 @@ export class EnhancedServiceValidator {
   private locationKeyGenerator = new LocationKeyGenerator();
 
   constructor(
-    private verbose: boolean = false,
     sourceConfig?: Partial<DISourceConfiguration>
   ) {
     this.sourceConfig = {
@@ -629,8 +628,8 @@ export class EnhancedServiceValidator {
 
       this.validationCache.set(cacheKey, isValid);
 
-      if (this.verbose && !isValid) {
-        console.warn(
+      if (!isValid) {
+        console.debug(
           `⚠️  Marker ${markerName} not from valid source in ${sourceFile.getBaseName()}`
         );
       }

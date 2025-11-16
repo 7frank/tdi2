@@ -23,8 +23,8 @@ describe("Enhanced Marker Approach Tests", () => {
     });
 
     dependencyExtractor = new EnhancedDependencyExtractor({
-      srcDir: "./src",
-      verbose: false,
+      scanDirs: ["./src"],
+      outputDir: "./src/generated",
     });
   });
 

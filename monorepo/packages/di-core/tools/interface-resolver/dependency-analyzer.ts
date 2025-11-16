@@ -17,8 +17,7 @@ const console = consoleFor('di-core:shared-type-resolver');
 
 export class DependencyAnalyzer {
   constructor(
-    private keySanitizer: KeySanitizer,
-    private verbose: boolean = false
+    private keySanitizer: KeySanitizer
   ) {}
 
   async processClassForDependencies(
