@@ -4,38 +4,95 @@
 
 ### remove magic strings
 
-`shouldSkipFile` contains hardcoded ignore paths
+Magic strings that will cause plugin failures for users and need to be made configurable:
 
-`shouldProcessFile` contains hardcoded ignore paths
+#### 🔴 HIGH PRIORITY - Will break plugin functionality:
 
-### ✅ hot reload fixes added path issue
+**1. File path filtering (affects all users):**
 
-see `src/generated` to src/.tdi2
+- `shouldSkipFile` / `shouldProcessFile` in multiple locations:
+  - [functional-di-enhanced-transformer.ts:468-471](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.ts#L468-L471) - `'generated'`, `'node_modules'`, `'.d.ts'`, `'.tdi2'`
+  - [utils.ts:10-15](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/utils.ts#L10-L15) - `'generated'`, `'node_modules'`, `'.d.ts'`, `'.tdi2'`, `'.test.'`, `'.spec.'`
+  - [integrated-interface-resolver.ts:346-349](monorepo/packages/di-core/tools/interface-resolver/integrated-interface-resolver.ts#L346-L349) - Same patterns
+  - [enhanced-di-transformer.ts:314-317](monorepo/packages/di-core/tools/enhanced-di-transformer.ts#L314-L317) - Same patterns
+  - [plugin-core/config.ts:127,132](monorepo/packages/plugin-core/src/config.ts#L127,132) - `'node_modules'`, `'.tdi2'`, `'/generated/'`
 
-### ✅ clean up after hot reloading and debug logger changes
+  **Issue**: Users with custom output directories or non-standard project structures will have their files incorrectly filtered
+  **Solution**: Add `excludePatterns?: string[]` to plugin options
 
-- ✅ some occurences of `verbose: true` seem to still be left 
+**2. DI pattern detection (affects pattern matching):**
 
-- ✅some paths of tests should fail find out if we dont run them or dont need them
-  - monorepo/packages/di-core/tools/__tests__/interface-collision-integration.test.ts
-  - monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.test.ts
+- [pattern-detection.ts:36-82](monorepo/packages/plugin-core/src/pattern-detection.ts#L36-L82):
+  - Service patterns: `'@Service'`, `'Inject<'`, `'@Inject'`, `'implements'`, `'Interface'`
+  - File naming: `'.service.'`, `'/services/'`, `'\\services\\'`, `'.component.'`, `'/components/'`, `'\\components\\'`
 
-- ✅ test failing regression of removing verbose
+  **Issue**: Users with different naming conventions won't be detected
+  **Solution**: Make pattern detection configurable via plugin options (already partially done via `advanced.diPatterns`)
 
-### ✅ console log in di-core and vite-plugin
+**3. Marker detection hardcoded strings:**
 
-✅ make it less noisy
+- [utils.ts:41,88](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/utils.ts#L41,88) - `'Inject<'`, `'InjectOptional<'`
+- [debug-file-generator.ts:144-170](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L144-L170) - `'useService('`, `'useOptionalService('`, `'import'`, `'const {'`, `'} = props'`, etc.
 
-✅ what about `createLogger`
-✅ what about `verbose` in vite plugin
+  **Issue**: Users with custom DI markers won't be detected
+  **Solution**: Already configurable via `advanced.diPatterns.interfaceMarker`
 
-### [✅] FIXME could not fast refrest useDi export incompatible
+#### 🟡 MEDIUM PRIORITY - May affect some users:
 
-> maybe in case this becomes too complex, reload full DiContainer
+**4. Vite plugin-specific patterns:**
 
-- ✅ vite plugin hot reload tsx file => update text in source code => componentn renders properly
-- ✅ vite plugin hot reload service => update service, tsx file that is using service updates similarly to how hooks would behave
-- ✅ vite plugin add new service and update tsx file interface and use new service and render properly
+- [vite-plugin-di/plugin.ts:405,494](monorepo/packages/vite-plugin-di/src/plugin.ts#L405,494) - `'.tdi2'` for HMR filtering
+
+  **Issue**: Users with custom outputDir won't get proper HMR
+  **Solution**: Use `options.outputDir` instead of hardcoded `.tdi2`
+
+**5. HMR message detection:**
+
+- [vite-plugin-di/e2e/helpers.ts:198,217-218](monorepo/packages/vite-plugin-di/e2e/helpers.ts#L198,217-218) - `'[vite] hmr update'`, `'[vite] hot updated'`, `'[vite] page reload'`, `'full-reload'`
+
+  **Issue**: Tests only - false positive
+
+#### 🟢 LOW PRIORITY - False positives (application/test code, not plugin code):
+
+**6. Application-specific business logic (NOT plugin issues):**
+
+- [FormDAGService.ts:263-288](examples/tdi2-enterprise-forms-example/src/services/FormDAGService.ts#L263-L288) - Form node names
+- [full-di-integration.test.tsx](monorepo/packages/di-cross-package-tests/__tests__/full-di-integration.test.tsx) - Test assertions checking for interface names
+- All di-debug analytics files - Heuristic analysis code, not plugin code
+
+**7. Type checking utilities (intentional, not issues):**
+
+- [key-sanitizer.ts:145,221,226,295](monorepo/packages/di-core/tools/interface-resolver/key-sanitizer.ts) - Checking for `'<'`, `'>'`, `'=>'`, `'function'`, `'{'`, `'}'`, `'__'`, `'_line_'`
+- [dependency-analyzer.ts:155](monorepo/packages/di-core/tools/interface-resolver/dependency-analyzer.ts#L155) - Checking for `'[]'`, `'Array<'`
+- [enhanced-interface-extractor.ts:440](monorepo/packages/di-core/tools/interface-resolver/enhanced-interface-extractor.ts#L440) - Checking for `'*'` glob patterns
+
+**8. Component detection heuristics:**
+
+- [utils.ts:494-497,219-222](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/utils.ts) - Detecting JSX: `'return'`, `'<'`, `'React.createElement'`, `'jsx'`
+
+  **Issue**: False positive - this is intentional JSX detection
+
+#### ACTION ITEMS:
+
+1. **Add to plugin options**:
+
+   ```typescript
+   export interface DIPluginOptions {
+     // ... existing options
+     excludePatterns?: string[]; // Default: ['node_modules', '.d.ts', '.test.', '.spec.']
+     excludeDirs?: string[]; // Default: ['node_modules']
+     // Note: outputDir already configurable, should be used instead of hardcoded '.tdi2'
+   }
+   ```
+
+2. **Files to update**:
+   - Replace hardcoded `'.tdi2'` checks with `options.outputDir` in vite-plugin HMR code
+   - Replace hardcoded exclude patterns with `options.excludePatterns` in all `shouldSkipFile` functions
+   - Document that `advanced.diPatterns` is available for custom marker detection
+
+3. **Testing**:
+   - Add tests for custom `outputDir` with HMR
+   - Add tests for custom `excludePatterns`
 
 ### [❌] playground
 
@@ -450,7 +507,7 @@ Resolution Steps:
 
 ### [❌] potential use case, "contracts"
 
-> DIContainer would have to have  an internal global singleton, and if internally services change thcontainer would have to invalidate child react nodes, to refresh the views
+> DIContainer would have to have an internal global singleton, and if internally services change thcontainer would have to invalidate child react nodes, to refresh the views
 
 > also maybe a suspense wrapper aroupd all components that use DI mechanism
 
@@ -714,6 +771,35 @@ evaluate scenarios
 ---
 
 ## Done
+
+### ✅ hot reload fixes added path issue
+
+see `src/generated` to src/.tdi2
+
+### ✅ clean up after hot reloading and debug logger changes
+
+- ✅ some occurences of `verbose: true` seem to still be left
+
+- ✅some paths of tests should fail find out if we dont run them or dont need them
+  - monorepo/packages/di-core/tools/**tests**/interface-collision-integration.test.ts
+  - monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.test.ts
+
+- ✅ test failing regression of removing verbose
+
+### ✅ console log in di-core and vite-plugin
+
+✅ make it less noisy
+
+✅ what about `createLogger`
+✅ what about `verbose` in vite plugin
+
+### [✅] FIXME could not fast refrest useDi export incompatible
+
+> maybe in case this becomes too complex, reload full DiContainer
+
+- ✅ vite plugin hot reload tsx file => update text in source code => componentn renders properly
+- ✅ vite plugin hot reload service => update service, tsx file that is using service updates similarly to how hooks would behave
+- ✅ vite plugin add new service and update tsx file interface and use new service and render properly
 
 ### ✅ fix build
 
