@@ -7,8 +7,8 @@ import createDebug from "debug";
  * Usage:
  *   const console = consoleFor("di-core:config-manager");
  *   console.log("verbose info");       // Only shown with DEBUG=di-core:*
- *   console.warn("warning message");   // Always shown
- *   console.error("error message");    // Always shown
+ *   console.warn("warning message");   // Always shown with namespace prefix
+ *   console.error("error message");    // Always shown with namespace prefix
  *
  * Enable debug logs:
  *   DEBUG=di-core:* npm run dev           // All di-core logs
@@ -24,12 +24,14 @@ export function consoleFor(name: string) {
     log: (formatter: any, ...args: any[]) => root(formatter, ...args),
     debug: (formatter: any, ...args: any[]) => debugLogger(formatter, ...args),
 
-    // Warnings and errors - always shown to stderr
-    warn: (...v: any[]) => {
-      console.warn(...v);
+    // Warnings and errors - always shown with namespace prefix for transparency
+    warn: (formatter: any, ...args: any[]) => {
+      const message = typeof formatter === 'string' ? formatter : String(formatter);
+      console.warn(`[${name}] ${message}`, ...args);
     },
-    error: (...v: any[]) => {
-      console.error(...v);
+    error: (formatter: any, ...args: any[]) => {
+      const message = typeof formatter === 'string' ? formatter : String(formatter);
+      console.error(`[${name}] ${message}`, ...args);
     },
   };
 }

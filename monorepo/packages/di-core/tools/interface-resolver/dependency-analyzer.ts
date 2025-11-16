@@ -9,6 +9,12 @@ import { ServiceDependency, ConstructorParam } from "./interface-resolver-types"
 import { KeySanitizer } from "./key-sanitizer";
 import { EnhancedServiceValidator } from "./enhanced-service-validator";
 
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:shared-type-resolver');
+
+
+
 export class DependencyAnalyzer {
   constructor(
     private keySanitizer: KeySanitizer,

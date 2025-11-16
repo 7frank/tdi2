@@ -1,9 +1,11 @@
 // tools/shared/SharedTypeResolver.ts
 
 import type { InterfaceImplementation,InterfaceResolverInterface, RegistrationType } from "../interface-resolver/interface-resolver-types";
-
-
 import { KeySanitizer } from "../interface-resolver/key-sanitizer";
+
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:shared-type-resolver');
 
 export interface TypeResolutionRequest {
   interfaceType: string;        // "Bar<Baz>" or "FooInterface"

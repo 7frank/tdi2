@@ -121,14 +121,20 @@ When adding logging to new modules:
 import { consoleFor } from '../logger';  // or '@tdi2/di-core/tools'
 const console = consoleFor('di-core:your-module-name');
 
-// Always shown (errors/warnings)
-console.error('❌ Error message');
-console.warn('⚠️  Warning message');
+// Always shown with namespace prefix (errors/warnings)
+console.error('❌ Error message');      // Outputs: [di-core:your-module-name] ❌ Error message
+console.warn('⚠️  Warning message');    // Outputs: [di-core:your-module-name] ⚠️  Warning message
 
 // Only shown with DEBUG=di-core:your-module-name (or DEBUG=di-core:*)
 console.log('Info message');
 console.debug('Detailed debug information');
 ```
+
+**Benefits:**
+- All log output includes namespace prefix for transparency
+- Errors and warnings are always shown (even without DEBUG)
+- Debug logs controlled via DEBUG environment variable
+- Easy to trace which module produced each message
 
 **DO NOT** use `if (verbose)` checks - the DEBUG environment variable provides granular control.
 
@@ -258,7 +264,6 @@ import { diEnhancedPlugin } from "@tdi2/vite-plugin-di";
 export default defineConfig({
   plugins: [
     diEnhancedPlugin({
-      verbose: true,
       enableFunctionalDI: true,
       enableInterfaceResolution: true,
       generateDebugFiles: true,
