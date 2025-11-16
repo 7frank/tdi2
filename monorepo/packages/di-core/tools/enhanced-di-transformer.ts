@@ -532,7 +532,6 @@ export class EnhancedDITransformer {
 // // CLI usage
 // if (import.meta.url === `file://${process.argv[1]}`) {
 //   const transformer = new EnhancedDITransformer({ 
-//     verbose: true,
 //     scanDirs: ['./src'],
 //     enableInterfaceResolution: true
 //   });

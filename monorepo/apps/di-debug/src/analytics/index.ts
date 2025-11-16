@@ -28,7 +28,7 @@ import type {
  * 
  * Example usage:
  * ```typescript
- * const analytics = new DIAnalytics({ verbose: true });
+ * const analytics = new DIAnalytics({});
  * 
  * // Comprehensive analysis
  * const result = analytics.analyzeConfiguration(DI_CONFIG);

@@ -4,7 +4,15 @@
 
 ### ❌ hot reload fixes added path issue
 
-see `src/generated`
+see `src/generated` to src/.tdi2
+
+### ❌ clean up after hot reloading and debug logger changes
+
+- some occurences of `verbose: true` seem to still be left 
+
+- some paths of tests should fail find out if we dont run them or dont need them
+  - monorepo/packages/di-core/tools/__tests__/interface-collision-integration.test.ts
+  - monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.test.ts
 
 ### ✅ console log in di-core and vite-plugin
 

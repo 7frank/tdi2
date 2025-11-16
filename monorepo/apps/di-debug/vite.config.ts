@@ -5,7 +5,6 @@ import { diEnhancedPlugin } from '@tdi2/vite-plugin-di';
 export default defineConfig({
   plugins: [
     diEnhancedPlugin({
-      verbose: true,
       enableFunctionalDI: true,
       enableInterfaceResolution: true,
       generateDebugFiles: true,

@@ -10,7 +10,6 @@ const compilerOptions = { experimentalDecorators: true };
 export default defineConfig({
   plugins: [
     diEnhancedPlugin({
-      verbose: true,
       watch: true,
       enableFunctionalDI: true,
       enableInterfaceResolution: true,
