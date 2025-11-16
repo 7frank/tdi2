@@ -62,30 +62,24 @@ export class EnhancedServiceValidator {
           // Validate source if required
           if (this.sourceConfig.validateSources) {
             if (this.validateDecoratorSource(decoratorName, sourceFile)) {
-              if (this.verbose) {
-                console.log(
-                  `✅ Valid service decorator: @${decoratorName} in ${classDecl.getName()}`
-                );
-              }
+              console.log(
+                `✅ Valid service decorator: @${decoratorName} in ${classDecl.getName()}`
+              );
               return true;
             } else {
-              if (this.verbose) {
-                console.warn(
-                  `⚠️  Invalid source for @${decoratorName} in ${classDecl.getName()}`
-                );
-              }
+              console.warn(
+                `⚠️  Invalid source for @${decoratorName} in ${classDecl.getName()}`
+              );
             }
           } else {
             return true; // Source validation disabled
           }
         }
       } catch (error) {
-        if (this.verbose) {
-          console.warn(
-            `⚠️  Error processing decorator in ${classDecl.getName()}:`,
-            error
-          );
-        }
+        console.warn(
+          `⚠️  Error processing decorator in ${classDecl.getName()}:`,
+          error
+        );
       }
     }
 
@@ -109,27 +103,21 @@ export class EnhancedServiceValidator {
           // Validate source if required
           if (this.sourceConfig.validateSources) {
             if (this.validateDecoratorSource(decoratorName, sourceFile)) {
-              if (this.verbose) {
-                console.log(
-                  `✅ Valid inject decorator: @${decoratorName} on parameter ${param.getName()}`
-                );
-              }
+              console.log(
+                `✅ Valid inject decorator: @${decoratorName} on parameter ${param.getName()}`
+              );
               return true;
             } else {
-              if (this.verbose) {
-                console.warn(
-                  `⚠️  Invalid source for @${decoratorName} on parameter ${param.getName()}`
-                );
-              }
+              console.warn(
+                `⚠️  Invalid source for @${decoratorName} on parameter ${param.getName()}`
+              );
             }
           } else {
             return true; // Source validation disabled
           }
         }
       } catch (error) {
-        if (this.verbose) {
-          console.warn(`⚠️  Error processing parameter decorator:`, error);
-        }
+        console.warn(`⚠️  Error processing parameter decorator:`, error);
       }
     }
 
@@ -649,9 +637,7 @@ export class EnhancedServiceValidator {
 
       return isValid;
     } catch (error) {
-      if (this.verbose) {
-        console.warn(`⚠️  Failed to validate marker source:`, error);
-      }
+      console.warn(`⚠️  Failed to validate marker source:`, error);
       return false;
     }
   }

@@ -37,34 +37,28 @@ export class TransformationPipeline {
   private enhanceDependenciesWithResolution(
     dependencies: ExtractedDependency[]
   ): ExtractedDependency[] {
-    if (this.options.verbose) {
+    console.log(
+      `🔍 Enhancing ${dependencies.length} dependencies with resolution...`
+    );
+    dependencies.forEach((dep) => {
       console.log(
-        `🔍 Enhancing ${dependencies.length} dependencies with resolution...`
+        `  - ${dep.serviceKey}: ${dep.interfaceType} (resolvedImplementation: ${dep.resolvedImplementation ? "already set" : "not set"})`
       );
-      dependencies.forEach((dep) => {
-        console.log(
-          `  - ${dep.serviceKey}: ${dep.interfaceType} (resolvedImplementation: ${dep.resolvedImplementation ? "already set" : "not set"})`
-        );
-      });
-    }
+    });
 
     if (!this.options.interfaceResolver) {
-      if (this.options.verbose) {
-        console.log(
-          "⚠️  No interface resolver available for dependency resolution"
-        );
-      }
+      console.log(
+        "⚠️  No interface resolver available for dependency resolution"
+      );
       return dependencies;
     }
 
     return dependencies.map((dep) => {
       // If already resolved, keep the existing resolution
       if (dep.resolvedImplementation) {
-        if (this.options.verbose) {
-          console.log(
-            `✅ Keeping existing resolution: ${dep.interfaceType} → ${dep.resolvedImplementation.implementationClass}`
-          );
-        }
+        console.log(
+          `✅ Keeping existing resolution: ${dep.interfaceType} → ${dep.resolvedImplementation.implementationClass}`
+        );
         return dep;
       }
 
@@ -75,21 +69,17 @@ export class TransformationPipeline {
         );
 
       if (resolvedImplementation) {
-        if (this.options.verbose) {
-          console.log(
-            `✅ Newly resolved ${dep.interfaceType} → ${resolvedImplementation.implementationClass}`
-          );
-        }
+        console.log(
+          `✅ Newly resolved ${dep.interfaceType} → ${resolvedImplementation.implementationClass}`
+        );
         return {
           ...dep,
           resolvedImplementation,
         };
       } else {
-        if (this.options.verbose) {
-          console.log(
-            `❌ Could not resolve implementation for ${dep.interfaceType}`
-          );
-        }
+        console.log(
+          `❌ Could not resolve implementation for ${dep.interfaceType}`
+        );
         return dep;
       }
     });
@@ -103,9 +93,7 @@ export class TransformationPipeline {
     dependencies: ExtractedDependency[],
     sourceFile: SourceFile
   ): void {
-    if (this.options.verbose) {
-      console.log(`🚀 Starting FIXED transformation pipeline`);
-    }
+    console.log(`🚀 Starting FIXED transformation pipeline`);
 
     // Step 0: Enhance dependencies with resolved implementations
     const enhancedDependencies =
@@ -144,24 +132,20 @@ export class TransformationPipeline {
     // No code generation needed - lifecycle management is built into the DI system
 
     // Step 8: Validate the transformation
-    if (this.options.verbose) {
-      const validation = this.propertyUpdater.validateUpdates(
-        func,
-        enhancedDependencies
+    const validation = this.propertyUpdater.validateUpdates(
+      func,
+      enhancedDependencies
+    );
+    if (!validation.isValid) {
+      console.warn(
+        "⚠️  Property access validation issues:",
+        validation.issues
       );
-      if (!validation.isValid) {
-        console.warn(
-          "⚠️  Property access validation issues:",
-          validation.issues
-        );
-      } else {
-        console.log("✅ Property access validation passed");
-      }
+    } else {
+      console.log("✅ Property access validation passed");
     }
 
-    if (this.options.verbose) {
-      console.log(`✅ FIXED transformation pipeline completed`);
-    }
+    console.log(`✅ FIXED transformation pipeline completed`);
   }
 
   /**
@@ -193,11 +177,9 @@ export class TransformationPipeline {
       // Replace destructured parameter with props parameter
       firstParam.replaceWithText(`props: ${typeText}`);
 
-      if (this.options.verbose) {
-        console.log(
-          `🔄 Normalized destructured parameter to: props: ${typeText}`
-        );
-      }
+      console.log(
+        `🔄 Normalized destructured parameter to: props: ${typeText}`
+      );
     }
   }
 
@@ -252,15 +234,13 @@ export class TransformationPipeline {
       }
     }
 
-    if (this.options.verbose) {
+    console.log(
+      `✅ Generated ${diStatements.length} DI hook statements with optional chaining`
+    );
+    if (preservedDestructuring.length > 0) {
       console.log(
-        `✅ Generated ${diStatements.length} DI hook statements with optional chaining`
+        `✅ Preserved ${preservedDestructuring.length} non-DI destructuring statements`
       );
-      if (preservedDestructuring.length > 0) {
-        console.log(
-          `✅ Preserved ${preservedDestructuring.length} non-DI destructuring statements`
-        );
-      }
     }
   }
 
@@ -331,11 +311,9 @@ export class TransformationPipeline {
 
         // Skip rest parameters (like ...props)
         if (dotDotDotToken) {
-          if (this.options.verbose) {
-            console.log(
-              `⏭️  Skipping rest parameter: ...${nameNode.getText()}`
-            );
-          }
+          console.log(
+            `⏭️  Skipping rest parameter: ...${nameNode.getText()}`
+          );
           continue;
         }
 
@@ -405,11 +383,9 @@ export class TransformationPipeline {
         const destructuringStatement = `const { ${properties.join(", ")} } = ${propsAccess};`;
         result.push(destructuringStatement);
 
-        if (this.options.verbose) {
-          console.log(
-            `📝 Generated non-DI parameter destructuring: ${destructuringStatement}`
-          );
-        }
+        console.log(
+          `📝 Generated non-DI parameter destructuring: ${destructuringStatement}`
+        );
       }
     }
   }
@@ -464,11 +440,9 @@ export class TransformationPipeline {
                 const preservedDestructuring = `const { ${nonDIProperties.join(", ")} } = props;`;
                 preservedStatements.push(preservedDestructuring);
 
-                if (this.options.verbose) {
-                  console.log(
-                    `📝 Preserving non-DI destructuring: ${preservedDestructuring}`
-                  );
-                }
+                console.log(
+                  `📝 Preserving non-DI destructuring: ${preservedDestructuring}`
+                );
               }
             }
           }
@@ -503,9 +477,7 @@ export class TransformationPipeline {
             const restName = Node.isIdentifier(nameNode) ? nameNode.getText() : nameNode.getText();
             nonDIProperties.push(`...${restName}`);
             
-            if (this.options.verbose) {
-              console.log(`🔒 Preserving rest parameter: ...${restName}`);
-            }
+            console.log(`🔒 Preserving rest parameter: ...${restName}`);
             continue;
           }
 
@@ -560,11 +532,9 @@ export class TransformationPipeline {
                 const nestedPattern = `${propertyName}: { ${nestedNonDI.join(", ")} }`;
                 nonDIProperties.push(nestedPattern);
 
-                if (this.options.verbose) {
-                  console.log(
-                    `🔒 Preserving nested non-DI property: ${nestedPattern}`
-                  );
-                }
+                console.log(
+                  `🔒 Preserving nested non-DI property: ${nestedPattern}`
+                );
               }
             } else {
               // Simple property - preserve it
@@ -574,16 +544,12 @@ export class TransformationPipeline {
                 nonDIProperties.push(propertyName);
               }
 
-              if (this.options.verbose) {
-                console.log(
-                  `🔒 Preserving non-DI property: ${propertyName}${propertyName !== localName ? ` as ${localName}` : ""}`
-                );
-              }
+              console.log(
+                `🔒 Preserving non-DI property: ${propertyName}${propertyName !== localName ? ` as ${localName}` : ""}`
+              );
             }
           } else {
-            if (this.options.verbose) {
-              console.log(`🎯 Skipping DI-related property: ${fullPath}`);
-            }
+            console.log(`🎯 Skipping DI-related property: ${fullPath}`);
           }
         }
       }
@@ -788,11 +754,9 @@ export class TransformationPipeline {
               if (this.containsAnyDIProperties(nameNode, diPropertyPaths)) {
                 toRemove.push(statement);
 
-                if (this.options.verbose) {
-                  console.log(
-                    `🗑️  Removing original destructuring (contains DI): ${statement.getText()}`
-                  );
-                }
+                console.log(
+                  `🗑️  Removing original destructuring (contains DI): ${statement.getText()}`
+                );
               }
             }
           }
@@ -810,11 +774,9 @@ export class TransformationPipeline {
               if (!this.isVariableUsedInFunction(func, varName, statement)) {
                 toRemove.push(statement);
 
-                if (this.options.verbose) {
-                  console.log(
-                    `🗑️  Removing redundant assignment: ${statement.getText()}`
-                  );
-                }
+                console.log(
+                  `🗑️  Removing redundant assignment: ${statement.getText()}`
+                );
               }
             }
           }
@@ -948,9 +910,7 @@ export class TransformationPipeline {
       }
     }
 
-    if (this.options.verbose) {
-      console.log(`🔄 Updated references from '${oldName}' to '${newName}'`);
-    }
+    console.log(`🔄 Updated references from '${oldName}' to '${newName}'`);
   }
 
   /**
@@ -963,9 +923,7 @@ export class TransformationPipeline {
     const body = this.getFunctionBody(func);
     if (!body || !Node.isBlock(body)) return;
 
-    if (this.options.verbose) {
-      console.log(`🎯 Removing only conflicting destructuring statements`);
-    }
+    console.log(`🎯 Removing only conflicting destructuring statements`);
 
     // Build set of variables that have DI hooks generated for them
     const diServiceVariables = new Set<string>();
@@ -1000,11 +958,9 @@ export class TransformationPipeline {
             ) {
               statementsToRemove.push(statement);
 
-              if (this.options.verbose) {
-                console.log(
-                  `🗑️  Removing conflicting destructuring: ${statement.getText()}`
-                );
-              }
+              console.log(
+                `🗑️  Removing conflicting destructuring: ${statement.getText()}`
+              );
               break;
             }
           }
@@ -1083,9 +1039,7 @@ export class TransformationPipeline {
         if (normalizedPreserved.includes(statementText)) {
           toRemove.push(statement);
           
-          if (this.options.verbose) {
-            console.log(`🗑️  Removing original destructuring that will be re-added: ${statementText}`);
-          }
+          console.log(`🗑️  Removing original destructuring that will be re-added: ${statementText}`);
         }
       }
     }

@@ -88,9 +88,7 @@ export class SharedServiceRegistry {
     // Update dependency graph
     this.updateDependencyGraph(registration);
 
-    if (this.options.verbose) {
-      console.log(`📝 Registered: ${registration.token} -> ${registration.implementationClass} (${registration.registrationType})`);
-    }
+    console.log(`📝 Registered: ${registration.token} -> ${registration.implementationClass} (${registration.registrationType})`);
   }
 
   /**
@@ -189,9 +187,7 @@ export class SharedServiceRegistry {
     
     await fs.promises.writeFile(configFilePath, configContent, 'utf8');
     
-    if (this.options.verbose) {
-      console.log(`📝 Generated DI configuration: ${configFilePath}`);
-    }
+    console.log(`📝 Generated DI configuration: ${configFilePath}`);
   }
 
   /**
@@ -203,9 +199,7 @@ export class SharedServiceRegistry {
     
     await fs.promises.writeFile(registryFilePath, registryContent, 'utf8');
     
-    if (this.options.verbose) {
-      console.log(`📝 Generated service registry: ${registryFilePath}`);
-    }
+    console.log(`📝 Generated service registry: ${registryFilePath}`);
   }
 
   /**

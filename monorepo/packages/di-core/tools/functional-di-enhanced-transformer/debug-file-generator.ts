@@ -37,9 +37,7 @@ export class DebugFileGenerator {
     // Generate summary file
     await this.generateTransformationSummary(transformedFiles, transformedDir);
 
-    if (this.options.verbose) {
-      console.log(`📝 Generated ${transformedFiles.size} debug files in ${transformedDir}`);
-    }
+    console.log(`📝 Generated ${transformedFiles.size} debug files in ${transformedDir}`);
   }
 
   /**
@@ -68,9 +66,7 @@ export class DebugFileGenerator {
     
     await fs.promises.writeFile(debugPath, debugContent, 'utf8');
     
-    if (this.options.verbose) {
-      console.log(`📝 Generated debug file: ${path.relative(process.cwd(), debugPath)}`);
-    }
+    console.log(`📝 Generated debug file: ${path.relative(process.cwd(), debugPath)}`);
   }
 
   /**
@@ -199,9 +195,7 @@ ${analysis.warnings.map(warning => ` * - ${warning}`).join('\n')}
     
     await fs.promises.writeFile(summaryPath, summary, 'utf8');
     
-    if (this.options.verbose) {
-      console.log(`📊 Generated transformation summary: ${summaryPath}`);
-    }
+    console.log(`📊 Generated transformation summary: ${summaryPath}`);
   }
 
   /**
@@ -368,9 +362,7 @@ ${hookTypesList}`;
     
     await fs.promises.writeFile(reportPath, htmlContent, 'utf8');
     
-    if (this.options.verbose) {
-      console.log(`📊 Generated HTML report: ${reportPath}`);
-    }
+    console.log(`📊 Generated HTML report: ${reportPath}`);
   }
 
   /**

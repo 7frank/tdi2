@@ -67,20 +67,16 @@ export class EnhancedInterfaceExtractor {
             if (interfaceInfo) {
               interfaces.push(interfaceInfo);
               
-              if (this.verbose) {
-                console.log(`🔌 Found interface: ${interfaceInfo.fullType} (generic: ${interfaceInfo.isGeneric})`);
-              }
+              console.log(`🔌 Found interface: ${interfaceInfo.fullType} (generic: ${interfaceInfo.isGeneric})`);
             }
           }
         }
       }
     } catch (error) {
-      if (this.verbose) {
-        console.warn(
-          `⚠️  Failed to parse interfaces for ${classDecl.getName()}:`,
-          error
-        );
-      }
+      console.warn(
+        `⚠️  Failed to parse interfaces for ${classDecl.getName()}:`,
+        error
+      );
     }
 
     return interfaces;
@@ -105,20 +101,16 @@ export class EnhancedInterfaceExtractor {
             if (classInfo) {
               extendedClasses.push(classInfo);
               
-              if (this.verbose) {
-                console.log(`🧬 Found extends: ${classInfo.fullType} (generic: ${classInfo.isGeneric})`);
-              }
+              console.log(`🧬 Found extends: ${classInfo.fullType} (generic: ${classInfo.isGeneric})`);
             }
           }
         }
       }
     } catch (error) {
-      if (this.verbose) {
-        console.warn(
-          `⚠️  Failed to parse extended classes for ${classDecl.getName()}:`,
-          error
-        );
-      }
+      console.warn(
+        `⚠️  Failed to parse extended classes for ${classDecl.getName()}:`,
+        error
+      );
     }
 
     return extendedClasses;
@@ -190,9 +182,7 @@ export class EnhancedInterfaceExtractor {
             };
           }
         } catch (error) {
-          if (this.verbose) {
-            console.warn(`⚠️  Could not extract location info for ${fullType}:`, error);
-          }
+          console.warn(`⚠️  Could not extract location info for ${fullType}:`, error);
         }
       }
 
@@ -204,9 +194,7 @@ export class EnhancedInterfaceExtractor {
         location
       };
     } catch (error) {
-      if (this.verbose) {
-        console.warn(`⚠️  Failed to extract interface from type node:`, error);
-      }
+      console.warn(`⚠️  Failed to extract interface from type node:`, error);
       return null;
     }
   }
@@ -270,9 +258,7 @@ export class EnhancedInterfaceExtractor {
       
       return isValid;
     } catch (error) {
-      if (this.verbose) {
-        console.warn(`⚠️  Failed to validate decorator source:`, error);
-      }
+      console.warn(`⚠️  Failed to validate decorator source:`, error);
       return false;
     }
   }
@@ -310,9 +296,7 @@ export class EnhancedInterfaceExtractor {
       
       return isValid;
     } catch (error) {
-      if (this.verbose) {
-        console.warn(`⚠️  Failed to validate marker source:`, error);
-      }
+      console.warn(`⚠️  Failed to validate marker source:`, error);
       return false;
     }
   }

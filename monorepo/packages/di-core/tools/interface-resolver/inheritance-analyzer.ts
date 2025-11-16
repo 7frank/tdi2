@@ -60,12 +60,10 @@ export class InheritanceAnalyzer {
       }
     } catch (error) {
       // Handle malformed heritage clauses gracefully
-      if (this.verbose) {
-        console.warn(
-          `⚠️  Failed to parse inheritance for ${classDecl.getName()}:`,
-          error
-        );
-      }
+      console.warn(
+        `⚠️  Failed to parse inheritance for ${classDecl.getName()}:`,
+        error
+      );
     }
 
     return {

@@ -110,35 +110,27 @@ export class FunctionalDIEnhancedTransformer {
       scanDirs: this.options.scanDirs,
       outputDir: this.options.outputDir,
       enableFunctionalDI: true,
-      verbose: this.options.verbose,
       customSuffix: this.options.customSuffix
     });
 
     // Initialize InterfaceResolver with all scan directories
     this.interfaceResolver = new IntegratedInterfaceResolver({
-      verbose: this.options.verbose,
       scanDirs: this.options.scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
       enableStateDI: this.options.enableStateDI
     });
 
     // Initialize shared components
-    this.typeResolver = new SharedTypeResolver(this.interfaceResolver, {
-      verbose: this.options.verbose
-    });
+    this.typeResolver = new SharedTypeResolver(this.interfaceResolver, {});
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
-      verbose: this.options.verbose,
       scanDirs: this.options.scanDirs
     });
 
-    this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
-      verbose: this.options.verbose
-    });
+    this.serviceRegistry = new SharedServiceRegistry(this.configManager, {});
 
     // Initialize transformation pipeline with enhanced options
     const pipelineOptions: TransformationPipelineOptions = {
-      verbose: this.options.verbose,
       generateFallbacks: options.generateFallbacks !== false, // Default to true
       preserveTypeAnnotations: true,
       interfaceResolver: this.interfaceResolver // Pass interface resolver for dependency resolution
@@ -149,8 +141,7 @@ export class FunctionalDIEnhancedTransformer {
     const functionalOptions = {
       scanDirs: this.options.scanDirs,
       outputDir: this.options.outputDir,
-      generateDebugFiles: options.generateDebugFiles,
-      verbose: this.options.verbose
+      generateDebugFiles: options.generateDebugFiles
     };
 
     this.importManager = new ImportManager(functionalOptions);
@@ -175,9 +166,7 @@ export class FunctionalDIEnhancedTransformer {
   async transform(): Promise<TransformationResult> {
     const startTime = Date.now();
 
-    if (this.options.verbose) {
-      console.log('🎯 Starting enhanced functional DI transformation with parameter normalization...');
-    }
+    console.log('🎯 Starting enhanced functional DI transformation with parameter normalization...');
 
     try {
       // Phase 1: Scan and resolve interfaces using shared logic
@@ -202,13 +191,11 @@ export class FunctionalDIEnhancedTransformer {
 
       const endTime = Date.now();
 
-      if (this.options.verbose) {
-        console.log(`✅ Enhanced transformation completed: ${this.transformationCount} functions in ${this.transformedFiles.size} files`);
-        console.log(`🏗️  Config directory: ${this.configManager.getConfigDir()}`);
-        console.log(`⏱️  Duration: ${endTime - startTime}ms`);
+      console.log(`✅ Enhanced transformation completed: ${this.transformationCount} functions in ${this.transformedFiles.size} files`);
+      console.log(`🏗️  Config directory: ${this.configManager.getConfigDir()}`);
+      console.log(`⏱️  Duration: ${endTime - startTime}ms`);
         
-        this.logTransformationStatistics();
-      }
+      this.logTransformationStatistics();
 
       return this.createTransformationResult(startTime, endTime);
 
@@ -224,20 +211,16 @@ export class FunctionalDIEnhancedTransformer {
   }
 
   private async scanAndResolveInterfaces(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('🔍 Scanning project for interfaces using shared resolver...');
-    }
+    console.log('🔍 Scanning project for interfaces using shared resolver...');
 
     await this.interfaceResolver.scanProject();
 
     const validation = this.interfaceResolver.validateDependencies();
     if (!validation.isValid) {
-      if (this.options.verbose) {
-        console.warn('⚠️  Some dependencies may not be resolvable:');
-        validation.missingImplementations.forEach(missing => {
-          console.warn(`  - Missing: ${missing}`);
-        });
-      }
+      console.warn('⚠️  Some dependencies may not be resolvable:');
+      validation.missingImplementations.forEach(missing => {
+        console.warn(`  - Missing: ${missing}`);
+      });
 
       validation.missingImplementations.forEach(missing => {
         this.warnings.push({
@@ -250,9 +233,7 @@ export class FunctionalDIEnhancedTransformer {
   }
 
   private async processConfigurationClasses(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('🏗️  Phase 2: Processing @Configuration classes and @Bean methods...');
-    }
+    console.log('🏗️  Phase 2: Processing @Configuration classes and @Bean methods...');
 
     try {
       // Process all configuration classes
@@ -270,19 +251,15 @@ export class FunctionalDIEnhancedTransformer {
           }
         }
 
-        if (this.options.verbose) {
-          console.log(`✅ Processed ${this.configurations.length} configuration classes`);
-          console.log(`🫘 Generated ${Object.keys(beanDIMap).length} bean factories`);
+        console.log(`✅ Processed ${this.configurations.length} configuration classes`);
+        console.log(`🫘 Generated ${Object.keys(beanDIMap).length} bean factories`);
           
-          // Log configuration details
-          for (const config of this.configurations) {
-            console.log(`  📦 ${config.className}: ${config.beans.length} beans`);
-          }
+        // Log configuration details
+        for (const config of this.configurations) {
+          console.log(`  📦 ${config.className}: ${config.beans.length} beans`);
         }
       } else {
-        if (this.options.verbose) {
-          console.log('ℹ️  No @Configuration classes found');
-        }
+        console.log('ℹ️  No @Configuration classes found');
       }
     } catch (error) {
       this.errors.push({
@@ -291,16 +268,12 @@ export class FunctionalDIEnhancedTransformer {
         details: error
       });
 
-      if (this.options.verbose) {
-        console.error('❌ Configuration processing failed:', error);
-      }
+      console.error('❌ Configuration processing failed:', error);
     }
   }
 
   private async findFunctionalComponents(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('🔍 Finding React functional components with DI markers...');
-    }
+    console.log('🔍 Finding React functional components with DI markers...');
 
     const pattern = "/**/*.{ts,tsx}";
 
@@ -310,26 +283,20 @@ export class FunctionalDIEnhancedTransformer {
       this.project.addSourceFilesAtPaths(`${dir}${pattern}`);
     }
 
-    if (this.options.verbose) {
-      console.log(`📂 Scanned source files in ${scanDirs.join(', ')} with pattern: ${pattern}`);
-      console.log(`🔍 Total source files: ${this.project.getSourceFiles().length}`);
-    }
+    console.log(`📂 Scanned source files in ${scanDirs.join(', ')} with pattern: ${pattern}`);
+    console.log(`🔍 Total source files: ${this.project.getSourceFiles().length}`);
 
     const sourceFiles = this.project.getSourceFiles();
 
     for (const sourceFile of sourceFiles) {
       if (this.shouldSkipFile(sourceFile)) continue;
       
-      if (this.options.verbose) {
-        console.log(`🔍 Processing source file: ${sourceFile.getFilePath()}`);
-      }
+      console.log(`🔍 Processing source file: ${sourceFile.getFilePath()}`);
 
       // Find function declarations
       for (const func of sourceFile.getFunctions()) {
         const candidate = this.createFunctionCandidate(func, sourceFile);
-        if (this.options.verbose) {
-          console.log("Function", func.getName(), "isCandidate", !!candidate);
-        }
+        console.log("Function", func.getName(), "isCandidate", !!candidate);
 
         if (candidate) {
           this.transformationCandidates.push(candidate);
@@ -350,10 +317,8 @@ export class FunctionalDIEnhancedTransformer {
       }
     }
 
-    if (this.options.verbose) {
-      console.log(`📋 Found ${this.transformationCandidates.length} functional component candidates:`, 
-        this.transformationCandidates.map(it => it.metadata?.componentName));
-    }
+    console.log(`📋 Found ${this.transformationCandidates.length} functional component candidates:`, 
+      this.transformationCandidates.map(it => it.metadata?.componentName));
   }
 
   private createFunctionCandidate(
@@ -362,9 +327,7 @@ export class FunctionalDIEnhancedTransformer {
   ): TransformationCandidate | null {
     const funcName = func.getName();
     if (!funcName) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Skipping unnamed function in ${sourceFile.getFilePath()}`);
-      }   
+      console.warn(`⚠️  Skipping unnamed function in ${sourceFile.getFilePath()}`);
       return null;
     }
 
@@ -411,9 +374,7 @@ export class FunctionalDIEnhancedTransformer {
 
   // NEW: Transform components using the transformation pipeline
   private async transformComponentsWithPipeline(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('🔄 Transforming components using enhanced pipeline with parameter normalization...');
-    }
+    console.log('🔄 Transforming components using enhanced pipeline with parameter normalization...');
 
     for (const candidate of this.transformationCandidates) {
       try {
@@ -432,9 +393,7 @@ export class FunctionalDIEnhancedTransformer {
   private async transformSingleComponentWithPipeline(candidate: TransformationCandidate): Promise<void> {
     const componentName = candidate.metadata?.componentName || 'unknown';
 
-    if (this.options.verbose) {
-      console.log(`🔄 Pipeline transform: ${componentName} (${candidate.type})`);
-    }
+    console.log(`🔄 Pipeline transform: ${componentName} (${candidate.type})`);
 
     // Step 1: Extract dependencies using shared logic
     let dependencies: any[] = [];
@@ -452,9 +411,7 @@ export class FunctionalDIEnhancedTransformer {
     }
 
     if (dependencies.length === 0) {
-      if (this.options.verbose) {
-        console.log(`⚠️  No dependencies found for ${componentName}`);
-      }
+      console.log(`⚠️  No dependencies found for ${componentName}`);
       return;
     }
 
@@ -480,19 +437,15 @@ export class FunctionalDIEnhancedTransformer {
     this.transformedFiles.set(candidate.filePath, candidate.sourceFile.getFullText());
     this.transformationCount++;
 
-    if (this.options.verbose) {
-      console.log(`✅ Pipeline transformed ${componentName} with ${dependencies.length} dependencies`);
-      dependencies.forEach(dep => {
-        const status = dep.resolvedImplementation ? '✅' : (dep.isOptional ? '⚠️' : '❌');
-        console.log(`    ${status} ${dep.serviceKey}: ${dep.interfaceType}`);
-      });
-    }
+    console.log(`✅ Pipeline transformed ${componentName} with ${dependencies.length} dependencies`);
+    dependencies.forEach(dep => {
+      const status = dep.resolvedImplementation ? '✅' : (dep.isOptional ? '⚠️' : '❌');
+      console.log(`    ${status} ${dep.serviceKey}: ${dep.interfaceType}`);
+    });
   }
 
   private async registerDiscoveredServices(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('📝 Registering discovered services...');
-    }
+    console.log('📝 Registering discovered services...');
 
     const implementations = this.interfaceResolver.getInterfaceImplementations();
     this.serviceRegistry.registerServices(Array.from(implementations.values()), new Map());
@@ -578,9 +531,7 @@ export class FunctionalDIEnhancedTransformer {
       console.log(`  ❌ Errors: ${this.errors.length}`);
 
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn('⚠️  Error accessing transformation statistics:', error);
-      }
+      console.warn('⚠️  Error accessing transformation statistics:', error);
     }
   }
 
@@ -670,9 +621,7 @@ export class FunctionalDIEnhancedTransformer {
         }
       }
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn('⚠️  Error getting resolved dependencies count:', error);
-      }
+      console.warn('⚠️  Error getting resolved dependencies count:', error);
     }
     
     return {
@@ -730,9 +679,7 @@ export class FunctionalDIEnhancedTransformer {
       
       return interfaceValidation.isValid && registryValidation.isValid;
     } catch (error) {
-      if (this.options.verbose) {
-        console.error('❌ Configuration validation failed:', error);
-      }
+      console.error('❌ Configuration validation failed:', error);
       return false;
     }
   }

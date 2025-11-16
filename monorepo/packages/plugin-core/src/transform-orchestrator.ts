@@ -5,9 +5,11 @@
 import {
   FunctionalDIEnhancedTransformer,
   EnhancedDITransformer,
+  consoleFor,
 } from '@tdi2/di-core/tools';
 import type { PluginConfig, TransformResult } from './types';
-import { createLogger } from './logger';
+
+const console = consoleFor('plugin-core:transform-orchestrator');
 
 export interface OrchestratorOptions extends Required<PluginConfig> {
   /**
@@ -24,11 +26,9 @@ export class TransformOrchestrator {
   private transformedFilesCache: Map<string, string> = new Map();
   private initialized = false;
   private initPromise: Promise<void> | null = null;
-  private logger;
 
   constructor(options: OrchestratorOptions) {
     this.options = options;
-    this.logger = createLogger(options.verbose, options.pluginName || 'TDI2');
   }
 
   /**
@@ -45,16 +45,15 @@ export class TransformOrchestrator {
 
   private async performInitialization(): Promise<void> {
     try {
-      this.logger.info('Initializing TDI2 transformers...');
-      this.logger.debug(`Scan directories: ${this.options.scanDirs.join(', ')}`);
+      console.log('Initializing TDI2 transformers...');
+      console.debug(`Scan directories: ${this.options.scanDirs.join(', ')}`);
 
       // Step 1: Run class-based DI transformer for interface resolution
-      this.logger.debug('Building interface resolution map...');
+      console.debug('Building interface resolution map...');
 
       const classTransformer = new EnhancedDITransformer({
         scanDirs: this.options.scanDirs,
         outputDir: this.options.outputDir,
-        verbose: this.options.verbose,
         enableInterfaceResolution: this.options.enableInterfaceResolution,
         customSuffix: this.options.customSuffix,
       });
@@ -64,13 +63,12 @@ export class TransformOrchestrator {
 
       // Step 2: Run functional DI transformer
       if (this.options.enableFunctionalDI) {
-        this.logger.debug('Transforming functional components...');
+        console.debug('Transforming functional components...');
 
         const functionalTransformer = new FunctionalDIEnhancedTransformer({
           scanDirs: this.options.scanDirs,
           outputDir: this.options.outputDir,
           generateDebugFiles: this.options.generateDebugFiles,
-          verbose: this.options.verbose,
           customSuffix: this.options.customSuffix,
           enableParameterNormalization: this.options.enableParameterNormalization,
           generateFallbacks: this.options.generateFallbacks,
@@ -79,12 +77,12 @@ export class TransformOrchestrator {
         // Transform all files and cache results
         this.transformedFilesCache = await functionalTransformer.transformForBuild();
 
-        this.logger.info(`✅ Transformed ${this.transformedFilesCache.size} files`);
+        console.log(`✅ Transformed ${this.transformedFilesCache.size} files`);
       }
 
-      this.logger.info('✅ TDI2 transformers initialized');
+      console.log('✅ TDI2 transformers initialized');
     } catch (error) {
-      this.logger.error(`Failed to initialize: ${error}`);
+      console.error(`Failed to initialize: ${error}`);
       throw error;
     }
   }
@@ -123,7 +121,7 @@ export class TransformOrchestrator {
     const transformedCode = this.getTransformedContent(filePath);
 
     if (transformedCode && transformedCode !== originalCode) {
-      this.logger.debug(`Using transformed version of ${filePath}`);
+      console.debug(`Using transformed version of ${filePath}`);
       return {
         code: transformedCode,
         map: null,

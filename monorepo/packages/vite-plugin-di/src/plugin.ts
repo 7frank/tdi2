@@ -38,9 +38,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
   const options = getDIPluginDefaults(userOptions);
   validateDIPluginOptions(options);
 
-  if (options.verbose){
-    console.log("🔧 TDI2 Vite Plugin Options:", options);
-  }
+  console.log("🔧 TDI2 Vite Plugin Options:", options);
 
   // Plugin state
   let classTransformer: EnhancedDITransformer;
@@ -63,21 +61,16 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         scanDirs: options.scanDirs!,
         outputDir: options.outputDir!,
         enableFunctionalDI: options.enableFunctionalDI!,
-        verbose: false, // Don't spam logs during check
         customSuffix: options.customSuffix,
       });
 
       const existingConfig = tempConfigManager.findExistingConfig();
       if (existingConfig && tempConfigManager.isConfigValid()) {
-        if (options.verbose) {
-          console.log(`♻️  Found valid existing config: ${existingConfig}`);
-        }
+        console.log(`♻️  Found valid existing config: ${existingConfig}`);
         return true;
       }
     } catch (error) {
-      if (options.verbose) {
-        console.warn("⚠️  Error checking existing config:", error);
-      }
+      console.warn("⚠️  Error checking existing config:", error);
     }
 
     return false;
@@ -104,9 +97,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       transformedFiles.size > 0  // Only skip if we already have transformed files
     ) {
       if (checkExistingConfig()) {
-        if (options.verbose) {
-          console.log("🔄 Reusing existing DI configuration (cache hit)");
-        }
+        console.log("🔄 Reusing existing DI configuration (cache hit)");
         performanceTracker.recordCacheHit();
         return;
       }
@@ -116,11 +107,9 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
 
     isTransforming = true;
     try {
-      if (options.verbose) {
-        console.log(
-          "🚀 Running enhanced DI transformation with interface resolution..."
-        );
-      }
+      console.log(
+        "🚀 Running enhanced DI transformation with interface resolution..."
+      );
 
       // Clean old configs periodically (but not if reusing)
       if (options.cleanOldConfigs && !options.reuseExistingConfig) {
@@ -134,17 +123,14 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         scanDirs: options.scanDirs!,
         outputDir: options.outputDir!,
         enableFunctionalDI: options.enableFunctionalDI!,
-        verbose: options.verbose!,
         customSuffix: configSuffix,
       });
 
       // Check if config is already valid and we should reuse it
       if (options.reuseExistingConfig && configManager.isConfigValid() && !force) {
-        if (options.verbose) {
-          console.log(
-            `♻️  Reusing valid config: ${configManager.getConfigHash()}`
-          );
-        }
+        console.log(
+          `♻️  Reusing valid config: ${configManager.getConfigHash()}`
+        );
 
         // Generate bridge files to ensure they're up to date
         configManager.generateBridgeFiles();
@@ -155,7 +141,6 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
             scanDirs: options.scanDirs,
             outputDir: options.outputDir,
             generateDebugFiles: options.generateDebugFiles,
-            verbose: options.verbose,
             customSuffix: configSuffix,
           });
 
@@ -163,12 +148,10 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
             // IMPORTANT: Always refresh transformedFiles map for HMR to work
             transformedFiles = await functionalTransformer.transformForBuild();
 
-            if (options.verbose) {
-              const summary = functionalTransformer.getTransformationSummary();
-              console.log(
-                `🎯 Functional DI: transformed ${summary.count} components (reused config)`
-              );
-            }
+            const summary = functionalTransformer.getTransformationSummary();
+            console.log(
+              `🎯 Functional DI: transformed ${summary.count} components (reused config)`
+            );
           } catch (error) {
             console.warn("⚠️  Functional DI transformation failed:", error);
             transformedFiles = new Map();
@@ -186,7 +169,6 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       classTransformer = new EnhancedDITransformer({
         scanDirs: options.scanDirs,
         outputDir: options.outputDir,
-        verbose: options.verbose,
         enableInterfaceResolution: options.enableInterfaceResolution,
         customSuffix: configSuffix,
       });
@@ -204,7 +186,6 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           scanDirs: options.scanDirs,
           outputDir: options.outputDir,
           generateDebugFiles: options.generateDebugFiles,
-          verbose: options.verbose,
           customSuffix: configSuffix,
         });
 
@@ -212,15 +193,13 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           transformedFiles = await functionalTransformer.transformForBuild();
           buildContext.transformedCount = transformedFiles.size;
 
-          if (options.verbose) {
-            const summary = functionalTransformer.getTransformationSummary();
-            console.log(
-              `🎯 Functional DI: transformed ${summary.count} components`
-            );
-            console.log(
-              `📋 Resolved ${summary.resolvedDependencies} interface implementations`
-            );
-          }
+          const summary = functionalTransformer.getTransformationSummary();
+          console.log(
+            `🎯 Functional DI: transformed ${summary.count} components`
+          );
+          console.log(
+            `📋 Resolved ${summary.resolvedDependencies} interface implementations`
+          );
         } catch (error) {
           console.warn("⚠️  Functional DI transformation failed:", error);
           transformedFiles = new Map();
@@ -230,43 +209,41 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
 
       performanceTracker.endTransformation();
 
-      if (options.verbose) {
-        console.log("✅ Enhanced DI transformation completed");
-        console.log(`⏱️  Transformation time: ${Date.now() - startTime}ms`);
-        
-        if (configManager) {
-          console.log(`🏗️  Config: ${configManager.getConfigHash()}`);
-          console.log(`📁 Config dir: ${configManager.getConfigDir()}`);
-          console.log(`🌉 Bridge dir: ${configManager.getBridgeDir()}`);
-        }
+      console.log("✅ Enhanced DI transformation completed");
+      console.log(`⏱️  Transformation time: ${Date.now() - startTime}ms`);
 
-        // Show interface resolution summary
-        if (classTransformer) {
-          const debugInfo = await classTransformer.getDebugInfo();
-          console.log(`\n📊 Interface Resolution Summary:`);
-          console.log(
-            `   ${debugInfo.implementations.length} interface implementations`
-          );
-          console.log(
-            `   ${debugInfo.dependencies.length} services with dependencies`
-          );
+      if (configManager) {
+        console.log(`🏗️  Config: ${configManager.getConfigHash()}`);
+        console.log(`📁 Config dir: ${configManager.getConfigDir()}`);
+        console.log(`🌉 Bridge dir: ${configManager.getBridgeDir()}`);
+      }
 
-          if (debugInfo.validation && !debugInfo.validation.isValid) {
-            console.log(`\n⚠️  Validation Issues:`);
-            if (debugInfo.validation.missingImplementations.length > 0) {
-              console.log(
-                `   Missing: ${debugInfo.validation.missingImplementations.join(
-                  ", "
-                )}`
-              );
-            }
-            if (debugInfo.validation.circularDependencies.length > 0) {
-              console.log(
-                `   Circular: ${debugInfo.validation.circularDependencies.join(
-                  ", "
-                )}`
-              );
-            }
+      // Show interface resolution summary
+      if (classTransformer) {
+        const debugInfo = await classTransformer.getDebugInfo();
+        console.log(`\n📊 Interface Resolution Summary:`);
+        console.log(
+          `   ${debugInfo.implementations.length} interface implementations`
+        );
+        console.log(
+          `   ${debugInfo.dependencies.length} services with dependencies`
+        );
+
+        if (debugInfo.validation && !debugInfo.validation.isValid) {
+          console.log(`\n⚠️  Validation Issues:`);
+          if (debugInfo.validation.missingImplementations.length > 0) {
+            console.log(
+              `   Missing: ${debugInfo.validation.missingImplementations.join(
+                ", "
+              )}`
+            );
+          }
+          if (debugInfo.validation.circularDependencies.length > 0) {
+            console.log(
+              `   Circular: ${debugInfo.validation.circularDependencies.join(
+                ", "
+              )}`
+            );
           }
         }
       }
@@ -302,11 +279,9 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         const absoluteOriginal = path.resolve(originalPath);
 
         if (absolutePath === absoluteOriginal) {
-          if (options.verbose) {
-            console.log(
-              `🔄 Loading transformed version of ${path.basename(id)}`
-            );
-          }
+          console.log(
+            `🔄 Loading transformed version of ${path.basename(id)}`
+          );
 
           // Return with code and optional map for better HMR support
           return {
@@ -336,9 +311,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     async handleHotUpdate({ file, server, modules }) {
       if (!options.watch) return undefined;
 
-      if (options.verbose) {
-        console.log(`🔥 handleHotUpdate called for: ${file}`);
-      }
+      console.log(`🔥 handleHotUpdate called for: ${file}`);
 
       const isInScanDir = absoluteScanDirs.some(dir => file.startsWith(dir));
 
@@ -353,9 +326,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           if (diPatterns.hasDI) {
             const absoluteFile = path.resolve(file);
 
-            if (options.verbose) {
-              console.log(`🔄 HMR: Re-transforming ${path.basename(file)}`);
-            }
+            console.log(`🔄 HMR: Re-transforming ${path.basename(file)}`);
 
             // Re-transform if this file was previously transformed
             const wasTransformed = transformedFiles.has(absoluteFile);
@@ -366,7 +337,6 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
                   scanDirs: options.scanDirs,
                   outputDir: options.outputDir,
                   generateDebugFiles: options.generateDebugFiles,
-                  verbose: false, // Suppress transformer logs during HMR
                   customSuffix: options.customSuffix,
                 });
 
@@ -379,9 +349,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
                   transformedFiles.set(path, content);
                 }
 
-                if (options.verbose) {
-                  console.log(`   Updated ${transformedFiles.size} transformed file(s)`);
-                }
+                console.log(`   Updated ${transformedFiles.size} transformed file(s)`);
               } catch (error) {
                 console.error('Error retransforming file during HMR:', error);
               }
@@ -423,9 +391,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           const hasServiceDecorator = /@Service\s*\(/.test(content);
 
           if (hasServiceDecorator) {
-            if (options.verbose) {
-              console.log(`🔄 Service file detected: ${path.basename(file)} - regenerating config`);
-            }
+            console.log(`🔄 Service file detected: ${path.basename(file)} - regenerating config`);
 
             // Regenerate the entire DI configuration
             await transformDI(true);
@@ -462,9 +428,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           }
         } catch (error) {
           // File might not exist yet or be unreadable
-          if (options.verbose) {
-            console.log(`Could not read file for service detection: ${file}`, error);
-          }
+          console.log(`Could not read file for service detection: ${file}`, error);
         }
       }
 
@@ -472,9 +436,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       if (file.includes(".tdi2") && configManager) {
         const relativePath = path.relative(configManager.getBridgeDir(), file);
         if (!relativePath.startsWith("..")) {
-          if (options.verbose) {
-            console.log(`🌉 Bridge file changed: ${relativePath}`);
-          }
+          console.log(`🌉 Bridge file changed: ${relativePath}`);
 
           server.ws.send({
             type: "full-reload",
@@ -518,9 +480,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
               const hasServiceDecorator = /@Service\s*\(/.test(content);
 
               if (hasServiceDecorator) {
-                if (options.verbose) {
-                  console.log(`🆕 New service file detected: ${path.basename(file)} - regenerating config`);
-                }
+                console.log(`🆕 New service file detected: ${path.basename(file)} - regenerating config`);
 
                 // Regenerate the entire DI configuration
                 await transformDI(true);
@@ -554,9 +514,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
                 });
               }
             } catch (error) {
-              if (options.verbose) {
-                console.log(`Could not read new file for service detection: ${file}`, error);
-              }
+              console.log(`Could not read new file for service detection: ${file}`, error);
             }
           }
         });
@@ -567,18 +525,16 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       if (configManager) {
         configManager.generateBridgeFiles();
 
-        if (options.verbose) {
-          console.log("🏗️  Generated bridge files for production build");
-        }
+        console.log("🏗️  Generated bridge files for production build");
       }
 
       // Log final build statistics
-      if (options.verbose && buildContext) {
+      if (buildContext) {
         console.log("\n📊 Final Build Statistics:");
         console.log(`   Transformed files: ${buildContext.transformedCount}`);
         console.log(`   Errors: ${buildContext.errors.length}`);
         console.log(`   Warnings: ${buildContext.warnings.length}`);
-        
+
         const perf = performanceTracker.getStats();
         if (perf.transformationTime > 0) {
           console.log(`   Total transformation time: ${perf.transformationTime}ms`);

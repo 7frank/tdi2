@@ -60,19 +60,15 @@ export class DependencyAnalyzer {
 
           interfaceDependencies.push(sanitizedKey);
 
-          if (this.verbose) {
-            console.log(
-              `🔗 ${className} depends on ${paramType} (key: ${sanitizedKey})`
-            );
-          }
+          console.log(
+            `🔗 ${className} depends on ${paramType} (key: ${sanitizedKey})`
+          );
         } catch (error) {
           // Skip malformed parameters
-          if (this.verbose) {
-            console.warn(
-              `⚠️  Failed to process parameter in ${className}:`,
-              error
-            );
-          }
+          console.warn(
+            `⚠️  Failed to process parameter in ${className}:`,
+            error
+          );
         }
       }
 
@@ -86,12 +82,10 @@ export class DependencyAnalyzer {
       }
     } catch (error) {
       // Handle malformed class gracefully
-      if (this.verbose) {
-        console.warn(
-          `⚠️  Failed to process dependencies for ${className}:`,
-          error
-        );
-      }
+      console.warn(
+        `⚠️  Failed to process dependencies for ${className}:`,
+        error
+      );
     }
   }
 
@@ -114,9 +108,7 @@ export class DependencyAnalyzer {
         sanitizedKey,
       };
     } catch (error) {
-      if (this.verbose) {
-        console.warn('⚠️  Failed to extract parameter dependency:', error);
-      }
+      console.warn('⚠️  Failed to extract parameter dependency:', error);
       return null;
     }
   }

@@ -28,9 +28,7 @@ export class BeanFactoryGenerator {
       Object.assign(diMap, configEntries);
     }
 
-    if (this.options.verbose) {
-      console.log(`🏭 Generated ${Object.keys(diMap).length} bean factory entries`);
-    }
+    console.log(`🏭 Generated ${Object.keys(diMap).length} bean factory entries`);
 
     return diMap;
   }
@@ -46,9 +44,7 @@ export class BeanFactoryGenerator {
       const entry = this.generateBeanEntry(bean, config);
       diMap[token] = entry;
 
-      if (this.options.verbose) {
-        console.log(`🫘 Generated factory for bean: ${token}`);
-      }
+      console.log(`🫘 Generated factory for bean: ${token}`);
     }
 
     return diMap;

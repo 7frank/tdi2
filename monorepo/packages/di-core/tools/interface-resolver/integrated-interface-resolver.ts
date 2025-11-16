@@ -88,9 +88,7 @@ export class IntegratedInterfaceResolver {
   }
 
   async scanProject(): Promise<void> {
-    if (this.options.verbose) {
-      console.log("🔍 Scanning project with enhanced AST-based components...");
-    }
+    console.log("🔍 Scanning project with enhanced AST-based components...");
 
     // Clear previous results
     this.interfaces.clear();
@@ -109,16 +107,12 @@ export class IntegratedInterfaceResolver {
       // Second pass: collect service dependencies with enhanced validation
       await this.collectServiceDependenciesEnhanced();
 
-      if (this.options.verbose) {
-        console.log(
-          `✅ Enhanced scan completed: ${this.interfaces.size} implementations, ${this.dependencies.size} services with dependencies`
-        );
-        this.logRegistrationSummary();
-      }
+      console.log(
+        `✅ Enhanced scan completed: ${this.interfaces.size} implementations, ${this.dependencies.size} services with dependencies`
+      );
+      this.logRegistrationSummary();
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn("⚠️  Error during enhanced project scanning:", error);
-      }
+      console.warn("⚠️  Error during enhanced project scanning:", error);
       // Continue with partial results
     }
   }
@@ -136,12 +130,10 @@ export class IntegratedInterfaceResolver {
           await this.processClassWithEnhancedExtraction(classDecl, sourceFile);
         }
       } catch (error) {
-        if (this.options.verbose) {
-          console.warn(
-            `⚠️  Failed to process ${sourceFile.getBaseName()}:`,
-            error
-          );
-        }
+        console.warn(
+          `⚠️  Failed to process ${sourceFile.getBaseName()}:`,
+          error
+        );
         // Continue processing other files
       }
     }
@@ -158,17 +150,13 @@ export class IntegratedInterfaceResolver {
       // Enhanced service validation with source checking
       const serviceValidation = this.serviceValidator.validateServiceWithSources(classDecl);
       if (!serviceValidation.hasServiceDecorator) {
-        if (this.options.verbose) {
-          console.log(`⏭️  Skipping ${className} - no valid @Service decorator`);
-        }
+        console.log(`⏭️  Skipping ${className} - no valid @Service decorator`);
         return;
       }
 
       if (!serviceValidation.isValid) {
-        if (this.options.verbose) {
-          console.warn(`⚠️  Service validation issues for ${className}:`);
-          serviceValidation.issues.forEach(issue => console.warn(`    - ${issue}`));
-        }
+        console.warn(`⚠️  Service validation issues for ${className}:`);
+        serviceValidation.issues.forEach(issue => console.warn(`    - ${issue}`));
         // Continue processing despite validation issues
       }
 
@@ -208,9 +196,7 @@ export class IntegratedInterfaceResolver {
       );
 
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Failed to process class ${className}:`, error);
-      }
+      console.warn(`⚠️  Failed to process class ${className}:`, error);
     }
   }
 
@@ -247,11 +233,9 @@ export class IntegratedInterfaceResolver {
 
     this.interfaces.set(sanitizedKey, implementation);
 
-    if (this.options.verbose) {
-      console.log(
-        `🔌 ${className} implements ${interfaceInfo.fullType} (key: ${sanitizedKey})`
-      );
-    }
+    console.log(
+      `🔌 ${className} implements ${interfaceInfo.fullType} (key: ${sanitizedKey})`
+    );
   }
 
   private async registerInheritanceImplementation(
@@ -291,11 +275,9 @@ export class IntegratedInterfaceResolver {
 
     this.interfaces.set(sanitizedKey, implementation);
 
-    if (this.options.verbose) {
-      console.log(
-        `🧬 ${className} extends ${inheritanceMapping.baseClassGeneric} (key: ${sanitizedKey})`
-      );
-    }
+    console.log(
+      `🧬 ${className} extends ${inheritanceMapping.baseClassGeneric} (key: ${sanitizedKey})`
+    );
   }
 
 
@@ -332,11 +314,9 @@ export class IntegratedInterfaceResolver {
 
     this.interfaces.set(sanitizedKey, implementation);
 
-    if (this.options.verbose) {
-      console.log(
-        `📦 ${className} registered as ${isPrimary ? 'primary' : 'secondary'} class-based service (key: ${sanitizedKey})`
-      );
-    }
+    console.log(
+      `📦 ${className} registered as ${isPrimary ? 'primary' : 'secondary'} class-based service (key: ${sanitizedKey})`
+    );
   }
 
   private async collectServiceDependenciesEnhanced(): Promise<void> {
@@ -357,12 +337,10 @@ export class IntegratedInterfaceResolver {
           );
         }
       } catch (error) {
-        if (this.options.verbose) {
-          console.warn(
-            `⚠️  Failed to process dependencies in ${sourceFile.getBaseName()}:`,
-            error
-          );
-        }
+        console.warn(
+          `⚠️  Failed to process dependencies in ${sourceFile.getBaseName()}:`,
+          error
+        );
         // Continue processing other files
       }
     }
@@ -410,33 +388,25 @@ export class IntegratedInterfaceResolver {
       sanitizedKey = this.keySanitizer.sanitizeKey(interfaceType);
     }
     
-    if (this.options.verbose) {
-      console.log(`🔍 Enhanced resolution: ${interfaceType} -> key: ${sanitizedKey} (location-based: ${isLocationBasedRequest})`);
-    }
+    console.log(`🔍 Enhanced resolution: ${interfaceType} -> key: ${sanitizedKey} (location-based: ${isLocationBasedRequest})`);
 
     // 1. Exact key match (highest priority) - handles both location-based and standard keys  
     for (const [storedKey, implementation] of this.interfaces) {
       // Check for exact stored key match
       if (storedKey === sanitizedKey || storedKey === interfaceType) {
-        if (this.options.verbose) {
-          console.log(`✅ Exact stored key match: ${implementation.implementationClass} (${implementation.registrationType})`);
-        }
+        console.log(`✅ Exact stored key match: ${implementation.implementationClass} (${implementation.registrationType})`);
         return implementation;
       }
       
       // For location-based keys, check if the stored key starts with the requested location-based key
       if (isLocationBasedRequest && storedKey.startsWith(sanitizedKey + '_')) {
-        if (this.options.verbose) {
-          console.log(`✅ Location-based key prefix match: ${implementation.implementationClass} (${implementation.registrationType})`);
-        }
+        console.log(`✅ Location-based key prefix match: ${implementation.implementationClass} (${implementation.registrationType})`);
         return implementation;
       }
       
       // Check sanitizedKey match (for backward compatibility)
       if (implementation.sanitizedKey === sanitizedKey || implementation.sanitizedKey === interfaceType) {
-        if (this.options.verbose) {
-          console.log(`✅ Sanitized key match: ${implementation.implementationClass} (${implementation.registrationType})`);
-        }
+        console.log(`✅ Sanitized key match: ${implementation.implementationClass} (${implementation.registrationType})`);
         return implementation;
       }
     }
@@ -444,9 +414,7 @@ export class IntegratedInterfaceResolver {
     // 1b. If this was a location-based request but no exact match, extract interface name and try interface matching
     if (isLocationBasedRequest) {
       const extractedInterfaceName = this.keySanitizer.extractInterfaceNameFromLocationKey(interfaceType);
-      if (this.options.verbose) {
-        console.log(`🔄 Location-based key failed, trying interface name: ${extractedInterfaceName}`);
-      }
+      console.log(`🔄 Location-based key failed, trying interface name: ${extractedInterfaceName}`);
       // Recursively try with just the interface name
       return this.resolveImplementation(extractedInterfaceName);
     }
@@ -459,9 +427,7 @@ export class IntegratedInterfaceResolver {
       for (const [, implementation] of this.interfaces) {
         // Match by interface name and generic capability
         if (implementation.interfaceName === requestedInterfaceName && implementation.isGeneric) {
-          if (this.options.verbose) {
-            console.log(`✅ Generic interface match: ${implementation.implementationClass} for ${interfaceType}`);
-          }
+          console.log(`✅ Generic interface match: ${implementation.implementationClass} for ${interfaceType}`);
           return implementation;
         }
       }
@@ -473,9 +439,7 @@ export class IntegratedInterfaceResolver {
     for (const [, implementation] of this.interfaces) {
       if (implementation.isInheritanceBased && 
           (implementation.sanitizedKey === sanitizedKey || implementation.sanitizedKey === inheritanceSanitizedKey)) {
-        if (this.options.verbose) {
-          console.log(`✅ Inheritance match: ${implementation.implementationClass}`);
-        }
+        console.log(`✅ Inheritance match: ${implementation.implementationClass}`);
         return implementation;
       }
     }
@@ -484,9 +448,7 @@ export class IntegratedInterfaceResolver {
     // 5. Class-based lookups
     for (const [, implementation] of this.interfaces) {
       if (implementation.isClassBased && implementation.sanitizedKey === sanitizedKey) {
-        if (this.options.verbose) {
-          console.log(`✅ Class-based match: ${implementation.implementationClass}`);
-        }
+        console.log(`✅ Class-based match: ${implementation.implementationClass}`);
         return implementation;
       }
     }
@@ -494,20 +456,16 @@ export class IntegratedInterfaceResolver {
     // 6. Fallback to interface name matching
     for (const [, implementation] of this.interfaces) {
       if (implementation.interfaceName === interfaceType || implementation.interfaceName === requestedInterfaceName) {
-        if (this.options.verbose) {
-          console.log(`⚠️  Interface name fallback: ${implementation.implementationClass}`);
-        }
+        console.log(`⚠️  Interface name fallback: ${implementation.implementationClass}`);
         return implementation;
       }
     }
 
-    if (this.options.verbose) {
-      console.log(`❌ No implementation found for: ${interfaceType}`);
-      console.log(`🔍 Searched for key: ${sanitizedKey}`);
-      console.log(`🔍 Interface name: ${requestedInterfaceName}`);
-      if (this.interfaces.size <= 10) {
-        console.log(`📋 Available implementations:`, Array.from(this.interfaces.values()).map(i => `${i.interfaceName} -> ${i.implementationClass} (key: ${i.sanitizedKey})`));
-      }
+    console.log(`❌ No implementation found for: ${interfaceType}`);
+    console.log(`🔍 Searched for key: ${sanitizedKey}`);
+    console.log(`🔍 Interface name: ${requestedInterfaceName}`);
+    if (this.interfaces.size <= 10) {
+      console.log(`📋 Available implementations:`, Array.from(this.interfaces.values()).map(i => `${i.interfaceName} -> ${i.implementationClass} (key: ${i.sanitizedKey})`));
     }
 
     return undefined;
@@ -727,9 +685,7 @@ export class IntegratedInterfaceResolver {
         lineNumber: line
       };
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Could not extract location from AST node:`, error);
-      }
+      console.warn(`⚠️  Could not extract location from AST node:`, error);
       return undefined;
     }
   }
@@ -746,9 +702,7 @@ export class IntegratedInterfaceResolver {
 
       return this.extractLocationFromNode(classDecl, sourceFile);
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Could not extract location from class ${className}:`, error);
-      }
+      console.warn(`⚠️  Could not extract location from class ${className}:`, error);
       return undefined;
     }
   }
@@ -777,9 +731,7 @@ export class IntegratedInterfaceResolver {
       // Fallback to class declaration location
       return this.extractLocationFromNode(classDecl, sourceFile);
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Could not extract inheritance location from class ${className}:`, error);
-      }
+      console.warn(`⚠️  Could not extract inheritance location from class ${className}:`, error);
       return undefined;
     }
   }

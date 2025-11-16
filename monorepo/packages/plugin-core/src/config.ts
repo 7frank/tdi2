@@ -27,7 +27,6 @@ const DEFAULT_ADVANCED_CONFIG: Required<AdvancedPluginConfig> = {
 const DEFAULT_BASE_CONFIG: Required<BasePluginConfig> = {
   scanDirs: ['./src'],
   outputDir: './src/generated',
-  verbose: false,
   enableFunctionalDI: true,
   enableInterfaceResolution: true,
   generateDebugFiles: false,
@@ -84,7 +83,6 @@ export function validateConfig(config: Required<PluginConfig>): void {
 
   // Validate boolean flags
   const booleanFields: Array<keyof BasePluginConfig> = [
-    'verbose',
     'enableFunctionalDI',
     'enableInterfaceResolution',
     'generateDebugFiles',

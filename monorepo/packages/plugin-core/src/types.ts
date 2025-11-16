@@ -20,12 +20,6 @@ export interface BasePluginConfig {
   outputDir?: string;
 
   /**
-   * Enable verbose logging for debugging
-   * @default false
-   */
-  verbose?: boolean;
-
-  /**
    * Enable functional component dependency injection transformation
    * @default true
    */
@@ -186,13 +180,3 @@ export interface TransformResult {
  * File filter function
  */
 export type FileFilter = (id: string) => boolean;
-
-/**
- * Plugin logger interface
- */
-export interface PluginLogger {
-  info(message: string): void;
-  warn(message: string): void;
-  error(message: string): void;
-  debug(message: string): void;
-}

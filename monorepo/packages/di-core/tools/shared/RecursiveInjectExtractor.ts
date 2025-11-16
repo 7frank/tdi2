@@ -42,9 +42,7 @@ export class RecursiveInjectExtractor {
   ): ExtractedInjectMarker[] {
     const markers: ExtractedInjectMarker[] = [];
 
-    if (this.options.verbose) {
-      console.log(`🔍 Extracting from ${typeNode.getKindName()} at path: [${propertyPath.join(', ')}]`);
-    }
+    console.log(`🔍 Extracting from ${typeNode.getKindName()} at path: [${propertyPath.join(', ')}]`);
 
     // Check inline type literal: { prop: Inject<Type>, nested: { deep: InjectOptional<Type> } }
     if (Node.isTypeLiteral(typeNode)) {
@@ -105,9 +103,7 @@ export class RecursiveInjectExtractor {
     const markers: ExtractedInjectMarker[] = [];
     const members = typeNode.getMembers();
 
-    if (this.options.verbose) {
-      console.log(`📝 Processing type literal with ${members.length} members at path: [${propertyPath.join(', ')}]`);
-    }
+    console.log(`📝 Processing type literal with ${members.length} members at path: [${propertyPath.join(', ')}]`);
 
     for (const member of members) {
       if (Node.isPropertySignature(member)) {
@@ -121,9 +117,7 @@ export class RecursiveInjectExtractor {
           if (directMarker) {
             markers.push(directMarker);
             
-            if (this.options.verbose) {
-              console.log(`✅ Found direct inject marker: ${directMarker.propertyPath.join('.')} -> ${directMarker.interfaceType}`);
-            }
+            console.log(`✅ Found direct inject marker: ${directMarker.propertyPath.join('.')} -> ${directMarker.interfaceType}`);
           } else {
             // Recursively check nested structures
             const nestedMarkers = this.extractInjectMarkersRecursive(memberTypeNode, sourceFile, currentPath);
@@ -171,12 +165,10 @@ export class RecursiveInjectExtractor {
         serviceKey = property.getName();
       }
       
-      if (this.options.verbose) {
-        console.log(`🔗 Found ${isOptional ? 'optional' : 'required'} inject marker:`);
-        console.log(`  propertyPath: [${propertyPath.join(', ')}]`);
-        console.log(`  serviceKey: "${serviceKey}"`);
-        console.log(`  interfaceType: "${interfaceType}"`);
-      }
+      console.log(`🔗 Found ${isOptional ? 'optional' : 'required'} inject marker:`);
+      console.log(`  propertyPath: [${propertyPath.join(', ')}]`);
+      console.log(`  serviceKey: "${serviceKey}"`);
+      console.log(`  interfaceType: "${interfaceType}"`);
 
       return {
         serviceKey,
@@ -200,12 +192,10 @@ export class RecursiveInjectExtractor {
   ): ExtractedInjectMarker[] {
     const markers: ExtractedInjectMarker[] = [];
 
-    if (this.options.verbose) {
-      const declName = Node.isInterfaceDeclaration(typeDeclaration) 
-        ? typeDeclaration.getName() 
-        : typeDeclaration.getName();
-      console.log(`📋 Processing ${typeDeclaration.getKindName()}: ${declName} at path: [${propertyPath.join(', ')}]`);
-    }
+    const declName = Node.isInterfaceDeclaration(typeDeclaration) 
+      ? typeDeclaration.getName() 
+      : typeDeclaration.getName();
+    console.log(`📋 Processing ${typeDeclaration.getKindName()}: ${declName} at path: [${propertyPath.join(', ')}]`);
 
     // Handle interface declaration
     if (Node.isInterfaceDeclaration(typeDeclaration)) {
@@ -248,17 +238,13 @@ export class RecursiveInjectExtractor {
     // First check current file
     const localInterface = sourceFile.getInterface(typeName);
     if (localInterface) {
-      if (this.options.verbose) {
-        console.log(`✅ Found interface ${typeName} in current file`);
-      }
+      console.log(`✅ Found interface ${typeName} in current file`);
       return localInterface;
     }
 
     const localTypeAlias = sourceFile.getTypeAlias(typeName);
     if (localTypeAlias) {
-      if (this.options.verbose) {
-        console.log(`✅ Found type alias ${typeName} in current file`);
-      }
+      console.log(`✅ Found type alias ${typeName} in current file`);
       return localTypeAlias;
     }
 
@@ -271,34 +257,26 @@ export class RecursiveInjectExtractor {
 
       if (isTypeImported) {
         const moduleSpecifier = importDecl.getModuleSpecifierValue();
-        if (this.options.verbose) {
-          console.log(`🔍 Looking for ${typeName} in imported module: ${moduleSpecifier}`);
-        }
+        console.log(`🔍 Looking for ${typeName} in imported module: ${moduleSpecifier}`);
         
         const importedFile = this.resolveImportedFile(moduleSpecifier, sourceFile);
         if (importedFile) {
           const importedInterface = importedFile.getInterface(typeName);
           if (importedInterface) {
-            if (this.options.verbose) {
-              console.log(`✅ Found interface ${typeName} in imported file`);
-            }
+            console.log(`✅ Found interface ${typeName} in imported file`);
             return importedInterface;
           }
 
           const importedTypeAlias = importedFile.getTypeAlias(typeName);
           if (importedTypeAlias) {
-            if (this.options.verbose) {
-              console.log(`✅ Found type alias ${typeName} in imported file`);
-            }
+            console.log(`✅ Found type alias ${typeName} in imported file`);
             return importedTypeAlias;
           }
         }
       }
     }
 
-    if (this.options.verbose) {
-      console.log(`❌ Could not find declaration for type: ${typeName}`);
-    }
+    console.log(`❌ Could not find declaration for type: ${typeName}`);
 
     return null;
   }
@@ -327,13 +305,9 @@ export class RecursiveInjectExtractor {
         }
       }
 
-      if (this.options.verbose) {
-        console.log(`❌ Could not resolve import: ${moduleSpecifier} (tried ${scanDirs.length} directories)`);
-      }
+      console.log(`❌ Could not resolve import: ${moduleSpecifier} (tried ${scanDirs.length} directories)`);
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Failed to resolve import: ${moduleSpecifier}`, error);
-      }
+      console.warn(`⚠️  Failed to resolve import: ${moduleSpecifier}`, error);
     }
 
     return null;
@@ -354,9 +328,7 @@ export class RecursiveInjectExtractor {
       const fullPath = resolvedPath + ext;
       const importedFile = project.getSourceFile(fullPath);
       if (importedFile) {
-        if (this.options.verbose) {
-          console.log(`✅ Resolved import: ${moduleSpecifier} -> ${fullPath}`);
-        }
+        console.log(`✅ Resolved import: ${moduleSpecifier} -> ${fullPath}`);
         return importedFile;
       }
     }
@@ -463,9 +435,7 @@ export class RecursiveInjectExtractor {
     sourceFile: SourceFile,
     initialPath: string[] = []
   ): ExtractedInjectMarker[] {
-    if (this.options.verbose) {
-      console.log(`🔍 Recursively extracting inject markers from interface ${interfaceDecl.getName()}`);
-    }
+    console.log(`🔍 Recursively extracting inject markers from interface ${interfaceDecl.getName()}`);
 
     return this.extractFromTypeDeclaration(interfaceDecl, sourceFile, initialPath);
   }
@@ -478,9 +448,7 @@ export class RecursiveInjectExtractor {
     sourceFile: SourceFile,
     initialPath: string[] = []
   ): ExtractedInjectMarker[] {
-    if (this.options.verbose) {
-      console.log(`🔍 Recursively extracting inject markers from type alias ${typeAlias.getName()}`);
-    }
+    console.log(`🔍 Recursively extracting inject markers from type alias ${typeAlias.getName()}`);
 
     return this.extractFromTypeDeclaration(typeAlias, sourceFile, initialPath);
   }
@@ -493,9 +461,7 @@ export class RecursiveInjectExtractor {
     sourceFile: SourceFile,
     initialPath: string[] = []
   ): ExtractedInjectMarker[] {
-    if (this.options.verbose) {
-      console.log(`🔍 Recursively extracting inject markers from type node: ${typeNode.getKindName()}`);
-    }
+    console.log(`🔍 Recursively extracting inject markers from type node: ${typeNode.getKindName()}`);
 
     return this.extractInjectMarkersRecursive(typeNode, sourceFile, initialPath);
   }

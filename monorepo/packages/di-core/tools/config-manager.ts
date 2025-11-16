@@ -12,7 +12,6 @@ interface DIConfigOptions {
   scanDirs: string[];
   outputDir: string;
   enableFunctionalDI: boolean;
-  verbose: boolean;
   nodeEnv?: string;
   customSuffix?: string;
 }
@@ -81,10 +80,8 @@ export class ConfigManager {
     // FIXED: Use a more stable naming scheme
     const configName = `${this.packageName}-${hash}`;
     
-    if (this.options.verbose) {
-      console.log(`🔑 Config hash inputs:`, sortedHashInput);
-      console.log(`🏗️  Generated config: ${configName}`);
-    }
+    console.log(`🔑 Config hash inputs:`, sortedHashInput);
+    console.log(`🏗️  Generated config: ${configName}`);
     
     return configName;
   }
@@ -112,16 +109,12 @@ export class ConfigManager {
       for (const config of configs) {
         const diConfigFile = path.join(config.path, 'di-config.ts');
         if (fs.existsSync(diConfigFile)) {
-          if (this.options.verbose) {
-            console.log(`♻️  Found existing config: ${config.name}`);
-          }
+          console.log(`♻️  Found existing config: ${config.name}`);
           return config.name;
         }
       }
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn('⚠️  Failed to scan existing configs:', error);
-      }
+      console.warn('⚠️  Failed to scan existing configs:', error);
     }
 
     return null;
@@ -133,9 +126,7 @@ export class ConfigManager {
     const existingConfig = this.findExistingConfig();
 
     if (existingConfig && existingConfig !== this.configHash) {
-      if (this.options.verbose) {
-        console.log(`🔄 Using existing config: ${existingConfig}`);
-      }
+      console.log(`🔄 Using existing config: ${existingConfig}`);
 
       // Update to use existing config
       this.configHash = existingConfig;
@@ -191,24 +182,18 @@ export class ConfigManager {
   }
 
   generateBridgeFiles(): void {
-    if (this.options.verbose) {
-      console.log(`🌉 Generating bridge files in ${this.bridgeDirs.length} directories`);
-    }
+    console.log(`🌉 Generating bridge files in ${this.bridgeDirs.length} directories`);
 
     // Generate bridge files in ALL scanDirs
     for (const bridgeDir of this.bridgeDirs) {
-      if (this.options.verbose) {
-        console.log(`  📁 ${bridgeDir}`);
-      }
+      console.log(`  📁 ${bridgeDir}`);
 
       this.generateDIConfigBridge(bridgeDir);
       this.generateRegistryBridge(bridgeDir);
       this.generateBridgeGitignore(bridgeDir);
     }
 
-    if (this.options.verbose) {
-      console.log(`✅ Bridge files generated for config: ${this.configHash}`);
-    }
+    console.log(`✅ Bridge files generated for config: ${this.configHash}`);
   }
 
   private generateDIConfigBridge(bridgeDir: string): void {

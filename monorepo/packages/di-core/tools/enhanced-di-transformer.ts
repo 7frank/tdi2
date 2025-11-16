@@ -35,7 +35,6 @@ import { IntegratedInterfaceResolver } from './interface-resolver/integrated-int
 interface TransformerOptions {
   scanDirs?: string[];
   outputDir?: string;
-  verbose?: boolean;
   generateRegistry?: boolean;
   enableInterfaceResolution?: boolean;
   customSuffix?: string;
@@ -65,7 +64,6 @@ export class EnhancedDITransformer {
 
     this.options = {
       outputDir: options.outputDir || './src/generated',
-      verbose: options.verbose || false,
       enableInterfaceResolution: options.enableInterfaceResolution !== false,
       enableInheritanceDI: true,
       enableStateDI: true,
@@ -82,39 +80,30 @@ export class EnhancedDITransformer {
       scanDirs: this.options.scanDirs,
       outputDir: this.options.outputDir,
       enableFunctionalDI: false, // This transformer focuses on class-based DI
-      verbose: this.options.verbose,
       customSuffix: this.options.customSuffix
     });
 
     // Initialize InterfaceResolver with all scan directories
     this.interfaceResolver = new IntegratedInterfaceResolver({
-      verbose: this.options.verbose,
       scanDirs: this.options.scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
       enableStateDI: this.options.enableStateDI
     });
 
     // Initialize shared components
-    this.typeResolver = new SharedTypeResolver(this.interfaceResolver, {
-      verbose: this.options.verbose
-    });
+    this.typeResolver = new SharedTypeResolver(this.interfaceResolver, {});
 
     this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
-      verbose: this.options.verbose,
       scanDirs: this.options.scanDirs
     });
 
-    this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
-      verbose: this.options.verbose
-    });
+    this.serviceRegistry = new SharedServiceRegistry(this.configManager, {});
   }
 
   async transform(): Promise<TransformationResult> {
     const startTime = Date.now();
 
-    if (this.options.verbose) {
-      console.log('🚀 Starting enhanced DI transformation with shared logic...');
-    }
+    console.log('🚀 Starting enhanced DI transformation with shared logic...');
 
     try {
       // Phase 1: Scan and resolve interfaces
@@ -137,13 +126,11 @@ export class EnhancedDITransformer {
 
       const endTime = Date.now();
 
-      if (this.options.verbose) {
-        console.log('✅ Enhanced DI transformation completed');
-        console.log(`🏗️  Config: ${this.configManager.getConfigHash()}`);
-        console.log(`📁 Config dir: ${this.configManager.getConfigDir()}`);
-        console.log(`🌉 Bridge dir: ${this.configManager.getBridgeDir()}`);
-        console.log(`⏱️  Duration: ${endTime - startTime}ms`);
-      }
+      console.log('✅ Enhanced DI transformation completed');
+      console.log(`🏗️  Config: ${this.configManager.getConfigHash()}`);
+      console.log(`📁 Config dir: ${this.configManager.getConfigDir()}`);
+      console.log(`🌉 Bridge dir: ${this.configManager.getBridgeDir()}`);
+      console.log(`⏱️  Duration: ${endTime - startTime}ms`);
 
       return this.createTransformationResult(startTime, endTime);
 
@@ -159,24 +146,20 @@ export class EnhancedDITransformer {
   }
 
   private async scanAndResolveInterfaces(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('🔍 Scanning project for interfaces and implementations...');
-    }
+    console.log('🔍 Scanning project for interfaces and implementations...');
 
     await this.interfaceResolver.scanProject();
 
     // Validate dependencies
     const validation = this.interfaceResolver.validateDependencies();
     if (!validation.isValid) {
-      if (this.options.verbose) {
-        console.warn('⚠️  Some dependencies may not be resolvable:');
-        validation.missingImplementations.forEach(missing => {
-          console.warn(`  - Missing: ${missing}`);
-        });
-        validation.circularDependencies.forEach(circular => {
-          console.warn(`  - Circular: ${circular}`);
-        });
-      }
+      console.warn('⚠️  Some dependencies may not be resolvable:');
+      validation.missingImplementations.forEach(missing => {
+        console.warn(`  - Missing: ${missing}`);
+      });
+      validation.circularDependencies.forEach(circular => {
+        console.warn(`  - Circular: ${circular}`);
+      });
 
       // Add warnings for missing implementations
       validation.missingImplementations.forEach(missing => {
@@ -198,9 +181,7 @@ export class EnhancedDITransformer {
   }
 
   private async findTransformationCandidates(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('🔍 Finding transformation candidates...');
-    }
+    console.log('🔍 Finding transformation candidates...');
 
     // Add source files from all scan directories
     const scanDirs = this.options.scanDirs;
@@ -222,9 +203,7 @@ export class EnhancedDITransformer {
       }
     }
 
-    if (this.options.verbose) {
-      console.log(`📋 Found ${this.transformationCandidates.length} transformation candidates`);
-    }
+    console.log(`📋 Found ${this.transformationCandidates.length} transformation candidates`);
   }
 
   private createClassCandidate(
@@ -251,9 +230,7 @@ export class EnhancedDITransformer {
   }
 
   private async extractDependencies(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('🔗 Extracting dependencies using shared logic...');
-    }
+    console.log('🔗 Extracting dependencies using shared logic...');
 
     const dependencyMap = new Map<string, any[]>();
 
@@ -269,13 +246,11 @@ export class EnhancedDITransformer {
             const className = candidate.node.getName()!;
             dependencyMap.set(className, dependencies);
 
-            if (this.options.verbose) {
-              console.log(`🔗 ${className}: Found ${dependencies.length} dependencies`);
-              dependencies.forEach(dep => {
-                const status = dep.resolvedImplementation ? '✅' : (dep.isOptional ? '⚠️' : '❌');
-                console.log(`    ${status} ${dep.serviceKey}: ${dep.interfaceType}`);
-              });
-            }
+            console.log(`🔗 ${className}: Found ${dependencies.length} dependencies`);
+            dependencies.forEach(dep => {
+              const status = dep.resolvedImplementation ? '✅' : (dep.isOptional ? '⚠️' : '❌');
+              console.log(`    ${status} ${dep.serviceKey}: ${dep.interfaceType}`);
+            });
           }
         } catch (error) {
           this.errors.push({
@@ -292,9 +267,7 @@ export class EnhancedDITransformer {
   }
 
   private async registerServices(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('📝 Registering services using shared registry...');
-    }
+    console.log('📝 Registering services using shared registry...');
 
     const implementations = this.interfaceResolver.getInterfaceImplementations();
     const dependencyMap = (this as any).dependencyMap || new Map();
@@ -323,15 +296,11 @@ export class EnhancedDITransformer {
       });
     });
 
-    if (this.options.verbose) {
-      console.log(`📊 Registry stats:`, validation.stats);
-    }
+    console.log(`📊 Registry stats:`, validation.stats);
   }
 
   private async generateConfiguration(): Promise<void> {
-    if (this.options.verbose) {
-      console.log('📄 Generating configuration files...');
-    }
+    console.log('📄 Generating configuration files...');
 
     // Generate DI configuration using shared registry
     await this.serviceRegistry.generateDIConfiguration();
@@ -466,9 +435,7 @@ export class EnhancedDITransformer {
     try {
       await this.project.save();
     } catch (error) {
-      if (this.options.verbose) {
-        console.error('❌ Failed to save project:', error);
-      }
+      console.error('❌ Failed to save project:', error);
       throw error;
     }
   }
@@ -526,9 +493,7 @@ export class EnhancedDITransformer {
       
       return interfaceValidation.isValid && registryValidation.isValid;
     } catch (error) {
-      if (this.options.verbose) {
-        console.error('❌ Configuration validation failed:', error);
-      }
+      console.error('❌ Configuration validation failed:', error);
       return false;
     }
   }

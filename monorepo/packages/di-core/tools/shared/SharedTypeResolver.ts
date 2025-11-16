@@ -45,9 +45,7 @@ export class SharedTypeResolver {
     const result = this.performResolution(request);
     this.resolutionCache.set(cacheKey, result);
     
-    if (this.options.verbose) {
-      this.logResolution(request, result);
-    }
+    this.logResolution(request, result);
 
     return result;
   }

@@ -28,11 +28,9 @@ export class ImportManager {
     if (!hasDIImport) {
       const relativePath = this.getStaticContextPackageImportPath();
 
-      if (this.options.verbose) {
-        console.log(
-          `📦 Adding DI import to ${sourceFile.getBaseName()}: ${relativePath}`
-        );
-      }
+      console.log(
+        `📦 Adding DI import to ${sourceFile.getBaseName()}: ${relativePath}`
+      );
 
       sourceFile.addImportDeclaration({
         moduleSpecifier: relativePath,
@@ -51,9 +49,7 @@ export class ImportManager {
     );
 
     if (!hasReactImport) {
-      if (this.options.verbose) {
-        console.log(`📦 Adding React import to ${sourceFile.getBaseName()}`);
-      }
+      console.log(`📦 Adding React import to ${sourceFile.getBaseName()}`);
 
       sourceFile.addImportDeclaration({
         moduleSpecifier: "react",
@@ -84,21 +80,17 @@ export class ImportManager {
         // Remove entire import if nothing is used
         importDecl.remove();
 
-        if (this.options.verbose) {
-          console.log(
-            `🗑️  Removed unused import: ${importDecl.getModuleSpecifierValue()}`
-          );
-        }
+        console.log(
+          `🗑️  Removed unused import: ${importDecl.getModuleSpecifierValue()}`
+        );
       } else if (usedImports.length < namedImports.length) {
         // Update import with only used imports
         importDecl.removeNamedImports();
         importDecl.addNamedImports(usedImports);
 
-        if (this.options.verbose) {
-          console.log(
-            `🔄 Updated import to include only: ${usedImports.join(", ")}`
-          );
-        }
+        console.log(
+          `🔄 Updated import to include only: ${usedImports.join(", ")}`
+        );
       }
     }
   }
@@ -172,11 +164,9 @@ export class ImportManager {
       });
     }
 
-    if (this.options.verbose) {
-      console.log(
-        `📋 Organized ${orderedImports.length} imports in ${sourceFile.getBaseName()}`
-      );
-    }
+    console.log(
+      `📋 Organized ${orderedImports.length} imports in ${sourceFile.getBaseName()}`
+    );
   }
 
   /**
@@ -197,11 +187,9 @@ export class ImportManager {
     if (!hasDITypeImport) {
       const relativePath = this.calculateDIMarkersImportPath(sourceFile);
 
-      if (this.options.verbose) {
-        console.log(
-          `📦 Adding DI type import to ${sourceFile.getBaseName()}: ${relativePath}`
-        );
-      }
+      console.log(
+        `📦 Adding DI type import to ${sourceFile.getBaseName()}: ${relativePath}`
+      );
 
       sourceFile.addImportDeclaration({
         moduleSpecifier: relativePath,
@@ -257,11 +245,9 @@ export class ImportManager {
       targetImport.removeNamedImports();
       targetImport.addNamedImports(allImports);
 
-      if (this.options.verbose) {
-        console.log(
-          `🔄 Updated import ${moduleSpecifier} with: ${allImports.join(", ")}`
-        );
-      }
+      console.log(
+        `🔄 Updated import ${moduleSpecifier} with: ${allImports.join(", ")}`
+      );
     } else {
       // Create new import
       sourceFile.addImportDeclaration({
@@ -269,11 +255,9 @@ export class ImportManager {
         namedImports: newImports,
       });
 
-      if (this.options.verbose) {
-        console.log(
-          `📦 Added new import ${moduleSpecifier} with: ${newImports.join(", ")}`
-        );
-      }
+      console.log(
+        `📦 Added new import ${moduleSpecifier} with: ${newImports.join(", ")}`
+      );
     }
   }
 
@@ -301,18 +285,14 @@ export class ImportManager {
       if (filteredImports.length === 0) {
         targetImport.remove();
 
-        if (this.options.verbose) {
-          console.log(`🗑️  Removed entire import: ${moduleSpecifier}`);
-        }
+        console.log(`🗑️  Removed entire import: ${moduleSpecifier}`);
       } else {
         targetImport.removeNamedImports();
         targetImport.addNamedImports(filteredImports);
 
-        if (this.options.verbose) {
-          console.log(
-            `🔄 Removed ${importsToRemove.join(", ")} from import: ${moduleSpecifier}`
-          );
-        }
+        console.log(
+          `🔄 Removed ${importsToRemove.join(", ")} from import: ${moduleSpecifier}`
+        );
       }
     }
   }
