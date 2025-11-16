@@ -29,7 +29,7 @@ export class ConfigurationProcessor {
     // Add source files from ALL scan directories
     for (const dir of options.scanDirs) {
       this.project.addSourceFilesAtPaths(`${dir}/**/*.{ts,tsx}`);
-      console.log(`📂 ConfigurationProcessor: Added source files from ${dir}`);
+      console.info(`📂 ConfigurationProcessor: Added source files from ${dir}`);
     }
   }
 
@@ -45,7 +45,7 @@ export class ConfigurationProcessor {
       configurations.push(...configsInFile);
     }
 
-    console.log(`🔍 Found ${configurations.length} configuration classes`);
+    console.info(`🔍 Found ${configurations.length} configuration classes`);
 
     return configurations;
   }
@@ -99,7 +99,7 @@ export class ConfigurationProcessor {
       beans: beanMethods,
     };
 
-    console.log(`📦 Processed configuration: ${className} with ${beanMethods.length} beans`);
+    console.info(`📦 Processed configuration: ${className} with ${beanMethods.length} beans`);
 
     return configMetadata;
   }
@@ -173,7 +173,7 @@ export class ConfigurationProcessor {
       profiles: decoratorMetadata.profiles,
     };
 
-    console.log(`🫘 Processed bean method: ${methodName} -> ${returnType}`);
+    console.info(`🫘 Processed bean method: ${methodName} -> ${returnType}`);
 
     return beanMetadata;
   }

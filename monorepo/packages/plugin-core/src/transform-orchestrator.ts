@@ -45,7 +45,7 @@ export class TransformOrchestrator {
 
   private async performInitialization(): Promise<void> {
     try {
-      console.log('Initializing TDI2 transformers...');
+      console.info('Initializing TDI2 transformers...');
       console.debug(`Scan directories: ${this.options.scanDirs.join(', ')}`);
 
       // Step 1: Run class-based DI transformer for interface resolution
@@ -77,10 +77,10 @@ export class TransformOrchestrator {
         // Transform all files and cache results
         this.transformedFilesCache = await functionalTransformer.transformForBuild();
 
-        console.log(`✅ Transformed ${this.transformedFilesCache.size} files`);
+        console.info(`✅ Transformed ${this.transformedFilesCache.size} files`);
       }
 
-      console.log('✅ TDI2 transformers initialized');
+      console.info('✅ TDI2 transformers initialized');
     } catch (error) {
       console.error(`Failed to initialize: ${error}`);
       throw error;

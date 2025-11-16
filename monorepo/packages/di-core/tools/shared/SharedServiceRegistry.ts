@@ -88,7 +88,7 @@ export class SharedServiceRegistry {
     // Update dependency graph
     this.updateDependencyGraph(registration);
 
-    console.log(`📝 Registered: ${registration.token} -> ${registration.implementationClass} (${registration.registrationType})`);
+    console.debug(`📝 Registered: ${registration.token} -> ${registration.implementationClass} (${registration.registrationType})`);
   }
 
   /**
@@ -186,8 +186,8 @@ export class SharedServiceRegistry {
     const configFilePath = path.join(this.configManager.getConfigDir(), 'di-config.ts');
     
     await fs.promises.writeFile(configFilePath, configContent, 'utf8');
-    
-    console.log(`📝 Generated DI configuration: ${configFilePath}`);
+
+    console.info(`📝 Generated DI configuration: ${configFilePath}`);
   }
 
   /**
@@ -198,8 +198,8 @@ export class SharedServiceRegistry {
     const registryFilePath = path.join(this.configManager.getConfigDir(), 'service-registry.ts');
     
     await fs.promises.writeFile(registryFilePath, registryContent, 'utf8');
-    
-    console.log(`📝 Generated service registry: ${registryFilePath}`);
+
+    console.info(`📝 Generated service registry: ${registryFilePath}`);
   }
 
   /**
