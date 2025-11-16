@@ -25,7 +25,6 @@ dist-ssr
 
 # TDI2 Generated Files
 src/.tdi2/
-
 node_modules/.tdi2/
 *.di-transformed.tsx
 *.di-transformed.ts

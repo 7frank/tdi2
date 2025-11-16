@@ -2,6 +2,8 @@
 
 ## ordered log (for production release)
 
+### console log in di-core and vite-plugin
+
 ### remove magic strings
 
 see `.includes('` `*.*js*,*.md,*.test.ts`

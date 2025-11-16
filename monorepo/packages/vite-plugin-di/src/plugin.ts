@@ -79,6 +79,9 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
   // Normalize scanDirs to absolute paths for HMR matching
   const absoluteScanDirs = options.scanDirs!.map(dir => path.resolve(dir));
 
+  // Normalize scanDirs to absolute paths for HMR matching
+  const absoluteScanDirs = options.scanDirs!.map(dir => path.resolve(dir));
+
   /**
    * Main transformation function
    */
@@ -89,10 +92,13 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     performanceTracker.startTransformation();
 
     // Check if we should reuse existing config (but always transform on force for HMR)
+    // Check if we should reuse existing config (but always transform on force for HMR)
     const now = Date.now();
     if (
       !force &&
       options.reuseExistingConfig &&
+      now - lastConfigCheck < CONFIG_CHECK_INTERVAL &&
+      transformedFiles.size > 0  // Only skip if we already have transformed files
       now - lastConfigCheck < CONFIG_CHECK_INTERVAL &&
       transformedFiles.size > 0  // Only skip if we already have transformed files
     ) {
@@ -114,9 +120,12 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       // Clean old configs periodically (but not if reusing)
       if (options.cleanOldConfigs && !options.reuseExistingConfig) {
         ConfigManager.cleanOldConfigs(options.keepConfigCount, options.outputDir);
+        ConfigManager.cleanOldConfigs(options.keepConfigCount, options.outputDir);
       }
 
       // Create config manager first to check for existing configs
+      // If forcing regeneration (e.g., new service added), use timestamp suffix to create new config
+      const configSuffix = force ? `hmr-${Date.now()}` : options.customSuffix;
       // If forcing regeneration (e.g., new service added), use timestamp suffix to create new config
       const configSuffix = force ? `hmr-${Date.now()}` : options.customSuffix;
       configManager = new ConfigManager({
@@ -136,6 +145,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         configManager.generateBridgeFiles();
 
         // Still run functional transformation as it doesn't persist (and for HMR updates)
+        // Still run functional transformation as it doesn't persist (and for HMR updates)
         if (options.enableFunctionalDI) {
           functionalTransformer = new FunctionalDIEnhancedTransformer({
             scanDirs: options.scanDirs,
@@ -145,6 +155,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           });
 
           try {
+            // IMPORTANT: Always refresh transformedFiles map for HMR to work
             // IMPORTANT: Always refresh transformedFiles map for HMR to work
             transformedFiles = await functionalTransformer.transformForBuild();
 
@@ -170,6 +181,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         scanDirs: options.scanDirs,
         outputDir: options.outputDir,
         enableInterfaceResolution: options.enableInterfaceResolution,
+        customSuffix: configSuffix,
         customSuffix: configSuffix,
       });
 
@@ -323,6 +335,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           const content = fs.readFileSync(file, "utf-8");
           const diPatterns = detectDIPatterns(content, options);
 
+
           if (diPatterns.hasDI) {
             const absoluteFile = path.resolve(file);
 
@@ -442,8 +455,12 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
             type: "full-reload",
           });
           return [];
+          return [];
         }
       }
+
+      // Return undefined to let Vite handle HMR normally
+      return undefined;
 
       // Return undefined to let Vite handle HMR normally
       return undefined;
