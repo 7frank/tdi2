@@ -79,8 +79,18 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
   // Normalize scanDirs to absolute paths for HMR matching
   const absoluteScanDirs = options.scanDirs!.map(dir => path.resolve(dir));
 
-  // Normalize scanDirs to absolute paths for HMR matching
-  const absoluteScanDirs = options.scanDirs!.map(dir => path.resolve(dir));
+  /**
+   * Helper function to check if a file should be skipped based on exclude patterns
+   */
+  const shouldSkipFile = (filePath: string): boolean => {
+    const excludePatterns = options.excludePatterns || ['node_modules', '.d.ts', '.test.', '.spec.'];
+    for (const pattern of excludePatterns) {
+      if (filePath.includes(pattern)) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   /**
    * Main transformation function
@@ -92,13 +102,10 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
     performanceTracker.startTransformation();
 
     // Check if we should reuse existing config (but always transform on force for HMR)
-    // Check if we should reuse existing config (but always transform on force for HMR)
     const now = Date.now();
     if (
       !force &&
       options.reuseExistingConfig &&
-      now - lastConfigCheck < CONFIG_CHECK_INTERVAL &&
-      transformedFiles.size > 0  // Only skip if we already have transformed files
       now - lastConfigCheck < CONFIG_CHECK_INTERVAL &&
       transformedFiles.size > 0  // Only skip if we already have transformed files
     ) {
@@ -120,12 +127,9 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       // Clean old configs periodically (but not if reusing)
       if (options.cleanOldConfigs && !options.reuseExistingConfig) {
         ConfigManager.cleanOldConfigs(options.keepConfigCount, options.outputDir);
-        ConfigManager.cleanOldConfigs(options.keepConfigCount, options.outputDir);
       }
 
       // Create config manager first to check for existing configs
-      // If forcing regeneration (e.g., new service added), use timestamp suffix to create new config
-      const configSuffix = force ? `hmr-${Date.now()}` : options.customSuffix;
       // If forcing regeneration (e.g., new service added), use timestamp suffix to create new config
       const configSuffix = force ? `hmr-${Date.now()}` : options.customSuffix;
       configManager = new ConfigManager({
@@ -145,17 +149,17 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         configManager.generateBridgeFiles();
 
         // Still run functional transformation as it doesn't persist (and for HMR updates)
-        // Still run functional transformation as it doesn't persist (and for HMR updates)
         if (options.enableFunctionalDI) {
           functionalTransformer = new FunctionalDIEnhancedTransformer({
             scanDirs: options.scanDirs,
             outputDir: options.outputDir,
             generateDebugFiles: options.generateDebugFiles,
             customSuffix: configSuffix,
+            excludePatterns: options.excludePatterns,
+            excludeDirs: options.excludeDirs,
           });
 
           try {
-            // IMPORTANT: Always refresh transformedFiles map for HMR to work
             // IMPORTANT: Always refresh transformedFiles map for HMR to work
             transformedFiles = await functionalTransformer.transformForBuild();
 
@@ -182,7 +186,8 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         outputDir: options.outputDir,
         enableInterfaceResolution: options.enableInterfaceResolution,
         customSuffix: configSuffix,
-        customSuffix: configSuffix,
+        excludePatterns: options.excludePatterns,
+        excludeDirs: options.excludeDirs,
       });
 
       await classTransformer.transform();
@@ -199,6 +204,8 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           outputDir: options.outputDir,
           generateDebugFiles: options.generateDebugFiles,
           customSuffix: configSuffix,
+          excludePatterns: options.excludePatterns,
+          excludeDirs: options.excludeDirs,
         });
 
         try {
@@ -308,10 +315,13 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
 
     resolveId(id) {
       // Handle bridge file resolution
-      if (id.startsWith("./.tdi2/") && configManager) {
+      const outputDirName = options.outputDir ? path.basename(options.outputDir!) : '.tdi2';
+      const outputDirPattern = `./${outputDirName}/`;
+
+      if (id.startsWith(outputDirPattern) && configManager) {
         const bridgeFile = path.resolve(
           configManager.getBridgeDir(),
-          id.replace("./.tdi2/", "")
+          id.replace(outputDirPattern, "")
         );
         if (fs.existsSync(bridgeFile)) {
           return bridgeFile;
@@ -351,6 +361,8 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
                   outputDir: options.outputDir,
                   generateDebugFiles: options.generateDebugFiles,
                   customSuffix: options.customSuffix,
+                  excludePatterns: options.excludePatterns,
+                  excludeDirs: options.excludeDirs,
                 });
 
                 // Re-run transformation with fresh instance
@@ -394,10 +406,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       if (
         isInScanDir &&
         (file.endsWith(".ts") || file.endsWith(".tsx")) &&
-        !file.endsWith(".test.ts") &&
-        !file.endsWith(".test.tsx") &&
-        !file.endsWith(".spec.ts") &&
-        !file.endsWith(".spec.tsx")
+        !shouldSkipFile(file)
       ) {
         try {
           const content = fs.readFileSync(file, "utf-8");
@@ -412,10 +421,12 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
             // Invalidate all bridge files, config modules, AND transformed components
             const moduleGraph = server.moduleGraph;
             const bridgeDir = configManager?.getBridgeDir();
+            const outputDirName = options.outputDir ? path.basename(options.outputDir!) : '.tdi2';
+
             if (bridgeDir) {
               // Invalidate all modules in the bridge directory
               for (const [id, mod] of moduleGraph.idToModuleMap) {
-                if (id.includes('.tdi2')) {
+                if (id.includes(outputDirName)) {
                   moduleGraph.invalidateModule(mod);
                 }
               }
@@ -446,7 +457,8 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       }
 
       // Handle bridge file changes
-      if (file.includes(".tdi2") && configManager) {
+      const outputDirName = options.outputDir ? path.basename(options.outputDir!) : '.tdi2';
+      if (file.includes(outputDirName) && configManager) {
         const relativePath = path.relative(configManager.getBridgeDir(), file);
         if (!relativePath.startsWith("..")) {
           console.debug(`🌉 Bridge file changed: ${relativePath}`);
@@ -455,12 +467,8 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
             type: "full-reload",
           });
           return [];
-          return [];
         }
       }
-
-      // Return undefined to let Vite handle HMR normally
-      return undefined;
 
       // Return undefined to let Vite handle HMR normally
       return undefined;
@@ -487,10 +495,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           if (
             isInScanDir &&
             (file.endsWith(".ts") || file.endsWith(".tsx")) &&
-            !file.endsWith(".test.ts") &&
-            !file.endsWith(".test.tsx") &&
-            !file.endsWith(".spec.ts") &&
-            !file.endsWith(".spec.tsx")
+            !shouldSkipFile(file)
           ) {
             try {
               const content = fs.readFileSync(file, "utf-8");
@@ -505,10 +510,12 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
                 // Invalidate all bridge files, config modules, AND transformed components
                 const moduleGraph = server.moduleGraph;
                 const bridgeDir = configManager?.getBridgeDir();
+                const outputDirName = options.outputDir ? path.basename(options.outputDir!) : '.tdi2';
+
                 if (bridgeDir) {
                   // Invalidate all modules in the bridge directory
                   for (const [id, mod] of moduleGraph.idToModuleMap) {
-                    if (id.includes('.tdi2')) {
+                    if (id.includes(outputDirName)) {
                       moduleGraph.invalidateModule(mod);
                     }
                   }

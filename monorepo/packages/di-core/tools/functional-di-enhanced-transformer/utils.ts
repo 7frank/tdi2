@@ -6,13 +6,48 @@ import { FunctionalDependency, TransformationOptions } from './types';
 /**
  * Check if a file should be skipped during transformation
  */
-export function shouldSkipFile(filePath: string): boolean {
-  return filePath.includes('generated') || 
-         filePath.includes('node_modules') ||
-         filePath.includes('.d.ts') ||
-         filePath.includes('.tdi2') ||
-         filePath.includes('.test.') ||
-         filePath.includes('.spec.');
+export function shouldSkipFile(
+  filePath: string,
+  options?: { excludePatterns?: string[]; excludeDirs?: string[]; outputDir?: string }
+): boolean {
+  const normalized = filePath.replace(/\\/g, '/');
+
+  // Default patterns
+  const defaultExcludePatterns = ['node_modules', '.d.ts', '.test.', '.spec.'];
+  const defaultExcludeDirs = ['node_modules'];
+
+  const excludePatterns = options?.excludePatterns || defaultExcludePatterns;
+  const excludeDirs = options?.excludeDirs || defaultExcludeDirs;
+
+  // Skip based on excludeDirs
+  for (const dir of excludeDirs) {
+    if (normalized.includes(`/${dir}/`) || normalized.includes(`\\${dir}\\`)) {
+      return true;
+    }
+  }
+
+  // Skip outputDir (generated files)
+  if (options?.outputDir) {
+    const normalizedOutputDir = options.outputDir.replace(/\\/g, '/');
+    const outputDirName = normalizedOutputDir.split('/').pop() || '';
+    if (outputDirName && normalized.includes(outputDirName)) {
+      return true;
+    }
+  }
+
+  // Skip based on excludePatterns
+  for (const pattern of excludePatterns) {
+    if (normalized.includes(pattern)) {
+      return true;
+    }
+  }
+
+  // Also skip 'generated' folder (legacy behavior for backwards compatibility)
+  if (normalized.includes('generated')) {
+    return true;
+  }
+
+  return false;
 }
 
 /**

@@ -50,6 +50,8 @@ interface TransformerOptions {
   customSuffix?: string;
   enableParameterNormalization?: boolean;
   generateFallbacks?: boolean;
+  excludePatterns?: string[];
+  excludeDirs?: string[];
 }
 
 export class FunctionalDIEnhancedTransformer {
@@ -465,15 +467,50 @@ export class FunctionalDIEnhancedTransformer {
 
   private shouldSkipFile(sourceFile: SourceFile): boolean {
     const filePath = sourceFile.getFilePath();
-    const shouldSkip = filePath.includes('generated') || 
-                     filePath.includes('node_modules') ||
-                     filePath.includes('.d.ts') ||
-                     filePath.includes('.tdi2');
-    
+
+    // Use centralized skip logic with configuration
+    const shouldSkip = this.shouldSkipFilePath(filePath);
+
     if (shouldSkip) {
       console.log(`🔍 Skipping file due to ignore pattern: ${filePath}`);
     }
     return shouldSkip;
+  }
+
+  private shouldSkipFilePath(filePath: string): boolean {
+    const normalized = filePath.replace(/\\/g, '/');
+
+    // Skip based on excludeDirs
+    const excludeDirs = this.options.excludeDirs || ['node_modules'];
+    for (const dir of excludeDirs) {
+      if (normalized.includes(`/${dir}/`) || normalized.includes(`\\${dir}\\`)) {
+        return true;
+      }
+    }
+
+    // Skip outputDir (generated files)
+    if (this.options.outputDir) {
+      const normalizedOutputDir = this.options.outputDir.replace(/\\/g, '/');
+      const outputDirName = normalizedOutputDir.split('/').pop() || '';
+      if (outputDirName && normalized.includes(outputDirName)) {
+        return true;
+      }
+    }
+
+    // Skip based on excludePatterns
+    const excludePatterns = this.options.excludePatterns || ['node_modules', '.d.ts', '.test.', '.spec.'];
+    for (const pattern of excludePatterns) {
+      if (normalized.includes(pattern)) {
+        return true;
+      }
+    }
+
+    // Also skip 'generated' folder (legacy behavior)
+    if (normalized.includes('generated')) {
+      return true;
+    }
+
+    return false;
   }
 
   private hasInjectMarkers(parameters: ParameterDeclaration[], sourceFile: SourceFile): boolean {
