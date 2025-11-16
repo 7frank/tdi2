@@ -2,16 +2,16 @@
 
 ## ordered log (for production release)
 
-### ❌ console log in di-core and vite-plugin
-
-make it less noisy
-
-what about `createLogger`
-what about `verbose` in vite plugin
-
 ### ❌ hot reload fixes added path issue
 
-see `src/generated` 
+see `src/generated`
+
+### ✅ console log in di-core and vite-plugin
+
+✅ make it less noisy
+
+✅ what about `createLogger`
+✅ what about `verbose` in vite plugin
 
 ### [✅] FIXME could not fast refrest useDi export incompatible
 

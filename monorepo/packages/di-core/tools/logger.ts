@@ -42,11 +42,11 @@ function shouldLog(level: LogLevel): boolean {
  *
  * Usage:
  *   const console = consoleFor("di-core:config-manager");
- *   console.debug("deep debugging info");   // Only shown with DEBUG=di-core:* AND LOG_LEVEL=DEBUG
- *   console.log("verbose info");            // Only shown with DEBUG=di-core:* AND LOG_LEVEL=DEBUG
- *   console.info("important operation");    // Shown with LOG_LEVEL=INFO or LOG_LEVEL=DEBUG
- *   console.warn("warning message");        // Shown with LOG_LEVEL=WARN, INFO, or DEBUG (default)
- *   console.error("error message");         // Always shown unless LOG_LEVEL=SILENT
+ *   console.debug("deep debugging info");   // DEBUG=di-core:* + LOG_LEVEL=DEBUG → di-core:config-manager:debug
+ *   console.log("verbose info");            // DEBUG=di-core:* + LOG_LEVEL=DEBUG → di-core:config-manager
+ *   console.info("important operation");    // DEBUG=di-core:* + LOG_LEVEL=INFO → di-core:config-manager:info
+ *   console.warn("warning message");        // DEBUG=di-core:* + LOG_LEVEL=WARN → di-core:config-manager:warn (default)
+ *   console.error("error message");         // DEBUG=di-core:* + LOG_LEVEL=ERROR → di-core:config-manager:error
  *
  * Environment variables:
  *   LOG_LEVEL=DEBUG   - Show all messages (debug, log, info, warn, error)
@@ -67,6 +67,9 @@ function shouldLog(level: LogLevel): boolean {
 export function consoleFor(name: string) {
   const root = createDebug(name);
   const debugLogger = root.extend("debug");
+  const infoLogger = root.extend("info");
+  const warnLogger = root.extend("warn");
+  const errorLogger = root.extend("error");
 
   return {
     // Debug/verbose logs - only shown when DEBUG env var is set AND LOG_LEVEL allows it
@@ -82,27 +85,28 @@ export function consoleFor(name: string) {
       }
     },
 
-    // Info logs - important operations we want to see
+    // Info logs - important operations we want to see (requires DEBUG to be set)
     info: (formatter: any, ...args: any[]) => {
       if (shouldLog(LogLevel.INFO)) {
-        const message = typeof formatter === 'string' ? formatter : String(formatter);
-        console.info(`[${name}] ${message}`, ...args);
+        infoLogger(formatter, ...args);
       }
     },
 
-    // Warnings - shown by default
+    // Warnings - always shown by default (bypasses DEBUG requirement)
     warn: (formatter: any, ...args: any[]) => {
       if (shouldLog(LogLevel.WARN)) {
-        const message = typeof formatter === 'string' ? formatter : String(formatter);
-        console.warn(`[${name}] ${message}`, ...args);
+        // Force output via debug package OR use console.warn as fallback
+        warnLogger.enabled = true;
+        warnLogger(formatter, ...args);
       }
     },
 
-    // Errors - always shown unless SILENT
+    // Errors - always shown unless SILENT (bypasses DEBUG requirement)
     error: (formatter: any, ...args: any[]) => {
       if (shouldLog(LogLevel.ERROR)) {
-        const message = typeof formatter === 'string' ? formatter : String(formatter);
-        console.error(`[${name}] ${message}`, ...args);
+        // Force output via debug package OR use console.error as fallback
+        errorLogger.enabled = true;
+        errorLogger(formatter, ...args);
       }
     },
   };

@@ -159,7 +159,6 @@ describe("EnhancedDITransformer", () => {
     transformer = new EnhancedDITransformer({
       scanDirs: ["./src"],
       outputDir: "./src/generated",
-      verbose: false,
       enableInterfaceResolution: true,
       generateRegistry: true, // FIXED: Add missing option
     });
@@ -179,7 +178,6 @@ describe("EnhancedDITransformer", () => {
         // Then
         const options = (defaultTransformer as any).options;
         expect(options.scanDirs).toEqual(["./src"]);
-        expect(options.verbose).toBe(false);
         expect(options.enableInterfaceResolution).toBe(true); // FIXED: Default is true
       });
 
@@ -187,7 +185,6 @@ describe("EnhancedDITransformer", () => {
         // Given & When
         const customTransformer = new EnhancedDITransformer({
           scanDirs: ["./custom/src"],
-          verbose: true,
           generateRegistry: false,
           enableInterfaceResolution: false,
           customSuffix: "test-suffix",
@@ -196,7 +193,6 @@ describe("EnhancedDITransformer", () => {
         // Then
         const options = (customTransformer as any).options;
         expect(options.scanDirs).toEqual(["./custom/src"]);
-        expect(options.verbose).toBe(true);
         expect(options.enableInterfaceResolution).toBe(false);
         expect(options.customSuffix).toBe("test-suffix");
       });
@@ -204,7 +200,6 @@ describe("EnhancedDITransformer", () => {
       it("When initializing, Then should create config manager and tree builder", () => {
         // Given & When
         const newTransformer = new EnhancedDITransformer({
-          verbose: true,
           scanDirs: ["./src"],
         });
 
