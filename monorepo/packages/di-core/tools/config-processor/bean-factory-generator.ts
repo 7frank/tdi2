@@ -6,7 +6,6 @@ import { consoleFor } from '../logger';
 const console = consoleFor('di-core:bean-factory-generator');
 
 export interface BeanFactoryGeneratorOptions {
-  verbose?: boolean;
 }
 
 /**
@@ -14,10 +13,7 @@ export interface BeanFactoryGeneratorOptions {
  * Integrates with existing DI container and interface resolution system
  */
 export class BeanFactoryGenerator {
-  private options: BeanFactoryGeneratorOptions;
-
-  constructor(options: BeanFactoryGeneratorOptions = {}) {
-    this.options = options;
+  constructor() {
   }
 
   /**

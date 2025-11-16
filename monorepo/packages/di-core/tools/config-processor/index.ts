@@ -8,7 +8,6 @@ const console = consoleFor('di-core:config-processor');
 
 export interface ConfigProcessorOptions {
   scanDirs: string[];
-  verbose?: boolean;
 }
 
 /**

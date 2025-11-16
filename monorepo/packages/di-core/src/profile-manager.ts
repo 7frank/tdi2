@@ -1,7 +1,10 @@
 // src/profile-manager.ts - Profile management for environment-aware DI
 
+import { consoleFor } from '../tools/logger';
+
+const console = consoleFor('di-core:profile-manager');
+
 export interface ProfileManagerOptions {
-  verbose?: boolean;
   defaultProfiles?: string[]; // Profiles to use when no profiles are active
 }
 
@@ -16,7 +19,6 @@ export class ProfileManager {
 
   constructor(options: ProfileManagerOptions = {}) {
     this.options = {
-      verbose: options.verbose || false,
       defaultProfiles: options.defaultProfiles || [
         ProfileManager.DEFAULT_PROFILE,
       ],
@@ -38,11 +40,9 @@ export class ProfileManager {
       }
     }
 
-    if (this.options.verbose) {
-      console.log(
-        `🎯 Active profiles set: [${Array.from(this.activeProfiles).join(", ")}]`
-      );
-    }
+    console.info(
+      `🎯 Active profiles set: [${Array.from(this.activeProfiles).join(", ")}]`
+    );
   }
 
   /**
@@ -55,11 +55,9 @@ export class ProfileManager {
       }
     }
 
-    if (this.options.verbose) {
-      console.log(
-        `🎯 Added profiles: [${profiles.join(", ")}]. Active: [${Array.from(this.activeProfiles).join(", ")}]`
-      );
-    }
+    console.info(
+      `🎯 Added profiles: [${profiles.join(", ")}]. Active: [${Array.from(this.activeProfiles).join(", ")}]`
+    );
   }
 
   /**
@@ -228,12 +226,9 @@ export class ProfileManager {
 
       if (profiles.length > 0) {
         this.setActiveProfiles(profiles);
-
-        if (this.options.verbose) {
-          console.log(
-            `🌍 Profiles loaded from environment: [${profiles.join(", ")}]`
-          );
-        }
+        console.info(
+          `🌍 Profiles loaded from environment: [${profiles.join(", ")}]`
+        );
       }
     }
   }

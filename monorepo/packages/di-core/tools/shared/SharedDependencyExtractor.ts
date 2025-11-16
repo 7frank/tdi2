@@ -51,11 +51,9 @@ export interface DependencyExtractionContext {
   sourceFile: SourceFile;
   targetType: 'class-constructor' | 'function-parameter' | 'arrow-function-parameter';
   node: ClassDeclaration | FunctionDeclaration | ArrowFunction;
-  verbose?: boolean;
 }
 
 export interface SharedDependencyExtractorOptions {
-  verbose?: boolean;
   scanDirs?: string[]; // Preferred: array of directories
 }
 
@@ -67,7 +65,6 @@ export class SharedDependencyExtractor {
     private options: SharedDependencyExtractorOptions = {}
   ) {
     this.recursiveExtractor = new RecursiveInjectExtractor({
-      verbose: this.options.verbose,
       scanDirs: this.options.scanDirs
     });
   }

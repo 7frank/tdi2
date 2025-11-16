@@ -17,7 +17,6 @@ describe("[DI Edge-Case] Class Name Collision Resolution", () => {
     });
 
     resolver = new IntegratedInterfaceResolver({
-      verbose: true,
       srcDir: "src",
       enableInheritanceDI: true,
       enableStateDI: true,

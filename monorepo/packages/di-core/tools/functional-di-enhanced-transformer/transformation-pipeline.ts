@@ -16,7 +16,6 @@ import { consoleFor } from "../logger";
 const console = consoleFor('di-core:transformation-pipeline');
 
 export interface TransformationPipelineOptions {
-  verbose?: boolean;
   generateFallbacks?: boolean;
   preserveTypeAnnotations?: boolean;
   interfaceResolver?: IntegratedInterfaceResolver;
@@ -26,9 +25,7 @@ export class TransformationPipeline {
   private propertyUpdater: PropertyAccessUpdater;
 
   constructor(private options: TransformationPipelineOptions = {}) {
-    this.propertyUpdater = new PropertyAccessUpdater({
-      verbose: this.options.verbose,
-    });
+    this.propertyUpdater = new PropertyAccessUpdater();
   }
 
   /**

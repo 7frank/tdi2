@@ -30,8 +30,6 @@ import type {
 } from "./interface-resolver-types";
 
 export interface IntegratedResolverOptions {
-  verbose?: boolean;
-
   scanDirs?: string[];
   enableInheritanceDI?: boolean;
   enableStateDI?: boolean;
@@ -56,7 +54,6 @@ export class IntegratedInterfaceResolver {
     const scanDirs = options.scanDirs || ['./src'];
 
     this.options = {
-      verbose: false,
       srcDir: scanDirs[0], // Keep for backward compat
       scanDirs: scanDirs,
       enableInheritanceDI: true,

@@ -66,8 +66,7 @@ export class SharedServiceRegistry {
   private dependencyGraph = new Map<string, ExtractedDependency[]>();
 
   constructor(
-    private configManager: ConfigManager,
-    private options: { verbose?: boolean } = {}
+    private configManager: ConfigManager
   ) {}
 
   /**

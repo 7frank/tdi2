@@ -28,8 +28,7 @@ export class SharedTypeResolver {
   private resolutionCache = new Map<string, TypeResolutionResult>();
 
   constructor(
-    private interfaceResolver: InterfaceResolverInterface,
-    private options: { verbose?: boolean } = {}
+    private interfaceResolver: InterfaceResolverInterface
   ) {
     this.keySanitizer = new KeySanitizer();
   }

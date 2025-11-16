@@ -47,7 +47,6 @@ interface TransformerOptions {
   scanDirs?: string[];
   outputDir?: string;
   generateDebugFiles?: boolean;
-  verbose?: boolean;
   customSuffix?: string;
   enableParameterNormalization?: boolean;
   generateFallbacks?: boolean;
@@ -90,7 +89,6 @@ export class FunctionalDIEnhancedTransformer {
 
     this.options = {
       outputDir: './src/generated',
-      verbose:  false,
       enableInterfaceResolution: true,
       enableInheritanceDI: true,
       enableStateDI: true,
@@ -149,13 +147,10 @@ export class FunctionalDIEnhancedTransformer {
     
     // Initialize configuration processing components
     this.configurationProcessor = new ConfigurationProcessor({
-      scanDirs: this.options.scanDirs,
-      verbose: this.options.verbose
+      scanDirs: this.options.scanDirs
     });
-    
-    this.beanFactoryGenerator = new BeanFactoryGenerator({
-      verbose: this.options.verbose
-    });
+
+    this.beanFactoryGenerator = new BeanFactoryGenerator();
   }
 
   async transformForBuild(): Promise<Map<string, string>> {

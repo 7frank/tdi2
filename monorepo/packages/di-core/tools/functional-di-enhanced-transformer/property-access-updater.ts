@@ -20,7 +20,7 @@ export interface PropertyAccessMapping {
 export class PropertyAccessUpdater {
   private accessMappings: PropertyAccessMapping[] = [];
 
-  constructor(private options: { verbose?: boolean } = {}) {}
+  constructor() {}
 
   /**
    * Generate property access mappings from dependencies

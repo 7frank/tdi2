@@ -16,7 +16,6 @@ export interface FunctionalDependency extends DependencyBase {
 
 export interface TransformationOptions {
   scanDirs?: string[]; // Array of directories to scan
-  verbose?: boolean; // Enable verbose logging
   outputDir?: string; // Output directory for transformed files
   preserveOriginal?: boolean; // Whether to preserve original files
   transformPatterns?: string[]; // File patterns to transform

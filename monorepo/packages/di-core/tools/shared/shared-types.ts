@@ -8,7 +8,6 @@ import type { SourceFile, ClassDeclaration, FunctionDeclaration, ArrowFunction }
 export interface SharedTransformationOptions {
   scanDirs: string[];
   outputDir: string;
-  verbose: boolean;
   enableInterfaceResolution: boolean;
   enableInheritanceDI: boolean;
   enableStateDI: boolean;

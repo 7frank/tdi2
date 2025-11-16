@@ -1,8 +1,11 @@
 // tools/dependency-tree-builder.ts - REFACTORED to use shared logic
 
 import { ConfigManager } from "./config-manager";
+import { consoleFor } from './logger';
 import * as path from "path";
 import * as fs from "fs";
+
+const console = consoleFor('di-core:dependency-tree-builder');
 
 // Use shared components instead of local interface resolver
 import { SharedDependencyExtractor } from "./shared/SharedDependencyExtractor";
@@ -52,7 +55,6 @@ export class DependencyTreeBuilder {
   private configurations: Map<string, DIConfiguration> = new Map();
   private serviceClasses: Map<string, ServiceClass> = new Map();
   private options: {
-    verbose: boolean;
     scanDirs: string[];
     enableInheritanceDI: boolean;
   };
@@ -66,14 +68,12 @@ export class DependencyTreeBuilder {
   constructor(
     configManager: ConfigManager,
     options: {
-      verbose?: boolean;
       scanDirs?: string[];
       enableInheritanceDI?: boolean;
     } = {}
   ) {
     this.configManager = configManager;
     this.options = {
-      verbose: false,
       scanDirs: options.scanDirs || ["./src"],
       enableInheritanceDI: true,
       ...options,
@@ -81,29 +81,20 @@ export class DependencyTreeBuilder {
 
     // Initialize interface resolver
     this.interfaceResolver = new IntegratedInterfaceResolver({
-      verbose: this.options.verbose,
       scanDirs: this.options.scanDirs,
       enableInheritanceDI: this.options.enableInheritanceDI,
     });
 
     // Initialize shared components
-    this.typeResolver = new SharedTypeResolver(this.interfaceResolver, {
-      verbose: this.options.verbose
-    });
+    this.typeResolver = new SharedTypeResolver(this.interfaceResolver);
 
-    this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
-      verbose: this.options.verbose
-    });
+    this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver);
 
-    this.serviceRegistry = new SharedServiceRegistry(this.configManager, {
-      verbose: this.options.verbose
-    });
+    this.serviceRegistry = new SharedServiceRegistry(this.configManager);
   }
 
   async buildDependencyTree(): Promise<void> {
-    if (this.options.verbose) {
-      console.log("🌳 Building dependency tree with shared logic and inheritance support...");
-    }
+    console.info("🌳 Building dependency tree with shared logic and inheritance support...");
 
     // Scan project for interfaces, implementations, and inheritance using shared logic
     await this.interfaceResolver.scanProject();
@@ -137,12 +128,10 @@ export class DependencyTreeBuilder {
     // Generate import file
     await this.generateImportFile();
 
-    if (this.options.verbose) {
-      console.log(
-        `✅ Built dependency tree with ${this.configurations.size} services`
-      );
-      console.log(`📦 Unique service classes: ${this.serviceClasses.size}`);
-    }
+    console.info(
+      `✅ Built dependency tree with ${this.configurations.size} services`
+    );
+    console.debug(`📦 Unique service classes: ${this.serviceClasses.size}`);
   }
 
   private async buildConfigurationsWithSharedLogic(): Promise<void> {
@@ -251,19 +240,17 @@ export class DependencyTreeBuilder {
 
         this.configurations.set(registration.token, config);
 
-        if (this.options.verbose) {
-          const typeIndicator =
-            registration.type === "state"
-              ? "🎯"
-              : registration.type === "inheritance"
-              ? "🧬"
-              : registration.type === "class"
-              ? "📦"
-              : "🔌";
-          console.log(
-            `${typeIndicator} Config: ${registration.token} -> ${className}`
-          );
-        }
+        const typeIndicator =
+          registration.type === "state"
+            ? "🎯"
+            : registration.type === "inheritance"
+            ? "🧬"
+            : registration.type === "class"
+            ? "📦"
+            : "🔌";
+        console.debug(
+          `${typeIndicator} Config: ${registration.token} -> ${className}`
+        );
       }
 
       // Extract dependencies for this service class using shared extractor
@@ -275,28 +262,22 @@ export class DependencyTreeBuilder {
     this.serviceRegistry.registerServices(allImplementations, dependencyMap);
 
     // Log summary
-    if (this.options.verbose) {
-      console.log("\n📋 Service Registration Summary:");
-      for (const [className, serviceClass] of this.serviceClasses) {
-        console.log(`  ${className}:`);
-        serviceClass.registrations.forEach((reg) => {
-          console.log(`    → ${reg.token} (${reg.type})`);
-        });
-      }
+    console.debug("\n📋 Service Registration Summary:");
+    for (const [className, serviceClass] of this.serviceClasses) {
+      console.debug(`  ${className}:`);
+      serviceClass.registrations.forEach((reg) => {
+        console.debug(`    → ${reg.token} (${reg.type})`);
+      });
     }
   }
 
   private async generateDIConfiguration(): Promise<void> {
-    if (this.options.verbose) {
-      console.log("📄 Generating DI configuration using shared registry...");
-    }
+    console.info("📄 Generating DI configuration using shared registry...");
 
     // Use shared registry to generate DI configuration
     await this.serviceRegistry.generateDIConfiguration();
 
-    if (this.options.verbose) {
-      console.log("✅ DI configuration generated successfully");
-    }
+    console.info("✅ DI configuration generated successfully");
   }
 
   private async generateImportFile(): Promise<void> {

@@ -14,7 +14,6 @@ import { consoleFor } from "../logger";
 const console = consoleFor('di-core:recursive-inject-extractor');
 
 export interface RecursiveExtractOptions {
-  verbose?: boolean;
   scanDirs?: string[]; // Preferred: array of directories to scan
 }
 
