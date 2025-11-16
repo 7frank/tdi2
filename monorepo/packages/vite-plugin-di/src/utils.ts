@@ -60,9 +60,8 @@ export function createDIPluginPresets(): Record<string, DIPluginPreset> {
   return {
     development: {
       name: 'Development',
-      description: 'Optimized for development with verbose logging and hot reload',
+      description: 'Optimized for development with hot reload',
       options: {
-        verbose: true,
         watch: true,
         enableFunctionalDI: true,
         enableInterfaceResolution: true,
@@ -74,9 +73,8 @@ export function createDIPluginPresets(): Record<string, DIPluginPreset> {
 
     production: {
       name: 'Production',
-      description: 'Optimized for production builds with minimal logging',
+      description: 'Optimized for production builds',
       options: {
-        verbose: false,
         watch: false,
         enableFunctionalDI: true,
         enableInterfaceResolution: true,
@@ -91,7 +89,6 @@ export function createDIPluginPresets(): Record<string, DIPluginPreset> {
       name: 'Testing',
       description: 'Optimized for test environments with fast rebuilds',
       options: {
-        verbose: false,
         watch: false,
         enableFunctionalDI: true,
         enableInterfaceResolution: true,
@@ -105,7 +102,6 @@ export function createDIPluginPresets(): Record<string, DIPluginPreset> {
       name: 'Minimal',
       description: 'Basic DI without functional components or interface resolution',
       options: {
-        verbose: false,
         watch: true,
         enableFunctionalDI: false,
         enableInterfaceResolution: false,
@@ -116,9 +112,8 @@ export function createDIPluginPresets(): Record<string, DIPluginPreset> {
 
     debugging: {
       name: 'Debugging',
-      description: 'Maximum verbosity and debug information for troubleshooting',
+      description: 'Maximum debug information for troubleshooting',
       options: {
-        verbose: true,
         watch: true,
         enableFunctionalDI: true,
         enableInterfaceResolution: true,
@@ -380,9 +375,7 @@ export function createDebugEndpoints(
   server.middlewares.use('/_di_regenerate', async (req, res, next) => {
     if (req.url === '/_di_regenerate' && req.method === 'POST') {
       try {
-        if (context.options.verbose) {
-          console.log('🔄 Forcing DI regeneration via API...');
-        }
+        console.log('🔄 Forcing DI regeneration via API...');
 
         // Force cleanup and regeneration
         const configManager = context.getConfigManager();

@@ -19,6 +19,9 @@ import { FunctionalDependency, TransformationOptions, TypeResolutionContext } fr
 
 import { KeySanitizer } from '../interface-resolver/key-sanitizer';
 import type { DISourceConfiguration } from '../interface-resolver/enhanced-interface-extractor';
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:enhanced-dependency-extractor');
 
 export interface CircularProtectionConfig {
   maxDepth: number;
@@ -84,17 +87,13 @@ export class EnhancedDependencyExtractor {
 
     const typeNode = param.getTypeNode();
     if (!typeNode) {
-      if (this.options.verbose) {
-        console.log('⚠️  Parameter has no type node');
-      }
+      console.log('⚠️  Parameter has no type node');
       return [];
     }
 
-    if (this.options.verbose) {
-      console.log(`🔍 Analyzing parameter: ${param.getName()}`);
-      console.log(`🔍 Parameter type: ${typeNode.getKindName()}`);
-      console.log(`📝 Parameter type text: ${typeNode.getText()}`);
-    }
+    console.log(`🔍 Analyzing parameter: ${param.getName()}`);
+    console.log(`🔍 Parameter type: ${typeNode.getKindName()}`);
+    console.log(`📝 Parameter type text: ${typeNode.getText()}`);
 
     try {
       // ENHANCED: Use comprehensive extraction with depth tracking
@@ -105,17 +104,13 @@ export class EnhancedDependencyExtractor {
         0 // Starting depth
       );
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Failed to extract dependencies from parameter ${param.getName()}:`, error);
-      }
+      console.warn(`⚠️  Failed to extract dependencies from parameter ${param.getName()}:`, error);
       return [];
     } finally {
       // Always clean up
       this.resetCircularProtection();
       
-      if (this.options.verbose) {
-        console.log(`📊 Extraction stats: ${JSON.stringify(this.extractionStats, null, 2)}`);
-      }
+      console.log(`📊 Extraction stats: ${JSON.stringify(this.extractionStats, null, 2)}`);
     }
   }
 
@@ -131,9 +126,7 @@ export class EnhancedDependencyExtractor {
     
     // DEPTH PROTECTION: Check max depth
     if (currentDepth >= this.circularProtectionConfig.maxDepth) {
-      if (this.options.verbose) {
-        console.log(`🛑 Max depth ${this.circularProtectionConfig.maxDepth} reached at ${basePath}, stopping`);
-      }
+      console.log(`🛑 Max depth ${this.circularProtectionConfig.maxDepth} reached at ${basePath}, stopping`);
       this.extractionStats.maxDepthReached++;
       return [];
     }
@@ -143,18 +136,14 @@ export class EnhancedDependencyExtractor {
       const pathKey = this.createPathKey(sourceFile, basePath, typeNode, currentDepth);
       
       if (this.circularProtection.has(pathKey)) {
-        if (this.options.verbose) {
-          console.log(`🔄 Circular reference detected at ${basePath} (depth: ${currentDepth}), skipping`);
-        }
+        console.log(`🔄 Circular reference detected at ${basePath} (depth: ${currentDepth}), skipping`);
         this.extractionStats.circularDetections++;
         return [];
       }
 
       // Check if we've exceeded max circular references
       if (this.circularProtection.size >= this.circularProtectionConfig.maxCircularReferences) {
-        if (this.options.verbose) {
-          console.log(`🛑 Max circular references ${this.circularProtectionConfig.maxCircularReferences} exceeded, stopping`);
-        }
+        console.log(`🛑 Max circular references ${this.circularProtectionConfig.maxCircularReferences} exceeded, stopping`);
         return [];
       }
 
@@ -191,79 +180,59 @@ export class EnhancedDependencyExtractor {
     
     // Case 1: Direct marker injection - Inject<FooInterface>
     if (this.isDirectMarkerInjection(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found direct marker injection at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Found direct marker injection at ${basePath} (depth: ${currentDepth})`);
       return this.extractFromDirectMarkerEnhanced(typeNode, sourceFile, basePath);
     }
 
     // Case 2: Type literal - { services: {...}, config: any }
     if (Node.isTypeLiteral(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found type literal at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Found type literal at ${basePath} (depth: ${currentDepth})`);
       return this.extractFromTypeLiteralEnhanced(typeNode, sourceFile, basePath, currentDepth);
     }
 
     // Case 3: Type reference - ComponentProps, ServiceConfig, etc.
     if (Node.isTypeReference(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found type reference at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Found type reference at ${basePath} (depth: ${currentDepth})`);
       return this.extractFromTypeReferenceEnhanced(typeNode, sourceFile, basePath, currentDepth);
     }
 
     // Case 4: Union type - { services: {...} } | { fallback: true }
     if (Node.isUnionTypeNode(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found union type at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Found union type at ${basePath} (depth: ${currentDepth})`);
       return this.extractFromUnionType(typeNode, sourceFile, basePath, currentDepth);
     }
 
     // Case 5: Intersection type - ServiceProps & ConfigProps
     if (Node.isIntersectionTypeNode(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found intersection type at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Found intersection type at ${basePath} (depth: ${currentDepth})`);
       return this.extractFromIntersectionType(typeNode, sourceFile, basePath, currentDepth);
     }
 
     // Case 6: Array type - Array<{ service: Inject<T> }> or T[]
     if (Node.isArrayTypeNode(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found array type at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Found array type at ${basePath} (depth: ${currentDepth})`);
       return this.extractFromArrayType(typeNode, sourceFile, basePath, currentDepth);
     }
 
     // Case 7: Tuple type - [Type1, Type2, ...]
     if (Node.isTupleTypeNode(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found tuple type at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Found tuple type at ${basePath} (depth: ${currentDepth})`);
       return this.extractFromTupleType(typeNode, sourceFile, basePath, currentDepth);
     }
 
     // Case 8: Mapped type - { [K in keyof T]: ... }
     if (Node.isMappedTypeNode(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found mapped type at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Found mapped type at ${basePath} (depth: ${currentDepth})`);
       return this.extractFromMappedType(typeNode, sourceFile, basePath, currentDepth);
     }
 
     // Case 9: Conditional type - T extends U ? X : Y
     if (Node.isConditionalTypeNode(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Found conditional type at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Found conditional type at ${basePath} (depth: ${currentDepth})`);
       return this.extractFromConditionalType(typeNode, sourceFile, basePath, currentDepth);
     }
 
-    if (this.options.verbose) {
-      console.log(`⚠️  Type node ${typeNode.getKindName()} at ${basePath} (depth: ${currentDepth}) not supported for dependency extraction`);
-    }
+    console.log(`⚠️  Type node ${typeNode.getKindName()} at ${basePath} (depth: ${currentDepth}) not supported for dependency extraction`);
 
     return [];
   }
@@ -307,9 +276,7 @@ export class EnhancedDependencyExtractor {
     const dependencies: FunctionalDependency[] = [];
     const members = typeNode.getMembers();
 
-    if (this.options.verbose) {
-      console.log(`🔍 Processing type literal with ${members.length} members at ${basePath} (depth: ${currentDepth})`);
-    }
+    console.log(`🔍 Processing type literal with ${members.length} members at ${basePath} (depth: ${currentDepth})`);
 
     for (const member of members) {
       if (Node.isPropertySignature(member)) {
@@ -318,15 +285,11 @@ export class EnhancedDependencyExtractor {
         const memberTypeNode = member.getTypeNode();
 
         if (!memberTypeNode) {
-          if (this.options.verbose) {
-            console.log(`⚠️  Property ${memberPath} has no type node`);
-          }
+          console.log(`⚠️  Property ${memberPath} has no type node`);
           continue;
         }
 
-        if (this.options.verbose) {
-          console.log(`🔍 Processing property: ${memberPath} (${memberTypeNode.getKindName()}) at depth ${currentDepth}`);
-        }
+        console.log(`🔍 Processing property: ${memberPath} (${memberTypeNode.getKindName()}) at depth ${currentDepth}`);
 
         // Recursive call with incremented depth
         const memberDeps = this.extractDependenciesFromTypeNodeWithProtection(
@@ -349,9 +312,7 @@ export class EnhancedDependencyExtractor {
           dependencies.push(...memberDeps);
         }
       } else {
-        if (this.options.verbose) {
-          console.log(`⚠️  Skipping non-property member: ${member.getKindName()} at ${basePath} (depth: ${currentDepth})`);
-        }
+        console.log(`⚠️  Skipping non-property member: ${member.getKindName()} at ${basePath} (depth: ${currentDepth})`);
       }
     }
 
@@ -372,9 +333,7 @@ export class EnhancedDependencyExtractor {
     const dependencies: FunctionalDependency[] = [];
     const conditionalType = typeNode as ConditionalTypeNode;
 
-    if (this.options.verbose) {
-      console.log(`🔍 Processing conditional type at ${basePath} (depth: ${currentDepth})`);
-    }
+    console.log(`🔍 Processing conditional type at ${basePath} (depth: ${currentDepth})`);
 
     try {
       // ENHANCED: Try to resolve the conditional type based on context
@@ -383,9 +342,7 @@ export class EnhancedDependencyExtractor {
       // Extract dependencies from both branches of the conditional type
       const trueType = conditionalType.getTrueType();
       if (trueType) {
-        if (this.options.verbose) {
-          console.log(`🔍 Processing conditional true branch: ${trueType.getKindName()} at depth ${currentDepth}`);
-        }
+        console.log(`🔍 Processing conditional true branch: ${trueType.getKindName()} at depth ${currentDepth}`);
         const trueDeps = this.extractDependenciesFromTypeNodeWithTypeParams(
           trueType, 
           sourceFile, 
@@ -398,9 +355,7 @@ export class EnhancedDependencyExtractor {
 
       const falseType = conditionalType.getFalseType();
       if (falseType) {
-        if (this.options.verbose) {
-          console.log(`🔍 Processing conditional false branch: ${falseType.getKindName()} at depth ${currentDepth}`);
-        }
+        console.log(`🔍 Processing conditional false branch: ${falseType.getKindName()} at depth ${currentDepth}`);
         const falseDeps = this.extractDependenciesFromTypeNodeWithTypeParams(
           falseType, 
           sourceFile, 
@@ -412,9 +367,7 @@ export class EnhancedDependencyExtractor {
       }
 
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Failed to process conditional type at ${basePath} (depth: ${currentDepth}):`, error);
-      }
+      console.warn(`⚠️  Failed to process conditional type at ${basePath} (depth: ${currentDepth}):`, error);
     }
 
     return dependencies;
@@ -434,9 +387,7 @@ export class EnhancedDependencyExtractor {
     const dependencies: FunctionalDependency[] = [];
     const unionTypes = (typeNode as UnionTypeNode).getTypeNodes();
 
-    if (this.options.verbose) {
-      console.log(`🔍 Processing union type with ${unionTypes.length} variants at ${basePath} (depth: ${currentDepth})`);
-    }
+    console.log(`🔍 Processing union type with ${unionTypes.length} variants at ${basePath} (depth: ${currentDepth})`);
 
     // Extract dependencies from each variant of the union
     for (let i = 0; i < unionTypes.length; i++) {
@@ -469,9 +420,7 @@ export class EnhancedDependencyExtractor {
     const dependencies: FunctionalDependency[] = [];
     const intersectionTypes = (typeNode as IntersectionTypeNode).getTypeNodes();
 
-    if (this.options.verbose) {
-      console.log(`🔍 Processing intersection type with ${intersectionTypes.length} types at ${basePath} (depth: ${currentDepth})`);
-    }
+    console.log(`🔍 Processing intersection type with ${intersectionTypes.length} types at ${basePath} (depth: ${currentDepth})`);
 
     // Extract dependencies from each part of the intersection
     for (let i = 0; i < intersectionTypes.length; i++) {
@@ -503,9 +452,7 @@ export class EnhancedDependencyExtractor {
 
     const elementTypeNode = (typeNode as ArrayTypeNode).getElementTypeNode();
     
-    if (this.options.verbose) {
-      console.log(`🔍 Processing array type at ${basePath} (depth: ${currentDepth}), element type: ${elementTypeNode.getKindName()}`);
-    }
+    console.log(`🔍 Processing array type at ${basePath} (depth: ${currentDepth}), element type: ${elementTypeNode.getKindName()}`);
 
     // Extract dependencies from the array element type
     return this.extractDependenciesFromTypeNodeWithProtection(
@@ -530,9 +477,7 @@ export class EnhancedDependencyExtractor {
     try {
       const elementTypes = typeNode.getElementTypeNodes();
       
-      if (this.options.verbose) {
-        console.log(`🔍 Processing tuple type with ${elementTypes.length} elements at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`🔍 Processing tuple type with ${elementTypes.length} elements at ${basePath} (depth: ${currentDepth})`);
 
       // Extract dependencies from each tuple element
       elementTypes.forEach((elementType: TypeNode, index: number) => {
@@ -545,9 +490,7 @@ export class EnhancedDependencyExtractor {
         dependencies.push(...elementDeps);
       });
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Failed to process tuple type at ${basePath} (depth: ${currentDepth}):`, error);
-      }
+      console.warn(`⚠️  Failed to process tuple type at ${basePath} (depth: ${currentDepth}):`, error);
     }
 
     return dependencies;
@@ -562,9 +505,7 @@ export class EnhancedDependencyExtractor {
     basePath: string,
     currentDepth: number
   ): FunctionalDependency[] {
-    if (this.options.verbose) {
-      console.log(`🔍 Processing mapped type at ${basePath} (depth: ${currentDepth}) (simplified extraction)`);
-    }
+    console.log(`🔍 Processing mapped type at ${basePath} (depth: ${currentDepth}) (simplified extraction)`);
 
     try {
       // For mapped types, try to get the template type
@@ -578,9 +519,7 @@ export class EnhancedDependencyExtractor {
         );
       }
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Failed to process mapped type at ${basePath} (depth: ${currentDepth}):`, error);
-      }
+      console.warn(`⚠️  Failed to process mapped type at ${basePath} (depth: ${currentDepth}):`, error);
     }
 
     return [];
@@ -599,9 +538,7 @@ export class EnhancedDependencyExtractor {
 
     // First check if this type reference itself is a marker injection
     if (this.isDirectMarkerInjection(typeNode)) {
-      if (this.options.verbose) {
-        console.log(`📝 Type reference is direct marker injection at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Type reference is direct marker injection at ${basePath} (depth: ${currentDepth})`);
       return this.extractFromDirectMarkerEnhanced(typeNode, sourceFile, basePath);
     }
 
@@ -610,36 +547,26 @@ export class EnhancedDependencyExtractor {
     const typeName = typeReference.getTypeName().getText();
     
     if (typeName === 'Array') {
-      if (this.options.verbose) {
-        console.log(`🔍 Handling built-in Array type at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`🔍 Handling built-in Array type at ${basePath} (depth: ${currentDepth})`);
       return this.handleBuiltInArrayType(typeReference, sourceFile, basePath, currentDepth);
     }
 
-    if (this.options.verbose) {
-      console.log(`🔍 Resolving type reference: ${typeName} at ${basePath} (depth: ${currentDepth})`);
-    }
+    console.log(`🔍 Resolving type reference: ${typeName} at ${basePath} (depth: ${currentDepth})`);
 
     // Check if this is a built-in type that we should handle specially
     if (this.isBuiltInType(typeName)) {
-      if (this.options.verbose) {
-        console.log(`📝 Handling built-in type: ${typeName} at ${basePath} (depth: ${currentDepth})`);
-      }
+      console.log(`📝 Handling built-in type: ${typeName} at ${basePath} (depth: ${currentDepth})`);
       return this.handleBuiltInType(typeReference, sourceFile, basePath, currentDepth);
     }
 
     // Find the type declaration
     const typeDeclaration = this.findTypeDeclaration(typeName, sourceFile);
     if (!typeDeclaration) {
-      if (this.options.verbose) {
-        console.log(`❌ Could not resolve type declaration for: ${typeName} at depth ${currentDepth}`);
-      }
+      console.log(`❌ Could not resolve type declaration for: ${typeName} at depth ${currentDepth}`);
       return [];
     }
 
-    if (this.options.verbose) {
-      console.log(`✅ Found type declaration: ${typeDeclaration.getKindName()} at depth ${currentDepth}`);
-    }
+    console.log(`✅ Found type declaration: ${typeDeclaration.getKindName()} at depth ${currentDepth}`);
 
     // Extract dependencies from the resolved type
     if (Node.isInterfaceDeclaration(typeDeclaration)) {
@@ -662,9 +589,7 @@ export class EnhancedDependencyExtractor {
     basePath: string,
     currentDepth: number
   ): FunctionalDependency[] {
-    if (this.options.verbose) {
-      console.log(`✅ Extracting dependencies from interface ${interfaceDecl.getName()} at ${basePath} (depth: ${currentDepth})`);
-    }
+    console.log(`✅ Extracting dependencies from interface ${interfaceDecl.getName()} at ${basePath} (depth: ${currentDepth})`);
 
     const dependencies: FunctionalDependency[] = [];
     const properties = interfaceDecl.getProperties();
@@ -675,9 +600,7 @@ export class EnhancedDependencyExtractor {
       const propTypeNode = property.getTypeNode();
 
       if (!propTypeNode) {
-        if (this.options.verbose) {
-          console.log(`⚠️  Property ${propPath} has no type annotation`);
-        }
+        console.log(`⚠️  Property ${propPath} has no type annotation`);
         continue;
       }
 
@@ -713,15 +636,11 @@ export class EnhancedDependencyExtractor {
   ): FunctionalDependency[] {
     const typeNode = typeAlias.getTypeNode();
     if (!typeNode) {
-      if (this.options.verbose) {
-        console.log(`⚠️  Type alias ${typeAlias.getName()} has no type node`);
-      }
+      console.log(`⚠️  Type alias ${typeAlias.getName()} has no type node`);
       return [];
     }
 
-    if (this.options.verbose) {
-      console.log(`✅ Extracting dependencies from type alias ${typeAlias.getName()} at ${basePath} (depth: ${currentDepth})`);
-    }
+    console.log(`✅ Extracting dependencies from type alias ${typeAlias.getName()} at ${basePath} (depth: ${currentDepth})`);
 
     // Recursive call with incremented depth
     return this.extractDependenciesFromTypeNodeWithProtection(
@@ -743,16 +662,12 @@ export class EnhancedDependencyExtractor {
   ): FunctionalDependency[] {
     const typeArgs = typeReference.getTypeArguments();
     if (typeArgs.length !== 1) {
-      if (this.options.verbose) {
-        console.log(`⚠️  Array type has ${typeArgs.length} type arguments, expected 1`);
-      }
+      console.log(`⚠️  Array type has ${typeArgs.length} type arguments, expected 1`);
       return [];
     }
 
     const elementType = typeArgs[0];
-    if (this.options.verbose) {
-      console.log(`🔍 Processing Array element type: ${elementType.getKindName()} at depth ${currentDepth}`);
-    }
+    console.log(`🔍 Processing Array element type: ${elementType.getKindName()} at depth ${currentDepth}`);
 
     // Extract dependencies from the array element type
     return this.extractDependenciesFromTypeNodeWithProtection(
@@ -775,9 +690,7 @@ export class EnhancedDependencyExtractor {
     const typeName = typeReference.getTypeName().getText();
     const typeArgs = typeReference.getTypeArguments();
 
-    if (this.options.verbose) {
-      console.log(`🔍 Handling built-in type: ${typeName} with ${typeArgs.length} type arguments at depth ${currentDepth}`);
-    }
+    console.log(`🔍 Handling built-in type: ${typeName} with ${typeArgs.length} type arguments at depth ${currentDepth}`);
 
     // For most built-in types, extract from their type arguments
     const dependencies: FunctionalDependency[] = [];
@@ -839,9 +752,7 @@ export class EnhancedDependencyExtractor {
     // Get type arguments using AST - much cleaner than manual parsing!
     const typeArgs = typeReference.getTypeArguments();
     if (typeArgs.length !== 1) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Expected exactly 1 type argument for ${markerName}, got ${typeArgs.length}`);
-      }
+      console.warn(`⚠️  Expected exactly 1 type argument for ${markerName}, got ${typeArgs.length}`);
       return [];
     }
 
@@ -850,9 +761,7 @@ export class EnhancedDependencyExtractor {
     
     // FIXED: Validate marker source if enabled - use the actual source file where the marker is imported
     if (this.sourceConfig.validateSources && !this.validateMarkerSource(markerName, sourceFile)) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Marker source not validated for ${servicePath}, skipping`);
-      }
+      console.warn(`⚠️  Marker source not validated for ${servicePath}, skipping`);
       return [];
     }
 
@@ -862,9 +771,7 @@ export class EnhancedDependencyExtractor {
     // Extract service key from path (e.g., "services.api" -> "api")
     const serviceKey = this.extractServiceKeyFromPath(servicePath);
 
-    if (this.options.verbose) {
-      console.log(`✅ Direct marker injection: ${servicePath} -> ${serviceKey} : ${interfaceType} (${isOptional ? 'optional' : 'required'})`);
-    }
+    console.log(`✅ Direct marker injection: ${servicePath} -> ${serviceKey} : ${interfaceType} (${isOptional ? 'optional' : 'required'})`);
 
     return [{
       serviceKey,
@@ -916,9 +823,7 @@ export class EnhancedDependencyExtractor {
                 // For ConditionalServiceProps<string>, map T -> string
                 typeParams.set('T', typeArgs[0].getText());
                 
-                if (this.options.verbose) {
-                  console.log(`🔍 Resolved type parameter from function: T -> ${typeArgs[0].getText()}`);
-                }
+                console.log(`🔍 Resolved type parameter from function: T -> ${typeArgs[0].getText()}`);
               }
             }
           }
@@ -943,9 +848,7 @@ export class EnhancedDependencyExtractor {
                   if (typeArgs.length > 0) {
                     typeParams.set('T', typeArgs[0].getText());
                     
-                    if (this.options.verbose) {
-                      console.log(`🔍 Resolved type parameter from arrow function: T -> ${typeArgs[0].getText()}`);
-                    }
+                    console.log(`🔍 Resolved type parameter from arrow function: T -> ${typeArgs[0].getText()}`);
                   }
                 }
               }
@@ -954,9 +857,7 @@ export class EnhancedDependencyExtractor {
         }
       }
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Failed to extract type parameters from context:`, error);
-      }
+      console.warn(`⚠️  Failed to extract type parameters from context:`, error);
     }
     
     return typeParams;
@@ -1000,11 +901,11 @@ export class EnhancedDependencyExtractor {
       const paramRegex = new RegExp(`\\b${param}\\b`, 'g');
       resolved = resolved.replace(paramRegex, value);
     }
-    
-    if (this.options.verbose && resolved !== interfaceType) {
-      console.log(`🔧 Resolved type parameters: ${interfaceType} -> ${resolved}`);
+
+    if (resolved !== interfaceType) {
+      console.debug(`🔧 Resolved type parameters: ${interfaceType} -> ${resolved}`);
     }
-    
+
     return resolved;
   }
 
@@ -1012,32 +913,24 @@ export class EnhancedDependencyExtractor {
    * Find interface or type alias declaration in the source file or imported files
    */
   private findTypeDeclaration(typeName: string, sourceFile: SourceFile): InterfaceDeclaration | TypeAliasDeclaration | undefined {
-    if (this.options.verbose) {
-      console.log(`🔍 Searching for type declaration: ${typeName}`);
-    }
+    console.log(`🔍 Searching for type declaration: ${typeName}`);
 
     // First, look in the current source file
     const localInterface = sourceFile.getInterface(typeName);
     if (localInterface) {
-      if (this.options.verbose) {
-        console.log(`✅ Found interface ${typeName} in current file`);
-      }
+      console.log(`✅ Found interface ${typeName} in current file`);
       return localInterface;
     }
 
     const localTypeAlias = sourceFile.getTypeAlias(typeName);
     if (localTypeAlias) {
-      if (this.options.verbose) {
-        console.log(`✅ Found type alias ${typeName} in current file`);
-      }
+      console.log(`✅ Found type alias ${typeName} in current file`);
       return localTypeAlias;
     }
 
     // Then, look in imported files
     const imports = sourceFile.getImportDeclarations();
-    if (this.options.verbose) {
-      console.log(`🔍 Checking ${imports.length} import declarations`);
-    }
+    console.log(`🔍 Checking ${imports.length} import declarations`);
 
     for (const importDeclaration of imports) {
       const namedImports = importDeclaration.getNamedImports();
@@ -1047,47 +940,33 @@ export class EnhancedDependencyExtractor {
 
       if (isTypeImported) {
         const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
-        if (this.options.verbose) {
-          console.log(`🔍 Looking for ${typeName} in imported module: ${moduleSpecifier}`);
-        }
+        console.log(`🔍 Looking for ${typeName} in imported module: ${moduleSpecifier}`);
         
         const importedFile = this.resolveImportedFile(moduleSpecifier, sourceFile);
         
         if (importedFile) {
-          if (this.options.verbose) {
-            console.log(`✅ Resolved import file: ${importedFile.getFilePath()}`);
-          }
+          console.log(`✅ Resolved import file: ${importedFile.getFilePath()}`);
 
           const importedInterface = importedFile.getInterface(typeName);
           if (importedInterface) {
-            if (this.options.verbose) {
-              console.log(`✅ Found interface ${typeName} in imported file`);
-            }
+            console.log(`✅ Found interface ${typeName} in imported file`);
             return importedInterface;
           }
 
           const importedTypeAlias = importedFile.getTypeAlias(typeName);
           if (importedTypeAlias) {
-            if (this.options.verbose) {
-              console.log(`✅ Found type alias ${typeName} in imported file`);
-            }
+            console.log(`✅ Found type alias ${typeName} in imported file`);
             return importedTypeAlias;
           }
 
-          if (this.options.verbose) {
-            console.log(`❌ Type ${typeName} not found in imported file ${importedFile.getFilePath()}`);
-          }
+          console.log(`❌ Type ${typeName} not found in imported file ${importedFile.getFilePath()}`);
         } else {
-          if (this.options.verbose) {
-            console.log(`❌ Could not resolve import file for module: ${moduleSpecifier}`);
-          }
+          console.log(`❌ Could not resolve import file for module: ${moduleSpecifier}`);
         }
       }
     }
 
-    if (this.options.verbose) {
-      console.log(`❌ Type declaration ${typeName} not found anywhere`);
-    }
+    console.log(`❌ Type declaration ${typeName} not found anywhere`);
 
     return undefined;
   }
@@ -1121,9 +1000,7 @@ export class EnhancedDependencyExtractor {
         const fullPath = resolvedPath + ext;
         const importedFile = project.getSourceFile(fullPath);
         if (importedFile) {
-          if (this.options.verbose) {
-            console.log(`✅ Resolved import: ${moduleSpecifier} -> ${fullPath}`);
-          }
+          console.log(`✅ Resolved import: ${moduleSpecifier} -> ${fullPath}`);
           return importedFile;
         }
       }
@@ -1133,23 +1010,17 @@ export class EnhancedDependencyExtractor {
       for (const sourceFile of project.getSourceFiles()) {
         const fileName = path.basename(sourceFile.getFilePath(), path.extname(sourceFile.getFilePath()));
         if (fileName === baseName) {
-          if (this.options.verbose) {
-            console.log(`✅ Found import by filename match: ${moduleSpecifier} -> ${sourceFile.getFilePath()}`);
-          }
+          console.log(`✅ Found import by filename match: ${moduleSpecifier} -> ${sourceFile.getFilePath()}`);
           return sourceFile;
         }
       }
 
-      if (this.options.verbose) {
-        console.log(`❌ Could not resolve import: ${moduleSpecifier}`);
-        console.log(`🔍 Tried paths: ${extensions.map(ext => resolvedPath + ext).join(', ')}`);
-        console.log(`🔍 Available files: ${project.getSourceFiles().map(f => f.getFilePath()).join(', ')}`);
-      }
+      console.log(`❌ Could not resolve import: ${moduleSpecifier}`);
+      console.log(`🔍 Tried paths: ${extensions.map(ext => resolvedPath + ext).join(', ')}`);
+      console.log(`🔍 Available files: ${project.getSourceFiles().map(f => f.getFilePath()).join(', ')}`);
       return undefined;
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Failed to resolve import: ${moduleSpecifier}`, error);
-      }
+      console.warn(`⚠️  Failed to resolve import: ${moduleSpecifier}`, error);
       return undefined;
     }
   }

@@ -9,10 +9,15 @@ import { ServiceDependency, ConstructorParam } from "./interface-resolver-types"
 import { KeySanitizer } from "./key-sanitizer";
 import { EnhancedServiceValidator } from "./enhanced-service-validator";
 
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:shared-type-resolver');
+
+
+
 export class DependencyAnalyzer {
   constructor(
-    private keySanitizer: KeySanitizer,
-    private verbose: boolean = false
+    private keySanitizer: KeySanitizer
   ) {}
 
   async processClassForDependencies(
@@ -60,19 +65,15 @@ export class DependencyAnalyzer {
 
           interfaceDependencies.push(sanitizedKey);
 
-          if (this.verbose) {
-            console.log(
-              `🔗 ${className} depends on ${paramType} (key: ${sanitizedKey})`
-            );
-          }
+          console.log(
+            `🔗 ${className} depends on ${paramType} (key: ${sanitizedKey})`
+          );
         } catch (error) {
           // Skip malformed parameters
-          if (this.verbose) {
-            console.warn(
-              `⚠️  Failed to process parameter in ${className}:`,
-              error
-            );
-          }
+          console.warn(
+            `⚠️  Failed to process parameter in ${className}:`,
+            error
+          );
         }
       }
 
@@ -86,12 +87,10 @@ export class DependencyAnalyzer {
       }
     } catch (error) {
       // Handle malformed class gracefully
-      if (this.verbose) {
-        console.warn(
-          `⚠️  Failed to process dependencies for ${className}:`,
-          error
-        );
-      }
+      console.warn(
+        `⚠️  Failed to process dependencies for ${className}:`,
+        error
+      );
     }
   }
 
@@ -114,9 +113,7 @@ export class DependencyAnalyzer {
         sanitizedKey,
       };
     } catch (error) {
-      if (this.verbose) {
-        console.warn('⚠️  Failed to extract parameter dependency:', error);
-      }
+      console.warn('⚠️  Failed to extract parameter dependency:', error);
       return null;
     }
   }

@@ -7,11 +7,13 @@ import {
 } from "ts-morph";
 import { InheritanceInfo, InheritanceMapping } from "./interface-resolver-types";
 import { KeySanitizer } from "./key-sanitizer";
+import { consoleFor } from "../logger";
+
+const console = consoleFor('di-core:inheritance-analyzer');
 
 export class InheritanceAnalyzer {
   constructor(
-    private keySanitizer: KeySanitizer,
-    private verbose: boolean = false
+    private keySanitizer: KeySanitizer
   ) {}
 
   getInheritanceInfo(classDecl: ClassDeclaration): InheritanceInfo {
@@ -60,12 +62,10 @@ export class InheritanceAnalyzer {
       }
     } catch (error) {
       // Handle malformed heritage clauses gracefully
-      if (this.verbose) {
-        console.warn(
-          `⚠️  Failed to parse inheritance for ${classDecl.getName()}:`,
-          error
-        );
-      }
+      console.warn(
+        `⚠️  Failed to parse inheritance for ${classDecl.getName()}:`,
+        error
+      );
     }
 
     return {

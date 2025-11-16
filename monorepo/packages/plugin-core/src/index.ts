@@ -26,14 +26,6 @@ export {
   createPerformanceTracker,
 } from './performance-tracker';
 
-// Export logging utilities
-export {
-  createLogger,
-  formatFilePath,
-  formatDuration,
-  formatFileSize,
-} from './logger';
-
 // Export transformation orchestrator
 export {
   TransformOrchestrator,
@@ -49,5 +41,4 @@ export type {
   PerformanceStats,
   TransformResult,
   FileFilter,
-  PluginLogger,
 } from './types';

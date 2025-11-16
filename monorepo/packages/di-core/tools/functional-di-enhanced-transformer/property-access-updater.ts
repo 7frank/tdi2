@@ -7,6 +7,9 @@ import {
   Identifier,
 } from "ts-morph";
 import { ExtractedDependency } from "../shared/SharedDependencyExtractor";
+import { consoleFor } from "../logger";
+
+const console = consoleFor('di-core:property-access-updater');
 
 export interface PropertyAccessMapping {
   originalAccess: string; // "services.api"
@@ -17,7 +20,7 @@ export interface PropertyAccessMapping {
 export class PropertyAccessUpdater {
   private accessMappings: PropertyAccessMapping[] = [];
 
-  constructor(private options: { verbose?: boolean } = {}) {}
+  constructor() {}
 
   /**
    * Generate property access mappings from dependencies
@@ -36,11 +39,9 @@ export class PropertyAccessUpdater {
         };
         this.accessMappings.push(mapping);
 
-        if (this.options.verbose) {
-          console.log(
-            `📝 Generated mapping: ${mapping.originalAccess} -> ${mapping.newVariable}`
-          );
-        }
+        console.log(
+          `📝 Generated mapping: ${mapping.originalAccess} -> ${mapping.newVariable}`
+        );
       }
     }
 
@@ -88,9 +89,7 @@ export class PropertyAccessUpdater {
   ): void {
     const fullExpression = this.getFullPropertyChain(propAccess);
 
-    if (this.options.verbose) {
-      console.log(`🔍 Analyzing property access: ${fullExpression}`);
-    }
+    console.log(`🔍 Analyzing property access: ${fullExpression}`);
 
     for (const mapping of mappings) {
       if (this.matchesPropertyPattern(fullExpression, mapping)) {
@@ -104,9 +103,7 @@ export class PropertyAccessUpdater {
           if (rootAccess) {
             rootAccess.replaceWithText(replacement);
 
-            if (this.options.verbose) {
-              console.log(`✅ Updated: ${fullExpression} -> ${replacement}`);
-            }
+            console.log(`✅ Updated: ${fullExpression} -> ${replacement}`);
             return;
           }
         }
@@ -280,11 +277,9 @@ export class PropertyAccessUpdater {
             if (nodeToReplace && replacement !== fullChain) {
               nodeToReplace.replaceWithText(replacement);
 
-              if (this.options.verbose) {
-                console.log(
-                  `🔄 Advanced update: ${fullChain} -> ${replacement}`
-                );
-              }
+              console.log(
+                `🔄 Advanced update: ${fullChain} -> ${replacement}`
+              );
 
               // Skip traversing children since we replaced the node
               traversal.skip();

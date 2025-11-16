@@ -1,9 +1,9 @@
 // tools/shared/SharedServiceRegistry.ts
 
 import type { ExtractedDependency } from './SharedDependencyExtractor';
-import type { 
-  InterfaceImplementation, 
-  ServiceScope, 
+import type {
+  InterfaceImplementation,
+  ServiceScope,
   RegistrationType,
   ServiceImplementationBase
 } from '../interface-resolver/interface-resolver-types';
@@ -11,8 +11,10 @@ import type { ConfigManager } from '../config-manager';
 import * as path from 'path';
 import * as fs from 'fs';
 import { KeySanitizer } from '../interface-resolver/key-sanitizer';
+import { consoleFor } from '../logger';
 
 const keySanitizer = new KeySanitizer();
+const console = consoleFor('di-core:shared-service-registry');
  
 
 /**
@@ -64,8 +66,7 @@ export class SharedServiceRegistry {
   private dependencyGraph = new Map<string, ExtractedDependency[]>();
 
   constructor(
-    private configManager: ConfigManager,
-    private options: { verbose?: boolean } = {}
+    private configManager: ConfigManager
   ) {}
 
   /**
@@ -86,9 +87,7 @@ export class SharedServiceRegistry {
     // Update dependency graph
     this.updateDependencyGraph(registration);
 
-    if (this.options.verbose) {
-      console.log(`📝 Registered: ${registration.token} -> ${registration.implementationClass} (${registration.registrationType})`);
-    }
+    console.debug(`📝 Registered: ${registration.token} -> ${registration.implementationClass} (${registration.registrationType})`);
   }
 
   /**
@@ -186,10 +185,8 @@ export class SharedServiceRegistry {
     const configFilePath = path.join(this.configManager.getConfigDir(), 'di-config.ts');
     
     await fs.promises.writeFile(configFilePath, configContent, 'utf8');
-    
-    if (this.options.verbose) {
-      console.log(`📝 Generated DI configuration: ${configFilePath}`);
-    }
+
+    console.info(`📝 Generated DI configuration: ${configFilePath}`);
   }
 
   /**
@@ -200,10 +197,8 @@ export class SharedServiceRegistry {
     const registryFilePath = path.join(this.configManager.getConfigDir(), 'service-registry.ts');
     
     await fs.promises.writeFile(registryFilePath, registryContent, 'utf8');
-    
-    if (this.options.verbose) {
-      console.log(`📝 Generated service registry: ${registryFilePath}`);
-    }
+
+    console.info(`📝 Generated service registry: ${registryFilePath}`);
   }
 
   /**

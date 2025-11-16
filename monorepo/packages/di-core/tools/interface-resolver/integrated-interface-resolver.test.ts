@@ -206,8 +206,7 @@ describe("InterfaceResolver", () => {
 
   beforeEach(() => {
     resolver = new IntegratedInterfaceResolver({
-      verbose: false,
-      srcDir: "./src",
+      scanDirs: ["./src"],
     });
     mockProject = createMockProject();
 
@@ -563,8 +562,7 @@ export class NoInterfaceService {
       it("When scanning empty codebase, Then should return empty results", async () => {
         // Given
         const emptyResolver = new IntegratedInterfaceResolver({
-          verbose: false,
-          srcDir: "./empty",
+          scanDirs: ["./empty"],
         });
         const emptyProject = new Project({ useInMemoryFileSystem: true });
         (emptyResolver as any).project = emptyProject;

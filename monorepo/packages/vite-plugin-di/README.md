@@ -59,8 +59,6 @@ export default defineConfig({
       enableInterfaceResolution: true,
       // Enable functional component DI
       enableFunctionalDI: true,
-      // Verbose logging for development
-      verbose: true,
     }),
     react(),
   ],
@@ -159,10 +157,7 @@ interface DIPluginOptions {
   
   /** Output directory for generated DI configuration files */
   outputDir?: string; // default: './src/generated'
-  
-  /** Enable verbose logging for debugging */
-  verbose?: boolean; // default: false
-  
+
   /** Enable file watching for hot reload during development */
   watch?: boolean; // default: true
   
@@ -482,17 +477,28 @@ export class MyService implements MyServiceInterface {
 // Check Vite plugin configuration
 diEnhancedPlugin({
   watch: true,  // Enable hot reload
-  verbose: true // See what's happening
 })
 ```
 
 ### Debug Information
 
-Enable verbose logging to see what's happening:
+Enable debug logging to see what's happening:
+
+```bash
+# Show all debug logs
+DEBUG=di-core:*,vite-plugin-di:*,plugin-core:* npm run dev
+
+# Show info level and above (important operations + warnings + errors)
+LOG_LEVEL=INFO npm run dev
+
+# Show debug level (very verbose)
+DEBUG=di-core:*,vite-plugin-di:*,plugin-core:* LOG_LEVEL=DEBUG npm run dev
+```
+
+Generate debug files for detailed transformation information:
 
 ```typescript
 diEnhancedPlugin({
-  verbose: true,
   generateDebugFiles: true,
 })
 ```

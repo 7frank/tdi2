@@ -169,7 +169,6 @@ describe("Functional DI Transformation Tests", () => {
     it.skip("should provide detailed transformation information", async () => {
       const framework = new TransformationTestFramework({
         fixtureDir: FIXTURES_DIR,
-        verbose: true,
         updateSnapshots: false,
       });
 
@@ -201,7 +200,6 @@ describe("Functional DI Transformation Tests", () => {
     it("should update snapshots when requested", async () => {
       const framework = new TransformationTestFramework({
         fixtureDir: FIXTURES_DIR,
-        verbose: true,
         updateSnapshots: true, // This will update snapshots
       });
 
@@ -217,7 +215,6 @@ describe("Transformation with Custom Options", () => {
   it("should handle verbose transformation", async () => {
     const framework = new TransformationTestFramework({
       fixtureDir: FIXTURES_DIR,
-      verbose: true,
       updateSnapshots: false,
     });
 

@@ -12,13 +12,16 @@ import {
   TypeAliasDeclaration
 } from 'ts-morph';
 import type { SharedTypeResolver, TypeResolutionRequest } from './SharedTypeResolver';
-import type { 
+import type {
   InterfaceImplementation,
   InterfaceResolverInterface,
   DependencyBase
 } from '../interface-resolver/interface-resolver-types';
 import { RecursiveInjectExtractor, ExtractedInjectMarker } from './RecursiveInjectExtractor';
 import * as path from 'path';
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:shared-dependency-extractor');
 
 /**
  * Extended dependency information used during extraction and resolution.
@@ -48,11 +51,9 @@ export interface DependencyExtractionContext {
   sourceFile: SourceFile;
   targetType: 'class-constructor' | 'function-parameter' | 'arrow-function-parameter';
   node: ClassDeclaration | FunctionDeclaration | ArrowFunction;
-  verbose?: boolean;
 }
 
 export interface SharedDependencyExtractorOptions {
-  verbose?: boolean;
   scanDirs?: string[]; // Preferred: array of directories
 }
 
@@ -64,7 +65,6 @@ export class SharedDependencyExtractor {
     private options: SharedDependencyExtractorOptions = {}
   ) {
     this.recursiveExtractor = new RecursiveInjectExtractor({
-      verbose: this.options.verbose,
       scanDirs: this.options.scanDirs
     });
   }
@@ -94,7 +94,7 @@ export class SharedDependencyExtractor {
       }
     }
 
-    if (this.options.verbose && dependencies.length > 0) {
+    if (dependencies.length > 0) {
       console.log(`🔍 Found ${dependencies.length} constructor dependencies in ${classDecl.getName()}`);
     }
 
@@ -146,9 +146,7 @@ export class SharedDependencyExtractor {
     const paramName = param.getName();
     const paramType = param.getTypeNode()?.getText();
     if (!paramType) {
-      if (this.options.verbose) {
-        console.warn(`⚠️  Parameter ${paramName} missing type annotation`);
-      }
+      console.warn(`⚠️  Parameter ${paramName} missing type annotation`);
       return null;
     }
 
@@ -197,14 +195,12 @@ export class SharedDependencyExtractor {
       return dependencies;
     }
 
-    if (this.options.verbose) {
-      console.log(`🔍 Analyzing parameter type: ${typeNode.getKindName()}`);
-    }
+    console.log(`🔍 Analyzing parameter type: ${typeNode.getKindName()}`);
 
     // Use recursive extraction to find all Inject markers in the type structure
     const injectMarkers = this.recursiveExtractor.extractFromTypeNode(typeNode, sourceFile);
     
-    if (this.options.verbose && injectMarkers.length > 0) {
+    if (injectMarkers.length > 0) {
       console.log(`🎯 Found ${injectMarkers.length} inject markers in parameter type`);
       injectMarkers.forEach(marker => {
         console.log(`  - ${marker.propertyPath.join('.')} -> ${marker.interfaceType} (${marker.isOptional ? 'optional' : 'required'})`);
@@ -241,9 +237,7 @@ export class SharedDependencyExtractor {
 
     const resolution = this.typeResolver.resolveType(resolutionRequest);
 
-    if (this.options.verbose) {
-      console.log(`🔗 Converting marker: ${marker.propertyPath.join('.')} -> ${marker.interfaceType} (${marker.isOptional ? 'optional' : 'required'})`);
-    }
+    console.log(`🔗 Converting marker: ${marker.propertyPath.join('.')} -> ${marker.interfaceType} (${marker.isOptional ? 'optional' : 'required'})`);
 
     return {
       serviceKey: marker.serviceKey,
@@ -272,16 +266,12 @@ export class SharedDependencyExtractor {
 
     const typeName = typeNode.getTypeName().getText();
     
-    if (this.options.verbose) {
-      console.log(`🔍 Resolving type reference: ${typeName}`);
-    }
+    console.log(`🔍 Resolving type reference: ${typeName}`);
 
     // Use recursive extractor to find and extract all inject markers
     const injectMarkers = this.recursiveExtractor.extractFromTypeNode(typeNode, sourceFile);
     
-    if (this.options.verbose) {
-      console.log(`🎯 Found ${injectMarkers.length} inject markers in type reference ${typeName}`);
-    }
+    console.log(`🎯 Found ${injectMarkers.length} inject markers in type reference ${typeName}`);
 
     // Convert inject markers to extracted dependencies
     const dependencies: ExtractedDependency[] = [];
@@ -303,16 +293,12 @@ export class SharedDependencyExtractor {
     sourceFile: SourceFile, 
     context: string
   ): ExtractedDependency[] {
-    if (this.options.verbose) {
-      console.log(`✅ Recursively extracting dependencies from interface ${interfaceDecl.getName()}`);
-    }
+    console.log(`✅ Recursively extracting dependencies from interface ${interfaceDecl.getName()}`);
 
     // Use recursive extractor to find all inject markers
     const injectMarkers = this.recursiveExtractor.extractFromInterfaceDeclaration(interfaceDecl, sourceFile);
     
-    if (this.options.verbose) {
-      console.log(`🎯 Found ${injectMarkers.length} inject markers in interface ${interfaceDecl.getName()}`);
-    }
+    console.log(`🎯 Found ${injectMarkers.length} inject markers in interface ${interfaceDecl.getName()}`);
 
     // Convert inject markers to extracted dependencies
     const dependencies: ExtractedDependency[] = [];
@@ -334,16 +320,12 @@ export class SharedDependencyExtractor {
     sourceFile: SourceFile, 
     context: string
   ): ExtractedDependency[] {
-    if (this.options.verbose) {
-      console.log(`✅ Recursively extracting dependencies from type alias ${typeAlias.getName()}`);
-    }
+    console.log(`✅ Recursively extracting dependencies from type alias ${typeAlias.getName()}`);
 
     // Use recursive extractor to find all inject markers
     const injectMarkers = this.recursiveExtractor.extractFromTypeAliasDeclaration(typeAlias, sourceFile);
     
-    if (this.options.verbose) {
-      console.log(`🎯 Found ${injectMarkers.length} inject markers in type alias ${typeAlias.getName()}`);
-    }
+    console.log(`🎯 Found ${injectMarkers.length} inject markers in type alias ${typeAlias.getName()}`);
 
     // Convert inject markers to extracted dependencies
     const dependencies: ExtractedDependency[] = [];

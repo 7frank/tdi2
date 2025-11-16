@@ -14,7 +14,6 @@ export default defineConfig({
     diEnhancedPlugin({
       scanDirs,
       outputDir,
-      verbose: true, // Enable verbose logging to debug service detection
       enableFunctionalDI: true,
       enableInterfaceResolution: true,
       generateDebugFiles: false,

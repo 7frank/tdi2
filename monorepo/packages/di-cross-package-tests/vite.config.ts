@@ -11,7 +11,6 @@ export default defineConfig(({ mode }) => ({
         path.resolve(__dirname, "fixtures/package-b"),
       ],
       outputDir: path.resolve(__dirname, "generated"),
-      verbose: true,
       enableFunctionalDI: true,
       enableInterfaceResolution: true,
       generateDebugFiles: true,

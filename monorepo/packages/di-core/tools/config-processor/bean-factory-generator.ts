@@ -1,9 +1,11 @@
 // tools/config-processor/bean-factory-generator.ts - Generate DI factories for @Bean methods
 
 import type { ConfigurationMetadata, BeanMetadata, DIMap } from '../../src/types';
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:bean-factory-generator');
 
 export interface BeanFactoryGeneratorOptions {
-  verbose?: boolean;
 }
 
 /**
@@ -11,10 +13,7 @@ export interface BeanFactoryGeneratorOptions {
  * Integrates with existing DI container and interface resolution system
  */
 export class BeanFactoryGenerator {
-  private options: BeanFactoryGeneratorOptions;
-
-  constructor(options: BeanFactoryGeneratorOptions = {}) {
-    this.options = options;
+  constructor() {
   }
 
   /**
@@ -28,9 +27,7 @@ export class BeanFactoryGenerator {
       Object.assign(diMap, configEntries);
     }
 
-    if (this.options.verbose) {
-      console.log(`🏭 Generated ${Object.keys(diMap).length} bean factory entries`);
-    }
+    console.info(`🏭 Generated ${Object.keys(diMap).length} bean factory entries`);
 
     return diMap;
   }
@@ -46,9 +43,7 @@ export class BeanFactoryGenerator {
       const entry = this.generateBeanEntry(bean, config);
       diMap[token] = entry;
 
-      if (this.options.verbose) {
-        console.log(`🫘 Generated factory for bean: ${token}`);
-      }
+      console.debug(`🫘 Generated factory for bean: ${token}`);
     }
 
     return diMap;

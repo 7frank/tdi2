@@ -63,6 +63,81 @@ bun test integrated-interface-resolver.test.ts
 bun run test:io
 ```
 
+## Debugging & Logging
+
+TDI2 uses the `debug` package for structured, namespace-based logging controlled via the `DEBUG` environment variable.
+
+### Enable Logs
+
+Set the DEBUG environment variable to control which logs appear:
+
+```bash
+# All TDI2 logs (most verbose)
+DEBUG=* bun run dev
+
+# All di-core transformation logs
+DEBUG=di-core:* bun run dev
+
+# All vite-plugin logs
+DEBUG=vite-plugin-di:* bun run dev
+
+# Specific module only
+DEBUG=di-core:config-manager bun run dev
+
+# Multiple specific modules
+DEBUG=di-core:config-manager,vite-plugin-di:plugin bun run dev
+```
+
+### Available Namespaces
+
+**Vite Plugin:**
+- `vite-plugin-di:plugin` - Vite plugin operations
+
+**Plugin Core:**
+- `plugin-core:transform-orchestrator` - Transformation orchestration
+
+**DI Core Tools:**
+- `di-core:config-manager` - Configuration generation
+- `di-core:functional-transformer` - Functional component transformation
+- `di-core:transformation-pipeline` - Transformation pipeline
+- `di-core:enhanced-transformer` - Enhanced DI transformation
+- `di-core:interface-resolver` - Interface resolution
+- `di-core:enhanced-service-validator` - Service validation
+- `di-core:enhanced-interface-extractor` - Interface extraction
+- `di-core:enhanced-dependency-extractor` - Dependency extraction
+- `di-core:recursive-inject-extractor` - Recursive inject extraction
+- `di-core:shared-service-registry` - Service registry
+- `di-core:shared-dependency-extractor` - Dependency extraction
+- `di-core:property-access-updater` - Property access updates
+- `di-core:import-manager` - Import management
+- `di-core:config-processor` - Configuration processing
+- `di-core:debug-file-generator` - Debug file generation
+
+### For Contributors
+
+When adding logging to new modules:
+
+```typescript
+import { consoleFor } from '../logger';  // or '@tdi2/di-core/tools'
+const console = consoleFor('di-core:your-module-name');
+
+// Always shown with namespace prefix (errors/warnings)
+console.error('❌ Error message');      // Outputs: [di-core:your-module-name] ❌ Error message
+console.warn('⚠️  Warning message');    // Outputs: [di-core:your-module-name] ⚠️  Warning message
+
+// Only shown with DEBUG=di-core:your-module-name (or DEBUG=di-core:*)
+console.log('Info message');
+console.debug('Detailed debug information');
+```
+
+**Benefits:**
+- All log output includes namespace prefix for transparency
+- Errors and warnings are always shown (even without DEBUG)
+- Debug logs controlled via DEBUG environment variable
+- Easy to trace which module produced each message
+
+**DO NOT** use `if (verbose)` checks - the DEBUG environment variable provides granular control.
+
 ## Core Architecture
 
 ### TDI2 System Components
@@ -189,7 +264,6 @@ import { diEnhancedPlugin } from "@tdi2/vite-plugin-di";
 export default defineConfig({
   plugins: [
     diEnhancedPlugin({
-      verbose: true,
       enableFunctionalDI: true,
       enableInterfaceResolution: true,
       generateDebugFiles: true,

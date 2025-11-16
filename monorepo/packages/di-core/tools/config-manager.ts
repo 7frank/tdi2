@@ -4,12 +4,14 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { createRequire } from 'module';
+import { consoleFor } from './logger';
+
+const console = consoleFor('di-core:config-manager');
 
 interface DIConfigOptions {
   scanDirs: string[];
   outputDir: string;
   enableFunctionalDI: boolean;
-  verbose: boolean;
   nodeEnv?: string;
   customSuffix?: string;
 }
@@ -74,15 +76,13 @@ export class ConfigManager {
 
     const hashString = JSON.stringify(sortedHashInput);
     const hash = crypto.createHash('sha256').update(hashString).digest('hex').substring(0, 8);
-    
+
     // FIXED: Use a more stable naming scheme
     const configName = `${this.packageName}-${hash}`;
-    
-    if (this.options.verbose) {
-      console.log(`🔑 Config hash inputs:`, sortedHashInput);
-      console.log(`🏗️  Generated config: ${configName}`);
-    }
-    
+
+    console.info(`🔑 Config hash inputs:`, sortedHashInput);
+    console.info(`🏗️  Generated config: ${configName}`);
+
     return configName;
   }
 
@@ -109,16 +109,12 @@ export class ConfigManager {
       for (const config of configs) {
         const diConfigFile = path.join(config.path, 'di-config.ts');
         if (fs.existsSync(diConfigFile)) {
-          if (this.options.verbose) {
-            console.log(`♻️  Found existing config: ${config.name}`);
-          }
+          console.info(`♻️  Found existing config: ${config.name}`);
           return config.name;
         }
       }
     } catch (error) {
-      if (this.options.verbose) {
-        console.warn('⚠️  Failed to scan existing configs:', error);
-      }
+      console.warn('⚠️  Failed to scan existing configs:', error);
     }
 
     return null;
@@ -130,9 +126,7 @@ export class ConfigManager {
     const existingConfig = this.findExistingConfig();
 
     if (existingConfig && existingConfig !== this.configHash) {
-      if (this.options.verbose) {
-        console.log(`🔄 Using existing config: ${existingConfig}`);
-      }
+      console.info(`🔄 Using existing config: ${existingConfig}`);
 
       // Update to use existing config
       this.configHash = existingConfig;
@@ -188,24 +182,18 @@ export class ConfigManager {
   }
 
   generateBridgeFiles(): void {
-    if (this.options.verbose) {
-      console.log(`🌉 Generating bridge files in ${this.bridgeDirs.length} directories`);
-    }
+    console.info(`🌉 Generating bridge files in ${this.bridgeDirs.length} directories`);
 
     // Generate bridge files in ALL scanDirs
     for (const bridgeDir of this.bridgeDirs) {
-      if (this.options.verbose) {
-        console.log(`  📁 ${bridgeDir}`);
-      }
+      console.info(`  📁 ${bridgeDir}`);
 
       this.generateDIConfigBridge(bridgeDir);
       this.generateRegistryBridge(bridgeDir);
       this.generateBridgeGitignore(bridgeDir);
     }
 
-    if (this.options.verbose) {
-      console.log(`✅ Bridge files generated for config: ${this.configHash}`);
-    }
+    console.info(`✅ Bridge files generated for config: ${this.configHash}`);
   }
 
   private generateDIConfigBridge(bridgeDir: string): void {
@@ -350,14 +338,14 @@ If you see issues with mismatched configurations:
       for (const config of toRemove) {
         try {
           fs.rmSync(config.path, { recursive: true, force: true });
-          console.log(`🗑️  Cleaned up old config: ${config.name}`);
+          console.info(`🗑️  Cleaned up old config: ${config.name}`);
         } catch (error) {
           console.warn(`⚠️  Failed to remove config ${config.name}:`, error);
         }
       }
-      
+
       if (toRemove.length === 0 && configs.length > 0) {
-        console.log(`📋 Found ${configs.length} configs, all within keep limit`);
+        console.info(`📋 Found ${configs.length} configs, all within keep limit`);
       }
     } catch (error) {
       console.warn('⚠️  Failed to clean old configs:', error);
@@ -369,7 +357,7 @@ If you see issues with mismatched configurations:
     const tdi2Dir = path.resolve(outputDir, 'configs');
 
     if (!fs.existsSync(tdi2Dir)) {
-      console.log('📋 No configuration directory found');
+      console.info('📋 No configuration directory found');
       return;
     }
 
@@ -399,16 +387,16 @@ If you see issues with mismatched configurations:
         .filter(item => item.stats.isDirectory())
         .sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
 
-      console.log(`📋 Found ${configs.length} configurations:`);
-      
+      console.info(`📋 Found ${configs.length} configurations:`);
+
       for (const config of configs) {
         const age = Math.round((Date.now() - config.stats.mtime.getTime()) / (1000 * 60));
         const status = config.isValid ? '✅' : '❌';
-        console.log(`  ${status} ${config.name} (${age}m ago)`);
-        
+        console.info(`  ${status} ${config.name} (${age}m ago)`);
+
         if (config.metadata) {
-          console.log(`     Generated: ${config.metadata.generatedAt}`);
-          console.log(`     Options: functional=${config.metadata.options?.enableFunctionalDI}`);
+          console.info(`     Generated: ${config.metadata.generatedAt}`);
+          console.info(`     Options: functional=${config.metadata.options?.enableFunctionalDI}`);
         }
       }
     } catch (error) {

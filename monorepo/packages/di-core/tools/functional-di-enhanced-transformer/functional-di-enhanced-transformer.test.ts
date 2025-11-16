@@ -267,7 +267,6 @@ describe("FunctionalDIEnhancedTransformer", () => {
     transformer = new FunctionalDIEnhancedTransformer({
       scanDirs: ["./src"],
       outputDir: "./src/generated",
-      verbose: false,
     });
 
     mockProject = createMockProject();
@@ -711,7 +710,6 @@ export function MissingDependencies(props: {
         const debugTransformer = new FunctionalDIEnhancedTransformer({
           scanDirs: ["./src"],
           generateDebugFiles: true,
-          verbose: true,
         });
         (debugTransformer as any).project = mockProject;
         (debugTransformer as any).interfaceResolver = (transformer as any).interfaceResolver;
@@ -859,7 +857,6 @@ export function ProblematicComponent(props: {
         // Given
         const verboseTransformer = new FunctionalDIEnhancedTransformer({
           scanDirs: ["./src"],
-          verbose: true,
         });
         (verboseTransformer as any).project = mockProject;
         (verboseTransformer as any).interfaceResolver = (transformer as any).interfaceResolver;

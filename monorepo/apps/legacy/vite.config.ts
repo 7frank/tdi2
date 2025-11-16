@@ -11,13 +11,13 @@ const compilerOptions = { experimentalDecorators: true };
 export default defineConfig({
   plugins: [
     diEnhancedPlugin({
-      verbose: true,
       watch: true,
       enableFunctionalDI: true,
       enableInterfaceResolution: true, // NEW: Enable automatic interface resolution
       generateDebugFiles: true,
       cleanOldConfigs: true,
       keepConfigCount: 3,
+      //outputDir: "./src/.tdi3",
     }),
     react(),
   ],

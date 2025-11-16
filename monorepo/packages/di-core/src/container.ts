@@ -1,9 +1,9 @@
 // src/di/container.ts - FIXED to properly load all services
 
-import type { 
-  DIContainer, 
-  ServiceFactory, 
-  DIMap, 
+import type {
+  DIContainer,
+  ServiceFactory,
+  DIMap,
   ComponentLifecycleOptions,
   OnInit,
   OnDestroy,
@@ -14,9 +14,11 @@ import type {
 } from './types';
 
 import { ProfileManager } from './profile-manager';
+import { consoleFor } from '../tools/logger';
+
+const console = consoleFor('di-core:container');
 
 export interface DIContainerOptions {
-  verbose?: boolean;
   activeProfiles?: string[];
 }
 
@@ -33,15 +35,11 @@ export class CompileTimeDIContainer implements DIContainer {
   private configurationInstances = new Map<string, any>(); // Configuration class instances
   private profileManager: ProfileManager;
   private parent?: DIContainer;
-  private verbose: boolean;
 
   constructor(parent?: DIContainer, options: DIContainerOptions = {}) {
     this.parent = parent;
-    this.verbose = options.verbose || false;
-    
-    this.profileManager = new ProfileManager({
-      verbose: this.verbose
-    });
+
+    this.profileManager = new ProfileManager();
 
     // Set initial active profiles if provided
     if (options.activeProfiles) {
@@ -192,10 +190,8 @@ export class CompileTimeDIContainer implements DIContainer {
 
   // FIXED: Enhanced loadConfiguration method with better logging and profile filtering
   loadConfiguration(diMap: DIMap): void {
-    if (this.verbose) {
-      console.log("🔧 Loading DI configuration...");
-      console.log("📋 DI_CONFIG keys:", Object.keys(diMap));
-    }
+    console.info("🔧 Loading DI configuration...");
+    console.debug("📋 DI_CONFIG keys:", Object.keys(diMap));
 
     let loaded = 0;
     let skipped = 0;
@@ -209,7 +205,7 @@ export class CompileTimeDIContainer implements DIContainer {
 
         // NEW: Check if service should be loaded based on profiles
         if (!this.profileManager.shouldLoadService(config.profiles)) {
-          if (this.verbose && this.profileManager.getActiveProfiles().length > 0) {
+          if (this.profileManager.getActiveProfiles().length > 0) {
             console.log(
               `⏭️  Skipping ${token} - Profile mismatch: ${this.profileManager.getProfileMatchReason(config.profiles)}`
             );
@@ -218,13 +214,11 @@ export class CompileTimeDIContainer implements DIContainer {
           continue;
         }
 
-        if (this.verbose) {
-          console.log(
-            `🔗 Registering: ${token} -> ${
-              config.implementationClass || "unknown"
-            }${config.profiles ? ` [profiles: ${config.profiles.join(', ')}]` : ''}`
-          );
-        }
+        console.debug(
+          `🔗 Registering: ${token} -> ${
+            config.implementationClass || "unknown"
+          }${config.profiles ? ` [profiles: ${config.profiles.join(', ')}]` : ''}`
+        );
 
         // @ts-ignore factory interface wrong?
         // FIXME
@@ -238,16 +232,14 @@ export class CompileTimeDIContainer implements DIContainer {
       }
     }
 
-    if (this.verbose || skipped > 0) {
+    if (skipped > 0) {
       console.log(`✅ DI configuration loaded: ${loaded} services registered, ${skipped} skipped by profiles`);
     }
   }
 
   // NEW: Enhanced loadConfiguration method that supports full ContainerConfiguration
   loadContainerConfiguration(config: ContainerConfiguration): void {
-    if (this.verbose) {
-      console.log("🔧 Loading full container configuration...");
-    }
+    console.info("🔧 Loading full container configuration...");
     
     // Set active profiles from configuration if provided
     if (config.profiles && config.profiles.length > 0) {
@@ -259,17 +251,13 @@ export class CompileTimeDIContainer implements DIContainer {
     
     // Load configuration classes
     this.loadConfigurationClasses(config.configurations);
-    
-    if (this.verbose) {
-      console.log("✅ Full container configuration loaded");
-    }
+
+    console.info("✅ Full container configuration loaded");
   }
 
   // NEW: Load configuration classes with @Bean methods (with profile filtering)
   private loadConfigurationClasses(configurations: ConfigurationMetadata[]): void {
-    if (this.verbose) {
-      console.log("🏗️  Loading configuration classes...");
-    }
+    console.info("🏗️  Loading configuration classes...");
     
     // Sort configurations by priority (higher priority first)
     const sortedConfigs = configurations.sort((a, b) => b.priority - a.priority);
@@ -281,35 +269,29 @@ export class CompileTimeDIContainer implements DIContainer {
       try {
         // NEW: Check if configuration should be loaded based on profiles
         if (!this.profileManager.shouldLoadConfiguration(config.profiles)) {
-          if (this.verbose) {
-            console.log(
-              `⏭️  Skipping configuration ${config.className} - Profile mismatch: ${this.profileManager.getProfileMatchReason(config.profiles)}`
-            );
-          }
+          console.debug(
+            `⏭️  Skipping configuration ${config.className} - Profile mismatch: ${this.profileManager.getProfileMatchReason(config.profiles)}`
+          );
           skipped++;
           continue;
         }
 
-        if (this.verbose) {
-          console.log(`📦 Loading configuration: ${config.className}${config.profiles?.length ? ` [profiles: ${config.profiles.join(', ')}]` : ''}`);
-        }
+        console.debug(`📦 Loading configuration: ${config.className}${config.profiles?.length ? ` [profiles: ${config.profiles.join(', ')}]` : ''}`);
         
         // Store configuration metadata
         this.configurations.set(config.className, config);
         
         // Create configuration instance (will be created when first bean is requested)
         // This is lazy loading - the configuration instance is created when needed
-        
-        if (this.verbose) {
-          console.log(`✅ Configuration ${config.className} registered with ${config.beans.length} beans`);
-        }
+
+        console.debug(`✅ Configuration ${config.className} registered with ${config.beans.length} beans`);
         loaded++;
       } catch (error) {
         console.error(`❌ Failed to load configuration ${config.className}:`, error);
       }
     }
 
-    if (this.verbose || skipped > 0) {
+    if (skipped > 0) {
       console.log(`🏗️  Configuration loading complete: ${loaded} loaded, ${skipped} skipped by profiles`);
     }
   }

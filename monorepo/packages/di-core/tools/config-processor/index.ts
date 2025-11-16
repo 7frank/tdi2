@@ -2,10 +2,12 @@
 
 import { Project, SourceFile, ClassDeclaration, MethodDeclaration, Decorator } from 'ts-morph';
 import type { ConfigurationMetadata, BeanMetadata, BeanParameterMetadata } from '../../src/types';
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:config-processor');
 
 export interface ConfigProcessorOptions {
   scanDirs: string[];
-  verbose?: boolean;
 }
 
 /**
@@ -26,9 +28,7 @@ export class ConfigurationProcessor {
     // Add source files from ALL scan directories
     for (const dir of options.scanDirs) {
       this.project.addSourceFilesAtPaths(`${dir}/**/*.{ts,tsx}`);
-      if (options.verbose) {
-        console.log(`📂 ConfigurationProcessor: Added source files from ${dir}`);
-      }
+      console.info(`📂 ConfigurationProcessor: Added source files from ${dir}`);
     }
   }
 
@@ -44,9 +44,7 @@ export class ConfigurationProcessor {
       configurations.push(...configsInFile);
     }
 
-    if (this.options.verbose) {
-      console.log(`🔍 Found ${configurations.length} configuration classes`);
-    }
+    console.info(`🔍 Found ${configurations.length} configuration classes`);
 
     return configurations;
   }
@@ -82,9 +80,7 @@ export class ConfigurationProcessor {
 
     const className = classDeclaration.getName();
     if (!className) {
-      if (this.options.verbose) {
-        console.warn('⚠️  Configuration class without name found');
-      }
+      console.warn('⚠️  Configuration class without name found');
       return null;
     }
 
@@ -102,9 +98,7 @@ export class ConfigurationProcessor {
       beans: beanMethods,
     };
 
-    if (this.options.verbose) {
-      console.log(`📦 Processed configuration: ${className} with ${beanMethods.length} beans`);
-    }
+    console.info(`📦 Processed configuration: ${className} with ${beanMethods.length} beans`);
 
     return configMetadata;
   }
@@ -178,9 +172,7 @@ export class ConfigurationProcessor {
       profiles: decoratorMetadata.profiles,
     };
 
-    if (this.options.verbose) {
-      console.log(`🫘 Processed bean method: ${methodName} -> ${returnType}`);
-    }
+    console.info(`🫘 Processed bean method: ${methodName} -> ${returnType}`);
 
     return beanMetadata;
   }

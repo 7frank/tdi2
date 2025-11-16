@@ -17,8 +17,7 @@ describe("[DI Edge-Case] Interface Name Collision - Integration Test", () => {
     });
 
     resolver = new IntegratedInterfaceResolver({
-      verbose: true,
-      srcDir: "src",
+      scanDirs: ["src"],
       enableInheritanceDI: true,
       enableStateDI: true,
       sourceConfig: {

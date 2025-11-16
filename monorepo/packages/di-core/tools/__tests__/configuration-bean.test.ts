@@ -30,14 +30,11 @@ describe('@Configuration and @Bean Integration', () => {
 
   beforeEach(() => {
     configProcessor = new ConfigurationProcessor({
-      scanDirs: ['./test-src'],
-      verbose: false
+      scanDirs: ['./test-src']
     });
-    
-    beanFactoryGenerator = new BeanFactoryGenerator({
-      verbose: false
-    });
-    
+
+    beanFactoryGenerator = new BeanFactoryGenerator({});
+
     container = new CompileTimeDIContainer();
   });
 
