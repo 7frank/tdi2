@@ -14,9 +14,13 @@ export enum LogLevel {
 
 /**
  * Parse LOG_LEVEL environment variable
+ * Works in both Node.js and browser environments
  */
 function getLogLevel(): LogLevel {
-  const envLevel = process.env.LOG_LEVEL?.toUpperCase();
+  // Check if we're in a browser or Node.js environment
+  const envLevel = typeof process !== 'undefined' && process.env
+    ? process.env.LOG_LEVEL?.toUpperCase()
+    : undefined;
 
   switch (envLevel) {
     case 'DEBUG': return LogLevel.DEBUG;

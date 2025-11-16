@@ -63,7 +63,7 @@ export class EnhancedDITransformer {
     }
 
     this.options = {
-      outputDir: options.outputDir || './src/generated',
+      outputDir: options.outputDir || './src/.tdi2',
       enableInterfaceResolution: options.enableInterfaceResolution !== false,
       enableInheritanceDI: true,
       enableStateDI: true,

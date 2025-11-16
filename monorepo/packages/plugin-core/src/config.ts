@@ -26,7 +26,7 @@ const DEFAULT_ADVANCED_CONFIG: Required<AdvancedPluginConfig> = {
  */
 const DEFAULT_BASE_CONFIG: Required<BasePluginConfig> = {
   scanDirs: ['./src'],
-  outputDir: './src/generated',
+  outputDir: './src/.tdi2',
   enableFunctionalDI: true,
   enableInterfaceResolution: true,
   generateDebugFiles: false,

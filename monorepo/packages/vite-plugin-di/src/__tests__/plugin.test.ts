@@ -29,7 +29,7 @@ describe('getDIPluginDefaults', () => {
     const defaults = getDIPluginDefaults({});
 
     expect(defaults.scanDirs).toEqual(['./src']);
-    expect(defaults.outputDir).toBe('./src/generated');
+    expect(defaults.outputDir).toBe('./src/.tdi2');
     expect(defaults.watch).toBe(true);
     expect(defaults.enableFunctionalDI).toBe(true);
     expect(defaults.enableInterfaceResolution).toBe(true);

@@ -2,19 +2,25 @@
 
 ## ordered log (for production release)
 
-### ❌ hot reload fixes added path issue
+### remove magic strings
+
+`shouldSkipFile` contains hardcoded ignore paths
+
+`shouldProcessFile` contains hardcoded ignore paths
+
+### ✅ hot reload fixes added path issue
 
 see `src/generated` to src/.tdi2
 
-### ❌ clean up after hot reloading and debug logger changes
+### ✅ clean up after hot reloading and debug logger changes
 
-- ❌ some occurences of `verbose: true` seem to still be left 
+- ✅ some occurences of `verbose: true` seem to still be left 
 
-- ❌some paths of tests should fail find out if we dont run them or dont need them
+- ✅some paths of tests should fail find out if we dont run them or dont need them
   - monorepo/packages/di-core/tools/__tests__/interface-collision-integration.test.ts
   - monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.test.ts
 
-- ❌ test failing regression of removing verbose
+- ✅ test failing regression of removing verbose
 
 ### ✅ console log in di-core and vite-plugin
 
@@ -443,6 +449,10 @@ Resolution Steps:
   - working DI (This might be still ahrd because 2 different packages)
 
 ### [❌] potential use case, "contracts"
+
+> DIContainer would have to have  an internal global singleton, and if internally services change thcontainer would have to invalidate child react nodes, to refresh the views
+
+> also maybe a suspense wrapper aroupd all components that use DI mechanism
 
 > This deserves its own category
 > but also should actually be much lower prio, stays up for the idea itself

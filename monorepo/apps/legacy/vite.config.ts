@@ -17,6 +17,7 @@ export default defineConfig({
       generateDebugFiles: true,
       cleanOldConfigs: true,
       keepConfigCount: 3,
+      //outputDir: "./src/.tdi3",
     }),
     react(),
   ],

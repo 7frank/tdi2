@@ -15,7 +15,7 @@ export interface BasePluginConfig {
 
   /**
    * Output directory for generated DI configuration files
-   * @default './src/generated'
+   * @default './src/.tdi2'
    */
   outputDir?: string;
 

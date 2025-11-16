@@ -104,7 +104,7 @@ export class TransformationTestFramework {
     // Initialize transformer
     this.transformer = new FunctionalDIEnhancedTransformer({
       scanDirs: ["./src"],
-      outputDir: "./src/generated",
+      outputDir: "./src/.tdi2",
     });
 
     // Inject mocked dependencies

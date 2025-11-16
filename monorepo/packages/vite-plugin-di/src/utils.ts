@@ -375,9 +375,7 @@ export function createDebugEndpoints(
   server.middlewares.use('/_di_regenerate', async (req, res, next) => {
     if (req.url === '/_di_regenerate' && req.method === 'POST') {
       try {
-        if (context.options.verbose) {
-          console.log('🔄 Forcing DI regeneration via API...');
-        }
+        console.log('🔄 Forcing DI regeneration via API...');
 
         // Force cleanup and regeneration
         const configManager = context.getConfigManager();

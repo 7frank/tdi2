@@ -88,7 +88,7 @@ export class FunctionalDIEnhancedTransformer {
     }
 
     this.options = {
-      outputDir: './src/generated',
+      outputDir: './src/.tdi2',
       enableInterfaceResolution: true,
       enableInheritanceDI: true,
       enableStateDI: true,
