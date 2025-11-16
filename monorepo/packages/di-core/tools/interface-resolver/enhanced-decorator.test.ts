@@ -24,8 +24,8 @@ describe("Enhanced Decorator Approach - Comprehensive Tests", () => {
     });
 
     keySanitizer = new KeySanitizer();
-    interfaceExtractor = new EnhancedInterfaceExtractor(keySanitizer, false);
-    serviceValidator = new EnhancedServiceValidator(false);
+    interfaceExtractor = new EnhancedInterfaceExtractor(keySanitizer);
+    serviceValidator = new EnhancedServiceValidator();
   });
 
   describe("Feature: Standalone Service Classes", () => {
@@ -435,7 +435,7 @@ export class CustomSourceService {}
 
       it("When disabling source validation, Then should accept any source", () => {
         // Given
-        const permissiveValidator = new EnhancedServiceValidator(false, {
+        const permissiveValidator = new EnhancedServiceValidator({
           validateSources: false
         });
 
