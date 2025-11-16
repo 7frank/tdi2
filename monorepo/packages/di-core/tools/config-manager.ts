@@ -29,7 +29,8 @@ export class ConfigManager {
 
     this.packageName = this.getPackageName();
     this.configHash = this.generateConfigHash();
-    this.configDir = path.resolve(`node_modules/.tdi2/configs/${this.configHash}`);
+    // Use outputDir option instead of hardcoded path - critical for test isolation
+    this.configDir = path.resolve(options.outputDir || 'node_modules/.tdi2', 'configs', this.configHash);
     this.bridgeDirs = options.scanDirs.map(dir => path.resolve(dir, '.tdi2'));
 
     this.ensureDirectories();
@@ -87,8 +88,8 @@ export class ConfigManager {
 
   // FIXED: Add method to check for existing configurations
   findExistingConfig(): string | null {
-    const tdi2Dir = path.resolve('node_modules/.tdi2/configs');
-    
+    const tdi2Dir = path.resolve(this.options.outputDir || 'node_modules/.tdi2', 'configs');
+
     if (!fs.existsSync(tdi2Dir)) {
       return null;
     }
@@ -135,7 +136,7 @@ export class ConfigManager {
 
       // Update to use existing config
       this.configHash = existingConfig;
-      this.configDir = path.resolve(`node_modules/.tdi2/configs/${this.configHash}`);
+      this.configDir = path.resolve(this.options.outputDir || 'node_modules/.tdi2', 'configs', this.configHash);
     }
 
     // Ensure config directory exists
@@ -326,9 +327,9 @@ If you see issues with mismatched configurations:
   }
 
   // FIXED: Enhanced cleanup with better logic
-  static cleanOldConfigs(keepCount: number = 3): void {
-    const tdi2Dir = path.resolve('node_modules/.tdi2/configs');
-    
+  static cleanOldConfigs(keepCount: number = 3, outputDir: string = 'node_modules/.tdi2'): void {
+    const tdi2Dir = path.resolve(outputDir, 'configs');
+
     if (!fs.existsSync(tdi2Dir)) {
       return;
     }
@@ -364,9 +365,9 @@ If you see issues with mismatched configurations:
   }
 
   // FIXED: Add method to list all configs
-  static listConfigs(): void {
-    const tdi2Dir = path.resolve('node_modules/.tdi2/configs');
-    
+  static listConfigs(outputDir: string = 'node_modules/.tdi2'): void {
+    const tdi2Dir = path.resolve(outputDir, 'configs');
+
     if (!fs.existsSync(tdi2Dir)) {
       console.log('📋 No configuration directory found');
       return;

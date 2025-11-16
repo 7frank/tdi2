@@ -2,7 +2,19 @@
 
 ## ordered log (for production release)
 
+### console log in di-core and vite-plugin
+
 ### [❌] FIXME could not fast refrest useDi export incompatible
+
+> maybe in case this becomes too complex, reload full DiContainer
+
+- ✅ vite plugin hot reload tsx file => update text in source code => componentn renders properly
+- ❌ vite plugin hot reload service => update service, tsx file that is using service updates similarly to how hooks would behave
+- ❌ vite plugin add new service and update tsx file interface and use new service and render properly
+
+### [❌] playground
+
+> use vite plugin in playground application similarly to https://typia.io/playground/ or others
 
 ### [❌] write state ownership docs section
 
