@@ -4,6 +4,8 @@
 
 ### remove magic strings
 
+see `.includes('` `*.*js*,*.md,*.test.ts`
+
 Magic strings that will cause plugin failures for users and need to be made configurable:
 
 #### 🔴 HIGH PRIORITY - Will break plugin functionality:
@@ -51,26 +53,6 @@ Magic strings that will cause plugin failures for users and need to be made conf
 - [vite-plugin-di/e2e/helpers.ts:198,217-218](monorepo/packages/vite-plugin-di/e2e/helpers.ts#L198,217-218) - `'[vite] hmr update'`, `'[vite] hot updated'`, `'[vite] page reload'`, `'full-reload'`
 
   **Issue**: Tests only - false positive
-
-#### 🟢 LOW PRIORITY - False positives (application/test code, not plugin code):
-
-**6. Application-specific business logic (NOT plugin issues):**
-
-- [FormDAGService.ts:263-288](examples/tdi2-enterprise-forms-example/src/services/FormDAGService.ts#L263-L288) - Form node names
-- [full-di-integration.test.tsx](monorepo/packages/di-cross-package-tests/__tests__/full-di-integration.test.tsx) - Test assertions checking for interface names
-- All di-debug analytics files - Heuristic analysis code, not plugin code
-
-**7. Type checking utilities (intentional, not issues):**
-
-- [key-sanitizer.ts:145,221,226,295](monorepo/packages/di-core/tools/interface-resolver/key-sanitizer.ts) - Checking for `'<'`, `'>'`, `'=>'`, `'function'`, `'{'`, `'}'`, `'__'`, `'_line_'`
-- [dependency-analyzer.ts:155](monorepo/packages/di-core/tools/interface-resolver/dependency-analyzer.ts#L155) - Checking for `'[]'`, `'Array<'`
-- [enhanced-interface-extractor.ts:440](monorepo/packages/di-core/tools/interface-resolver/enhanced-interface-extractor.ts#L440) - Checking for `'*'` glob patterns
-
-**8. Component detection heuristics:**
-
-- [utils.ts:494-497,219-222](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/utils.ts) - Detecting JSX: `'return'`, `'<'`, `'React.createElement'`, `'jsx'`
-
-  **Issue**: False positive - this is intentional JSX detection
 
 #### ACTION ITEMS:
 
