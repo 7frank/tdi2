@@ -2,6 +2,9 @@
 
 import { Project, SourceFile, ClassDeclaration, MethodDeclaration, Decorator } from 'ts-morph';
 import type { ConfigurationMetadata, BeanMetadata, BeanParameterMetadata } from '../../src/types';
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:config-processor');
 
 export interface ConfigProcessorOptions {
   scanDirs: string[];

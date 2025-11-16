@@ -4,6 +4,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ConfigManager } from '../config-manager';
 import { TransformationOptions } from './types';
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:debug-file-generator');
 
 export class DebugFileGenerator {
   constructor(

@@ -9,6 +9,9 @@ import {
 } from "ts-morph";
 import { InterfaceInfo, SourceLocation } from "./interface-resolver-types";
 import { KeySanitizer } from "./key-sanitizer";
+import { consoleFor } from "../logger";
+
+const console = consoleFor('di-core:enhanced-interface-extractor');
 
 export interface DISourceConfiguration {
   decoratorSources: string[];      // ["@tdi2/di-core/decorators", "@custom/di/decorators"]

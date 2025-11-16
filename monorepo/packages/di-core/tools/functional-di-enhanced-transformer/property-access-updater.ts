@@ -7,6 +7,9 @@ import {
   Identifier,
 } from "ts-morph";
 import { ExtractedDependency } from "../shared/SharedDependencyExtractor";
+import { consoleFor } from "../logger";
+
+const console = consoleFor('di-core:property-access-updater');
 
 export interface PropertyAccessMapping {
   originalAccess: string; // "services.api"

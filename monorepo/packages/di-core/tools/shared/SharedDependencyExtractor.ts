@@ -12,13 +12,16 @@ import {
   TypeAliasDeclaration
 } from 'ts-morph';
 import type { SharedTypeResolver, TypeResolutionRequest } from './SharedTypeResolver';
-import type { 
+import type {
   InterfaceImplementation,
   InterfaceResolverInterface,
   DependencyBase
 } from '../interface-resolver/interface-resolver-types';
 import { RecursiveInjectExtractor, ExtractedInjectMarker } from './RecursiveInjectExtractor';
 import * as path from 'path';
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:shared-dependency-extractor');
 
 /**
  * Extended dependency information used during extraction and resolution.

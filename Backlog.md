@@ -6,6 +6,9 @@
 
 make it less noisy
 
+what about `createLogger`
+what about `verbose` in vite plugin
+
 ### ❌ hot reload fixes added path issue
 
 see `src/generated` 

@@ -14,6 +14,9 @@ import {
 } from "./interface-resolver-types";
 import { LocationKeyGenerator } from "./location-key-generator";
 import type { DISourceConfiguration } from "./enhanced-interface-extractor";
+import { consoleFor } from "../logger";
+
+const console = consoleFor('di-core:enhanced-service-validator');
 
 export class EnhancedServiceValidator {
   private sourceConfig: DISourceConfiguration;

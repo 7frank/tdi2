@@ -1,9 +1,9 @@
 // tools/shared/SharedServiceRegistry.ts
 
 import type { ExtractedDependency } from './SharedDependencyExtractor';
-import type { 
-  InterfaceImplementation, 
-  ServiceScope, 
+import type {
+  InterfaceImplementation,
+  ServiceScope,
   RegistrationType,
   ServiceImplementationBase
 } from '../interface-resolver/interface-resolver-types';
@@ -11,8 +11,10 @@ import type { ConfigManager } from '../config-manager';
 import * as path from 'path';
 import * as fs from 'fs';
 import { KeySanitizer } from '../interface-resolver/key-sanitizer';
+import { consoleFor } from '../logger';
 
 const keySanitizer = new KeySanitizer();
+const console = consoleFor('di-core:shared-service-registry');
  
 
 /**

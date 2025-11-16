@@ -9,6 +9,9 @@ import {
   PropertySignature
 } from "ts-morph";
 import * as path from "path";
+import { consoleFor } from "../logger";
+
+const console = consoleFor('di-core:recursive-inject-extractor');
 
 export interface RecursiveExtractOptions {
   verbose?: boolean;

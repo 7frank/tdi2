@@ -2,6 +2,9 @@
 
 import * as path from "path";
 import { TransformationOptions } from "./types";
+import { consoleFor } from "../logger";
+
+const console = consoleFor('di-core:import-manager');
 
 export class ImportManager {
   constructor(private options: TransformationOptions) {}

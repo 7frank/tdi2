@@ -19,6 +19,9 @@ import { FunctionalDependency, TransformationOptions, TypeResolutionContext } fr
 
 import { KeySanitizer } from '../interface-resolver/key-sanitizer';
 import type { DISourceConfiguration } from '../interface-resolver/enhanced-interface-extractor';
+import { consoleFor } from '../logger';
+
+const console = consoleFor('di-core:enhanced-dependency-extractor');
 
 export interface CircularProtectionConfig {
   maxDepth: number;
