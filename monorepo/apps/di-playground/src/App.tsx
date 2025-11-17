@@ -32,13 +32,16 @@ function App() {
     setError(null);
 
     try {
-      // Use demo transformation for now (simplified for browser)
-      const result = await transformerRef.current.transformWithDemo(inputCode);
+      // Use the ACTUAL TDI2 transformer (not a demo!)
+      const result = await transformerRef.current.transform(inputCode, 'playground.tsx');
 
       if (result.success && result.transformedCode) {
         setOutputCode(result.transformedCode);
         if (result.warnings && result.warnings.length > 0) {
           console.warn('Transformation warnings:', result.warnings);
+        }
+        if (result.stats) {
+          console.info('Transformation stats:', result.stats);
         }
       } else {
         setError(result.error || 'Transformation failed');

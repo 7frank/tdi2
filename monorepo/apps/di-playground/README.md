@@ -58,21 +58,27 @@ The playground includes several examples:
 
 ### Transformation Process
 
-The playground uses a simplified, browser-compatible transformer that demonstrates TDI2's core concepts:
+The playground uses the **actual** `FunctionalDIEnhancedTransformer` from `@tdi2/di-core` running in the browser:
 
-1. **DI Marker Detection**: Looks for `// @di-inject` comments
-2. **Service Injection**: Identifies `useInject<ServiceInterface>()` calls
-3. **Code Transformation**: Shows how components are enhanced with DI
+1. **In-Memory File System**: Uses ts-morph's in-memory file system for browser compatibility
+2. **Service Registry**: Pre-loads common service interfaces (Counter, Todo, User, Auth, Cart, Product)
+3. **Real Transformation**: Runs the same transformation pipeline used by the Vite plugin
+4. **DI Marker Detection**: Looks for `// @di-inject` comments
+5. **Interface Resolution**: Automatically resolves service interfaces to implementations
+6. **Code Generation**: Generates actual transformed code with proper imports and DI setup
 
-### Current Limitations
+### Features
 
-This is a **demo playground** that uses simplified transformations for visualization purposes. The actual production transformer (`@tdi2/di-core`) performs more sophisticated transformations including:
+The playground runs the full production transformer including:
 
-- Full AST-based code transformation
-- Interface resolution and validation
-- Complex prop destructuring handling
-- Configuration class processing
-- Bean factory generation
+- ✅ Full AST-based code transformation
+- ✅ Interface resolution and validation
+- ✅ Complex prop destructuring handling
+- ✅ Service injection transformation
+- ✅ Import management and code generation
+- ✅ Error reporting and warnings
+
+Note: Configuration class processing and bean factory generation work but require specific setup.
 
 ## Project Structure
 
@@ -114,11 +120,12 @@ Edit `src/examples.ts` and add a new entry to the `examples` array:
 
 ### Enhancing Transformations
 
-The transformer logic is in `src/transformer.ts`. The `transformWithDemo()` method uses simple string replacements for demo purposes. To implement more sophisticated transformations:
+The transformer logic is in `src/transformer.ts` and uses the real `FunctionalDIEnhancedTransformer`. To add more features:
 
-1. Use `ts-morph` AST manipulation in the `transform()` method
-2. Consider integrating more of `@tdi2/di-core`'s transformation pipeline
-3. Be mindful of browser performance and bundle size
+1. **Add More Services**: Add service definitions in `createCommonServices()` method
+2. **Configuration Options**: Expose transformer options in the UI (e.g., enable/disable features)
+3. **Multiple Files**: Support multiple file transformations in the virtual filesystem
+4. **Advanced Debugging**: Show intermediate transformation steps or AST visualization
 
 ### Styling
 

@@ -10,7 +10,7 @@ export const examples: Example[] = [
     description: "Counter using CounterServiceInterface",
     code: `import React from 'react';
 import { Inject } from '@tdi2/di-core';
-import type { CounterServiceInterface } from '../services/CounterService';
+import type { CounterServiceInterface } from '/virtual/services/CounterService';
 
 // @di-inject
 function Counter({counterService}:{counterService:Inject<CounterServiceInterface>}) {
@@ -35,7 +35,7 @@ export default Counter;`,
     description: "Todo list component with service injection",
     code: `import React from 'react';
 import { Inject } from '@tdi2/di-core';
-import type { TodoServiceInterface } from '../services/TodoService';
+import type { TodoServiceInterface } from '/virtual/services/TodoService';
 
 // @di-inject
 function TodoList() {
@@ -90,8 +90,8 @@ export default TodoList;`,
     description: "User profile with multiple service dependencies",
     code: `import React from 'react';
 import { Inject } from '@tdi2/di-core';
-import type { UserServiceInterface } from '../services/UserService';
-import type { AuthServiceInterface } from '../services/AuthService';
+import type { UserServiceInterface } from '/virtual/services/UserService';
+import type { AuthServiceInterface } from '/virtual/services/AuthService';
 
 // @di-inject
 function UserProfile() {
@@ -127,8 +127,8 @@ export default UserProfile;`,
     description: "E-commerce cart with complex state",
     code: String.raw`import React from 'react';
 import { Inject } from '@tdi2/di-core';
-import type { CartServiceInterface } from '../services/CartService';
-import type { ProductServiceInterface } from '../services/ProductService';
+import type { CartServiceInterface } from '/virtual/services/CartService';
+import type { ProductServiceInterface } from '/virtual/services/ProductService';
 
 // @di-inject
 function ShoppingCart() {
