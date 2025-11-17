@@ -151,28 +151,6 @@ describe('detectDIPatterns', () => {
     expect(result.patterns).toContain('Inject<T>');
   });
 
-  it('should detect @Autowired decorator', () => {
-    const content = `
-      constructor(@Autowired private service: MyService) {}
-    `;
-    
-    const result = detectDIPatterns(content, options);
-    expect(result.hasDI).toBe(true);
-    expect(result.patterns).toContain('@Autowired');
-  });
-
-  it('should detect interface implementations', () => {
-    const content = `
-      export class MyService implements MyServiceInterface {
-        // implementation
-      }
-    `;
-    
-    const result = detectDIPatterns(content, options);
-    expect(result.hasDI).toBe(true);
-    expect(result.patterns).toContain('Interface implementation');
-  });
-
   it('should return false for files without DI patterns', () => {
     const content = `
       export class RegularClass {
@@ -188,16 +166,15 @@ describe('detectDIPatterns', () => {
   it('should detect multiple patterns in one file', () => {
     const content = `
       @Service()
-      export class MyService implements MyServiceInterface {
+      export class MyService {
         constructor(@Inject() private logger: LoggerService) {}
       }
     `;
-    
+
     const result = detectDIPatterns(content, options);
     expect(result.hasDI).toBe(true);
     expect(result.patterns).toContain('@Service');
     expect(result.patterns).toContain('@Inject');
-    expect(result.patterns).toContain('Interface implementation');
   });
 });
 

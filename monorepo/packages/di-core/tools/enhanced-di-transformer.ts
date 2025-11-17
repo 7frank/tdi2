@@ -31,6 +31,7 @@ import type {
 } from './shared/shared-types';
 
 import { IntegratedInterfaceResolver } from './interface-resolver/integrated-interface-resolver';
+import { shouldSkipFile as shouldSkipFileUtil } from './functional-di-enhanced-transformer/utils';
 
 interface TransformerOptions {
   scanDirs?: string[];
@@ -313,41 +314,11 @@ export class EnhancedDITransformer {
 
   private shouldSkipFile(sourceFile: SourceFile): boolean {
     const filePath = sourceFile.getFilePath();
-    const normalized = filePath.replace(/\\/g, '/');
-
-    // Default patterns
-    const excludePatterns = this.options.excludePatterns || ['node_modules', '.d.ts', '.test.', '.spec.'];
-    const excludeDirs = this.options.excludeDirs || ['node_modules'];
-
-    // Skip based on excludeDirs
-    for (const dir of excludeDirs) {
-      if (normalized.includes(`/${dir}/`) || normalized.includes(`\\${dir}\\`)) {
-        return true;
-      }
-    }
-
-    // Skip outputDir (generated files)
-    if (this.options.outputDir) {
-      const normalizedOutputDir = this.options.outputDir.replace(/\\/g, '/');
-      const outputDirName = normalizedOutputDir.split('/').pop() || '';
-      if (outputDirName && normalized.includes(outputDirName)) {
-        return true;
-      }
-    }
-
-    // Skip based on excludePatterns
-    for (const pattern of excludePatterns) {
-      if (normalized.includes(pattern)) {
-        return true;
-      }
-    }
-
-    // Also skip 'generated' folder (legacy behavior)
-    if (normalized.includes('generated')) {
-      return true;
-    }
-
-    return false;
+    return shouldSkipFileUtil(filePath, {
+      excludePatterns: this.options.excludePatterns,
+      excludeDirs: this.options.excludeDirs,
+      outputDir: this.options.outputDir,
+    });
   }
 
   private hasServiceDecorator(classDecl: ClassDeclaration): boolean {

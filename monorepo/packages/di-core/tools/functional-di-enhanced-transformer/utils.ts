@@ -42,11 +42,6 @@ export function shouldSkipFile(
     }
   }
 
-  // Also skip 'generated' folder (legacy behavior for backwards compatibility)
-  if (normalized.includes('generated')) {
-    return true;
-  }
-
   return false;
 }
 
