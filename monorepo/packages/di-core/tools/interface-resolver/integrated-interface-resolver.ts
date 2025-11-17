@@ -34,6 +34,8 @@ export interface IntegratedResolverOptions {
   enableInheritanceDI?: boolean;
   enableStateDI?: boolean;
   sourceConfig?: Partial<DISourceConfiguration>;
+  project?: Project; // Allow passing an existing project (for browser use)
+  useInMemoryFileSystem?: boolean; // For browser compatibility
 }
 
 export class IntegratedInterfaceResolver {
@@ -62,9 +64,26 @@ export class IntegratedInterfaceResolver {
       ...options,
     } as Required<IntegratedResolverOptions>;
 
-    this.project = new Project({
-      tsConfigFilePath: "./tsconfig.json",
-    });
+    // Use provided project or create a new one
+    if (options.project) {
+      this.project = options.project;
+    } else if (options.useInMemoryFileSystem) {
+      // Browser-compatible in-memory file system
+      this.project = new Project({
+        useInMemoryFileSystem: true,
+        compilerOptions: {
+          target: 99, // ESNext
+          module: 99, // ESNext
+          jsx: 2, // React
+          experimentalDecorators: true,
+        },
+      });
+    } else {
+      // Node.js file system with tsconfig
+      this.project = new Project({
+        tsConfigFilePath: "./tsconfig.json",
+      });
+    }
 
     // Initialize components with source configuration
     this.keySanitizer = new KeySanitizer();
