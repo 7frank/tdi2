@@ -32,17 +32,5 @@ export function detectDIPatterns(
     hasDI = true;
   }
 
-  // Check for @Autowired decorator
-  if (content.includes('@Autowired') || content.includes('@AutoWire')) {
-    patternsList.push('@Autowired');
-    hasDI = true;
-  }
-
-  // Check for interface implementations
-  if (content.includes('implements ') && content.includes('Interface')) {
-    patternsList.push('Interface implementation');
-    hasDI = true;
-  }
-
   return { hasDI, patterns: patternsList };
 }
