@@ -16,8 +16,10 @@
     "rm": "find . -maxdepth 3 -type d -name \"node_modules\" -exec rm -rf {} +",
     "docs:dev": "cd apps/docs-starlight && bun run dev",
     "docs:build": "cd apps/docs-starlight && bun run build",
-    "docs:preview": "cd apps/docs-starlight && bun run preview"
-
+    "docs:preview": "cd apps/docs-starlight && bun run preview",
+    "playground:dev": "cd apps/di-playground && bun run dev",
+    "playground:build": "cd apps/di-playground && bun run build",
+    "playground:preview": "cd apps/di-playground && bun run preview"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",

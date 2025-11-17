@@ -1,0 +1,42 @@
+{
+  "name": "@tdi2/di-playground",
+  "version": "1.0.0",
+  "description": "TDI2 Interactive Playground - Live code transformation preview",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo 'No tests configured yet'",
+    "lint": "echo 'No linting configured yet'",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "dependency-injection",
+    "typescript",
+    "playground",
+    "interactive"
+  ],
+  "author": "TDI2 Team",
+  "license": "MIT",
+  "dependencies": {
+    "@tdi2/di-core": "workspace:*",
+    "@monaco-editor/react": "^4.6.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "ts-morph": "^21.0.1",
+    "valtio": "^2.1.2"
+  },
+  "devDependencies": {
+    "@tdi2/vite-plugin-di": "workspace:*",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "~5.8.3",
+    "vite": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
