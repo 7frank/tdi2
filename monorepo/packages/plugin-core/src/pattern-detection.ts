@@ -6,6 +6,9 @@ import type { DIPatternDetection, PluginConfig } from './types';
 
 /**
  * Detect if content contains TDI2 dependency injection patterns
+ * Note this is only used for hot reloading
+ * TODO we can cobine this with monorepo/packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts
+ *  and make both AST based to remove false positives with string comparision
  */
 export function detectDIPatterns(
   content: string,
@@ -31,6 +34,7 @@ export function detectDIPatterns(
     patternsList.push('Inject<T>');
     hasDI = true;
   }
+
 
   return { hasDI, patterns: patternsList };
 }
