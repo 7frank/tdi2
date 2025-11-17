@@ -1,5 +1,9 @@
-import { Project, SourceFile } from 'ts-morph';
-import { FunctionalDIEnhancedTransformer } from '@tdi2/di-core/tools';
+import { Project, SourceFile, SyntaxKind } from 'ts-morph';
+import { TransformationPipeline } from '@tdi2/di-core/tools/functional-di-enhanced-transformer/transformation-pipeline';
+import { IntegratedInterfaceResolver } from '@tdi2/di-core/tools/interface-resolver/integrated-interface-resolver';
+import { SharedDependencyExtractor } from '@tdi2/di-core/tools/shared/SharedDependencyExtractor';
+import { SharedTypeResolver } from '@tdi2/di-core/tools/shared/SharedTypeResolver';
+import { DiInjectMarkers } from '@tdi2/di-core/tools/functional-di-enhanced-transformer/di-inject-markers';
 
 export interface TransformationResult {
   success: boolean;
@@ -14,12 +18,16 @@ export interface TransformationResult {
 }
 
 /**
- * Browser-compatible wrapper for the actual TDI2 transformer.
- * Uses the real FunctionalDIEnhancedTransformer with in-memory file system.
+ * Browser-compatible transformer using the actual TDI2 transformation pipeline.
+ * Runs entirely in-memory without Node.js dependencies.
  */
 export class BrowserTransformer {
   private project: Project;
   private virtualRoot = '/virtual';
+  private interfaceResolver: IntegratedInterfaceResolver;
+  private typeResolver: SharedTypeResolver;
+  private dependencyExtractor: SharedDependencyExtractor;
+  private transformationPipeline: TransformationPipeline;
 
   constructor() {
     // Create in-memory project for browser use
@@ -35,8 +43,29 @@ export class BrowserTransformer {
       },
     });
 
+    // Initialize the transformation components
+    this.interfaceResolver = new IntegratedInterfaceResolver({
+      scanDirs: [this.virtualRoot],
+      enableInheritanceDI: true,
+      enableStateDI: true,
+    });
+
+    this.typeResolver = new SharedTypeResolver(this.interfaceResolver);
+    this.dependencyExtractor = new SharedDependencyExtractor(this.typeResolver, {
+      scanDirs: [this.virtualRoot],
+    });
+
+    this.transformationPipeline = new TransformationPipeline({
+      generateFallbacks: true,
+      preserveTypeAnnotations: true,
+      interfaceResolver: this.interfaceResolver,
+    });
+
     // Create common service interfaces that examples might use
     this.createCommonServices();
+
+    // Scan the project to populate the interface resolver
+    this.scanInterfaces();
   }
 
   private createCommonServices(): void {
@@ -246,17 +275,18 @@ export class ProductService implements ProductServiceInterface {
   }
 }
     `);
+  }
 
-    // Create tsconfig for the virtual project
-    this.project.createSourceFile(`${this.virtualRoot}/tsconfig.json`, JSON.stringify({
-      compilerOptions: {
-        target: "ES2020",
-        module: "ESNext",
-        jsx: "react-jsx",
-        experimentalDecorators: true,
-        lib: ["ES2020", "DOM"]
-      }
-    }, null, 2));
+  private async scanInterfaces(): Promise<void> {
+    try {
+      // Set the project for the interface resolver
+      (this.interfaceResolver as any).project = this.project;
+
+      // Scan all service files
+      await this.interfaceResolver.scanProject();
+    } catch (error) {
+      console.error('Error scanning interfaces:', error);
+    }
   }
 
   async transform(inputCode: string, fileName: string = 'Component.tsx'): Promise<TransformationResult> {
@@ -265,34 +295,75 @@ export class ProductService implements ProductServiceInterface {
       const componentPath = `${this.virtualRoot}/components/${fileName}`;
       const sourceFile = this.project.createSourceFile(componentPath, inputCode, { overwrite: true });
 
-      // Initialize the actual TDI2 transformer with in-memory project
-      const transformer = new FunctionalDIEnhancedTransformer({
-        scanDirs: [this.virtualRoot],
-        outputDir: `${this.virtualRoot}/.tdi2`,
-        generateDebugFiles: false,
-      });
+      // Find components with @di-inject marker
+      const functions = sourceFile.getFunctions();
+      const variables = sourceFile.getVariableDeclarations();
 
-      // HACK: Replace the transformer's project with our in-memory one
-      // This is needed because the transformer creates its own project
-      (transformer as any).project = this.project;
+      let transformedCount = 0;
+      const warnings: string[] = [];
+      const errors: string[] = [];
 
-      // Run the actual transformation
-      const summary = await transformer.transform();
+      // Transform function declarations
+      for (const func of functions) {
+        const fullText = func.getFullText();
+        if (DiInjectMarkers.hasDIMarker(fullText)) {
+          try {
+            // Extract dependencies
+            const dependencies = this.dependencyExtractor.extractDependencies(func, sourceFile);
 
-      // Get the transformed code from the source file
+            // Run transformation pipeline
+            this.transformationPipeline.transformComponent(func, dependencies, sourceFile);
+            transformedCount++;
+          } catch (err) {
+            errors.push(`Error transforming ${func.getName()}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          }
+        }
+      }
+
+      // Transform arrow function components
+      for (const varDecl of variables) {
+        const initializer = varDecl.getInitializer();
+        if (initializer && initializer.getKind() === SyntaxKind.ArrowFunction) {
+          const varStatement = varDecl.getVariableStatement();
+          if (varStatement && DiInjectMarkers.hasDIMarker(varStatement.getFullText())) {
+            try {
+              // Extract dependencies
+              const dependencies = this.dependencyExtractor.extractDependencies(initializer as any, sourceFile);
+
+              // Run transformation pipeline
+              this.transformationPipeline.transformComponent(initializer as any, dependencies, sourceFile);
+              transformedCount++;
+            } catch (err) {
+              errors.push(`Error transforming ${varDecl.getName()}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+            }
+          }
+        }
+      }
+
+      // Get the transformed code
       const transformedCode = sourceFile.getFullText();
 
-      // Check if there were actual transformations
-      const hasChanges = transformedCode !== inputCode;
+      // Add warnings if no transformations occurred
+      if (transformedCount === 0) {
+        warnings.push('No @di-inject markers found. Add // @di-inject comment above your component.');
+      }
+
+      if (errors.length > 0) {
+        return {
+          success: false,
+          error: errors.join('\n'),
+          transformedCode: inputCode,
+        };
+      }
 
       return {
         success: true,
         transformedCode,
-        warnings: hasChanges ? [] : ['No @di-inject markers found or no transformations applied'],
+        warnings,
         stats: {
-          transformedComponents: summary.transformedComponents || 0,
-          errors: summary.errors?.length || 0,
-          warnings: summary.warnings?.length || 0,
+          transformedComponents: transformedCount,
+          errors: errors.length,
+          warnings: warnings.length,
         },
       };
     } catch (error) {
@@ -300,7 +371,7 @@ export class ProductService implements ProductServiceInterface {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown transformation error',
-        transformedCode: inputCode, // Return original code on error
+        transformedCode: inputCode,
       };
     }
   }
