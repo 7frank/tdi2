@@ -1,7 +1,60 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import Editor from '@monaco-editor/react';
+import Editor, { OnMount } from '@monaco-editor/react';
 import { BrowserTransformer } from './transformer';
 import { examples, defaultCode, Example } from './examples';
+import type * as Monaco from 'monaco-editor';
+
+// Configure Monaco editor with type definitions
+const configureMonaco = (monaco: typeof Monaco) => {
+  // Add React type definitions
+  monaco.languages.typescript.typescriptDefaults.addExtraLib(
+    `declare module 'react' {
+      export function useState<T>(initialValue: T): [T, (value: T) => void];
+      export function useEffect(effect: () => void | (() => void), deps?: any[]): void;
+      export function useCallback<T extends Function>(callback: T, deps: any[]): T;
+      export const FC: any;
+      export const ReactNode: any;
+      export default React;
+      const React: any;
+    }`,
+    'file:///node_modules/@types/react/index.d.ts'
+  );
+
+  // Add @tdi2/di-core type definitions
+  monaco.languages.typescript.typescriptDefaults.addExtraLib(
+    `declare module '@tdi2/di-core' {
+      export type Inject<T> = T;
+      export type InjectOptional<T> = T | undefined;
+      export function Service(): ClassDecorator;
+      export const Container: any;
+    }`,
+    'file:///node_modules/@tdi2/di-core/index.d.ts'
+  );
+
+  // Configure compiler options
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+    target: monaco.languages.typescript.ScriptTarget.ES2020,
+    allowNonTsExtensions: true,
+    moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+    module: monaco.languages.typescript.ModuleKind.ESNext,
+    noEmit: true,
+    esModuleInterop: true,
+    jsx: monaco.languages.typescript.JsxEmit.React,
+    reactNamespace: 'React',
+    allowJs: true,
+    typeRoots: ['node_modules/@types'],
+  });
+
+  // Set diagnostics options to reduce noise
+  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+    noSemanticValidation: false,
+    noSyntaxValidation: false,
+    diagnosticCodesToIgnore: [
+      1259, // Top-level 'await' expressions are only allowed when the 'module' option is set to 'esnext' or 'system'
+      2792, // Cannot find module (we handle this with extra libs)
+    ],
+  });
+};
 
 function App() {
   const [inputCode, setInputCode] = useState(defaultCode);
@@ -113,9 +166,12 @@ function App() {
             <Editor
               height="100%"
               defaultLanguage="typescript"
+              language="typescript"
+              path="playground.tsx"
               theme="vs-dark"
               value={inputCode}
               onChange={(value) => setInputCode(value || '')}
+              beforeMount={configureMonaco}
               options={{
                 minimap: { enabled: false },
                 fontSize: 14,
@@ -125,8 +181,7 @@ function App() {
                 tabSize: 2,
               }}
             />
-          </div>
-        </div>
+          </div>        </div>
 
         <div className="resizer" />
 
