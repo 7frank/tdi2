@@ -6,37 +6,14 @@ export interface Example {
 
 export const examples: Example[] = [
   {
-    name: 'Basic Counter',
-    description: 'Simple counter component with DI marker',
-    code: `import React from 'react';
-import { Inject } from '@tdi2/di-core';
-
-// @di-inject
-function Counter() {
-  const [count, setCount] = React.useState(0);
-
-  return (
-    <div>
-      <h1>Count: {count}</h1>
-      <button onClick={() => setCount(count + 1)}>
-        Increment
-      </button>
-    </div>
-  );
-}
-
-export default Counter;`,
-  },
-  {
-    name: 'Counter with Service',
-    description: 'Counter using CounterServiceInterface',
+    name: "Counter with Service",
+    description: "Counter using CounterServiceInterface",
     code: `import React from 'react';
 import { Inject } from '@tdi2/di-core';
 import type { CounterServiceInterface } from '../services/CounterService';
 
 // @di-inject
-function Counter() {
-  const counterService = useInject<CounterServiceInterface>();
+function Counter({counterService}:{counterService:Inject<CounterServiceInterface>}) {
 
   return (
     <div>
@@ -54,8 +31,8 @@ function Counter() {
 export default Counter;`,
   },
   {
-    name: 'Todo List',
-    description: 'Todo list component with service injection',
+    name: "Todo List",
+    description: "Todo list component with service injection",
     code: `import React from 'react';
 import { Inject } from '@tdi2/di-core';
 import type { TodoServiceInterface } from '../services/TodoService';
@@ -109,8 +86,8 @@ function TodoList() {
 export default TodoList;`,
   },
   {
-    name: 'User Profile',
-    description: 'User profile with multiple service dependencies',
+    name: "User Profile",
+    description: "User profile with multiple service dependencies",
     code: `import React from 'react';
 import { Inject } from '@tdi2/di-core';
 import type { UserServiceInterface } from '../services/UserService';
@@ -146,9 +123,9 @@ function UserProfile() {
 export default UserProfile;`,
   },
   {
-    name: 'Shopping Cart',
-    description: 'E-commerce cart with complex state',
-    code: `import React from 'react';
+    name: "Shopping Cart",
+    description: "E-commerce cart with complex state",
+    code: String.raw`import React from 'react';
 import { Inject } from '@tdi2/di-core';
 import type { CartServiceInterface } from '../services/CartService';
 import type { ProductServiceInterface } from '../services/ProductService';
@@ -170,7 +147,7 @@ function ShoppingCart() {
         <h2>Available Products</h2>
         {productService.state.products.map((product) => (
           <div key={product.id}>
-            <span>{product.name} - ${product.price}</span>
+            <span>{product.name} - \${product.price}</span>
             <button onClick={() => cartService.addItem(product)}>
               Add to Cart
             </button>
@@ -195,7 +172,7 @@ function ShoppingCart() {
         ))}
       </div>
       <div>
-        <h3>Total: ${total.toFixed(2)}</h3>
+        <h3>Total: \${total.toFixed(2)}</h3>
         <button onClick={() => cartService.checkout()}>
           Checkout
         </button>
