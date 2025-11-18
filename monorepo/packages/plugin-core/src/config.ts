@@ -34,7 +34,6 @@ const DEFAULT_BASE_CONFIG: Required<BasePluginConfig> = {
   enableParameterNormalization: true,
   generateFallbacks: false,
   excludePatterns: ['node_modules', '.d.ts', '.test.', '.spec.'],
-  excludeDirs: ['node_modules'],
 };
 
 /**
@@ -124,18 +123,9 @@ export function normalizePath(filePath: string): string {
  */
 export function shouldSkipFile(
   filePath: string,
-  config: { excludePatterns?: string[]; excludeDirs?: string[]; outputDir?: string }
+  config: { excludePatterns?: string[]; outputDir?: string }
 ): boolean {
   const normalized = normalizePath(filePath);
-
-  // Skip directories
-  if (config.excludeDirs) {
-    for (const dir of config.excludeDirs) {
-      if (normalized.includes(`/${dir}/`) || normalized.includes(`\\${dir}\\`)) {
-        return true;
-      }
-    }
-  }
 
   // Skip outputDir (generated files)
   if (config.outputDir) {
@@ -147,7 +137,7 @@ export function shouldSkipFile(
     }
   }
 
-  // Skip by patterns
+  // Skip by exclude patterns (works for both files and directories)
   if (config.excludePatterns) {
     for (const pattern of config.excludePatterns) {
       if (normalized.includes(pattern)) {
@@ -165,7 +155,7 @@ export function shouldSkipFile(
 export function shouldProcessFile(
   filePath: string,
   extensions: string[],
-  config?: { excludePatterns?: string[]; excludeDirs?: string[]; outputDir?: string }
+  config?: { excludePatterns?: string[]; outputDir?: string }
 ): boolean {
   const normalized = normalizePath(filePath);
 

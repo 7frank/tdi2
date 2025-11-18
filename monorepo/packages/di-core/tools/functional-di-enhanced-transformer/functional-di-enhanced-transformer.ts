@@ -52,7 +52,6 @@ interface TransformerOptions {
   enableParameterNormalization?: boolean;
   generateFallbacks?: boolean;
   excludePatterns?: string[];
-  excludeDirs?: string[];
 }
 
 export class FunctionalDIEnhancedTransformer {
@@ -472,7 +471,6 @@ export class FunctionalDIEnhancedTransformer {
     // Use centralized skip logic with configuration
     const shouldSkip = shouldSkipFileUtil(filePath, {
       excludePatterns: this.options.excludePatterns,
-      excludeDirs: this.options.excludeDirs,
       outputDir: this.options.outputDir,
     });
 

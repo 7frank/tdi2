@@ -40,7 +40,6 @@ interface TransformerOptions {
   enableInterfaceResolution?: boolean;
   customSuffix?: string;
   excludePatterns?: string[];
-  excludeDirs?: string[];
 }
 
 export class EnhancedDITransformer {
@@ -316,7 +315,6 @@ export class EnhancedDITransformer {
     const filePath = sourceFile.getFilePath();
     return shouldSkipFileUtil(filePath, {
       excludePatterns: this.options.excludePatterns,
-      excludeDirs: this.options.excludeDirs,
       outputDir: this.options.outputDir,
     });
   }
