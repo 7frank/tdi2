@@ -2,6 +2,12 @@
 
 ## ordered log (for production release)
 
+### fix interface collision & test case
+
+two interface of the same name and in different files are resolved inproperly
+
+`should fail with current implementation - interface name collision`
+
 ### console log in di-core and vite-plugin
 
 ### remove magic strings
