@@ -55,17 +55,12 @@ export interface BasePluginConfig {
   generateFallbacks?: boolean;
 
   /**
-   * Patterns to exclude from processing (e.g., 'node_modules', '.test.', '.spec.')
-   * Supports partial string matching
+   * Patterns to exclude from processing
+   * Supports partial string matching for both files and directories
    * @default ['node_modules', '.d.ts', '.test.', '.spec.']
+   * @example ['node_modules', 'dist', '.test.', '.spec.', 'generated']
    */
   excludePatterns?: string[];
-
-  /**
-   * Directories to exclude from processing (e.g., 'node_modules', 'dist')
-   * @default ['node_modules']
-   */
-  excludeDirs?: string[];
 }
 
 /**

@@ -14,7 +14,6 @@ export interface SharedTransformationOptions {
   customSuffix?: string;
   generateDebugFiles?: boolean;
   excludePatterns?: string[];
-  excludeDirs?: string[];
 }
 
 /**

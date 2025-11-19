@@ -156,7 +156,6 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
             generateDebugFiles: options.generateDebugFiles,
             customSuffix: configSuffix,
             excludePatterns: options.excludePatterns,
-            excludeDirs: options.excludeDirs,
           });
 
           try {
@@ -187,7 +186,6 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         enableInterfaceResolution: options.enableInterfaceResolution,
         customSuffix: configSuffix,
         excludePatterns: options.excludePatterns,
-        excludeDirs: options.excludeDirs,
       });
 
       await classTransformer.transform();
@@ -205,7 +203,6 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           generateDebugFiles: options.generateDebugFiles,
           customSuffix: configSuffix,
           excludePatterns: options.excludePatterns,
-          excludeDirs: options.excludeDirs,
         });
 
         try {
@@ -362,7 +359,6 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
                   generateDebugFiles: options.generateDebugFiles,
                   customSuffix: options.customSuffix,
                   excludePatterns: options.excludePatterns,
-                  excludeDirs: options.excludeDirs,
                 });
 
                 // Re-run transformation with fresh instance

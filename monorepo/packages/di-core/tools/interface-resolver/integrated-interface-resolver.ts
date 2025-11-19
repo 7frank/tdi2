@@ -36,7 +36,6 @@ export interface IntegratedResolverOptions {
   enableStateDI?: boolean;
   sourceConfig?: Partial<DISourceConfiguration>;
   excludePatterns?: string[];
-  excludeDirs?: string[];
   outputDir?: string;
 }
 
@@ -349,7 +348,6 @@ export class IntegratedInterfaceResolver {
     const filePath = sourceFile.getFilePath();
     return shouldSkipFileUtil(filePath, {
       excludePatterns: this.options.excludePatterns,
-      excludeDirs: this.options.excludeDirs,
       outputDir: this.options.outputDir,
     });
   }

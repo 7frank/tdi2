@@ -8,23 +8,13 @@ import { FunctionalDependency, TransformationOptions } from './types';
  */
 export function shouldSkipFile(
   filePath: string,
-  options?: { excludePatterns?: string[]; excludeDirs?: string[]; outputDir?: string }
+  options?: { excludePatterns?: string[]; outputDir?: string }
 ): boolean {
   const normalized = filePath.replace(/\\/g, '/');
 
-  // Default patterns
+  // Default patterns (works for both files and directories)
   const defaultExcludePatterns = ['node_modules', '.d.ts', '.test.', '.spec.'];
-  const defaultExcludeDirs = ['node_modules'];
-
   const excludePatterns = options?.excludePatterns || defaultExcludePatterns;
-  const excludeDirs = options?.excludeDirs || defaultExcludeDirs;
-
-  // Skip based on excludeDirs
-  for (const dir of excludeDirs) {
-    if (normalized.includes(`/${dir}/`) || normalized.includes(`\\${dir}\\`)) {
-      return true;
-    }
-  }
 
   // Skip outputDir (generated files)
   if (options?.outputDir) {
@@ -35,7 +25,7 @@ export function shouldSkipFile(
     }
   }
 
-  // Skip based on excludePatterns
+  // Skip based on exclude patterns (works for both files and directories)
   for (const pattern of excludePatterns) {
     if (normalized.includes(pattern)) {
       return true;
