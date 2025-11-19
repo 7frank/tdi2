@@ -1,4 +1,4 @@
-import { Project, SourceFile, SyntaxKind } from 'ts-morph';
+import { Project, SyntaxKind } from 'ts-morph';
 
 // Import browser-compatible components directly from source
 // @ts-ignore - importing from source files

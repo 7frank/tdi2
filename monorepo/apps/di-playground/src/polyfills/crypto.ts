@@ -5,12 +5,12 @@ export function randomBytes(size: number): Uint8Array {
   return bytes;
 }
 
-export function createHash(algorithm: string) {
+export function createHash(_algorithm: string) {
   return {
-    update(data: string) {
+    update(_data: string) {
       return this;
     },
-    digest(encoding?: string) {
+    digest(_encoding?: string) {
       // Return a simple hash-like string for browser compatibility
       return Math.random().toString(36).substring(2, 15);
     },

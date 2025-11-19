@@ -14,7 +14,7 @@ export function resolve(...paths: string[]): string {
   return join(...paths);
 }
 
-export function relative(from: string, to: string): string {
+export function relative(_from: string, to: string): string {
   return to;
 }
 
