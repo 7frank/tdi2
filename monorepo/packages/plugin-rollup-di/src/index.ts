@@ -29,8 +29,7 @@ export interface RollupPluginDIOptions extends PluginConfig {}
  *   plugins: [
  *     tdi2Plugin({
  *       srcDir: './src',
- *       enableFunctionalDI: true,
- *       verbose: false
+ *       enableFunctionalDI: true
  *     })
  *   ]
  * };
@@ -47,10 +46,6 @@ export function tdi2Plugin(userOptions: RollupPluginDIOptions = {}): Plugin {
     name: 'tdi2-rollup-plugin',
 
     async buildStart() {
-      if (config.verbose) {
-        console.log('🚀 TDI2 Rollup Plugin: Starting build...');
-      }
-
       performanceTracker.startTransformation();
 
       // Initialize orchestrator
@@ -69,10 +64,6 @@ export function tdi2Plugin(userOptions: RollupPluginDIOptions = {}): Plugin {
       }
 
       performanceTracker.endTransformation();
-
-      if (config.verbose) {
-        console.log('✅ TDI2 Rollup Plugin: Initialization complete');
-      }
     },
 
     load(id: string) {
@@ -85,9 +76,6 @@ export function tdi2Plugin(userOptions: RollupPluginDIOptions = {}): Plugin {
       const transformedCode = orchestrator?.getTransformedContent(id);
 
       if (transformedCode) {
-        if (config.verbose) {
-          console.log(`[Rollup] 🔍 Using transformed version of ${id}`);
-        }
         return transformedCode;
       }
 
@@ -121,11 +109,7 @@ export function tdi2Plugin(userOptions: RollupPluginDIOptions = {}): Plugin {
     },
 
     buildEnd() {
-      if (config.verbose) {
-        console.log('\n📊 TDI2 Rollup Plugin Statistics:');
-        console.log(`   Transformed files: ${orchestrator?.getTransformedFileCount() ?? 0}`);
-        console.log(performanceTracker.formatStats());
-      }
+      // Statistics available via DEBUG environment variable
     },
   };
 }

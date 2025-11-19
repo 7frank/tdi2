@@ -53,13 +53,6 @@ export interface BasePluginConfig {
    * @default false
    */
   generateFallbacks?: boolean;
-
-  /**
-   * Enable verbose logging for debugging
-   * @default false
-   * @deprecated Use DEBUG environment variable instead (e.g., DEBUG=vite-plugin-di:* or DEBUG=di-core:*)
-   */
-  verbose?: boolean;
 }
 
 /**

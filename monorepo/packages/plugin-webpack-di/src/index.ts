@@ -29,8 +29,7 @@ export interface WebpackPluginDIOptions extends PluginConfig {}
  *   plugins: [
  *     new TDI2WebpackPlugin({
  *       srcDir: './src',
- *       enableFunctionalDI: true,
- *       verbose: false
+ *       enableFunctionalDI: true
  *     })
  *   ]
  * };
@@ -51,10 +50,6 @@ export class TDI2WebpackPlugin {
 
     // Initialize on compilation start
     compiler.hooks.beforeCompile.tapPromise(pluginName, async () => {
-      if (this.config.verbose) {
-        console.log('🚀 TDI2 Webpack Plugin: Starting compilation...');
-      }
-
       this.performanceTracker.startTransformation();
 
       try {
@@ -65,10 +60,6 @@ export class TDI2WebpackPlugin {
 
         await this.orchestrator.initialize();
         this.performanceTracker.recordCacheHit();
-
-        if (this.config.verbose) {
-          console.log('✅ TDI2 Webpack Plugin: Initialization complete');
-        }
       } catch (error) {
         this.performanceTracker.recordError();
         console.error('❌ TDI2 initialization failed:', error);
@@ -101,10 +92,6 @@ export class TDI2WebpackPlugin {
           module._source = new webpack.sources.RawSource(transformedCode);
 
           this.performanceTracker.recordCacheHit();
-
-          if (this.config.verbose) {
-            console.log(`🔄 Applied transformation: ${filePath}`);
-          }
         } else {
           this.performanceTracker.recordCacheMiss();
         }
@@ -113,11 +100,7 @@ export class TDI2WebpackPlugin {
 
     // Report statistics on done
     compiler.hooks.done.tap(pluginName, () => {
-      if (this.config.verbose && this.orchestrator) {
-        console.log('\n📊 TDI2 Webpack Plugin Statistics:');
-        console.log(`   Transformed files: ${this.orchestrator.getTransformedFileCount()}`);
-        console.log(this.performanceTracker.formatStats());
-      }
+      // Statistics available via DEBUG environment variable
     });
   }
 }

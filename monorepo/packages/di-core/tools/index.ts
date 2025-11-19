@@ -18,12 +18,10 @@ export type {
 } from "./interface-resolver/interface-resolver-types"
 
 // Node.js-only exports (require fs, path, crypto, module)
-// Only import these in Node.js environments (Vite plugin, CLI tools, etc.)
-// DO NOT import in browser code
-// These are NOT exported to prevent bundlers from trying to load them
-// If you need these in Node.js, import directly from the source files:
-// import { ConfigManager } from '@tdi2/di-core/tools/config-manager'
-// import { EnhancedDITransformer } from '@tdi2/di-core/tools/enhanced-di-transformer'
+// WARNING: These CANNOT be imported in browser code! Only use in Node.js environments.
+// For browser code, use the browser-safe exports above or import directly from source files.
+export { FunctionalDIEnhancedTransformer } from "./functional-di-enhanced-transformer/functional-di-enhanced-transformer"
+export { EnhancedDITransformer } from "./enhanced-di-transformer"
 
 
 

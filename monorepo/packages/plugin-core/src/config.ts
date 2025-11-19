@@ -33,7 +33,6 @@ const DEFAULT_BASE_CONFIG: Required<BasePluginConfig> = {
   customSuffix: '',
   enableParameterNormalization: true,
   generateFallbacks: false,
-  verbose: false,
 };
 
 /**
@@ -89,7 +88,6 @@ export function validateConfig(config: Required<PluginConfig>): void {
     'generateDebugFiles',
     'enableParameterNormalization',
     'generateFallbacks',
-    'verbose',
   ];
 
   for (const field of booleanFields) {
