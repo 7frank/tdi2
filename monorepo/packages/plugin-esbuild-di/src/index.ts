@@ -14,6 +14,9 @@ import {
   createPerformanceTracker,
   type PluginConfig,
 } from '@tdi2/plugin-core';
+import { consoleFor } from '@tdi2/di-core/tools';
+
+const console = consoleFor('plugin-esbuild-di');
 
 export interface EsbuildPluginDIOptions extends PluginConfig {}
 
@@ -53,6 +56,7 @@ export function tdi2Plugin(userOptions: EsbuildPluginDIOptions = {}): Plugin {
     setup(build) {
       // Initialize on build start
       build.onStart(async () => {
+        console.log('🚀 TDI2 esbuild Plugin: Starting build...');
         performanceTracker.startTransformation();
 
         try {
@@ -64,6 +68,7 @@ export function tdi2Plugin(userOptions: EsbuildPluginDIOptions = {}): Plugin {
           await orchestrator.initialize();
           initialized = true;
           performanceTracker.recordCacheHit();
+          console.log('✅ TDI2 esbuild Plugin: Initialization complete');
         } catch (error) {
           performanceTracker.recordError();
           console.error('❌ TDI2 initialization failed:', error);
@@ -99,6 +104,7 @@ export function tdi2Plugin(userOptions: EsbuildPluginDIOptions = {}): Plugin {
 
           if (result.wasTransformed) {
             performanceTracker.recordCacheHit();
+            console.debug(`🔄 Transformed: ${args.path}`);
 
             return {
               contents: result.code,
@@ -117,7 +123,11 @@ export function tdi2Plugin(userOptions: EsbuildPluginDIOptions = {}): Plugin {
 
       // Report statistics on build end
       build.onEnd(() => {
-        // Statistics available via DEBUG environment variable
+        if (orchestrator) {
+          console.log('\n📊 TDI2 esbuild Plugin Statistics:');
+          console.log(`   Transformed files: ${orchestrator.getTransformedFileCount()}`);
+          console.log(performanceTracker.formatStats());
+        }
       });
     },
   };

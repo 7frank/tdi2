@@ -13,6 +13,9 @@ import {
   createPerformanceTracker,
   type PluginConfig,
 } from '@tdi2/plugin-core';
+import { consoleFor } from '@tdi2/di-core/tools';
+
+const console = consoleFor('plugin-rollup-di');
 
 export interface RollupPluginDIOptions extends PluginConfig {}
 
@@ -46,6 +49,7 @@ export function tdi2Plugin(userOptions: RollupPluginDIOptions = {}): Plugin {
     name: 'tdi2-rollup-plugin',
 
     async buildStart() {
+      console.log('🚀 TDI2 Rollup Plugin: Starting build...');
       performanceTracker.startTransformation();
 
       // Initialize orchestrator
@@ -64,6 +68,7 @@ export function tdi2Plugin(userOptions: RollupPluginDIOptions = {}): Plugin {
       }
 
       performanceTracker.endTransformation();
+      console.log('✅ TDI2 Rollup Plugin: Initialization complete');
     },
 
     load(id: string) {
@@ -76,6 +81,7 @@ export function tdi2Plugin(userOptions: RollupPluginDIOptions = {}): Plugin {
       const transformedCode = orchestrator?.getTransformedContent(id);
 
       if (transformedCode) {
+        console.debug(`[Rollup] 🔍 Using transformed version of ${id}`);
         return transformedCode;
       }
 
@@ -109,7 +115,9 @@ export function tdi2Plugin(userOptions: RollupPluginDIOptions = {}): Plugin {
     },
 
     buildEnd() {
-      // Statistics available via DEBUG environment variable
+      console.log('\n📊 TDI2 Rollup Plugin Statistics:');
+      console.log(`   Transformed files: ${orchestrator?.getTransformedFileCount() ?? 0}`);
+      console.log(performanceTracker.formatStats());
     },
   };
 }

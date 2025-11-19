@@ -13,6 +13,9 @@ import {
   createPerformanceTracker,
   type PluginConfig,
 } from '@tdi2/plugin-core';
+import { consoleFor } from '@tdi2/di-core/tools';
+
+const console = consoleFor('plugin-webpack-di');
 
 export interface WebpackPluginDIOptions extends PluginConfig {}
 
@@ -50,6 +53,7 @@ export class TDI2WebpackPlugin {
 
     // Initialize on compilation start
     compiler.hooks.beforeCompile.tapPromise(pluginName, async () => {
+      console.log('🚀 TDI2 Webpack Plugin: Starting compilation...');
       this.performanceTracker.startTransformation();
 
       try {
@@ -60,6 +64,7 @@ export class TDI2WebpackPlugin {
 
         await this.orchestrator.initialize();
         this.performanceTracker.recordCacheHit();
+        console.log('✅ TDI2 Webpack Plugin: Initialization complete');
       } catch (error) {
         this.performanceTracker.recordError();
         console.error('❌ TDI2 initialization failed:', error);
@@ -92,6 +97,7 @@ export class TDI2WebpackPlugin {
           module._source = new webpack.sources.RawSource(transformedCode);
 
           this.performanceTracker.recordCacheHit();
+          console.debug(`🔄 Applied transformation: ${filePath}`);
         } else {
           this.performanceTracker.recordCacheMiss();
         }
@@ -100,7 +106,11 @@ export class TDI2WebpackPlugin {
 
     // Report statistics on done
     compiler.hooks.done.tap(pluginName, () => {
-      // Statistics available via DEBUG environment variable
+      if (this.orchestrator) {
+        console.log('\n📊 TDI2 Webpack Plugin Statistics:');
+        console.log(`   Transformed files: ${this.orchestrator.getTransformedFileCount()}`);
+        console.log(this.performanceTracker.formatStats());
+      }
     });
   }
 }
