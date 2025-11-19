@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
         path.resolve(__dirname, "fixtures/package-a"),
         path.resolve(__dirname, "fixtures/package-b"),
       ],
-      outputDir: path.resolve(__dirname, "generated"),
+      outputDir: path.resolve(__dirname, ".tdi2"),
       enableFunctionalDI: true,
       enableInterfaceResolution: true,
       generateDebugFiles: true,

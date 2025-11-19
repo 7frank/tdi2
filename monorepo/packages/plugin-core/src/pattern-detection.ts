@@ -6,6 +6,9 @@ import type { DIPatternDetection, PluginConfig } from './types';
 
 /**
  * Detect if content contains TDI2 dependency injection patterns
+ * Note this is only used for hot reloading
+ * TODO we can cobine this with monorepo/packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts
+ *  and make both AST based to remove false positives with string comparision
  */
 export function detectDIPatterns(
   content: string,
@@ -32,54 +35,6 @@ export function detectDIPatterns(
     hasDI = true;
   }
 
-  // Check for @Autowired decorator
-  if (content.includes('@Autowired') || content.includes('@AutoWire')) {
-    patternsList.push('@Autowired');
-    hasDI = true;
-  }
-
-  // Check for interface implementations
-  if (content.includes('implements ') && content.includes('Interface')) {
-    patternsList.push('Interface implementation');
-    hasDI = true;
-  }
 
   return { hasDI, patterns: patternsList };
-}
-
-/**
- * Quick check if content likely contains DI patterns (faster heuristic)
- */
-export function quickDICheck(content: string): boolean {
-  return (
-    content.includes('@Service') ||
-    content.includes('Inject<') ||
-    content.includes('@Inject') ||
-    (content.includes('implements') && content.includes('Interface'))
-  );
-}
-
-/**
- * Check if a file path indicates it's a service file
- */
-export function isServiceFile(filePath: string): boolean {
-  const normalized = filePath.toLowerCase();
-  return (
-    normalized.includes('.service.') ||
-    normalized.includes('/services/') ||
-    normalized.includes('\\services\\')
-  );
-}
-
-/**
- * Check if a file path indicates it's a component file
- */
-export function isComponentFile(filePath: string): boolean {
-  const normalized = filePath.toLowerCase();
-  return (
-    normalized.includes('.component.') ||
-    normalized.includes('/components/') ||
-    normalized.includes('\\components\\') ||
-    normalized.endsWith('.tsx')
-  );
 }

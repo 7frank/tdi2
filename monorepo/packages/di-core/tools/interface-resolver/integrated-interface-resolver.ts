@@ -17,6 +17,7 @@ import { consoleFor } from "../logger";
 
 const console = consoleFor('di-core:interface-resolver');
 import { KeySanitizer } from "./key-sanitizer";
+import { shouldSkipFile as shouldSkipFileUtil } from "../functional-di-enhanced-transformer/utils";
 
 // Import types
 import type { 
@@ -34,6 +35,8 @@ export interface IntegratedResolverOptions {
   enableInheritanceDI?: boolean;
   enableStateDI?: boolean;
   sourceConfig?: Partial<DISourceConfiguration>;
+  excludePatterns?: string[];
+  outputDir?: string;
 }
 
 export class IntegratedInterfaceResolver {
@@ -343,10 +346,10 @@ export class IntegratedInterfaceResolver {
 
   private shouldSkipFile(sourceFile: SourceFile): boolean {
     const filePath = sourceFile.getFilePath();
-    return filePath.includes('generated') || 
-           filePath.includes('node_modules') ||
-           filePath.includes('.d.ts') ||
-           filePath.includes('.tdi2');
+    return shouldSkipFileUtil(filePath, {
+      excludePatterns: this.options.excludePatterns,
+      outputDir: this.options.outputDir,
+    });
   }
 
   private logRegistrationSummary(): void {

@@ -37,6 +37,7 @@ import { TransformationPipeline, TransformationPipelineOptions } from './transfo
 import { ImportManager } from './import-manager';
 import { DebugFileGenerator } from './debug-file-generator';
 import { DiInjectMarkers } from './di-inject-markers';
+import { shouldSkipFile as shouldSkipFileUtil } from './utils';
 
 // Import configuration processing capabilities
 import { ConfigurationProcessor } from '../config-processor/index';
@@ -50,6 +51,7 @@ interface TransformerOptions {
   customSuffix?: string;
   enableParameterNormalization?: boolean;
   generateFallbacks?: boolean;
+  excludePatterns?: string[];
 }
 
 export class FunctionalDIEnhancedTransformer {
@@ -465,11 +467,13 @@ export class FunctionalDIEnhancedTransformer {
 
   private shouldSkipFile(sourceFile: SourceFile): boolean {
     const filePath = sourceFile.getFilePath();
-    const shouldSkip = filePath.includes('generated') || 
-                     filePath.includes('node_modules') ||
-                     filePath.includes('.d.ts') ||
-                     filePath.includes('.tdi2');
-    
+
+    // Use centralized skip logic with configuration
+    const shouldSkip = shouldSkipFileUtil(filePath, {
+      excludePatterns: this.options.excludePatterns,
+      outputDir: this.options.outputDir,
+    });
+
     if (shouldSkip) {
       console.log(`🔍 Skipping file due to ignore pattern: ${filePath}`);
     }

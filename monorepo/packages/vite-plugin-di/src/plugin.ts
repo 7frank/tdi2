@@ -79,6 +79,18 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
   // Normalize scanDirs to absolute paths for HMR matching
   const absoluteScanDirs = options.scanDirs!.map(dir => path.resolve(dir));
 
+  /**
+   * Helper function to check if a file should be skipped based on exclude patterns
+   */
+  const shouldSkipFile = (filePath: string): boolean => {
+    const excludePatterns = options.excludePatterns || ['node_modules', '.d.ts', '.test.', '.spec.'];
+    for (const pattern of excludePatterns) {
+      if (filePath.includes(pattern)) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   /**
    * Main transformation function
@@ -143,6 +155,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
             outputDir: options.outputDir,
             generateDebugFiles: options.generateDebugFiles,
             customSuffix: configSuffix,
+            excludePatterns: options.excludePatterns,
           });
 
           try {
@@ -172,6 +185,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
         outputDir: options.outputDir,
         enableInterfaceResolution: options.enableInterfaceResolution,
         customSuffix: configSuffix,
+        excludePatterns: options.excludePatterns,
       });
 
       await classTransformer.transform();
@@ -188,6 +202,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           outputDir: options.outputDir,
           generateDebugFiles: options.generateDebugFiles,
           customSuffix: configSuffix,
+          excludePatterns: options.excludePatterns,
         });
 
         try {
@@ -297,10 +312,13 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
 
     resolveId(id) {
       // Handle bridge file resolution
-      if (id.startsWith("./.tdi2/") && configManager) {
+      const outputDirName = options.outputDir ? path.basename(options.outputDir!) : '.tdi2';
+      const outputDirPattern = `./${outputDirName}/`;
+
+      if (id.startsWith(outputDirPattern) && configManager) {
         const bridgeFile = path.resolve(
           configManager.getBridgeDir(),
-          id.replace("./.tdi2/", "")
+          id.replace(outputDirPattern, "")
         );
         if (fs.existsSync(bridgeFile)) {
           return bridgeFile;
@@ -340,6 +358,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
                   outputDir: options.outputDir,
                   generateDebugFiles: options.generateDebugFiles,
                   customSuffix: options.customSuffix,
+                  excludePatterns: options.excludePatterns,
                 });
 
                 // Re-run transformation with fresh instance
@@ -383,10 +402,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       if (
         isInScanDir &&
         (file.endsWith(".ts") || file.endsWith(".tsx")) &&
-        !file.endsWith(".test.ts") &&
-        !file.endsWith(".test.tsx") &&
-        !file.endsWith(".spec.ts") &&
-        !file.endsWith(".spec.tsx")
+        !shouldSkipFile(file)
       ) {
         try {
           const content = fs.readFileSync(file, "utf-8");
@@ -401,10 +417,12 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
             // Invalidate all bridge files, config modules, AND transformed components
             const moduleGraph = server.moduleGraph;
             const bridgeDir = configManager?.getBridgeDir();
+            const outputDirName = options.outputDir ? path.basename(options.outputDir!) : '.tdi2';
+
             if (bridgeDir) {
               // Invalidate all modules in the bridge directory
               for (const [id, mod] of moduleGraph.idToModuleMap) {
-                if (id.includes('.tdi2')) {
+                if (id.includes(outputDirName)) {
                   moduleGraph.invalidateModule(mod);
                 }
               }
@@ -435,7 +453,8 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
       }
 
       // Handle bridge file changes
-      if (file.includes(".tdi2") && configManager) {
+      const outputDirName = options.outputDir ? path.basename(options.outputDir!) : '.tdi2';
+      if (file.includes(outputDirName) && configManager) {
         const relativePath = path.relative(configManager.getBridgeDir(), file);
         if (!relativePath.startsWith("..")) {
           console.debug(`🌉 Bridge file changed: ${relativePath}`);
@@ -472,10 +491,7 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
           if (
             isInScanDir &&
             (file.endsWith(".ts") || file.endsWith(".tsx")) &&
-            !file.endsWith(".test.ts") &&
-            !file.endsWith(".test.tsx") &&
-            !file.endsWith(".spec.ts") &&
-            !file.endsWith(".spec.tsx")
+            !shouldSkipFile(file)
           ) {
             try {
               const content = fs.readFileSync(file, "utf-8");
@@ -490,10 +506,12 @@ export function diEnhancedPlugin(userOptions: DIPluginOptions = {}): Plugin {
                 // Invalidate all bridge files, config modules, AND transformed components
                 const moduleGraph = server.moduleGraph;
                 const bridgeDir = configManager?.getBridgeDir();
+                const outputDirName = options.outputDir ? path.basename(options.outputDir!) : '.tdi2';
+
                 if (bridgeDir) {
                   // Invalidate all modules in the bridge directory
                   for (const [id, mod] of moduleGraph.idToModuleMap) {
-                    if (id.includes('.tdi2')) {
+                    if (id.includes(outputDirName)) {
                       moduleGraph.invalidateModule(mod);
                     }
                   }
