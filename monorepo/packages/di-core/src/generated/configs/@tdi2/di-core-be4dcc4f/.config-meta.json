@@ -1,0 +1,28 @@
+{
+  "configHash": "@tdi2/di-core-be4dcc4f",
+  "generatedAt": "2025-11-19T15:46:46.297Z",
+  "options": {
+    "nodeEnv": "test",
+    "scanDirs": [
+      "./src"
+    ],
+    "outputDir": "./src/generated",
+    "enableFunctionalDI": false
+  },
+  "packageName": "@tdi2/di-core",
+  "paths": {
+    "configDir": "/home/user/tdi2/monorepo/packages/di-core/src/generated/configs/@tdi2/di-core-be4dcc4f",
+    "bridgeDirs": [
+      "/home/user/tdi2/monorepo/packages/di-core/src/generated"
+    ]
+  },
+  "version": "2.0.0",
+  "hashInputs": {
+    "scanDirs": [
+      "/home/user/tdi2/monorepo/packages/di-core/src"
+    ],
+    "enableFunctionalDI": false,
+    "packageName": "@tdi2/di-core",
+    "environment": "development"
+  }
+}

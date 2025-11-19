@@ -1,6 +1,16 @@
 import { Project, SourceFile, SyntaxKind } from 'ts-morph';
 
-import { SharedTypeResolver,TransformationPipeline,IntegratedInterfaceResolver, SharedDependencyExtractor } from '@tdi2/di-core/tools';
+// Import browser-compatible components directly from source
+// @ts-ignore - importing from source files
+import { TransformationPipeline } from '../../packages/di-core/tools/functional-di-enhanced-transformer/transformation-pipeline';
+// @ts-ignore
+import { IntegratedInterfaceResolver } from '../../packages/di-core/tools/interface-resolver/integrated-interface-resolver';
+// @ts-ignore
+import { SharedDependencyExtractor } from '../../packages/di-core/tools/shared/SharedDependencyExtractor';
+// @ts-ignore
+import { SharedTypeResolver } from '../../packages/di-core/tools/shared/SharedTypeResolver';
+// @ts-ignore
+import { DiInjectMarkers } from '../../packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers';
 
 export interface TransformationResult {
   success: boolean;
@@ -26,13 +36,6 @@ export class BrowserTransformer {
   private dependencyExtractor: SharedDependencyExtractor;
   private transformationPipeline: TransformationPipeline;
 
-  /**
-   * Check if code has @di-inject marker
-   */
-  private hasDIMarker(text: string): boolean {
-    return text.includes('@di-inject') || text.includes('// @di-inject');
-  }
-
   constructor() {
     // Create in-memory project for browser use
     this.project = new Project({
@@ -48,9 +51,7 @@ export class BrowserTransformer {
     });
 
     // Initialize the transformation components
-    // Pass the in-memory project to avoid creating a new one with file system
     this.interfaceResolver = new IntegratedInterfaceResolver({
-      project: this.project, // Use our in-memory project
       scanDirs: [this.virtualRoot],
       enableInheritanceDI: true,
       enableStateDI: true,
@@ -312,10 +313,10 @@ export class ProductService implements ProductServiceInterface {
       // Transform function declarations
       for (const func of functions) {
         const fullText = func.getFullText();
-        if (this.hasDIMarker(fullText)) {
+        if (DiInjectMarkers.hasDIMarker(fullText)) {
           try {
-            // Extract dependencies using the correct method
-            const dependencies = this.dependencyExtractor.extractFromFunctionParameter(func, sourceFile);
+            // Extract dependencies
+            const dependencies = this.dependencyExtractor.extractDependencies(func, sourceFile);
 
             // Run transformation pipeline
             this.transformationPipeline.transformComponent(func, dependencies, sourceFile);
@@ -331,10 +332,10 @@ export class ProductService implements ProductServiceInterface {
         const initializer = varDecl.getInitializer();
         if (initializer && initializer.getKind() === SyntaxKind.ArrowFunction) {
           const varStatement = varDecl.getVariableStatement();
-          if (varStatement && this.hasDIMarker(varStatement.getFullText())) {
+          if (varStatement && DiInjectMarkers.hasDIMarker(varStatement.getFullText())) {
             try {
-              // Extract dependencies using the correct method for arrow functions
-              const dependencies = this.dependencyExtractor.extractFromArrowFunction(initializer as any, sourceFile);
+              // Extract dependencies
+              const dependencies = this.dependencyExtractor.extractDependencies(initializer as any, sourceFile);
 
               // Run transformation pipeline
               this.transformationPipeline.transformComponent(initializer as any, dependencies, sourceFile);

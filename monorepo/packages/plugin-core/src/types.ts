@@ -55,12 +55,11 @@ export interface BasePluginConfig {
   generateFallbacks?: boolean;
 
   /**
-   * Patterns to exclude from processing
-   * Supports partial string matching for both files and directories
-   * @default ['node_modules', '.d.ts', '.test.', '.spec.']
-   * @example ['node_modules', 'dist', '.test.', '.spec.', 'generated']
+   * Enable verbose logging for debugging
+   * @default false
+   * @deprecated Use DEBUG environment variable instead (e.g., DEBUG=vite-plugin-di:* or DEBUG=di-core:*)
    */
-  excludePatterns?: string[];
+  verbose?: boolean;
 }
 
 /**
