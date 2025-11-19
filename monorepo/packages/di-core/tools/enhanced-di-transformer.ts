@@ -31,6 +31,7 @@ import type {
 } from './shared/shared-types';
 
 import { IntegratedInterfaceResolver } from './interface-resolver/integrated-interface-resolver';
+import { shouldSkipFile as shouldSkipFileUtil } from './functional-di-enhanced-transformer/utils';
 
 interface TransformerOptions {
   scanDirs?: string[];
@@ -38,6 +39,7 @@ interface TransformerOptions {
   generateRegistry?: boolean;
   enableInterfaceResolution?: boolean;
   customSuffix?: string;
+  excludePatterns?: string[];
 }
 
 export class EnhancedDITransformer {
@@ -311,10 +313,10 @@ export class EnhancedDITransformer {
 
   private shouldSkipFile(sourceFile: SourceFile): boolean {
     const filePath = sourceFile.getFilePath();
-    return filePath.includes('generated') || 
-           filePath.includes('node_modules') ||
-           filePath.includes('.d.ts') ||
-           filePath.includes('.tdi2');
+    return shouldSkipFileUtil(filePath, {
+      excludePatterns: this.options.excludePatterns,
+      outputDir: this.options.outputDir,
+    });
   }
 
   private hasServiceDecorator(classDecl: ClassDeclaration): boolean {

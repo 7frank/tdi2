@@ -84,6 +84,22 @@ export class TransformationTestFramework {
   private snapshotSubDirectory = "."; // Previously "__snapshots__" but we prefer to keep snapshots next to input files, which reduces complexity with imports
 
   constructor(private options: TransformationTestOptions) {
+    this.initializeProject();
+
+    // Setup default ignore patterns
+    this.defaultIgnorePatterns = DEFAULT_IGNORE_PATTERNS
+
+    // Create mock interface resolver with common implementations
+    this.setupMockInterfaceResolver();
+
+    // Initialize transformer
+    this.initializeTransformer();
+  }
+
+  /**
+   * Initialize or reinitialize the ts-morph project
+   */
+  private initializeProject(): void {
     this.project = new Project({
       useInMemoryFileSystem: true,
       compilerOptions: {
@@ -94,14 +110,12 @@ export class TransformationTestFramework {
         module: 99, // ESNext
       },
     });
+  }
 
-    // Setup default ignore patterns
-    this.defaultIgnorePatterns = DEFAULT_IGNORE_PATTERNS
-
-    // Create mock interface resolver with common implementations
-    this.setupMockInterfaceResolver();
-
-    // Initialize transformer
+  /**
+   * Initialize or reinitialize the transformer with the current project
+   */
+  private initializeTransformer(): void {
     this.transformer = new FunctionalDIEnhancedTransformer({
       scanDirs: ["./src"],
       outputDir: "./src/.tdi2",
@@ -110,7 +124,7 @@ export class TransformationTestFramework {
     // Inject mocked dependencies
     (this.transformer as any).project = this.project;
     (this.transformer as any).interfaceResolver = this.mockInterfaceResolver;
-    
+
     // Also inject the mock into shared components that use the interface resolver
     if ((this.transformer as any).typeResolver) {
       (this.transformer as any).typeResolver.interfaceResolver = this.mockInterfaceResolver;
@@ -118,6 +132,20 @@ export class TransformationTestFramework {
     if ((this.transformer as any).dependencyExtractor?.typeResolver) {
       (this.transformer as any).dependencyExtractor.typeResolver.interfaceResolver = this.mockInterfaceResolver;
     }
+  }
+
+  /**
+   * Reset the framework state between tests without creating a new Project instance
+   * This is much faster than creating a new framework instance
+   */
+  public reset(): void {
+    // Remove all source files from the project
+    this.project.getSourceFiles().forEach(sourceFile => {
+      this.project.removeSourceFile(sourceFile);
+    });
+
+    // Don't recreate the project or transformer - just clear the files
+    // This is significantly faster than creating new instances
   }
 
   private setupMockInterfaceResolver(): void {
@@ -878,29 +906,58 @@ export interface TransformationSnapshot {
   };
 }
 
+// Cache for shared framework instances to avoid recreating Project for each test
+const frameworkCache = new Map<string, TransformationTestFramework>();
+
+/**
+ * Get or create a shared framework instance for a fixture directory
+ * This significantly improves test performance by reusing the ts-morph Project
+ */
+function getOrCreateFramework(
+  fixtureDir: string,
+  options?: Partial<TransformationTestOptions>
+): TransformationTestFramework {
+  const cacheKey = fixtureDir;
+
+  if (!frameworkCache.has(cacheKey)) {
+    const framework = new TransformationTestFramework({
+      fixtureDir,
+      updateSnapshots: [
+        "1",
+        "true",
+        "True",
+        "TRUE",
+        "yes",
+        "Yes",
+        "YES",
+      ].includes(process.env.UPDATE_SNAPSHOTS || ""),
+      validateSyntax: true, // Enable syntax validation by default
+      failOnSyntaxErrors: false, // Don't fail tests by default, just log
+      ...options,
+    });
+    frameworkCache.set(cacheKey, framework);
+  }
+
+  return frameworkCache.get(cacheKey)!;
+}
+
 // Utility function for creating tests with ignore patterns and validation
 export function defineTransformationTest(
   testName: string,
   fixtureDir: string,
   options?: Partial<TransformationTestOptions>
 ): () => Promise<void> {
-  const framework = new TransformationTestFramework({
-    fixtureDir,
-    updateSnapshots: [
-      "1",
-      "true",
-      "True",
-      "TRUE",
-      "yes",
-      "Yes",
-      "YES",
-    ].includes(process.env.UPDATE_SNAPSHOTS || ""),
-    validateSyntax: true, // Enable syntax validation by default
-    failOnSyntaxErrors: false, // Don't fail tests by default, just log
-    ...options,
-  });
+  // Get or create a shared framework instance (reuses Project across tests)
+  const framework = getOrCreateFramework(fixtureDir, options);
 
-  return framework.createJestTest(testName);
+  return async () => {
+    // Reset the framework before each test to clear previous files
+    framework.reset();
+
+    // Run the test
+    const testFn = framework.createJestTest(testName);
+    return testFn();
+  };
 }
 
 // Predefined ignore pattern factories for common use cases

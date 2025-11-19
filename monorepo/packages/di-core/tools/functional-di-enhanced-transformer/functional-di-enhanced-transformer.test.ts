@@ -263,13 +263,25 @@ describe("FunctionalDIEnhancedTransformer", () => {
   let transformer: FunctionalDIEnhancedTransformer;
   let mockProject: Project;
 
+  // Create shared project once for all tests (performance optimization)
+  // Instead of creating a new Project for each test, we create it once and clear files between tests
+  const sharedProject = createMockProject();
+
   beforeEach(() => {
     transformer = new FunctionalDIEnhancedTransformer({
       scanDirs: ["./src"],
       outputDir: "./src/generated",
     });
 
-    mockProject = createMockProject();
+    // Clear all files except the markers file between tests (much faster than creating new Project)
+    const markersFile = sharedProject.getSourceFile("src/di/markers.ts");
+    sharedProject.getSourceFiles().forEach(file => {
+      if (file !== markersFile) {
+        sharedProject.removeSourceFile(file);
+      }
+    });
+
+    mockProject = sharedProject;
     
     // Mock the project property
     (transformer as any).project = mockProject;

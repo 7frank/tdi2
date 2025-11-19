@@ -33,6 +33,7 @@ const DEFAULT_BASE_CONFIG: Required<BasePluginConfig> = {
   customSuffix: '',
   enableParameterNormalization: true,
   generateFallbacks: false,
+  excludePatterns: ['node_modules', '.d.ts', '.test.', '.spec.'],
 };
 
 /**
@@ -118,19 +119,62 @@ export function normalizePath(filePath: string): string {
 }
 
 /**
- * Check if a file should be processed based on extension
+ * Check if a file should be skipped based on configuration
  */
-export function shouldProcessFile(filePath: string, extensions: string[]): boolean {
+export function shouldSkipFile(
+  filePath: string,
+  config: { excludePatterns?: string[]; outputDir?: string }
+): boolean {
   const normalized = normalizePath(filePath);
 
-  // Skip node_modules
-  if (normalized.includes('node_modules')) {
+  // Skip outputDir (generated files)
+  if (config.outputDir) {
+    const normalizedOutputDir = normalizePath(config.outputDir);
+    // Extract just the directory name (e.g., '.tdi2' from './src/.tdi2')
+    const outputDirName = normalizedOutputDir.split('/').pop() || '';
+    if (outputDirName && normalized.includes(outputDirName)) {
+      return true;
+    }
+  }
+
+  // Skip by exclude patterns (works for both files and directories)
+  if (config.excludePatterns) {
+    for (const pattern of config.excludePatterns) {
+      if (normalized.includes(pattern)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Check if a file should be processed based on extension
+ */
+export function shouldProcessFile(
+  filePath: string,
+  extensions: string[],
+  config?: { excludePatterns?: string[]; outputDir?: string }
+): boolean {
+  const normalized = normalizePath(filePath);
+
+  // Use the centralized skip function if config is provided
+  if (config && shouldSkipFile(filePath, config)) {
     return false;
   }
 
-  // Skip generated files
-  if (normalized.includes('.tdi2') || normalized.includes('/generated/')) {
-    return false;
+  // Legacy behavior if no config provided
+  if (!config) {
+    // Skip node_modules
+    if (normalized.includes('node_modules')) {
+      return false;
+    }
+
+    // Skip generated files
+    if (normalized.includes('.tdi2') || normalized.includes('/generated/')) {
+      return false;
+    }
   }
 
   // Check extension

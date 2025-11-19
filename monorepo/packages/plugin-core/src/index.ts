@@ -15,9 +15,6 @@ export {
 // Export pattern detection
 export {
   detectDIPatterns,
-  quickDICheck,
-  isServiceFile,
-  isComponentFile,
 } from './pattern-detection';
 
 // Export performance tracking

@@ -6,13 +6,33 @@ import { FunctionalDependency, TransformationOptions } from './types';
 /**
  * Check if a file should be skipped during transformation
  */
-export function shouldSkipFile(filePath: string): boolean {
-  return filePath.includes('generated') || 
-         filePath.includes('node_modules') ||
-         filePath.includes('.d.ts') ||
-         filePath.includes('.tdi2') ||
-         filePath.includes('.test.') ||
-         filePath.includes('.spec.');
+export function shouldSkipFile(
+  filePath: string,
+  options?: { excludePatterns?: string[]; outputDir?: string }
+): boolean {
+  const normalized = filePath.replace(/\\/g, '/');
+
+  // Default patterns (works for both files and directories)
+  const defaultExcludePatterns = ['node_modules', '.d.ts', '.test.', '.spec.'];
+  const excludePatterns = options?.excludePatterns || defaultExcludePatterns;
+
+  // Skip outputDir (generated files)
+  if (options?.outputDir) {
+    const normalizedOutputDir = options.outputDir.replace(/\\/g, '/');
+    const outputDirName = normalizedOutputDir.split('/').pop() || '';
+    if (outputDirName && normalized.includes(outputDirName)) {
+      return true;
+    }
+  }
+
+  // Skip based on exclude patterns (works for both files and directories)
+  for (const pattern of excludePatterns) {
+    if (normalized.includes(pattern)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
