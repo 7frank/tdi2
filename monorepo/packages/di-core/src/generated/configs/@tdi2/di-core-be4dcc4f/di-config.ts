@@ -1,6 +1,6 @@
 // Auto-generated DI configuration
 // Config: @tdi2/di-core-be4dcc4f
-// Generated: 2025-11-19T15:46:28.509Z
+// Generated: 2025-11-19T17:34:31.435Z
 
 
 

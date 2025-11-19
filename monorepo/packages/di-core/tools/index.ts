@@ -22,6 +22,7 @@ export type {
 // For browser code, use the browser-safe exports above or import directly from source files.
 export { FunctionalDIEnhancedTransformer } from "./functional-di-enhanced-transformer/functional-di-enhanced-transformer"
 export { EnhancedDITransformer } from "./enhanced-di-transformer"
+export { ConfigManager } from "./config-manager"
 
 
 
