@@ -4,9 +4,11 @@
  * Displays interfaces implemented, usage stats, and links to other implementations
  */
 
-const metadataLoader = require('../utils/metadata-loader');
+import type { Rule } from 'eslint';
+import metadataLoader from '../utils/metadata-loader.js';
+import type { ImplementationContextOptions, ImplementationMetadata } from '../types.js';
 
-module.exports = {
+const rule: Rule.RuleModule = {
   meta: {
     type: 'suggestion',
     docs: {
@@ -63,10 +65,10 @@ module.exports = {
     ],
   },
 
-  create(context) {
+  create(context: Rule.RuleContext) {
     const projectRoot = context.getCwd();
     const metadata = metadataLoader.loadMetadata(projectRoot);
-    const options = context.options[0] || {};
+    const options = (context.options[0] || {}) as ImplementationContextOptions;
 
     // Default options
     const showUsageStats = options.showUsageStats !== false;
@@ -74,13 +76,13 @@ module.exports = {
     const showOtherImplementations = options.showOtherImplementations !== false;
 
     // Skip if metadata not available
-    if (!metadata || metadata.error) {
+    if (!metadata || 'error' in metadata) {
       return {};
     }
 
     return {
       // Match class declarations
-      ClassDeclaration(node) {
+      ClassDeclaration(node: any) {
         const className = node.id && node.id.name;
         if (!className) return;
 
@@ -184,8 +186,10 @@ module.exports = {
 /**
  * Format other implementation for display
  */
-function formatOtherImpl(impl) {
+function formatOtherImpl(impl: ImplementationMetadata): string {
   const badge = impl.isPrimary ? '⭐ PRIMARY' : '';
   const profiles = impl.profiles.length > 0 ? ` [${impl.profiles.join(', ')}]` : '';
   return `   • ${impl.implementationClass}${profiles} ${badge}`.trim();
 }
+
+export default rule;

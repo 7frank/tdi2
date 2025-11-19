@@ -41,8 +41,8 @@ describe('MetadataLoader - Logic Tests', () => {
       const primaryImpl = interfaceData.implementations.find((impl) => impl.isPrimary);
 
       expect(primaryImpl).toBeDefined();
-      expect(primaryImpl.implementationClass).toBe('UserService');
-      expect(primaryImpl.isSelected).toBe(true);
+      expect(primaryImpl!.implementationClass).toBe('UserService');
+      expect(primaryImpl!.isSelected).toBe(true);
     });
 
     it('should correctly identify ambiguous interface', () => {
@@ -57,9 +57,9 @@ describe('MetadataLoader - Logic Tests', () => {
       const interfaceData = validMetadata.interfaces.UserServiceInterface;
       const primaryImpl = interfaceData.implementations.find((impl) => impl.isPrimary);
 
-      expect(primaryImpl.dependencies).toBeInstanceOf(Array);
-      expect(primaryImpl.dependencies.length).toBe(2);
-      expect(primaryImpl.dependencies[0].interfaceName).toBe('AuthService');
+      expect(primaryImpl!.dependencies).toBeInstanceOf(Array);
+      expect(primaryImpl!.dependencies.length).toBe(2);
+      expect(primaryImpl!.dependencies[0].interfaceName).toBe('AuthService');
     });
   });
 
@@ -143,22 +143,22 @@ describe('MetadataLoader - Logic Tests', () => {
       const ambiguousIssue = validMetadata.issues.find((issue) => issue.type === 'ambiguous');
 
       expect(ambiguousIssue).toBeDefined();
-      expect(ambiguousIssue.interfaceName).toBe('LoggerInterface');
-      expect(ambiguousIssue.severity).toBe('warning');
+      expect(ambiguousIssue!.interfaceName).toBe('LoggerInterface');
+      expect(ambiguousIssue!.severity).toBe('warning');
     });
 
     it('should provide suggested fixes', () => {
       const ambiguousIssue = validMetadata.issues.find((issue) => issue.type === 'ambiguous');
 
-      expect(ambiguousIssue.suggestedFix).toBeDefined();
-      expect(ambiguousIssue.suggestedFix).toContain('@Primary');
+      expect(ambiguousIssue!.suggestedFix).toBeDefined();
+      expect(ambiguousIssue!.suggestedFix).toContain('@Primary');
     });
 
     it('should list affected components', () => {
       const ambiguousIssue = validMetadata.issues.find((issue) => issue.type === 'ambiguous');
 
-      expect(ambiguousIssue.affectedComponents).toBeInstanceOf(Array);
-      expect(ambiguousIssue.affectedComponents.length).toBeGreaterThan(0);
+      expect(ambiguousIssue!.affectedComponents).toBeInstanceOf(Array);
+      expect(ambiguousIssue!.affectedComponents.length).toBeGreaterThan(0);
     });
   });
 });

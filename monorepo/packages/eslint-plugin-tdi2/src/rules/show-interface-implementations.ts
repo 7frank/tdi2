@@ -4,9 +4,11 @@
  * Provides navigation to all implementing classes
  */
 
-const metadataLoader = require('../utils/metadata-loader');
+import type { Rule } from 'eslint';
+import metadataLoader from '../utils/metadata-loader.js';
+import type { InterfaceImplementationsOptions, ImplementationMetadata, ESLintMetadata } from '../types.js';
 
-module.exports = {
+const rule: Rule.RuleModule = {
   meta: {
     type: 'suggestion',
     docs: {
@@ -53,10 +55,10 @@ module.exports = {
     ],
   },
 
-  create(context) {
+  create(context: Rule.RuleContext) {
     const projectRoot = context.getCwd();
     const metadata = metadataLoader.loadMetadata(projectRoot);
-    const options = context.options[0] || {};
+    const options = (context.options[0] || {}) as InterfaceImplementationsOptions;
 
     // Default options
     const showUsageStats = options.showUsageStats !== false;
@@ -64,13 +66,13 @@ module.exports = {
     const warnOnAmbiguity = options.warnOnAmbiguity !== false;
 
     // Skip if metadata not available
-    if (!metadata || metadata.error) {
+    if (!metadata || 'error' in metadata) {
       return {};
     }
 
     return {
       // Match interface declarations
-      TSInterfaceDeclaration(node) {
+      TSInterfaceDeclaration(node: any) {
         const interfaceName = node.id && node.id.name;
         if (!interfaceName) return;
 
@@ -125,8 +127,14 @@ module.exports = {
 /**
  * Format single implementation for display
  */
-function formatImplementation(impl, number, metadata, showUsageStats, showProfiles) {
-  const parts = [];
+function formatImplementation(
+  impl: ImplementationMetadata,
+  number: number,
+  metadata: ESLintMetadata,
+  showUsageStats: boolean,
+  showProfiles: boolean
+): string {
+  const parts: string[] = [];
 
   // Header with number and class name
   let header = `   ${number}. ${impl.implementationClass}`;
@@ -179,3 +187,5 @@ function formatImplementation(impl, number, metadata, showUsageStats, showProfil
 
   return parts.join('\n');
 }
+
+export default rule;

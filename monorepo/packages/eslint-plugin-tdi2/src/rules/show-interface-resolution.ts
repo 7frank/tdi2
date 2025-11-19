@@ -4,9 +4,12 @@
  * Displays multiple implementations, selection logic, and navigation context
  */
 
-const metadataLoader = require('../utils/metadata-loader');
+import type { Rule } from 'eslint';
+import type { TSESTree } from '@typescript-eslint/utils';
+import metadataLoader from '../utils/metadata-loader.js';
+import type { InterfaceResolutionOptions, ImplementationMetadata } from '../types.js';
 
-module.exports = {
+const rule: Rule.RuleModule = {
   meta: {
     type: 'suggestion',
     docs: {
@@ -102,10 +105,10 @@ module.exports = {
     ],
   },
 
-  create(context) {
+  create(context: Rule.RuleContext) {
     const projectRoot = context.getCwd();
     const metadata = metadataLoader.loadMetadata(projectRoot);
-    const options = context.options[0] || {};
+    const options = (context.options[0] || {}) as InterfaceResolutionOptions;
 
     // Default options
     const showDependencies = options.showDependencies !== false;
@@ -115,9 +118,9 @@ module.exports = {
     const warnOnAmbiguous = options.warnOnAmbiguous !== false;
 
     // If config not found, show warning once per file
-    if (metadata.error === 'CONFIG_NOT_FOUND') {
+    if ('error' in metadata && metadata.error === 'CONFIG_NOT_FOUND') {
       return {
-        Program(node) {
+        Program(node: Rule.Node) {
           context.report({
             node,
             messageId: 'configNotFound',
@@ -126,9 +129,13 @@ module.exports = {
       };
     }
 
+    if ('error' in metadata) {
+      return {};
+    }
+
     return {
       // Detect Inject<InterfaceName> patterns in TypeScript
-      TSTypeReference(node) {
+      TSTypeReference(node: any) {
         // Check if this is an Inject or InjectOptional marker
         if (!isInjectMarker(node)) return;
 
@@ -254,7 +261,7 @@ module.exports = {
 /**
  * Check if node is an Inject<> or InjectOptional<> marker
  */
-function isInjectMarker(node) {
+function isInjectMarker(node: any): boolean {
   if (!node.typeName) return false;
 
   const typeName = node.typeName.name || node.typeName.escapedText;
@@ -264,7 +271,7 @@ function isInjectMarker(node) {
 /**
  * Extract interface name from Inject<InterfaceName>
  */
-function extractInterfaceName(node) {
+function extractInterfaceName(node: any): string | null {
   try {
     if (!node.typeParameters || !node.typeParameters.params || node.typeParameters.params.length === 0) {
       return null;
@@ -287,7 +294,7 @@ function extractInterfaceName(node) {
 /**
  * Format list of implementations for ambiguous warning
  */
-function formatImplementationList(implementations) {
+function formatImplementationList(implementations: ImplementationMetadata[]): string {
   return implementations
     .map((impl, i) => {
       const parts = [
@@ -310,7 +317,7 @@ function formatImplementationList(implementations) {
 /**
  * Format single other implementation for display
  */
-function formatOtherImplementation(impl) {
+function formatOtherImplementation(impl: ImplementationMetadata): string {
   const parts = [`   • ${impl.implementationClass} (${impl.implementationPath}:${impl.implementationLocation.line})`];
 
   if (impl.profiles.length > 0) {
@@ -323,3 +330,5 @@ function formatOtherImplementation(impl) {
 
   return parts.join('\n');
 }
+
+export default rule;

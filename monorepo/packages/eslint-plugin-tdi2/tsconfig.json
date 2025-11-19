@@ -9,17 +9,17 @@
     "declaration": true,
     "declarationMap": true,
     "outDir": "./dist",
-    "rootDir": "./",
-    "strict": false,
+    "rootDir": "./src",
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
-    "index.js",
-    "rules/**/*.js",
-    "utils/**/*.js"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",

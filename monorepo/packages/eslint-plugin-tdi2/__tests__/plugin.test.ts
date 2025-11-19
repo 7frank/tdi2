@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import plugin from '../index.js';
+import plugin from '../src/index.js';
 
 describe('ESLint Plugin TDI2', () => {
   it('should export rules object', () => {
@@ -69,7 +69,7 @@ describe('ESLint Plugin TDI2', () => {
       const rule = plugin.rules['show-interface-resolution'];
 
       expect(rule.meta.type).toBe('suggestion');
-      expect(rule.meta.docs.description).toContain('Inject<>');
+      expect(rule.meta.docs?.description).toContain('Inject<>');
       expect(rule.meta.messages.configNotFound).toBeDefined();
       expect(rule.meta.messages.interfaceResolved).toBeDefined();
       expect(rule.meta.messages.interfaceAmbiguous).toBeDefined();
@@ -81,7 +81,7 @@ describe('ESLint Plugin TDI2', () => {
       const rule = plugin.rules['show-implementation-context'];
 
       expect(rule.meta.type).toBe('suggestion');
-      expect(rule.meta.docs.description).toContain('@Service()');
+      expect(rule.meta.docs?.description).toContain('@Service()');
       expect(rule.meta.messages.implementationContext).toBeDefined();
       expect(rule.meta.schema).toBeDefined();
     });
@@ -90,7 +90,7 @@ describe('ESLint Plugin TDI2', () => {
       const rule = plugin.rules['show-interface-implementations'];
 
       expect(rule.meta.type).toBe('suggestion');
-      expect(rule.meta.docs.description).toContain('implementations');
+      expect(rule.meta.docs?.description).toContain('implementations');
       expect(rule.meta.messages.interfaceImplementations).toBeDefined();
       expect(rule.meta.schema).toBeDefined();
     });
@@ -99,7 +99,7 @@ describe('ESLint Plugin TDI2', () => {
   describe('rule schemas', () => {
     it('show-interface-resolution should accept valid options', () => {
       const rule = plugin.rules['show-interface-resolution'];
-      const schema = rule.meta.schema[0];
+      const schema = rule.meta.schema![0] as any;
 
       expect(schema.type).toBe('object');
       expect(schema.properties.showDependencies).toBeDefined();
@@ -111,7 +111,7 @@ describe('ESLint Plugin TDI2', () => {
 
     it('show-implementation-context should accept valid options', () => {
       const rule = plugin.rules['show-implementation-context'];
-      const schema = rule.meta.schema[0];
+      const schema = rule.meta.schema![0] as any;
 
       expect(schema.type).toBe('object');
       expect(schema.properties.showUsageStats).toBeDefined();
@@ -121,7 +121,7 @@ describe('ESLint Plugin TDI2', () => {
 
     it('show-interface-implementations should accept valid options', () => {
       const rule = plugin.rules['show-interface-implementations'];
-      const schema = rule.meta.schema[0];
+      const schema = rule.meta.schema![0] as any;
 
       expect(schema.type).toBe('object');
       expect(schema.properties.showUsageStats).toBeDefined();

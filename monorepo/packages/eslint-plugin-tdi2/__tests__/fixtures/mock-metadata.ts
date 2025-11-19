@@ -2,7 +2,9 @@
  * Mock ESLint metadata for testing
  */
 
-export const validMetadata = {
+import type { ESLintMetadata, MetadataError } from '../../src/types.js';
+
+export const validMetadata: ESLintMetadata = {
   version: '1.0.0',
   generated: '2025-01-01T00:00:00.000Z',
   configHash: 'test-hash-123',
@@ -197,12 +199,12 @@ export const validMetadata = {
   ],
 };
 
-export const metadataNotFound = {
+export const metadataNotFound: MetadataError = {
   error: 'CONFIG_NOT_FOUND',
   message: 'TDI2 config not found. Run your app once to generate interface resolution data.',
 };
 
-export const metadataParseError = {
+export const metadataParseError: MetadataError = {
   error: 'PARSE_ERROR',
   message: 'Failed to parse ESLint metadata: Unexpected token',
 };

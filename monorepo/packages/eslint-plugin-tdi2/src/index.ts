@@ -3,11 +3,12 @@
  * Provides rich context information for interface resolution and DI usage
  */
 
-const showInterfaceResolution = require('./rules/show-interface-resolution');
-const showImplementationContext = require('./rules/show-implementation-context');
-const showInterfaceImplementations = require('./rules/show-interface-implementations');
+import type { ESLint, Linter } from 'eslint';
+import showInterfaceResolution from './rules/show-interface-resolution.js';
+import showImplementationContext from './rules/show-implementation-context.js';
+import showInterfaceImplementations from './rules/show-interface-implementations.js';
 
-module.exports = {
+const plugin: ESLint.Plugin = {
   rules: {
     // Interface resolution context at Inject<> usage points
     'show-interface-resolution': showInterfaceResolution,
@@ -27,7 +28,7 @@ module.exports = {
         'tdi2/show-implementation-context': 'warn',
         'tdi2/show-interface-implementations': 'warn',
       },
-    },
+    } as any,
     strict: {
       plugins: ['tdi2'],
       rules: {
@@ -58,6 +59,8 @@ module.exports = {
           },
         ],
       },
-    },
+    } as any,
   },
 };
+
+export default plugin;
