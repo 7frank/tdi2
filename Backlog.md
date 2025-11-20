@@ -10,16 +10,16 @@ two interface of the same name and in different files are resolved inproperly
 
 ### [❌] playground
 
-> use vite plugin in playground application similarly to https://typia.io/playground/ or others
+> ✅ use vite plugin in playground application similarly to https://typia.io/playground/ or others
 
-- ❌ fix all builds
-- ❌ fix all tests
-- add playground delpoyment to github pages
-- add builld and ALL tests to CI
-  - dicore = e2e
-  - cross package
-  - e2e
-- ...
+- ✅ fix all builds
+- ✅ fix all tests
+- ❌ add playground delpoyment to github pages
+- ✅ add build and ALL tests to CI
+  - ✅ dicore unit & e2e
+  - ✅ cross package
+  - ✅ e2e
+
 
 
 ### [❌] write state ownership docs section

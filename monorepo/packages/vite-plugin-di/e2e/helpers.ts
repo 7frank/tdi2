@@ -1,7 +1,7 @@
-import { Page } from '@playwright/test';
-import { createServer, ViteDevServer } from 'vite';
-import { promises as fsPromises } from 'fs';
-import * as pathModule from 'path';
+import { Page } from "@playwright/test";
+import { createServer, ViteDevServer } from "vite";
+import { promises as fsPromises } from "fs";
+import * as pathModule from "path";
 
 // Create fs and path references
 const fs = fsPromises;
@@ -54,13 +54,15 @@ async function removeDir(dir: string): Promise<void> {
 /**
  * Start a Vite dev server programmatically
  */
-export async function startDevServer(testAppDir: string): Promise<{ server: ViteDevServer; port: number }> {
+export async function startDevServer(
+  testAppDir: string
+): Promise<{ server: ViteDevServer; port: number }> {
   // Use random port to avoid conflicts when tests run in parallel
   const port = 3000 + Math.floor(Math.random() * 1000);
 
   const server = await createServer({
     root: testAppDir,
-    configFile: path.join(testAppDir, 'vite.config.ts'),
+    configFile: path.join(testAppDir, "vite.config.ts"),
     server: {
       port,
       strictPort: false, // Allow fallback to another port
@@ -68,7 +70,7 @@ export async function startDevServer(testAppDir: string): Promise<{ server: Vite
         port,
       },
     },
-    logLevel: 'silent', // Suppress all Vite logs during tests
+    logLevel: "silent", // Suppress all Vite logs during tests
     clearScreen: false,
   });
 
@@ -78,7 +80,7 @@ export async function startDevServer(testAppDir: string): Promise<{ server: Vite
   const actualPort = (server.config.server.port || port) as number;
 
   // Give the plugin time to generate di-config
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   return { server, port: actualPort };
 }
@@ -94,7 +96,7 @@ export async function stopDevServer(server: ViteDevServer): Promise<void> {
  * Copy the fixture test app to a temporary directory and set up dependencies
  */
 export async function setupTestApp(tempDir: string): Promise<void> {
-  const fixtureDir = path.join(__dirname, 'fixtures', 'test-app');
+  const fixtureDir = path.join(__dirname, "fixtures", "test-app");
 
   // Clean temp directory if it exists
   if (await pathExists(tempDir)) {
@@ -106,9 +108,9 @@ export async function setupTestApp(tempDir: string): Promise<void> {
 
   // Symlink node_modules from monorepo root to temp directory
   // This gives access to all workspace packages
-  const monorepoRoot = path.resolve(__dirname, '../../..');
-  const monorepoNodeModules = path.join(monorepoRoot, 'node_modules');
-  const tempNodeModules = path.join(tempDir, 'node_modules');
+  const monorepoRoot = path.resolve(__dirname, "../../..");
+  const monorepoNodeModules = path.join(monorepoRoot, "node_modules");
+  const tempNodeModules = path.join(tempDir, "node_modules");
 
   // Create symlink to monorepo node_modules
   if (await pathExists(monorepoNodeModules)) {
@@ -121,7 +123,7 @@ export async function setupTestApp(tempDir: string): Promise<void> {
         await removeDir(tempNodeModules);
       }
     }
-    await fs.symlink(monorepoNodeModules, tempNodeModules, 'dir');
+    await fs.symlink(monorepoNodeModules, tempNodeModules, "dir");
   }
 }
 
@@ -144,7 +146,7 @@ export async function replaceFile(
   await fs.copyFile(sourcePath, targetPath);
 
   // Delay to ensure file system change is detected (longer for parallel tests)
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 }
 
 /**
@@ -155,12 +157,12 @@ export async function modifyFile(
   find: string,
   replace: string
 ): Promise<void> {
-  const content = await fs.readFile(filePath, 'utf-8');
+  const content = await fs.readFile(filePath, "utf-8");
   const newContent = content.replace(find, replace);
-  await fs.writeFile(filePath, newContent, 'utf-8');
+  await fs.writeFile(filePath, newContent, "utf-8");
 
   // Small delay to ensure file system change is detected
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
 /**
@@ -170,10 +172,10 @@ export async function appendToFile(
   filePath: string,
   content: string
 ): Promise<void> {
-  await fs.appendFile(filePath, content, 'utf-8');
+  await fs.appendFile(filePath, content, "utf-8");
 
   // Small delay to ensure file system change is detected
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
 /**
@@ -186,7 +188,7 @@ export async function addFile(
   await fs.copyFile(sourcePath, targetPath);
 
   // Small delay to ensure file system change is detected
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
 /**
@@ -194,8 +196,10 @@ export async function addFile(
  */
 export async function waitForHMR(page: Page, timeout = 5000): Promise<void> {
   try {
-    await page.waitForEvent('console', {
-      predicate: msg => msg.text().includes('[vite] hmr update') || msg.text().includes('[vite] hot updated'),
+    await page.waitForEvent("console", {
+      predicate: (msg) =>
+        msg.text().includes("[vite] hmr update") ||
+        msg.text().includes("[vite] hot updated"),
       timeout,
     });
 
@@ -210,31 +214,40 @@ export async function waitForHMR(page: Page, timeout = 5000): Promise<void> {
 /**
  * Wait for full page reload
  */
-export async function waitForFullReload(page: Page, timeout = 5000): Promise<void> {
+export async function waitForFullReload(
+  page: Page,
+  timeout = 5000
+): Promise<void> {
   try {
-    await page.waitForEvent('console', {
-      predicate: msg =>
-        msg.text().includes('[vite] page reload') ||
-        msg.text().includes('full-reload'),
+    await page.waitForEvent("console", {
+      predicate: (msg) =>
+        msg.text().includes("[vite] page reload") ||
+        msg.text().includes("full-reload"),
       timeout,
     });
 
     // Wait for page to reload
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("networkidle");
   } catch (error) {
     // Fallback: just wait for network idle
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("networkidle");
   }
 }
 
 /**
  * Inject a marker into window object to detect full reloads
  */
-export async function injectReloadMarker(page: Page, markerName = '__hmr_test_id'): Promise<string> {
+export async function injectReloadMarker(
+  page: Page,
+  markerName = "__hmr_test_id"
+): Promise<string> {
   const markerId = Math.random().toString(36).substring(7);
-  await page.evaluate(({ name, id }) => {
-    (window as any)[name] = id;
-  }, { name: markerName, id: markerId });
+  await page.evaluate(
+    ({ name, id }) => {
+      (window as any)[name] = id;
+    },
+    { name: markerName, id: markerId }
+  );
 
   return markerId;
 }
@@ -245,11 +258,14 @@ export async function injectReloadMarker(page: Page, markerName = '__hmr_test_id
 export async function expectNoFullReload(
   page: Page,
   markerId: string,
-  markerName = '__hmr_test_id'
+  markerName = "__hmr_test_id"
 ): Promise<boolean> {
-  const currentId = await page.evaluate(({ name }) => {
-    return (window as any)[name];
-  }, { name: markerName });
+  const currentId = await page.evaluate(
+    ({ name }) => {
+      return (window as any)[name];
+    },
+    { name: markerName }
+  );
 
   return currentId === markerId;
 }
@@ -259,14 +275,16 @@ export async function expectNoFullReload(
  */
 async function findDiConfig(testAppDir: string): Promise<string | null> {
   // Resolve the actual node_modules path (might be a symlink)
-  const nodeModulesPath = path.join(testAppDir, 'node_modules');
+  const nodeModulesPath = path.join(testAppDir, "node_modules");
   let resolvedNodeModules = nodeModulesPath;
 
   try {
     const stats = await fs.lstat(nodeModulesPath);
     if (stats.isSymbolicLink()) {
       resolvedNodeModules = await fs.readlink(nodeModulesPath);
-      console.log(`[findDiConfig] node_modules is a symlink to: ${resolvedNodeModules}`);
+      console.log(
+        `[findDiConfig] node_modules is a symlink to: ${resolvedNodeModules}`
+      );
     }
   } catch (err) {
     console.log(`[findDiConfig] Error checking node_modules symlink:`, err);
@@ -274,21 +292,21 @@ async function findDiConfig(testAppDir: string): Promise<string | null> {
 
   // Possible locations for di-config
   const possibleLocations = [
-    path.join(testAppDir, 'node_modules', '.tdi2', 'configs'),
-    path.join(resolvedNodeModules, '.tdi2', 'configs'),
-    path.join(testAppDir, '.tdi2'),
+    path.join(testAppDir, "node_modules", ".tdi2", "configs"),
+    path.join(resolvedNodeModules, ".tdi2", "configs"),
+    path.join(testAppDir, ".tdi2"),
   ];
 
   for (const location of possibleLocations) {
     console.log(`[findDiConfig] Checking location: ${location}`);
 
-    if (!await pathExists(location)) {
+    if (!(await pathExists(location))) {
       console.log(`[findDiConfig] Location does not exist: ${location}`);
       continue;
     }
 
     // Check if di-config.ts is directly in this directory
-    const directConfigPath = path.join(location, 'di-config.ts');
+    const directConfigPath = path.join(location, "di-config.ts");
     if (await pathExists(directConfigPath)) {
       console.log(`[findDiConfig] Found di-config.ts at: ${directConfigPath}`);
       return directConfigPath;
@@ -297,12 +315,17 @@ async function findDiConfig(testAppDir: string): Promise<string | null> {
     // Check if there are subdirectories (configs/* pattern)
     try {
       const entries = await fs.readdir(location, { withFileTypes: true });
-      const dirs = entries.filter(e => e.isDirectory());
-      console.log(`[findDiConfig] Found subdirs in ${location}:`, dirs.map(d => d.name));
+      const dirs = entries.filter((e) => e.isDirectory());
+      console.log(
+        `[findDiConfig] Found subdirs in ${location}:`,
+        dirs.map((d) => d.name)
+      );
 
       for (const dir of dirs) {
-        const diConfigPath = path.join(location, dir.name, 'di-config.ts');
-        console.log(`[findDiConfig] Checking for di-config at: ${diConfigPath}`);
+        const diConfigPath = path.join(location, dir.name, "di-config.ts");
+        console.log(
+          `[findDiConfig] Checking for di-config at: ${diConfigPath}`
+        );
         if (await pathExists(diConfigPath)) {
           console.log(`[findDiConfig] Found di-config.ts at: ${diConfigPath}`);
           return diConfigPath;
@@ -328,7 +351,7 @@ export async function expectServiceRegistered(
   try {
     // If configPath doesn't end with .ts, treat it as test app directory
     let actualConfigPath = configPath;
-    if (!configPath.endsWith('.ts')) {
+    if (!configPath.endsWith(".ts")) {
       const foundPath = await findDiConfig(configPath);
       if (!foundPath) {
         return false;
@@ -336,7 +359,7 @@ export async function expectServiceRegistered(
       actualConfigPath = foundPath;
     }
 
-    const content = await fs.readFile(actualConfigPath, 'utf-8');
+    const content = await fs.readFile(actualConfigPath, "utf-8");
     return content.includes(serviceName);
   } catch {
     return false;
@@ -349,7 +372,7 @@ export async function expectServiceRegistered(
 export function captureConsoleLogs(page: Page): string[] {
   const logs: string[] = [];
 
-  page.on('console', msg => {
+  page.on("console", (msg) => {
     logs.push(msg.text());
   });
 
@@ -390,29 +413,31 @@ export async function expectTextContent(
 export async function waitForAppReady(page: Page): Promise<void> {
   // Capture console errors
   const errors: string[] = [];
-  page.on('pageerror', err => {
+  page.on("pageerror", (err) => {
     errors.push(err.message);
-    console.error('Browser error:', err.message);
+    console.error("waitForAppReady: Browser error:", err.message);
   });
-  page.on('console', msg => {
-    if (msg.type() === 'error') {
-      console.error('Browser console error:', msg.text());
+  page.on("console", (msg) => {
+    if (msg.type() === "error") {
+      console.error("waitForAppReady: Browser console error:", msg.text());
     }
   });
 
   // Wait for React root to render
   try {
-    await page.waitForSelector('#root > *', { timeout: 10000 });
+    await page.waitForSelector("#root > *", { timeout: 10000 });
   } catch (error) {
-    console.error('Failed to find #root > *, page errors:', errors);
+    console.error("Failed to find #root > *, page errors:", errors);
     // Check if there's anything in the root at all
-    const rootHTML = await page.$eval('#root', el => el.innerHTML).catch(() => 'Could not read root');
-    console.error('Root HTML:', rootHTML);
+    const rootHTML = await page
+      .$eval("#root", (el) => el.innerHTML)
+      .catch(() => "Could not read root");
+    console.error("Root HTML:", rootHTML);
     throw error;
   }
 
   // Wait for network to be idle
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState("networkidle");
 
   // Small additional delay for DI initialization
   await page.waitForTimeout(500);
