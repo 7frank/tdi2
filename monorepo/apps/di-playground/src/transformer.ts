@@ -340,7 +340,7 @@ export class ProductService implements ProductServiceInterface {
         if (this.hasInjectMarkers(func, sourceFile)) {
           try {
             // Extract dependencies
-            const dependencies = this.dependencyExtractor.extractDependencies(func, sourceFile);
+            const dependencies = this.dependencyExtractor.extractFromFunctionParameter(func, sourceFile);
 
             // Run transformation pipeline
             this.transformationPipeline.transformComponent(func, dependencies, sourceFile);
@@ -358,7 +358,7 @@ export class ProductService implements ProductServiceInterface {
           if (this.hasInjectMarkers(initializer, sourceFile)) {
             try {
               // Extract dependencies
-              const dependencies = this.dependencyExtractor.extractDependencies(initializer as any, sourceFile);
+              const dependencies = this.dependencyExtractor.extractFromArrowFunction(initializer as any, sourceFile);
 
               // Run transformation pipeline
               this.transformationPipeline.transformComponent(initializer as any, dependencies, sourceFile);

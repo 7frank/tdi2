@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'bun:test';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { BrowserTransformer } from '../transformer';
 
 describe('BrowserTransformer', () => {
@@ -30,6 +30,12 @@ function Counter({counterService}:{counterService:Inject<CounterServiceInterface
 export default Counter;`;
 
     const result = await transformer.transform(input, 'Counter.tsx');
+
+    // Debug output
+    if (!result.success) {
+      console.log('Transformation failed:', result.error);
+      console.log('Warnings:', result.warnings);
+    }
 
     // Basic checks
     expect(result.success).toBe(true);
