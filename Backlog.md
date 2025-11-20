@@ -8,85 +8,19 @@ two interface of the same name and in different files are resolved inproperly
 
 `should fail with current implementation - interface name collision`
 
-### console log in di-core and vite-plugin
-
-### remove magic strings
-
-see `.includes('` `*.*js*,*.md,*.test.ts`
-
-Magic strings that will cause plugin failures for users and need to be made configurable:
-
-#### 🔴 HIGH PRIORITY - Will break plugin functionality:
-
-**1. File path filtering (affects all users):**
-
-- `shouldSkipFile` / `shouldProcessFile` in multiple locations:
-  - [functional-di-enhanced-transformer.ts:468-471](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.ts#L468-L471) - `'generated'`, `'node_modules'`, `'.d.ts'`, `'.tdi2'`
-  - [utils.ts:10-15](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/utils.ts#L10-L15) - `'generated'`, `'node_modules'`, `'.d.ts'`, `'.tdi2'`, `'.test.'`, `'.spec.'`
-  - [integrated-interface-resolver.ts:346-349](monorepo/packages/di-core/tools/interface-resolver/integrated-interface-resolver.ts#L346-L349) - Same patterns
-  - [enhanced-di-transformer.ts:314-317](monorepo/packages/di-core/tools/enhanced-di-transformer.ts#L314-L317) - Same patterns
-  - [plugin-core/config.ts:127,132](monorepo/packages/plugin-core/src/config.ts#L127,132) - `'node_modules'`, `'.tdi2'`, `'/generated/'`
-
-  **Issue**: Users with custom output directories or non-standard project structures will have their files incorrectly filtered
-  **Solution**: Add `excludePatterns?: string[]` to plugin options
-
-**2. DI pattern detection (affects pattern matching):**
-
-- [pattern-detection.ts:36-82](monorepo/packages/plugin-core/src/pattern-detection.ts#L36-L82):
-  - Service patterns: `'@Service'`, `'Inject<'`, `'@Inject'`, `'implements'`, `'Interface'`
-  - File naming: `'.service.'`, `'/services/'`, `'\\services\\'`, `'.component.'`, `'/components/'`, `'\\components\\'`
-
-  **Issue**: Users with different naming conventions won't be detected
-  **Solution**: Make pattern detection configurable via plugin options (already partially done via `advanced.diPatterns`)
-
-**3. Marker detection hardcoded strings:**
-
-- [utils.ts:41,88](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/utils.ts#L41,88) - `'Inject<'`, `'InjectOptional<'`
-- [debug-file-generator.ts:144-170](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L144-L170) - `'useService('`, `'useOptionalService('`, `'import'`, `'const {'`, `'} = props'`, etc.
-
-  **Issue**: Users with custom DI markers won't be detected
-  **Solution**: Already configurable via `advanced.diPatterns.interfaceMarker`
-
-#### 🟡 MEDIUM PRIORITY - May affect some users:
-
-**4. Vite plugin-specific patterns:**
-
-- [vite-plugin-di/plugin.ts:405,494](monorepo/packages/vite-plugin-di/src/plugin.ts#L405,494) - `'.tdi2'` for HMR filtering
-
-  **Issue**: Users with custom outputDir won't get proper HMR
-  **Solution**: Use `options.outputDir` instead of hardcoded `.tdi2`
-
-**5. HMR message detection:**
-
-- [vite-plugin-di/e2e/helpers.ts:198,217-218](monorepo/packages/vite-plugin-di/e2e/helpers.ts#L198,217-218) - `'[vite] hmr update'`, `'[vite] hot updated'`, `'[vite] page reload'`, `'full-reload'`
-
-  **Issue**: Tests only - false positive
-
-#### ACTION ITEMS:
-
-1. **Add to plugin options**:
-
-   ```typescript
-   export interface DIPluginOptions {
-     // ... existing options
-     excludePatterns?: string[]; // Default: ['node_modules', '.d.ts', '.test.', '.spec.']
-     excludeDirs?: string[]; // Default: ['node_modules']
-     // Note: outputDir already configurable, should be used instead of hardcoded '.tdi2'
-   }
-   ```
-
-2. **Files to update**:
-   - Replace hardcoded `'.tdi2'` checks with `options.outputDir` in vite-plugin HMR code
-   - Replace hardcoded exclude patterns with `options.excludePatterns` in all `shouldSkipFile` functions
-   - Document that `advanced.diPatterns` is available for custom marker detection
-
-3. **Testing**:
-   - Add tests for custom `outputDir` with HMR
-   - Add tests for custom `excludePatterns`
-
 ### [❌] playground
 
 > use vite plugin in playground application similarly to https://typia.io/playground/ or others
+
+- ❌ fix all builds
+- ❌ fix all tests
+- add playground delpoyment to github pages
+- add builld and ALL tests to CI
+  - dicore = e2e
+  - cross package
+  - e2e
+- ...
+
 
 ### [❌] write state ownership docs section
 
@@ -761,6 +695,84 @@ evaluate scenarios
 ---
 
 ## Done
+
+### ✅ console log in di-core and vite-plugin
+
+improve logging with DEBUG and LOG_LEVEL
+
+### ✅ remove magic strings
+
+see `.includes('` `*.*js*,*.md,*.test.ts`
+
+Magic strings that will cause plugin failures for users and need to be made configurable:
+
+#### 🔴 HIGH PRIORITY - Will break plugin functionality:
+
+**1. File path filtering (affects all users):**
+
+- `shouldSkipFile` / `shouldProcessFile` in multiple locations:
+  - [functional-di-enhanced-transformer.ts:468-471](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/functional-di-enhanced-transformer.ts#L468-L471) - `'generated'`, `'node_modules'`, `'.d.ts'`, `'.tdi2'`
+  - [utils.ts:10-15](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/utils.ts#L10-L15) - `'generated'`, `'node_modules'`, `'.d.ts'`, `'.tdi2'`, `'.test.'`, `'.spec.'`
+  - [integrated-interface-resolver.ts:346-349](monorepo/packages/di-core/tools/interface-resolver/integrated-interface-resolver.ts#L346-L349) - Same patterns
+  - [enhanced-di-transformer.ts:314-317](monorepo/packages/di-core/tools/enhanced-di-transformer.ts#L314-L317) - Same patterns
+  - [plugin-core/config.ts:127,132](monorepo/packages/plugin-core/src/config.ts#L127,132) - `'node_modules'`, `'.tdi2'`, `'/generated/'`
+
+  **Issue**: Users with custom output directories or non-standard project structures will have their files incorrectly filtered
+  **Solution**: Add `excludePatterns?: string[]` to plugin options
+
+**2. DI pattern detection (affects pattern matching):**
+
+- [pattern-detection.ts:36-82](monorepo/packages/plugin-core/src/pattern-detection.ts#L36-L82):
+  - Service patterns: `'@Service'`, `'Inject<'`, `'@Inject'`, `'implements'`, `'Interface'`
+  - File naming: `'.service.'`, `'/services/'`, `'\\services\\'`, `'.component.'`, `'/components/'`, `'\\components\\'`
+
+  **Issue**: Users with different naming conventions won't be detected
+  **Solution**: Make pattern detection configurable via plugin options (already partially done via `advanced.diPatterns`)
+
+**3. Marker detection hardcoded strings:**
+
+- [utils.ts:41,88](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/utils.ts#L41,88) - `'Inject<'`, `'InjectOptional<'`
+- [debug-file-generator.ts:144-170](monorepo/packages/di-core/tools/functional-di-enhanced-transformer/debug-file-generator.ts#L144-L170) - `'useService('`, `'useOptionalService('`, `'import'`, `'const {'`, `'} = props'`, etc.
+
+  **Issue**: Users with custom DI markers won't be detected
+  **Solution**: Already configurable via `advanced.diPatterns.interfaceMarker`
+
+#### 🟡 MEDIUM PRIORITY - May affect some users:
+
+**4. Vite plugin-specific patterns:**
+
+- [vite-plugin-di/plugin.ts:405,494](monorepo/packages/vite-plugin-di/src/plugin.ts#L405,494) - `'.tdi2'` for HMR filtering
+
+  **Issue**: Users with custom outputDir won't get proper HMR
+  **Solution**: Use `options.outputDir` instead of hardcoded `.tdi2`
+
+**5. HMR message detection:**
+
+- [vite-plugin-di/e2e/helpers.ts:198,217-218](monorepo/packages/vite-plugin-di/e2e/helpers.ts#L198,217-218) - `'[vite] hmr update'`, `'[vite] hot updated'`, `'[vite] page reload'`, `'full-reload'`
+
+  **Issue**: Tests only - false positive
+
+#### ACTION ITEMS:
+
+1. **Add to plugin options**:
+
+   ```typescript
+   export interface DIPluginOptions {
+     // ... existing options
+     excludePatterns?: string[]; // Default: ['node_modules', '.d.ts', '.test.', '.spec.']
+     excludeDirs?: string[]; // Default: ['node_modules']
+     // Note: outputDir already configurable, should be used instead of hardcoded '.tdi2'
+   }
+   ```
+
+2. **Files to update**:
+   - Replace hardcoded `'.tdi2'` checks with `options.outputDir` in vite-plugin HMR code
+   - Replace hardcoded exclude patterns with `options.excludePatterns` in all `shouldSkipFile` functions
+   - Document that `advanced.diPatterns` is available for custom marker detection
+
+3. **Testing**:
+   - Add tests for custom `outputDir` with HMR
+   - Add tests for custom `excludePatterns`
 
 ### ✅ hot reload fixes added path issue
 

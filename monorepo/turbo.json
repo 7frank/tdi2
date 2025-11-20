@@ -18,7 +18,7 @@
       "persistent": true
     },
     "test": {
-      "dependsOn": ["^test"]
+      "cache": true
     },
     "publish:package": {
       "dependsOn": ["build"],
