@@ -44,11 +44,10 @@ export class CounterService implements CounterServiceInterface {
         path: 'src/components/Counter.tsx',
         language: 'tsx',
         content: `import React from 'react';
+import { Inject } from '@tdi2/di-core';
 import type { CounterServiceInterface } from '../services/CounterService';
 
-
 function Counter({counterService}:{counterService:Inject<CounterServiceInterface>}) {
-
   return (
     <div className="counter">
       <h1>Count: {counterService.state.count}</h1>
@@ -144,11 +143,10 @@ export class TodoService implements TodoServiceInterface {
         path: 'src/components/TodoList.tsx',
         language: 'tsx',
         content: `import React from 'react';
+import { Inject } from '@tdi2/di-core';
 import type { TodoServiceInterface } from '../services/TodoService';
 
-// @di-inject
-function TodoList() {
-  const todoService = React.useContext<TodoServiceInterface>(null as any);
+function TodoList({todoService}:{todoService:Inject<TodoServiceInterface>}) {
   const [newTodo, setNewTodo] = React.useState('');
 
   const handleAdd = () => {
@@ -341,14 +339,11 @@ export class CartService implements CartServiceInterface {
         path: 'src/components/ShoppingCart.tsx',
         language: 'tsx',
         content: `import React from 'react';
+import { Inject } from '@tdi2/di-core';
 import type { ProductServiceInterface } from '../services/ProductService';
 import type { CartServiceInterface } from '../services/CartService';
 
-// @di-inject
-function ShoppingCart() {
-  const productService = React.useContext<ProductServiceInterface>(null as any);
-  const cartService = React.useContext<CartServiceInterface>(null as any);
-
+function ShoppingCart({productService, cartService}:{productService:Inject<ProductServiceInterface>, cartService:Inject<CartServiceInterface>}) {
   React.useEffect(() => {
     productService.loadProducts();
   }, []);
