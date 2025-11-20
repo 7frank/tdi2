@@ -1,4 +1,4 @@
-import { Project, Node } from 'ts-morph';
+import { Project, SyntaxKind } from 'ts-morph';
 
 // Import browser-compatible components directly from source
 // @ts-ignore - importing from source files
@@ -35,7 +35,6 @@ export class BrowserTransformer {
   private typeResolver: SharedTypeResolver;
   private dependencyExtractor: SharedDependencyExtractor;
   private transformationPipeline: TransformationPipeline;
-  private diInjectMarkers: DiInjectMarkers;
 
   constructor() {
     // Create in-memory project for browser use
@@ -50,9 +49,6 @@ export class BrowserTransformer {
         skipLibCheck: true,
       },
     });
-
-    // Initialize DI inject markers detector
-    this.diInjectMarkers = new DiInjectMarkers();
 
     // Initialize the transformation components
     this.interfaceResolver = new IntegratedInterfaceResolver({
@@ -302,25 +298,6 @@ export class ProductService implements ProductServiceInterface {
     }
   }
 
-  /**
-   * Check if a component has Inject<T> markers in its parameters
-   */
-  private hasInjectMarkers(component: any, sourceFile: any): boolean {
-    try {
-      const parameters = component.getParameters();
-      for (const param of parameters) {
-        const typeNode = param.getTypeNode();
-        if (typeNode && this.diInjectMarkers.hasInjectMarkersRecursive(typeNode, sourceFile)) {
-          return true;
-        }
-      }
-      return false;
-    } catch (error) {
-      console.warn('Error checking for inject markers:', error);
-      return false;
-    }
-  }
-
   async transform(inputCode: string, fileName: string = 'Component.tsx'): Promise<TransformationResult> {
     try {
       // Create the component file in virtual filesystem
@@ -337,7 +314,8 @@ export class ProductService implements ProductServiceInterface {
 
       // Transform function declarations
       for (const func of functions) {
-        if (this.hasInjectMarkers(func, sourceFile)) {
+        const fullText = func.getFullText();
+        if (DiInjectMarkers.hasDIMarker(fullText)) {
           try {
             // Extract dependencies
             const dependencies = this.dependencyExtractor.extractDependencies(func, sourceFile);
@@ -354,8 +332,9 @@ export class ProductService implements ProductServiceInterface {
       // Transform arrow function components
       for (const varDecl of variables) {
         const initializer = varDecl.getInitializer();
-        if (initializer && Node.isArrowFunction(initializer)) {
-          if (this.hasInjectMarkers(initializer, sourceFile)) {
+        if (initializer && initializer.getKind() === SyntaxKind.ArrowFunction) {
+          const varStatement = varDecl.getVariableStatement();
+          if (varStatement && DiInjectMarkers.hasDIMarker(varStatement.getFullText())) {
             try {
               // Extract dependencies
               const dependencies = this.dependencyExtractor.extractDependencies(initializer as any, sourceFile);
@@ -375,7 +354,7 @@ export class ProductService implements ProductServiceInterface {
 
       // Add warnings if no transformations occurred
       if (transformedCount === 0) {
-        warnings.push('No Inject<T> type markers found in component props. Components need props with Inject<ServiceInterface> types to be transformed.');
+        warnings.push('No @di-inject markers found. Add // @di-inject comment above your component.');
       }
 
       if (errors.length > 0) {
