@@ -3,6 +3,7 @@ import Editor from '@monaco-editor/react';
 import { BrowserTransformer } from './transformer';
 import { examples, defaultExample, ProjectExample, ProjectFile } from './examples';
 import { FileTree } from './components/FileTree';
+import { Preview } from './components/Preview';
 import type * as Monaco from 'monaco-editor';
 
 // Configure Monaco editor with type definitions
@@ -57,7 +58,7 @@ const configureMonaco = (monaco: typeof Monaco) => {
   });
 };
 
-interface TransformedFile {
+export interface TransformedFile {
   path: string;
   originalCode: string;
   transformedCode: string;
@@ -257,24 +258,13 @@ function App() {
           </div>
         </div>
 
-        {/* Right Panel - Preview (conditional) */}
+        {/* Right Panel - Live Preview (conditional) */}
         {showPreview && (
-          <div className="preview-panel">
-            <div className="preview-header">
-              Preview
-            </div>
-            <div className="preview-content">
-              <div className="preview-placeholder">
-                <div className="preview-icon">🚧</div>
-                <h3>Preview Coming Soon</h3>
-                <p>Interactive preview will render the transformed component here.</p>
-                <div className="preview-info">
-                  <p>Files transformed: {Object.keys(transformedFiles).length}</p>
-                  <p>Current example: {selectedExample.name}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Preview
+            example={selectedExample}
+            transformedFiles={transformedFiles}
+            onClose={() => setShowPreview(false)}
+          />
         )}
       </div>
 

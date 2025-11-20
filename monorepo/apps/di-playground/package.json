@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@tdi2/di-core": "workspace:*",
+    "@codesandbox/sandpack-react": "^2.19.10",
     "@monaco-editor/react": "^4.6.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
