@@ -55,6 +55,8 @@ export class BrowserTransformer {
       scanDirs: [this.virtualRoot],
       enableInheritanceDI: true,
       enableStateDI: true,
+      useInMemoryFileSystem: true, // Required for browser compatibility
+   
     });
 
     this.typeResolver = new SharedTypeResolver(this.interfaceResolver);

@@ -46,9 +46,8 @@ export class CounterService implements CounterServiceInterface {
         content: `import React from 'react';
 import type { CounterServiceInterface } from '../services/CounterService';
 
-// @di-inject
-function Counter() {
-  const counterService = React.useContext<CounterServiceInterface>(null as any);
+
+function Counter({counterService}:{counterService:Inject<CounterServiceInterface>}) {
 
   return (
     <div className="counter">
