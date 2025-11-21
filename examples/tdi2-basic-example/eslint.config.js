@@ -1,4 +1,4 @@
-// eslint.config.js - Updated with TDI2 interface resolution context plugin
+// eslint.config.js - TDI2 ESLint Configuration
 import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
@@ -48,7 +48,7 @@ export default tseslint.config(
       "tdi2/show-implementation-context": "warn",
       "tdi2/show-interface-implementations": "warn",
 
-      // Disable TypeScript rules that conflict with DI transformation
+      // Relax TypeScript rules for DI usage
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {
@@ -57,15 +57,11 @@ export default tseslint.config(
           ignoreRestSiblings: true,
         },
       ],
-
-      // Allow any types in DI contexts (they're resolved at runtime)
       "@typescript-eslint/no-explicit-any": "warn",
-
-      // Relax some rules for DI-related code
       "@typescript-eslint/no-empty-interface": [
         "error",
         {
-          allowSingleExtends: true, // Allow marker interfaces
+          allowSingleExtends: true,
         },
       ],
     },
@@ -79,7 +75,6 @@ export default tseslint.config(
   {
     files: ["**/*.di-transformed.*", "src/.tdi2/**/*"],
     rules: {
-      // Disable all problematic rules for transformed files
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "tdi2/show-interface-resolution": "off",
