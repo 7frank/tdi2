@@ -119,6 +119,11 @@ function App() {
   const transformAllFiles = useCallback(async () => {
     if (!transformerRef.current || isTransformingRef.current) return;
 
+    console.log('🔄 ========== STARTING transformAllFiles ==========');
+    console.log('📋 Files to process:', selectedExampleFilesRef.current.map(f => f.path));
+    console.log('📝 Edited files:', Object.keys(editedFilesRef.current));
+    console.log('🎯 Has initial transform?', hasInitialTransformRef.current);
+
     isTransformingRef.current = true;
     setIsTransforming(true);
     setError(null);
@@ -171,12 +176,16 @@ function App() {
     // CRITICAL: Re-scan interfaces after transformations
     // Transformations remove/recreate source files, which clears interface mappings
     // This rebuild ensures generateDIConfig() has the correct mappings
+    console.log('🔍 Re-scanning interfaces after transformations...');
     try {
       await transformerRef.current.rescanInterfaces();
       console.log('✅ Re-scanned interfaces after transformations');
     } catch (err) {
-      console.error('Error re-scanning interfaces:', err);
+      console.error('❌ Error re-scanning interfaces:', err);
     }
+
+    console.log('📊 Transformation results:', Object.keys(results));
+    console.log('🔄 ========== ENDING transformAllFiles ==========');
 
     setTransformedFiles(results);
     setIsTransforming(false);
@@ -186,7 +195,9 @@ function App() {
     if (!hasInitialTransformRef.current) {
       hasInitialTransformRef.current = true;
       setShowPreview(true);
-      console.log('✅ Initial transformation complete - preview ready');
+      console.log('✅ Initial transformation complete - preview ready, opening preview');
+    } else {
+      console.log('📋 Subsequent transformation complete');
     }
   }, []); // No dependencies - stable callback
 
@@ -277,7 +288,12 @@ function App() {
 
   // Generate DI_CONFIG.ts content using the actual transformer logic
   const generateDIConfig = (): string => {
+    console.log('🏗️  generateDIConfig called');
+    console.log('   Transformer ready?', !!transformerRef.current);
+    console.log('   Transformed files:', Object.keys(transformedFiles));
+
     if (!transformerRef.current) {
+      console.warn('⚠️  Transformer not initialized, returning empty config');
       return `// Transformer not initialized
 export const DI_CONFIG = {};
 export const SERVICE_TOKENS = {};
@@ -285,11 +301,15 @@ export const INTERFACE_IMPLEMENTATIONS = {};
 `;
     }
 
-    return transformerRef.current.generateDIConfig();
+    const config = transformerRef.current.generateDIConfig();
+    console.log('🏗️  Generated config length:', config.length);
+    console.log('🏗️  Config preview:', config.substring(0, 300));
+    return config;
   };
 
   // Memoize DI config to prevent unnecessary Sandpack reloads
   const diConfigContent = useMemo(() => {
+    console.log('🔄 useMemo for diConfigContent triggered');
     return generateDIConfig();
   }, [transformedFiles]); // Only regenerate when transformedFiles changes
 

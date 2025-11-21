@@ -12,9 +12,21 @@ interface PreviewProps {
 }
 
 export function Preview({ example, transformedFiles, diConfigContent, onClose }: PreviewProps) {
+  console.log('🎬 Preview component rendering');
+  console.log('   Example:', example.name);
+  console.log('   Transformed files:', Object.keys(transformedFiles));
+  console.log('   DI Config length:', diConfigContent.length);
+  console.log('   DI Config preview:', diConfigContent.substring(0, 200));
+
   // Generate Sandpack file structure from transformed files
   const files = useMemo(() => {
-    return generateSandpackFiles(example, transformedFiles, diConfigContent);
+    console.log('📦 Generating Sandpack files...');
+    const generatedFiles = generateSandpackFiles(example, transformedFiles, diConfigContent);
+    console.log('📦 Generated files:', Object.keys(generatedFiles));
+    if (generatedFiles['/src/.tdi2/DI_CONFIG.ts']) {
+      console.log('📦 DI_CONFIG in Sandpack:', generatedFiles['/src/.tdi2/DI_CONFIG.ts'].code.substring(0, 200));
+    }
+    return generatedFiles;
   }, [example, transformedFiles, diConfigContent]);
 
   return (
