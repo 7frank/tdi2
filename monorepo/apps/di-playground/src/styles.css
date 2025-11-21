@@ -215,6 +215,21 @@ body {
   flex: 1;
 }
 
+.file-tree-item.generated {
+  color: #4ec9b0;
+}
+
+.file-badge {
+  background: #4ec9b0;
+  color: #1e1e1e;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 6px;
+}
+
 /* Editor Panel */
 .editor-panel {
   flex: 1;
@@ -295,6 +310,11 @@ body {
 
 .editor-mode-badge.readonly {
   background: #6b6b6b;
+}
+
+.editor-mode-badge.generated {
+  background: #4ec9b0;
+  color: #1e1e1e;
 }
 
 .editor-wrapper {

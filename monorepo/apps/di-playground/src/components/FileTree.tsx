@@ -96,7 +96,11 @@ function TreeItem({
   }
 
   const isSelected = selectedFile === node.path;
-  const icon = node.name.endsWith('.tsx')
+  const isGenerated = node.path.includes('.tdi2/');
+
+  const icon = isGenerated
+    ? '⚙️' // Generated file icon
+    : node.name.endsWith('.tsx')
     ? '⚛️'
     : node.name.endsWith('.ts')
     ? '📘'
@@ -104,12 +108,13 @@ function TreeItem({
 
   return (
     <div
-      className={`file-tree-item file ${isSelected ? 'selected' : ''}`}
+      className={`file-tree-item file ${isSelected ? 'selected' : ''} ${isGenerated ? 'generated' : ''}`}
       style={{ paddingLeft: `${depth * 12}px` }}
       onClick={() => onFileSelect(node.path)}
     >
       <span className="file-tree-icon">{icon}</span>
       <span className="file-tree-name">{node.name}</span>
+      {isGenerated && <span className="file-badge">Generated</span>}
     </div>
   );
 }
