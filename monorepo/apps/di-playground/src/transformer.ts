@@ -421,6 +421,14 @@ export const INTERFACE_IMPLEMENTATIONS = ${JSON.stringify(interfaceImplementatio
     try {
       // Create the component file in virtual filesystem
       const componentPath = `${this.virtualRoot}/components/${fileName}`;
+
+      // CRITICAL: Delete existing file first to prevent transformation stacking
+      const existingFile = this.project.getSourceFile(componentPath);
+      if (existingFile) {
+        this.project.removeSourceFile(existingFile);
+      }
+
+      // Create fresh source file
       const sourceFile = this.project.createSourceFile(componentPath, inputCode, { overwrite: true });
 
       // Find components with @di-inject marker

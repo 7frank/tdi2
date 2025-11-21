@@ -386,9 +386,10 @@ export const INTERFACE_IMPLEMENTATIONS = {};
           </div>
           <div className="editor-wrapper">
             <Editor
+              key={`${viewMode}-${currentFile?.path}`}
               height="100%"
               language={currentLanguage}
-              path={currentFile?.path}
+              path={`${viewMode}:${currentFile?.path}`}
               theme="vs-dark"
               value={currentCode}
               onChange={viewMode === 'before' ? handleCodeChange : undefined}
