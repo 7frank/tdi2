@@ -14,11 +14,14 @@ two interface of the same name and in different files are resolved inproperly
 
 - ✅ fix all builds
 - ✅ fix all tests
-- ❌ add playground delpoyment to github pages
+- ✅ add playground delpoyment to github pages
 - ✅ add build and ALL tests to CI
   - ✅ dicore unit & e2e
   - ✅ cross package
   - ✅ e2e
+
+❌ fix preview  
+❌ fix comments in PR
 
 
 
