@@ -402,6 +402,44 @@ export class ProductService implements ProductServiceInterface {
   }
 
   /**
+   * Find all service interfaces referenced in component files
+   */
+  private findUsedServices(): Set<string> {
+    const usedServices = new Set<string>();
+
+    // Get all component files
+    const componentFiles = this.project.getSourceFiles().filter(f =>
+      f.getFilePath().includes('/components/')
+    );
+
+    console.log(`🔍 Analyzing ${componentFiles.length} component files for service usage...`);
+
+    for (const file of componentFiles) {
+      const fileText = file.getFullText();
+
+      // Find all Inject<ServiceInterface> patterns
+      const injectPattern = /Inject<(\w+)>/g;
+      let match;
+      while ((match = injectPattern.exec(fileText)) !== null) {
+        const serviceName = match[1];
+        usedServices.add(serviceName);
+        console.log(`  ✓ Found usage: ${serviceName} in ${file.getBaseName()}`);
+      }
+
+      // Also find InjectOptional<ServiceInterface> patterns
+      const injectOptionalPattern = /InjectOptional<(\w+)>/g;
+      while ((match = injectOptionalPattern.exec(fileText)) !== null) {
+        const serviceName = match[1];
+        usedServices.add(serviceName);
+        console.log(`  ✓ Found optional usage: ${serviceName} in ${file.getBaseName()}`);
+      }
+    }
+
+    console.log(`📊 Total unique services used: ${usedServices.size}`);
+    return usedServices;
+  }
+
+  /**
    * Generate the DI_CONFIG file content with the same structure as the real Vite plugin
    */
   generateDIConfig(): string {
@@ -423,14 +461,36 @@ export const INTERFACE_IMPLEMENTATIONS = {};
 `;
     }
 
+    // Find which services are actually used in components
+    const usedServices = this.findUsedServices();
+
+    if (usedServices.size === 0) {
+      return `// Auto-generated DI configuration
+// No services used in this example
+// Tip: Add Inject<ServiceInterface> types to component props to use dependency injection
+
+export const DI_CONFIG = {};
+
+export const SERVICE_TOKENS = {};
+
+export const INTERFACE_IMPLEMENTATIONS = {};
+`;
+    }
+
     const factoryFunctions: string[] = [];
     const configEntries: string[] = [];
     const serviceTokens: Record<string, string> = {};
     const interfaceImplementations: Record<string, string[]> = {};
     const imports: Set<string> = new Set();
+    const processedClasses = new Set<string>(); // Track which classes we've processed
 
     // Process all interface->implementation mappings
     mappings.forEach((implementation: any, interfaceName: string) => {
+      // FILTER: Only include if this interface is used in components
+      if (!usedServices.has(interfaceName)) {
+        console.log(`  ⏭️  Skipping unused service: ${interfaceName}`);
+        return;
+      }
       const className = implementation.implementationClass;
       const filePath = implementation.filePath.replace(/^\/virtual\//, '').replace(/\.ts$/, '');
 
@@ -440,10 +500,13 @@ export const INTERFACE_IMPLEMENTATIONS = {};
       // Add import
       imports.add(`import { ${className} } from './${filePath}';`);
 
-      // Create factory function
-      factoryFunctions.push(`function create${className}(container: any) {
+      // Create factory function (only once per class)
+      if (!processedClasses.has(className)) {
+        factoryFunctions.push(`function create${className}(container: any) {
   return () => new ${className}();
 }`);
+        processedClasses.add(className);
+      }
 
       // Add config entry
       configEntries.push(`  '${token}': {
@@ -472,9 +535,11 @@ export const INTERFACE_IMPLEMENTATIONS = {};
     });
 
     const timestamp = new Date().toISOString();
+    const usedServicesList = Array.from(usedServices).join(', ');
 
     return `// Auto-generated DI configuration
 // Generated: ${timestamp}
+// Services used in this example: ${usedServicesList}
 
 ${Array.from(imports).join('\n')}
 
