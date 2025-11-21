@@ -103,8 +103,12 @@ function App() {
 
   // Initialize transformer
   useEffect(() => {
+    console.log('🔧 Initializing BrowserTransformer...');
     transformerRef.current = new BrowserTransformer();
-  }, []);
+    console.log('✅ BrowserTransformer initialized, triggering initial transformation');
+    // Trigger initial transformation now that transformer is ready
+    transformAllFiles();
+  }, [transformAllFiles]);
 
   // Set initial selected file when example changes
   useEffect(() => {
@@ -226,7 +230,13 @@ function App() {
 
   // Transform immediately when example changes (no debounce)
   useEffect(() => {
-    transformAllFiles();
+    // Only run if transformer is initialized
+    if (transformerRef.current) {
+      console.log('📢 Example changed, triggering transformation');
+      transformAllFiles();
+    } else {
+      console.warn('⚠️  Transformer not ready yet, skipping transformation');
+    }
   }, [selectedExample, transformAllFiles]);
 
   // Load edited files from URL hash on mount
