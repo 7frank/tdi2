@@ -135,11 +135,19 @@ const rule: Rule.RuleModule = {
 
     return {
       // Detect Inject<InterfaceName> patterns in TypeScript
-      TSTypeReference(node: any) {
-        // Check if this is an Inject or InjectOptional marker
-        if (!isInjectMarker(node)) return;
+      'Identifier'(node: any) {
+        // Only check identifiers named "Inject" or "InjectOptional"
+        if (node.name !== 'Inject' && node.name !== 'InjectOptional') return;
 
-        const interfaceName = extractInterfaceName(node);
+        // The parent should be a TSTypeReference (Inject<SomeInterface>)
+        const parent = node.parent;
+        if (!parent || parent.type !== 'TSTypeReference') return;
+
+        // The TSTypeReference should have this identifier as its typeName
+        if (parent.typeName !== node) return;
+
+        const typeRefNode = parent;
+        const interfaceName = extractInterfaceName(typeRefNode);
         if (!interfaceName) return;
 
         const interfaceData = metadata.interfaces[interfaceName];
@@ -273,11 +281,15 @@ function isInjectMarker(node: any): boolean {
  */
 function extractInterfaceName(node: any): string | null {
   try {
-    if (!node.typeParameters || !node.typeParameters.params || node.typeParameters.params.length === 0) {
+    // ESLint uses 'typeArguments' instead of 'typeParameters'
+    const typeArgs = node.typeArguments || node.typeParameters;
+    const params = typeArgs?.params || typeArgs?.types;
+
+    if (!params || params.length === 0) {
       return null;
     }
 
-    const typeParam = node.typeParameters.params[0];
+    const typeParam = params[0];
 
     // Handle TSTypeReference
     if (typeParam.typeName) {

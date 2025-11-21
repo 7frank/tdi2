@@ -16,7 +16,6 @@ const rule: Rule.RuleModule = {
       category: 'TDI2 Context',
       recommended: true,
     },
-    hasSuggestions: true,
     messages: {
       missingServicesWithContext: [
         '💡 DI Context: This component expects services',
@@ -27,9 +26,8 @@ const rule: Rule.RuleModule = {
         '✅ The services prop is handled by the DI transformer',
         '   You can safely ignore the TypeScript error above.',
         '',
-        '💡 Tip: Use quick fixes (Ctrl+.) to navigate to service implementations',
+        '💡 Tip: File paths above are clickable in VS Code Problems panel',
       ].join('\n'),
-      navigateToService: '🔗 Open {{serviceName}} ({{path}})',
     },
     schema: [],
   },
@@ -74,6 +72,8 @@ const rule: Rule.RuleModule = {
         }
 
         // Format injection list with resolution info
+        // Use relative paths for VS Code clickability
+        const sourceFile = context.getFilename();
         const injectionList = componentData.injections
           .map((injection) => {
             const parts = [
@@ -83,7 +83,11 @@ const rule: Rule.RuleModule = {
             if (injection.resolvedClass) {
               parts.push(`     └─ Resolves to: ${injection.resolvedClass}`);
               if (injection.resolvedPath) {
-                parts.push(`     └─ 📍 ${injection.resolvedPath}`);
+                // Make path relative to project root for clickability
+                const relPath = injection.resolvedPath.startsWith(projectRoot)
+                  ? injection.resolvedPath.substring(projectRoot.length + 1)
+                  : injection.resolvedPath;
+                parts.push(`     └─ 📍 ${relPath}`);
               }
             }
 
@@ -95,26 +99,14 @@ const rule: Rule.RuleModule = {
           })
           .join('\n\n');
 
-        // Create navigation suggestions for each resolved service
-        const suggestions = componentData.injections
-          .filter((injection) => injection.resolvedClass && injection.resolvedPath)
-          .map((injection) => ({
-            messageId: 'navigateToService' as const,
-            data: {
-              serviceName: injection.resolvedClass!,
-              path: injection.resolvedPath!,
-            },
-            fix: () => null as any,
-          }));
-
-        // Report info message
+        // Report info message with clickable paths
+        // Note: VS Code ESLint extension will make the file paths clickable in the Problems panel
         context.report({
           node,
           messageId: 'missingServicesWithContext',
           data: {
             injectionList,
           },
-          suggest: suggestions,
         });
       },
     };
