@@ -26,13 +26,6 @@ const rule: Rule.RuleModule = {
         '',
         '{{ambiguityWarning}}',
       ].join('\n'),
-
-      interfaceNoImplementations: [
-        '📦 Interface: {{interfaceName}}',
-        '❌ No implementations found',
-        '',
-        '💡 Add a @Service() class that implements this interface',
-      ].join('\n'),
     },
     schema: [
       {
@@ -78,16 +71,10 @@ const rule: Rule.RuleModule = {
 
         const interfaceData = metadata.interfaces[interfaceName];
 
-        // Handle interface with no implementations
+        // ONLY show information for interfaces that are part of the DI system
+        // Skip interfaces that aren't in metadata (e.g., React props interfaces)
         if (!interfaceData) {
-          context.report({
-            node: node.id,
-            messageId: 'interfaceNoImplementations',
-            data: {
-              interfaceName,
-            },
-          });
-          return;
+          return; // Silent - not a DI interface
         }
 
         const implementations = interfaceData.implementations;
