@@ -31,7 +31,7 @@ export function Preview({ example, transformedFiles, diConfigContent, onClose }:
 
       <div className="preview-content">
         <Sandpack
-          template="react-ts"
+          template="vite-react-ts"
           theme="dark"
           files={files}
           options={{
@@ -44,12 +44,6 @@ export function Preview({ example, transformedFiles, diConfigContent, onClose }:
             editorWidthPercentage: 0, // Hide editor, only show preview
             autorun: true,
             autoReload: true,
-          }}
-          customSetup={{
-            dependencies: {
-              '@tdi2/di-core': '3.3.0',
-              valtio: '^2.1.2',
-            },
           }}
         />
       </div>
