@@ -29,11 +29,6 @@ export interface DIPluginOptions extends BasePluginConfig {
    */
   reuseExistingConfig?: boolean;
 
-  /**
-   * Patterns to exclude from transformation
-   * @default ['node_modules', '.d.ts', '.test.', '.spec.']
-   */
-  excludePatterns?: string[];
 }
 
 export interface TransformationSummary {

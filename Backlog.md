@@ -8,7 +8,7 @@ two interface of the same name and in different files are resolved inproperly
 
 `should fail with current implementation - interface name collision`
 
-### [❌] playground
+### [✅] playground
 
 > ✅ use vite plugin in playground application similarly to https://typia.io/playground/ or others
 
@@ -20,10 +20,8 @@ two interface of the same name and in different files are resolved inproperly
   - ✅ cross package
   - ✅ e2e
 
-❌ fix preview  
-❌ fix comments in PR
-
-
+✅ fix preview  
+✅ fix comments in PR
 
 ### [❌] write state ownership docs section
 
