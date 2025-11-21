@@ -16,7 +16,9 @@ const rule: Rule.RuleModule = {
       category: 'TDI2 Context',
       recommended: true,
     },
+    hasSuggestions: true,
     messages: {
+      navigateToInterface: '🔗 Open interface {{interfaceName}} ({{path}}:{{line}})',
       implementationContext: [
         '📦 Service: {{className}}',
         '🔗 Implements: {{interfaces}}',
@@ -134,6 +136,17 @@ const rule: Rule.RuleModule = {
           }
         }
 
+        // Create navigation suggestions for interfaces
+        const suggestions = implData.implementsInterfaces.map((ref) => ({
+          messageId: 'navigateToInterface' as const,
+          data: {
+            interfaceName: ref.interfaceName,
+            path: ref.interfaceFilePath,
+            line: String(ref.interfaceLocation.line),
+          },
+          fix: () => null as any,
+        }));
+
         // Check if this is the primary implementation
         if (implData.isPrimary || interfaces.length === 0) {
           // Show primary context
@@ -150,6 +163,7 @@ const rule: Rule.RuleModule = {
               dependencyList,
               otherImplementationsSection,
             },
+            suggest: suggestions,
           });
         } else {
           // Show non-primary context
@@ -174,6 +188,7 @@ const rule: Rule.RuleModule = {
               qualifier: implData.qualifier || className.replace(/Service$/, '').toLowerCase(),
               otherImplementations: otherImplementations || '   (none)',
             },
+            suggest: suggestions,
           });
         }
       },

@@ -16,6 +16,7 @@ const rule: Rule.RuleModule = {
       category: 'TDI2 Context',
       recommended: true,
     },
+    hasSuggestions: true,
     messages: {
       missingServicesWithContext: [
         '💡 DI Context: This component expects services',
@@ -25,7 +26,10 @@ const rule: Rule.RuleModule = {
         '',
         '✅ The services prop is handled by the DI transformer',
         '   You can safely ignore the TypeScript error above.',
+        '',
+        '💡 Tip: Use quick fixes (Ctrl+.) to navigate to service implementations',
       ].join('\n'),
+      navigateToService: '🔗 Open {{serviceName}} ({{path}})',
     },
     schema: [],
   },
@@ -91,6 +95,18 @@ const rule: Rule.RuleModule = {
           })
           .join('\n\n');
 
+        // Create navigation suggestions for each resolved service
+        const suggestions = componentData.injections
+          .filter((injection) => injection.resolvedClass && injection.resolvedPath)
+          .map((injection) => ({
+            messageId: 'navigateToService' as const,
+            data: {
+              serviceName: injection.resolvedClass!,
+              path: injection.resolvedPath!,
+            },
+            fix: () => null as any,
+          }));
+
         // Report info message
         context.report({
           node,
@@ -98,6 +114,7 @@ const rule: Rule.RuleModule = {
           data: {
             injectionList,
           },
+          suggest: suggestions,
         });
       },
     };

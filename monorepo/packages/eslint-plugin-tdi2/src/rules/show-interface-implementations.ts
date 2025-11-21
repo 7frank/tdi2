@@ -16,6 +16,7 @@ const rule: Rule.RuleModule = {
       category: 'TDI2 Context',
       recommended: true,
     },
+    hasSuggestions: true,
     messages: {
       interfaceImplementations: [
         '📦 Interface: {{interfaceName}}',
@@ -25,7 +26,10 @@ const rule: Rule.RuleModule = {
         '{{implementations}}',
         '',
         '{{ambiguityWarning}}',
+        '',
+        '💡 Tip: Use quick fixes (Ctrl+.) to navigate to implementations',
       ].join('\n'),
+      navigateToImplementation: '🔗 Open {{className}} ({{path}}:{{line}})',
     },
     schema: [
       {
@@ -94,6 +98,17 @@ const rule: Rule.RuleModule = {
           ].join('\n');
         }
 
+        // Create navigation suggestions for each implementation
+        const suggestions = implementations.map((impl) => ({
+          messageId: 'navigateToImplementation' as const,
+          data: {
+            className: impl.implementationClass,
+            path: impl.implementationPath,
+            line: String(impl.implementationLocation.line),
+          },
+          fix: () => null as any, // No actual code fix, just for navigation
+        }));
+
         context.report({
           node: node.id,
           messageId: 'interfaceImplementations',
@@ -103,6 +118,7 @@ const rule: Rule.RuleModule = {
             implementations: implementationsList,
             ambiguityWarning,
           },
+          suggest: suggestions,
         });
       },
     };
