@@ -83,6 +83,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [isTransforming, setIsTransforming] = useState(false);
   const [showPreview, setShowPreview] = useState(false); // Preview closed by default - opens after first transformation
+  const [isTransformerReady, setIsTransformerReady] = useState(false); // Track transformer initialization
   const transformerRef = useRef<BrowserTransformer | null>(null);
   const transformTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTransformingRef = useRef(false); // Track transforming state in ref to prevent callback recreation
@@ -105,10 +106,9 @@ function App() {
   useEffect(() => {
     console.log('🔧 Initializing BrowserTransformer...');
     transformerRef.current = new BrowserTransformer();
-    console.log('✅ BrowserTransformer initialized, triggering initial transformation');
-    // Trigger initial transformation now that transformer is ready
-    transformAllFiles();
-  }, [transformAllFiles]);
+    console.log('✅ BrowserTransformer initialized');
+    setIsTransformerReady(true);
+  }, []);
 
   // Set initial selected file when example changes
   useEffect(() => {
@@ -228,16 +228,15 @@ function App() {
     };
   }, [editedFiles, transformAllFiles]);
 
-  // Transform immediately when example changes (no debounce)
+  // Transform when transformer is ready or example changes
   useEffect(() => {
-    // Only run if transformer is initialized
-    if (transformerRef.current) {
-      console.log('📢 Example changed, triggering transformation');
+    if (isTransformerReady) {
+      console.log('📢 Transformer ready or example changed, triggering transformation');
       transformAllFiles();
     } else {
       console.warn('⚠️  Transformer not ready yet, skipping transformation');
     }
-  }, [selectedExample, transformAllFiles]);
+  }, [isTransformerReady, selectedExample, transformAllFiles]);
 
   // Load edited files from URL hash on mount
   useEffect(() => {
