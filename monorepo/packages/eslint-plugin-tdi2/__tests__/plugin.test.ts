@@ -29,6 +29,12 @@ describe('ESLint Plugin TDI2', () => {
     expect(plugin.rules['show-interface-implementations'].create).toBeDefined();
   });
 
+  it('should export show-missing-services-context rule', () => {
+    expect(plugin.rules['show-missing-services-context']).toBeDefined();
+    expect(plugin.rules['show-missing-services-context'].meta).toBeDefined();
+    expect(plugin.rules['show-missing-services-context'].create).toBeDefined();
+  });
+
   it('should export configs', () => {
     expect(plugin.configs).toBeDefined();
     expect(plugin.configs.recommended).toBeDefined();
@@ -36,13 +42,14 @@ describe('ESLint Plugin TDI2', () => {
   });
 
   describe('recommended config', () => {
-    it('should include all three rules', () => {
+    it('should include all four rules', () => {
       const { recommended } = plugin.configs;
 
       expect(recommended.plugins).toContain('tdi2');
       expect(recommended.rules['tdi2/show-interface-resolution']).toBe('warn');
       expect(recommended.rules['tdi2/show-implementation-context']).toBe('warn');
       expect(recommended.rules['tdi2/show-interface-implementations']).toBe('warn');
+      expect(recommended.rules['tdi2/show-missing-services-context']).toBe('warn');
     });
   });
 
@@ -93,6 +100,14 @@ describe('ESLint Plugin TDI2', () => {
       expect(rule.meta.docs?.description).toContain('implementations');
       expect(rule.meta.messages.interfaceImplementations).toBeDefined();
       expect(rule.meta.schema).toBeDefined();
+    });
+
+    it('show-missing-services-context should have correct metadata', () => {
+      const rule = plugin.rules['show-missing-services-context'];
+
+      expect(rule.meta.type).toBe('suggestion');
+      expect(rule.meta.docs?.description).toContain('missing services');
+      expect(rule.meta.messages.missingServicesWithContext).toBeDefined();
     });
   });
 

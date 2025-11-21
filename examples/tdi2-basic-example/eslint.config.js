@@ -47,6 +47,7 @@ export default tseslint.config(
       "tdi2/show-interface-resolution": "warn",
       "tdi2/show-implementation-context": "warn",
       "tdi2/show-interface-implementations": "warn",
+      "tdi2/show-missing-services-context": "warn",
 
       // Relax TypeScript rules for DI usage
       "@typescript-eslint/no-unused-vars": [

@@ -7,6 +7,7 @@ import type { ESLint, Linter } from 'eslint';
 import showInterfaceResolution from './rules/show-interface-resolution.js';
 import showImplementationContext from './rules/show-implementation-context.js';
 import showInterfaceImplementations from './rules/show-interface-implementations.js';
+import showMissingServicesContext from './rules/show-missing-services-context.js';
 
 const plugin: ESLint.Plugin = {
   rules: {
@@ -18,6 +19,9 @@ const plugin: ESLint.Plugin = {
 
     // All implementations when hovering over interface declarations
     'show-interface-implementations': showInterfaceImplementations,
+
+    // DI context when services prop is missing
+    'show-missing-services-context': showMissingServicesContext,
   },
 
   configs: {
@@ -27,6 +31,7 @@ const plugin: ESLint.Plugin = {
         'tdi2/show-interface-resolution': 'warn',
         'tdi2/show-implementation-context': 'warn',
         'tdi2/show-interface-implementations': 'warn',
+        'tdi2/show-missing-services-context': 'warn',
       },
     } as any,
     strict: {
@@ -58,6 +63,7 @@ const plugin: ESLint.Plugin = {
             warnOnAmbiguity: true,
           },
         ],
+        'tdi2/show-missing-services-context': 'warn',
       },
     } as any,
   },
