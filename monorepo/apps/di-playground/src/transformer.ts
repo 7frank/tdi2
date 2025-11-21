@@ -614,8 +614,8 @@ export const INTERFACE_IMPLEMENTATIONS = ${JSON.stringify(interfaceImplementatio
 
   async transform(inputCode: string, fileName: string = 'Component.tsx'): Promise<TransformationResult> {
     try {
-      // Create the component file in virtual filesystem
-      const componentPath = `${this.virtualRoot}/components/${fileName}`;
+      // Create the component file in virtual filesystem (fileName already includes path like src/components/...)
+      const componentPath = `${this.virtualRoot}/${fileName.replace(/^src\//, '')}`;
 
       // CRITICAL: Delete existing file first to prevent transformation stacking
       const existingFile = this.project.getSourceFile(componentPath);

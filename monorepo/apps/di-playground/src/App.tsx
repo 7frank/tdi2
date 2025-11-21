@@ -82,7 +82,7 @@ function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('before');
   const [error, setError] = useState<string | null>(null);
   const [isTransforming, setIsTransforming] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(true); // Preview open by default
   const transformerRef = useRef<BrowserTransformer | null>(null);
   const transformTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
