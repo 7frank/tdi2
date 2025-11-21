@@ -8,33 +8,24 @@ import type * as Monaco from 'monaco-editor';
 
 // Configure Monaco editor with type definitions
 const configureMonaco = (monaco: typeof Monaco) => {
-  // Add React type definitions
-  monaco.languages.typescript.typescriptDefaults.addExtraLib(
-    `declare module 'react' {
-      export function useState<T>(initialValue: T): [T, (value: T) => void];
-      export function useEffect(effect: () => void | (() => void), deps?: any[]): void;
-      export function useCallback<T extends Function>(callback: T, deps: any[]): T;
-      export const FC: any;
-      export const ReactNode: any;
-      export default React;
-      const React: any;
-    }`,
-    'file:///node_modules/@types/react/index.d.ts'
-  );
+  const reactTypes = `declare module 'react' {
+    export function useState<T>(initialValue: T): [T, (value: T) => void];
+    export function useEffect(effect: () => void | (() => void), deps?: any[]): void;
+    export function useCallback<T extends Function>(callback: T, deps: any[]): T;
+    export const FC: any;
+    export const ReactNode: any;
+    export default React;
+    const React: any;
+  }`;
 
-  // Add @tdi2/di-core type definitions
-  monaco.languages.typescript.typescriptDefaults.addExtraLib(
-    `declare module '@tdi2/di-core' {
-      export type Inject<T> = T;
-      export type InjectOptional<T> = T | undefined;
-      export function Service(): ClassDecorator;
-      export const Container: any;
-    }`,
-    'file:///node_modules/@tdi2/di-core/index.d.ts'
-  );
+  const diCoreTypes = `declare module '@tdi2/di-core' {
+    export type Inject<T> = T;
+    export type InjectOptional<T> = T | undefined;
+    export function Service(): ClassDecorator;
+    export const Container: any;
+  }`;
 
-  // Configure compiler options
-  monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+  const compilerOptions = {
     target: monaco.languages.typescript.ScriptTarget.ES2020,
     allowNonTsExtensions: true,
     moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
@@ -45,17 +36,28 @@ const configureMonaco = (monaco: typeof Monaco) => {
     reactNamespace: 'React',
     allowJs: true,
     typeRoots: ['node_modules/@types'],
-  });
+  };
 
-  // Set diagnostics options to reduce noise
-  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+  const diagnosticOptions = {
     noSemanticValidation: false,
     noSyntaxValidation: false,
     diagnosticCodesToIgnore: [
       1259, // Top-level 'await' expressions are only allowed when the 'module' option is set to 'esnext' or 'system'
       2792, // Cannot find module (we handle this with extra libs)
     ],
-  });
+  };
+
+  // Configure TypeScript (for .ts files)
+  monaco.languages.typescript.typescriptDefaults.addExtraLib(reactTypes, 'file:///node_modules/@types/react/index.d.ts');
+  monaco.languages.typescript.typescriptDefaults.addExtraLib(diCoreTypes, 'file:///node_modules/@tdi2/di-core/index.d.ts');
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions(compilerOptions);
+  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(diagnosticOptions);
+
+  // Configure JavaScript (for JSX highlighting in .tsx files)
+  monaco.languages.typescript.javascriptDefaults.addExtraLib(reactTypes, 'file:///node_modules/@types/react/index.d.ts');
+  monaco.languages.typescript.javascriptDefaults.addExtraLib(diCoreTypes, 'file:///node_modules/@tdi2/di-core/index.d.ts');
+  monaco.languages.typescript.javascriptDefaults.setCompilerOptions(compilerOptions);
+  monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions(diagnosticOptions);
 };
 
 export interface TransformedFile {
@@ -291,13 +293,6 @@ export const INTERFACE_IMPLEMENTATIONS = {};
         ? currentFile.content // Show generated file as-is
         : (currentTransformed?.transformedCode ?? ''));
 
-  // Map file language to Monaco language ID
-  const getMonacoLanguage = (language: string | undefined): string => {
-    if (language === 'tsx') return 'typescriptreact';
-    return language || 'typescript';
-  };
-
-  const currentLanguage = getMonacoLanguage(currentFile?.language);
   const exampleIndex = examples.findIndex(ex => ex.name === selectedExample.name);
 
   return (
@@ -394,8 +389,7 @@ export const INTERFACE_IMPLEMENTATIONS = {};
             <Editor
               key={`${viewMode}-${currentFile?.path}`}
               height="100%"
-              language={currentLanguage}
-              path={`${viewMode}:${currentFile?.path}`}
+              path={`${viewMode}/${currentFile?.path}`}
               theme="vs-dark"
               value={currentCode}
               onChange={viewMode === 'before' ? handleCodeChange : undefined}
