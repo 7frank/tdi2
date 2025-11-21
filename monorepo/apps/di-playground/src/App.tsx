@@ -291,7 +291,13 @@ export const INTERFACE_IMPLEMENTATIONS = {};
         ? currentFile.content // Show generated file as-is
         : (currentTransformed?.transformedCode ?? ''));
 
-  const currentLanguage = currentFile?.language || 'typescript';
+  // Map file language to Monaco language ID
+  const getMonacoLanguage = (language: string | undefined): string => {
+    if (language === 'tsx') return 'typescriptreact';
+    return language || 'typescript';
+  };
+
+  const currentLanguage = getMonacoLanguage(currentFile?.language);
   const exampleIndex = examples.findIndex(ex => ex.name === selectedExample.name);
 
   return (
