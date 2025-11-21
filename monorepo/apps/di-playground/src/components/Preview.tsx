@@ -41,9 +41,10 @@ export function Preview({ example, transformedFiles, diConfigContent, onClose }:
             showInlineErrors: true,
             closableTabs: false,
             editorHeight: '100%',
-            editorWidthPercentage: 0, // Hide editor, only show preview
+            editorWidthPercentage: 0, // Completely hide the editor/file panel
             autorun: true,
             autoReload: true,
+            layout: 'preview', // Only show preview, no code editor
           }}
           customSetup={{
             dependencies: {
@@ -51,18 +52,8 @@ export function Preview({ example, transformedFiles, diConfigContent, onClose }:
               valtio: '^2.1.2',
             },
           }}
+          style={{ height: '100%' }}
         />
-      </div>
-
-      <div className="preview-info">
-        <div className="preview-info-item">
-          <span className="preview-info-label">Example:</span>
-          <span className="preview-info-value">{example.name}</span>
-        </div>
-        <div className="preview-info-item">
-          <span className="preview-info-label">Files transformed:</span>
-          <span className="preview-info-value">{Object.keys(transformedFiles).length}</span>
-        </div>
       </div>
     </div>
   );
