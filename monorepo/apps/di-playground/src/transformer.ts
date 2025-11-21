@@ -2,17 +2,17 @@ import { Project, Node } from 'ts-morph';
 
 // Import browser-compatible components directly from source
 // @ts-ignore - importing from source files
-import { TransformationPipeline } from '../../packages/di-core/tools/functional-di-enhanced-transformer/transformation-pipeline';
+import { TransformationPipeline } from '../../packages/di-core/tools/functional-di-enhanced-transformer/transformation-pipeline.ts';
 // @ts-ignore
-import { IntegratedInterfaceResolver } from '../../packages/di-core/tools/interface-resolver/integrated-interface-resolver';
+import { IntegratedInterfaceResolver } from '../../packages/di-core/tools/interface-resolver/integrated-interface-resolver.ts';
 // @ts-ignore
-import { SharedDependencyExtractor } from '../../packages/di-core/tools/shared/SharedDependencyExtractor';
+import { SharedDependencyExtractor } from '../../packages/di-core/tools/shared/SharedDependencyExtractor.ts';
 // @ts-ignore
-import { SharedTypeResolver } from '../../packages/di-core/tools/shared/SharedTypeResolver';
+import { SharedTypeResolver } from '../../packages/di-core/tools/shared/SharedTypeResolver.ts';
 // @ts-ignore
-import { DiInjectMarkers } from '../../packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers';
+import { DiInjectMarkers } from '../../packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts';
 // @ts-ignore
-import { ImportManager } from '../../packages/di-core/tools/functional-di-enhanced-transformer/import-manager';
+import { ImportManager } from '../../packages/di-core/tools/functional-di-enhanced-transformer/import-manager.ts';
 
 export interface TransformationResult {
   success: boolean;
