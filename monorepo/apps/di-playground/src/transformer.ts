@@ -297,6 +297,38 @@ export class ProductService implements ProductServiceInterface {
     `);
   }
 
+  /**
+   * Update a single virtual file's content (without re-scanning)
+   */
+  updateVirtualFile(filePath: string, content: string): void {
+    const virtualPath = `${this.virtualRoot}/${filePath.replace(/^src\//, '')}`;
+
+    // Check if file exists and update it, or create new one
+    const existingFile = this.project.getSourceFile(virtualPath);
+    if (existingFile) {
+      existingFile.replaceWithText(content);
+      console.log(`📝 Updated virtual file: ${virtualPath}`);
+    } else {
+      this.project.createSourceFile(virtualPath, content);
+      console.log(`📄 Created new virtual file: ${virtualPath}`);
+    }
+  }
+
+  /**
+   * Update multiple virtual files and re-scan interfaces once
+   * More efficient than updating one-by-one
+   */
+  async updateFilesAndRescan(files: Array<{ path: string; content: string }>): Promise<void> {
+    // Update all files first
+    for (const file of files) {
+      this.updateVirtualFile(file.path, file.content);
+    }
+
+    // Then re-scan interfaces once
+    await this.scanInterfaces();
+    console.log(`✅ Updated ${files.length} files and re-scanned interfaces`);
+  }
+
   private async scanInterfaces(): Promise<void> {
     try {
       // BROWSER FIX: Don't call scanProject() because it tries to read from disk

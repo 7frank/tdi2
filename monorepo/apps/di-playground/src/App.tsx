@@ -109,6 +109,20 @@ function App() {
 
     const results: Record<string, TransformedFile> = {};
 
+    // CRITICAL: Update virtual files and re-scan interfaces FIRST
+    // This ensures DI_CONFIG generation uses current file content
+    try {
+      const filesToUpdate = selectedExample.files.map(file => ({
+        path: file.path,
+        content: editedFiles[file.path] ?? file.content,
+      }));
+      // Batch update all files and re-scan interfaces once (more efficient)
+      await transformerRef.current.updateFilesAndRescan(filesToUpdate);
+    } catch (err) {
+      console.error('Error updating virtual files:', err);
+    }
+
+    // Now transform all files with updated interface mappings
     for (const file of selectedExample.files) {
       try {
         // Use edited content if available, otherwise use original
