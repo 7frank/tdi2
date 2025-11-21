@@ -65,17 +65,24 @@ export interface TransformedFile {
   error?: string;
 }
 
+export interface EditedFile {
+  path: string;
+  content: string;
+}
+
 type ViewMode = 'before' | 'after';
 
 function App() {
   const [selectedExample, setSelectedExample] = useState<ProjectExample>(defaultExample);
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const [transformedFiles, setTransformedFiles] = useState<Record<string, TransformedFile>>({});
+  const [editedFiles, setEditedFiles] = useState<Record<string, string>>({}); // Store user edits
   const [viewMode, setViewMode] = useState<ViewMode>('before');
   const [error, setError] = useState<string | null>(null);
   const [isTransforming, setIsTransforming] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const transformerRef = useRef<BrowserTransformer | null>(null);
+  const transformTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize transformer
   useEffect(() => {
@@ -87,12 +94,14 @@ function App() {
     if (selectedExample.files.length > 0) {
       setSelectedFilePath(selectedExample.files[0].path);
     }
+    // Clear edits when example changes
+    setEditedFiles({});
   }, [selectedExample]);
 
-  // Transform all files when example changes
+  // Transform all files when example changes or edits change
   useEffect(() => {
     transformAllFiles();
-  }, [selectedExample]);
+  }, [selectedExample, editedFiles]);
 
   const transformAllFiles = useCallback(async () => {
     if (!transformerRef.current) return;
@@ -104,12 +113,14 @@ function App() {
 
     for (const file of selectedExample.files) {
       try {
-        const result = await transformerRef.current.transform(file.content, file.path);
+        // Use edited content if available, otherwise use original
+        const contentToTransform = editedFiles[file.path] ?? file.content;
+        const result = await transformerRef.current.transform(contentToTransform, file.path);
 
         results[file.path] = {
           path: file.path,
-          originalCode: file.content,
-          transformedCode: result.transformedCode || file.content,
+          originalCode: contentToTransform,
+          transformedCode: result.transformedCode || contentToTransform,
           error: result.error,
         };
 
@@ -118,9 +129,10 @@ function App() {
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        const contentToTransform = editedFiles[file.path] ?? file.content;
         results[file.path] = {
           path: file.path,
-          originalCode: file.content,
+          originalCode: contentToTransform,
           transformedCode: `// Transformation failed: ${errorMessage}`,
           error: errorMessage,
         };
@@ -129,7 +141,34 @@ function App() {
 
     setTransformedFiles(results);
     setIsTransforming(false);
-  }, [selectedExample]);
+  }, [selectedExample, editedFiles]);
+
+  // Load edited files from URL hash on mount
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      try {
+        const decoded = atob(hash);
+        const data = JSON.parse(decoded);
+        if (data.edits) {
+          setEditedFiles(data.edits);
+        }
+      } catch (e) {
+        console.warn('Failed to load edits from URL:', e);
+      }
+    }
+  }, []);
+
+  // Save edited files to URL hash
+  useEffect(() => {
+    if (Object.keys(editedFiles).length > 0) {
+      const data = { edits: editedFiles };
+      const encoded = btoa(JSON.stringify(data));
+      window.location.hash = encoded;
+    } else {
+      window.location.hash = '';
+    }
+  }, [editedFiles]);
 
   const handleExampleChange = (index: number) => {
     setSelectedExample(examples[index]);
@@ -144,6 +183,40 @@ function App() {
     setShowPreview(true);
   };
 
+  // Handle code changes with debounced transformation
+  const handleCodeChange = (value: string | undefined) => {
+    if (!selectedFilePath || !value) return;
+
+    // Update edited files immediately
+    setEditedFiles(prev => ({
+      ...prev,
+      [selectedFilePath]: value,
+    }));
+
+    // Debounce transformation (will trigger via useEffect)
+    if (transformTimeoutRef.current) {
+      clearTimeout(transformTimeoutRef.current);
+    }
+  };
+
+  // Get files to display based on view mode
+  const getDisplayFiles = (): ProjectFile[] => {
+    if (viewMode === 'before') {
+      return selectedExample.files;
+    } else {
+      // In "after" view, show transformed files + generated files
+      const transformedFilesList: ProjectFile[] = selectedExample.files.map(file => ({
+        ...file,
+        path: file.path,
+        content: transformedFiles[file.path]?.transformedCode || file.content,
+      }));
+
+      // TODO: Add generated files like DI_CONFIG
+      // For now, just return transformed files
+      return transformedFilesList;
+    }
+  };
+
   const getCurrentFile = (): ProjectFile | null => {
     if (!selectedFilePath) return null;
     return selectedExample.files.find((f) => f.path === selectedFilePath) || null;
@@ -156,11 +229,15 @@ function App() {
 
   const currentFile = getCurrentFile();
   const currentTransformed = getCurrentTransformedFile();
+
+  // Get current code based on view mode
   const currentCode = viewMode === 'before'
-    ? currentFile?.content || ''
+    ? (editedFiles[selectedFilePath || ''] ?? currentFile?.content || '')
     : currentTransformed?.transformedCode || '';
+
   const currentLanguage = currentFile?.language || 'typescript';
   const exampleIndex = examples.findIndex(ex => ex.name === selectedExample.name);
+  const displayFiles = getDisplayFiles();
 
   return (
     <div className="playground-container">
@@ -202,40 +279,52 @@ function App() {
       <div className="playground-content">
         {/* Left Panel - File Tree */}
         <div className="sidebar-panel">
+          <div className="view-mode-toggle">
+            <button
+              className={`toggle-button ${viewMode === 'before' ? 'active' : ''}`}
+              onClick={() => setViewMode('before')}
+            >
+              📝 Before
+            </button>
+            <button
+              className={`toggle-button ${viewMode === 'after' ? 'active' : ''}`}
+              onClick={() => setViewMode('after')}
+            >
+              ✨ After
+            </button>
+          </div>
           <FileTree
-            example={selectedExample}
+            example={{
+              ...selectedExample,
+              files: displayFiles,
+            }}
             selectedFile={selectedFilePath}
             onFileSelect={handleFileSelect}
           />
           <div className="sidebar-info">
             <p className="info-description">{selectedExample.description}</p>
             <p className="info-stats">
-              {selectedExample.files.length} file{selectedExample.files.length !== 1 ? 's' : ''}
+              {displayFiles.length} file{displayFiles.length !== 1 ? 's' : ''}
+              {viewMode === 'after' && ' (transformed)'}
             </p>
           </div>
         </div>
 
         {/* Center Panel - Code Editor */}
         <div className="editor-panel">
-          <div className="editor-tabs">
-            <button
-              className={`editor-tab ${viewMode === 'before' ? 'active' : ''}`}
-              onClick={() => setViewMode('before')}
-            >
-              📝 Before Transformation
-            </button>
-            <button
-              className={`editor-tab ${viewMode === 'after' ? 'active' : ''}`}
-              onClick={() => setViewMode('after')}
-            >
-              ✨ After Transformation
-            </button>
+          <div className="editor-header">
+            <span className="editor-file-path">
+              {currentFile?.path || 'No file selected'}
+            </span>
             {isTransforming && (
               <span className="transforming-indicator">⚡ Transforming...</span>
             )}
-          </div>
-          <div className="editor-header">
-            {currentFile?.path || 'No file selected'}
+            {viewMode === 'before' && (
+              <span className="editor-mode-badge">Editable</span>
+            )}
+            {viewMode === 'after' && (
+              <span className="editor-mode-badge readonly">Read-only</span>
+            )}
           </div>
           <div className="editor-wrapper">
             <Editor
@@ -244,6 +333,7 @@ function App() {
               path={currentFile?.path}
               theme="vs-dark"
               value={currentCode}
+              onChange={viewMode === 'before' ? handleCodeChange : undefined}
               beforeMount={configureMonaco}
               options={{
                 minimap: { enabled: false },

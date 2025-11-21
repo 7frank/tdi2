@@ -106,6 +106,37 @@ body {
   overflow: hidden;
 }
 
+/* View Mode Toggle */
+.view-mode-toggle {
+  display: flex;
+  padding: 12px;
+  gap: 8px;
+  background: #2d2d30;
+  border-bottom: 1px solid #3c3c3c;
+}
+
+.toggle-button {
+  flex: 1;
+  background: #3c3c3c;
+  color: #cccccc;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.toggle-button:hover {
+  background: #4c4c4c;
+}
+
+.toggle-button.active {
+  background: #0e639c;
+  color: white;
+}
+
 .sidebar-info {
   padding: 12px;
   border-top: 1px solid #3c3c3c;
@@ -243,6 +274,27 @@ body {
   color: #888888;
   font-weight: 400;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editor-file-path {
+  flex: 1;
+}
+
+.editor-mode-badge {
+  background: #0e639c;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.editor-mode-badge.readonly {
+  background: #6b6b6b;
 }
 
 .editor-wrapper {
