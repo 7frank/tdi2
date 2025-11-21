@@ -5,6 +5,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "test": "turbo run test",
+    "test:ci": "CI=true turbo run test",
     "lint": "turbo run lint",
     "check-types": "turbo run check-types",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
@@ -16,8 +17,10 @@
     "rm": "find . -maxdepth 3 -type d -name \"node_modules\" -exec rm -rf {} +",
     "docs:dev": "cd apps/docs-starlight && bun run dev",
     "docs:build": "cd apps/docs-starlight && bun run build",
-    "docs:preview": "cd apps/docs-starlight && bun run preview"
-
+    "docs:preview": "cd apps/docs-starlight && bun run preview",
+    "playground:dev": "cd apps/di-playground && bun run dev",
+    "playground:build": "cd apps/di-playground && bun run build",
+    "playground:preview": "cd apps/di-playground && bun run preview"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",

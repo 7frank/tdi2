@@ -14,6 +14,9 @@ import {
   createPerformanceTracker,
   type PluginConfig,
 } from '@tdi2/plugin-core';
+import { consoleFor } from '@tdi2/di-core/tools';
+
+const console = consoleFor('plugin-esbuild-di');
 
 export interface EsbuildPluginDIOptions extends PluginConfig {}
 
@@ -33,8 +36,7 @@ export interface EsbuildPluginDIOptions extends PluginConfig {}
  *   plugins: [
  *     tdi2Plugin({
  *       srcDir: './src',
- *       enableFunctionalDI: true,
- *       verbose: false
+ *       enableFunctionalDI: true
  *     })
  *   ]
  * });
@@ -54,10 +56,7 @@ export function tdi2Plugin(userOptions: EsbuildPluginDIOptions = {}): Plugin {
     setup(build) {
       // Initialize on build start
       build.onStart(async () => {
-        if (config.verbose) {
-          console.log('🚀 TDI2 esbuild Plugin: Starting build...');
-        }
-
+        console.log('🚀 TDI2 esbuild Plugin: Starting build...');
         performanceTracker.startTransformation();
 
         try {
@@ -69,10 +68,7 @@ export function tdi2Plugin(userOptions: EsbuildPluginDIOptions = {}): Plugin {
           await orchestrator.initialize();
           initialized = true;
           performanceTracker.recordCacheHit();
-
-          if (config.verbose) {
-            console.log('✅ TDI2 esbuild Plugin: Initialization complete');
-          }
+          console.log('✅ TDI2 esbuild Plugin: Initialization complete');
         } catch (error) {
           performanceTracker.recordError();
           console.error('❌ TDI2 initialization failed:', error);
@@ -108,10 +104,7 @@ export function tdi2Plugin(userOptions: EsbuildPluginDIOptions = {}): Plugin {
 
           if (result.wasTransformed) {
             performanceTracker.recordCacheHit();
-
-            if (config.verbose) {
-              console.log(`🔄 Transformed: ${args.path}`);
-            }
+            console.debug(`🔄 Transformed: ${args.path}`);
 
             return {
               contents: result.code,
@@ -130,7 +123,7 @@ export function tdi2Plugin(userOptions: EsbuildPluginDIOptions = {}): Plugin {
 
       // Report statistics on build end
       build.onEnd(() => {
-        if (config.verbose && orchestrator) {
+        if (orchestrator) {
           console.log('\n📊 TDI2 esbuild Plugin Statistics:');
           console.log(`   Transformed files: ${orchestrator.getTransformedFileCount()}`);
           console.log(performanceTracker.formatStats());

@@ -52,6 +52,12 @@ jobs:
           bun install
           bun run build
 
+      - name: Build playground
+        run: |
+          cd monorepo/apps/di-playground
+          bun install
+          bun run build
+
       - name: Upload test harness for Pages
         uses: actions/upload-artifact@v4
         with:
@@ -63,6 +69,12 @@ jobs:
         with:
           name: docs-dist
           path: monorepo/apps/docs-starlight/dist/
+
+      - name: Upload playground for Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: playground-dist
+          path: monorepo/apps/di-playground/dist/
 
   # Deploy to GitHub Pages
   deploy-pages:
@@ -88,6 +100,12 @@ jobs:
         with:
           name: test-harness-dist
           path: ./pages-site/test-harness
+
+      - name: Download playground build
+        uses: actions/download-artifact@v4
+        with:
+          name: playground-dist
+          path: ./pages-site/playground
 
       - name: Create root index page
         run: |
@@ -130,7 +148,7 @@ jobs:
               }
               .links {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
                 gap: 2rem;
                 margin-top: 2rem;
               }
@@ -183,6 +201,10 @@ jobs:
                 <a href="./test-harness/" class="link-card">
                   <h2>🧪 Interactive Examples</h2>
                   <p>Live demos and transformations you can try right now</p>
+                </a>
+                <a href="./playground/" class="link-card">
+                  <h2>🎮 Playground</h2>
+                  <p>Interactive code editor with live transformation preview</p>
                 </a>
               </div>
               

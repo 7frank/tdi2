@@ -28,6 +28,7 @@ export interface DIPluginOptions extends BasePluginConfig {
    * @default true
    */
   reuseExistingConfig?: boolean;
+
 }
 
 export interface TransformationSummary {
