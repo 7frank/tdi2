@@ -460,23 +460,35 @@ export class ProductService implements ProductServiceInterface {
   private findUsedServices(): Set<string> {
     const usedServices = new Set<string>();
 
+    // Get ALL source files to see what we have
+    const allFiles = this.project.getSourceFiles();
+    console.log(`📁 All files in project (${allFiles.length}):`, allFiles.map(f => f.getFilePath()));
+
     // Get all component files
-    const componentFiles = this.project.getSourceFiles().filter(f =>
+    const componentFiles = allFiles.filter(f =>
       f.getFilePath().includes('/components/')
     );
 
     console.log(`🔍 Analyzing ${componentFiles.length} component files for service usage...`);
+    if (componentFiles.length === 0) {
+      console.warn(`⚠️  No component files found! Check if files contain '/components/' in path`);
+    }
 
     for (const file of componentFiles) {
+      const filePath = file.getFilePath();
       const fileText = file.getFullText();
+      console.log(`  📄 Scanning ${filePath}...`);
+      console.log(`  📝 File content preview:`, fileText.substring(0, 200));
 
       // Find all Inject<ServiceInterface> patterns
       const injectPattern = /Inject<(\w+)>/g;
       let match;
+      let foundInFile = false;
       while ((match = injectPattern.exec(fileText)) !== null) {
         const serviceName = match[1];
         usedServices.add(serviceName);
         console.log(`  ✓ Found usage: ${serviceName} in ${file.getBaseName()}`);
+        foundInFile = true;
       }
 
       // Also find InjectOptional<ServiceInterface> patterns
@@ -485,10 +497,15 @@ export class ProductService implements ProductServiceInterface {
         const serviceName = match[1];
         usedServices.add(serviceName);
         console.log(`  ✓ Found optional usage: ${serviceName} in ${file.getBaseName()}`);
+        foundInFile = true;
+      }
+
+      if (!foundInFile) {
+        console.log(`  ⚠️  No Inject<> patterns found in ${file.getBaseName()}`);
       }
     }
 
-    console.log(`📊 Total unique services used: ${usedServices.size}`);
+    console.log(`📊 Total unique services used: ${usedServices.size}`, Array.from(usedServices));
     return usedServices;
   }
 
@@ -514,9 +531,25 @@ export const INTERFACE_IMPLEMENTATIONS = {};
 `;
     }
 
-    // For playground: register ALL discovered services (no filtering)
-    // This ensures services are available even if service detection had issues
-    console.log(`📋 Registering all ${mappings.size} discovered services`);
+    // Use cached services (found before transformation)
+    // We can't call findUsedServices() here because components are already transformed
+    const usedServices = this.cachedUsedServices;
+
+    console.log(`📋 Cached used services (${usedServices.size}):`, Array.from(usedServices));
+    console.log(`📋 Available mappings (${mappings.size}):`, Array.from(mappings.keys()));
+
+    if (usedServices.size === 0) {
+      return `// Auto-generated DI configuration
+// No services used in this example
+// Tip: Add Inject<ServiceInterface> types to component props to use dependency injection
+
+export const DI_CONFIG = {};
+
+export const SERVICE_TOKENS = {};
+
+export const INTERFACE_IMPLEMENTATIONS = {};
+`;
+    }
 
     const factoryFunctions: string[] = [];
     const configEntries: string[] = [];
@@ -527,6 +560,11 @@ export const INTERFACE_IMPLEMENTATIONS = {};
 
     // Process all interface->implementation mappings
     mappings.forEach((implementation: any, interfaceName: string) => {
+      // FILTER: Only include if this interface is used in components
+      if (!usedServices.has(interfaceName)) {
+        console.log(`  ⏭️  Skipping unused service: ${interfaceName}`);
+        return;
+      }
       console.log(`  ✅ Registering service: ${interfaceName}`);
       const className = implementation.implementationClass;
       const filePath = implementation.filePath.replace(/^\/virtual\//, '').replace(/\.ts$/, '');
@@ -572,11 +610,11 @@ export const INTERFACE_IMPLEMENTATIONS = {};
     });
 
     const timestamp = new Date().toISOString();
-    const registeredServices = Array.from(mappings.keys()).join(', ');
+    const usedServicesList = Array.from(usedServices).join(', ');
 
     return `// Auto-generated DI configuration
 // Generated: ${timestamp}
-// Registered services: ${registeredServices}
+// Services used in this example: ${usedServicesList}
 
 ${Array.from(imports).join('\n')}
 
