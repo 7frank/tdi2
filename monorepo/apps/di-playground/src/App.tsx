@@ -86,6 +86,19 @@ function App() {
   const transformerRef = useRef<BrowserTransformer | null>(null);
   const transformTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Refs to always access latest values (avoid stale closures)
+  const editedFilesRef = useRef(editedFiles);
+  const selectedExampleFilesRef = useRef(selectedExample.files);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    editedFilesRef.current = editedFiles;
+  }, [editedFiles]);
+
+  useEffect(() => {
+    selectedExampleFilesRef.current = selectedExample.files;
+  }, [selectedExample.files]);
+
   // Initialize transformer
   useEffect(() => {
     transformerRef.current = new BrowserTransformer();
@@ -111,10 +124,11 @@ function App() {
 
     // CRITICAL: Update virtual files and re-scan interfaces FIRST
     // This ensures DI_CONFIG generation uses current file content
+    // Use refs to get latest values (avoid stale closures)
     try {
-      const filesToUpdate = selectedExample.files.map(file => ({
+      const filesToUpdate = selectedExampleFilesRef.current.map(file => ({
         path: file.path,
-        content: editedFiles[file.path] ?? file.content,
+        content: editedFilesRef.current[file.path] ?? file.content,
       }));
       // Batch update all files and re-scan interfaces once (more efficient)
       await transformerRef.current.updateFilesAndRescan(filesToUpdate);
@@ -123,10 +137,10 @@ function App() {
     }
 
     // Now transform all files with updated interface mappings
-    for (const file of selectedExample.files) {
+    for (const file of selectedExampleFilesRef.current) {
       try {
         // Use edited content if available, otherwise use original
-        const contentToTransform = editedFiles[file.path] ?? file.content;
+        const contentToTransform = editedFilesRef.current[file.path] ?? file.content;
         const result = await transformerRef.current.transform(contentToTransform, file.path);
 
         results[file.path] = {
@@ -141,7 +155,7 @@ function App() {
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-        const contentToTransform = editedFiles[file.path] ?? file.content;
+        const contentToTransform = editedFilesRef.current[file.path] ?? file.content;
         results[file.path] = {
           path: file.path,
           originalCode: contentToTransform,
@@ -153,7 +167,7 @@ function App() {
 
     setTransformedFiles(results);
     setIsTransforming(false);
-  }, [selectedExample.files, editedFiles, isTransforming]);
+  }, [isTransforming]);
 
   // Debounced transform when edits change
   useEffect(() => {
@@ -176,14 +190,12 @@ function App() {
         clearTimeout(transformTimeoutRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editedFiles]);
+  }, [editedFiles, transformAllFiles]);
 
   // Transform immediately when example changes (no debounce)
   useEffect(() => {
     transformAllFiles();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedExample]);
+  }, [selectedExample, transformAllFiles]);
 
   // Load edited files from URL hash on mount
   useEffect(() => {
