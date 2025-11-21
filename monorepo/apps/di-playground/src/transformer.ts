@@ -514,22 +514,9 @@ export const INTERFACE_IMPLEMENTATIONS = {};
 `;
     }
 
-    // Use cached services (found before transformation)
-    // We can't call findUsedServices() here because components are already transformed
-    const usedServices = this.cachedUsedServices;
-
-    if (usedServices.size === 0) {
-      return `// Auto-generated DI configuration
-// No services used in this example
-// Tip: Add Inject<ServiceInterface> types to component props to use dependency injection
-
-export const DI_CONFIG = {};
-
-export const SERVICE_TOKENS = {};
-
-export const INTERFACE_IMPLEMENTATIONS = {};
-`;
-    }
+    // For playground: register ALL discovered services (no filtering)
+    // This ensures services are available even if service detection had issues
+    console.log(`📋 Registering all ${mappings.size} discovered services`);
 
     const factoryFunctions: string[] = [];
     const configEntries: string[] = [];
@@ -540,11 +527,7 @@ export const INTERFACE_IMPLEMENTATIONS = {};
 
     // Process all interface->implementation mappings
     mappings.forEach((implementation: any, interfaceName: string) => {
-      // FILTER: Only include if this interface is used in components
-      if (!usedServices.has(interfaceName)) {
-        console.log(`  ⏭️  Skipping unused service: ${interfaceName}`);
-        return;
-      }
+      console.log(`  ✅ Registering service: ${interfaceName}`);
       const className = implementation.implementationClass;
       const filePath = implementation.filePath.replace(/^\/virtual\//, '').replace(/\.ts$/, '');
 
@@ -589,11 +572,11 @@ export const INTERFACE_IMPLEMENTATIONS = {};
     });
 
     const timestamp = new Date().toISOString();
-    const usedServicesList = Array.from(usedServices).join(', ');
+    const registeredServices = Array.from(mappings.keys()).join(', ');
 
     return `// Auto-generated DI configuration
 // Generated: ${timestamp}
-// Services used in this example: ${usedServicesList}
+// Registered services: ${registeredServices}
 
 ${Array.from(imports).join('\n')}
 
