@@ -82,10 +82,11 @@ function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('before');
   const [error, setError] = useState<string | null>(null);
   const [isTransforming, setIsTransforming] = useState(false);
-  const [showPreview, setShowPreview] = useState(true); // Preview open by default
+  const [showPreview, setShowPreview] = useState(false); // Preview closed by default - opens after first transformation
   const transformerRef = useRef<BrowserTransformer | null>(null);
   const transformTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTransformingRef = useRef(false); // Track transforming state in ref to prevent callback recreation
+  const hasInitialTransformRef = useRef(false); // Track if initial transformation is complete
 
   // Refs to always access latest values (avoid stale closures)
   const editedFilesRef = useRef(editedFiles);
@@ -180,6 +181,13 @@ function App() {
     setTransformedFiles(results);
     setIsTransforming(false);
     isTransformingRef.current = false;
+
+    // After first successful transformation, mark as ready and open preview
+    if (!hasInitialTransformRef.current) {
+      hasInitialTransformRef.current = true;
+      setShowPreview(true);
+      console.log('✅ Initial transformation complete - preview ready');
+    }
   }, []); // No dependencies - stable callback
 
   // Debounced transform when edits change
@@ -240,6 +248,7 @@ function App() {
   const handleExampleChange = (index: number) => {
     setSelectedExample(examples[index]);
     setShowPreview(false);
+    hasInitialTransformRef.current = false; // Reset for new example
   };
 
   const handleFileSelect = (filePath: string) => {
@@ -363,7 +372,7 @@ export const INTERFACE_IMPLEMENTATIONS = {};
             onClick={handleRun}
             disabled={isTransforming}
           >
-            {showPreview ? '🔄 Refresh' : '▶️ Run'}
+            {isTransforming && !hasInitialTransformRef.current ? '⏳ Loading...' : (showPreview ? '🔄 Refresh' : '▶️ Run')}
           </button>
           {showPreview && (
             <button
