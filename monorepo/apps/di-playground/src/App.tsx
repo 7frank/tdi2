@@ -422,7 +422,7 @@ export const INTERFACE_IMPLEMENTATIONS = {};
         </div>
 
         {/* Right Panel - Live Preview (conditional) */}
-        {showPreview && (
+        {showPreview && Object.keys(transformedFiles).length > 0 && (
           <Preview
             example={selectedExample}
             transformedFiles={transformedFiles}
