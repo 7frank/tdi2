@@ -98,13 +98,9 @@ function App() {
     setEditedFiles({});
   }, [selectedExample]);
 
-  // Transform all files when example changes or edits change
-  useEffect(() => {
-    transformAllFiles();
-  }, [selectedExample, editedFiles]);
-
+  // Transform all files
   const transformAllFiles = useCallback(async () => {
-    if (!transformerRef.current) return;
+    if (!transformerRef.current || isTransforming) return;
 
     setIsTransforming(true);
     setError(null);
@@ -141,7 +137,37 @@ function App() {
 
     setTransformedFiles(results);
     setIsTransforming(false);
-  }, [selectedExample, editedFiles]);
+  }, [selectedExample.files, editedFiles, isTransforming]);
+
+  // Debounced transform when edits change
+  useEffect(() => {
+    // Only transform if we have edits
+    if (Object.keys(editedFiles).length === 0) return;
+
+    // Clear any pending transformation
+    if (transformTimeoutRef.current) {
+      clearTimeout(transformTimeoutRef.current);
+    }
+
+    // Debounce transformation (500ms delay)
+    transformTimeoutRef.current = setTimeout(() => {
+      transformAllFiles();
+    }, 500);
+
+    // Cleanup on unmount or before next effect
+    return () => {
+      if (transformTimeoutRef.current) {
+        clearTimeout(transformTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editedFiles]);
+
+  // Transform immediately when example changes (no debounce)
+  useEffect(() => {
+    transformAllFiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedExample]);
 
   // Load edited files from URL hash on mount
   useEffect(() => {
