@@ -341,14 +341,23 @@ export class ProductService implements ProductServiceInterface {
             const interfaceName = impl.getText();
             console.log(`      → implements ${interfaceName}`);
 
+            // Generate sanitized key (used as service token)
+            const sanitizedKey = `${interfaceName}__${filePath.replace(/^\/virtual\//, '').replace(/\//g, '_').replace(/\.ts$/, '')}`;
+            console.log(`      → sanitizedKey: ${sanitizedKey}`);
+
             // Register this interface->class mapping
             const mapping = {
               implementationClass: className,
               interfaceName: interfaceName,
               filePath: filePath,
+              sanitizedKey: sanitizedKey,
+              isGeneric: false,
+              typeParameters: [],
+              scope: 'singleton' as const,
               isAutoResolved: true,
               registrationType: 'interface',
               isClassBased: false,
+              isInheritanceBased: false,
             };
 
             // Store in the resolver's internal map (correct property name is 'interfaces')
@@ -359,13 +368,19 @@ export class ProductService implements ProductServiceInterface {
           }
 
           // Also register the class itself
+          const classSanitizedKey = `${className}__${filePath.replace(/^\/virtual\//, '').replace(/\//g, '_').replace(/\.ts$/, '')}`;
           const classMapping = {
             implementationClass: className,
             interfaceName: className,
             filePath: filePath,
+            sanitizedKey: classSanitizedKey,
+            isGeneric: false,
+            typeParameters: [],
+            scope: 'singleton' as const,
             isAutoResolved: true,
             registrationType: 'class',
             isClassBased: true,
+            isInheritanceBased: false,
           };
           const interfaceMap = (this.interfaceResolver as any).interfaces;
           if (interfaceMap) {
