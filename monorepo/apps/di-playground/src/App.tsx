@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Editor from '@monaco-editor/react';
 import { BrowserTransformer } from './transformer';
 import { examples, defaultExample, ProjectExample, ProjectFile } from './examples';
@@ -85,6 +85,7 @@ function App() {
   const [showPreview, setShowPreview] = useState(true); // Preview open by default
   const transformerRef = useRef<BrowserTransformer | null>(null);
   const transformTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTransformingRef = useRef(false); // Track transforming state in ref to prevent callback recreation
 
   // Refs to always access latest values (avoid stale closures)
   const editedFilesRef = useRef(editedFiles);
@@ -115,8 +116,9 @@ function App() {
 
   // Transform all files
   const transformAllFiles = useCallback(async () => {
-    if (!transformerRef.current || isTransforming) return;
+    if (!transformerRef.current || isTransformingRef.current) return;
 
+    isTransformingRef.current = true;
     setIsTransforming(true);
     setError(null);
 
@@ -167,7 +169,8 @@ function App() {
 
     setTransformedFiles(results);
     setIsTransforming(false);
-  }, [isTransforming]);
+    isTransformingRef.current = false;
+  }, []); // No dependencies - stable callback
 
   // Debounced transform when edits change
   useEffect(() => {
@@ -266,6 +269,11 @@ export const INTERFACE_IMPLEMENTATIONS = {};
     return transformerRef.current.generateDIConfig();
   };
 
+  // Memoize DI config to prevent unnecessary Sandpack reloads
+  const diConfigContent = useMemo(() => {
+    return generateDIConfig();
+  }, [transformedFiles]); // Only regenerate when transformedFiles changes
+
   // Get files to display based on view mode
   const getDisplayFiles = (): ProjectFile[] => {
     if (viewMode === 'before') {
@@ -282,7 +290,7 @@ export const INTERFACE_IMPLEMENTATIONS = {};
       const diConfigFile: ProjectFile = {
         path: 'src/.tdi2/DI_CONFIG.ts',
         language: 'typescript',
-        content: generateDIConfig(),
+        content: diConfigContent,
       };
 
       return [...transformedFilesList, diConfigFile];
@@ -438,7 +446,7 @@ export const INTERFACE_IMPLEMENTATIONS = {};
           <Preview
             example={selectedExample}
             transformedFiles={transformedFiles}
-            diConfigContent={generateDIConfig()}
+            diConfigContent={diConfigContent}
             onClose={() => setShowPreview(false)}
           />
         )}
