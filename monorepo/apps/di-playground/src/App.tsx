@@ -232,8 +232,8 @@ function App() {
 
   // Get current code based on view mode
   const currentCode = viewMode === 'before'
-    ? (editedFiles[selectedFilePath || ''] ?? currentFile?.content || '')
-    : currentTransformed?.transformedCode || '';
+    ? (editedFiles[selectedFilePath || ''] ?? currentFile?.content ?? '')
+    : (currentTransformed?.transformedCode ?? '');
 
   const currentLanguage = currentFile?.language || 'typescript';
   const exampleIndex = examples.findIndex(ex => ex.name === selectedExample.name);
