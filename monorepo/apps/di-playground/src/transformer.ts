@@ -11,6 +11,8 @@ import { SharedDependencyExtractor } from '../../packages/di-core/tools/shared/S
 import { SharedTypeResolver } from '../../packages/di-core/tools/shared/SharedTypeResolver';
 // @ts-ignore
 import { DiInjectMarkers } from '../../packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers';
+// @ts-ignore
+import { ImportManager } from '../../packages/di-core/tools/functional-di-enhanced-transformer/import-manager';
 
 export interface TransformationResult {
   success: boolean;
@@ -36,6 +38,7 @@ export class BrowserTransformer {
   private dependencyExtractor: SharedDependencyExtractor;
   private transformationPipeline: TransformationPipeline;
   private diInjectMarkers: DiInjectMarkers;
+  private importManager: ImportManager;
 
   constructor() {
     // Create in-memory project for browser use
@@ -72,6 +75,11 @@ export class BrowserTransformer {
       generateFallbacks: true,
       preserveTypeAnnotations: true,
       interfaceResolver: this.interfaceResolver,
+    });
+
+    this.importManager = new ImportManager({
+      scanDirs: [this.virtualRoot],
+      outputDir: `${this.virtualRoot}/.tdi2`,
     });
 
     // Create common service interfaces that examples might use
@@ -368,6 +376,11 @@ export class ProductService implements ProductServiceInterface {
             }
           }
         }
+      }
+
+      // Add useService imports if transformations were made
+      if (transformedCount > 0) {
+        this.importManager.ensureDIImports(sourceFile);
       }
 
       // Get the transformed code
