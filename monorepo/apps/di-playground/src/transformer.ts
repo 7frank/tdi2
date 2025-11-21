@@ -57,13 +57,12 @@ export class BrowserTransformer {
     // Initialize DI inject markers detector
     this.diInjectMarkers = new DiInjectMarkers();
 
-    // Initialize the transformation components
+    // Initialize the transformation components - CRITICAL: Pass our project instance
     this.interfaceResolver = new IntegratedInterfaceResolver({
       scanDirs: [this.virtualRoot],
       enableInheritanceDI: true,
       enableStateDI: true,
-      useInMemoryFileSystem: true, // Required for browser compatibility
-   
+      project: this.project, // Pass our project so it scans the right files
     });
 
     this.typeResolver = new SharedTypeResolver(this.interfaceResolver);
@@ -300,11 +299,11 @@ export class ProductService implements ProductServiceInterface {
 
   private async scanInterfaces(): Promise<void> {
     try {
-      // Set the project for the interface resolver
-      (this.interfaceResolver as any).project = this.project;
-
-      // Scan all service files
+      // Scan all service files - project was passed in constructor
       await this.interfaceResolver.scanProject();
+
+      console.log('Interface scan complete. Mappings found:',
+        (this.interfaceResolver as any).interfaceToImplementation?.size || 0);
     } catch (error) {
       console.error('Error scanning interfaces:', error);
     }
@@ -335,9 +334,13 @@ export class ProductService implements ProductServiceInterface {
   generateDIConfig(): string {
     const mappings = (this.interfaceResolver as any).interfaceToImplementation || new Map();
 
+    console.log('Generating DI_CONFIG. Mappings size:', mappings.size);
+    console.log('All files in project:', this.project.getSourceFiles().map(f => f.getFilePath()));
+
     if (mappings.size === 0) {
       return `// Auto-generated DI configuration
 // No services found
+// Project has ${this.project.getSourceFiles().length} files
 
 export const DI_CONFIG = {};
 
