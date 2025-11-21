@@ -39,6 +39,7 @@ export class BrowserTransformer {
   private transformationPipeline: TransformationPipeline;
   private diInjectMarkers: DiInjectMarkers;
   private importManager: ImportManager;
+  private cachedUsedServices: Set<string> = new Set(); // Cache services found before transformation
 
   constructor() {
     // Create in-memory project for browser use
@@ -324,6 +325,11 @@ export class ProductService implements ProductServiceInterface {
       this.updateVirtualFile(file.path, file.content);
     }
 
+    // CRITICAL: Cache used services BEFORE transformation happens
+    // After transformation, Inject<T> markers are replaced with useService() calls
+    this.cachedUsedServices = this.findUsedServices();
+    console.log(`📌 Cached ${this.cachedUsedServices.size} used services before transformation`);
+
     // Then re-scan interfaces once
     await this.scanInterfaces();
     console.log(`✅ Updated ${files.length} files and re-scanned interfaces`);
@@ -508,8 +514,9 @@ export const INTERFACE_IMPLEMENTATIONS = {};
 `;
     }
 
-    // Find which services are actually used in components
-    const usedServices = this.findUsedServices();
+    // Use cached services (found before transformation)
+    // We can't call findUsedServices() here because components are already transformed
+    const usedServices = this.cachedUsedServices;
 
     if (usedServices.size === 0) {
       return `// Auto-generated DI configuration
