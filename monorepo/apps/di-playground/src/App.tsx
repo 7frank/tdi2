@@ -412,6 +412,7 @@ export const INTERFACE_IMPLEMENTATIONS = {};
           <Preview
             example={selectedExample}
             transformedFiles={transformedFiles}
+            diConfigContent={generateDIConfig()}
             onClose={() => setShowPreview(false)}
           />
         )}

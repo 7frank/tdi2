@@ -7,14 +7,15 @@ import { generateSandpackFiles } from '../preview/projectGenerator';
 interface PreviewProps {
   example: ProjectExample;
   transformedFiles: Record<string, TransformedFile>;
+  diConfigContent: string;
   onClose: () => void;
 }
 
-export function Preview({ example, transformedFiles, onClose }: PreviewProps) {
+export function Preview({ example, transformedFiles, diConfigContent, onClose }: PreviewProps) {
   // Generate Sandpack file structure from transformed files
   const files = useMemo(() => {
-    return generateSandpackFiles(example, transformedFiles);
-  }, [example, transformedFiles]);
+    return generateSandpackFiles(example, transformedFiles, diConfigContent);
+  }, [example, transformedFiles, diConfigContent]);
 
   return (
     <div className="preview-panel">

@@ -21,7 +21,8 @@ export interface SandpackFiles {
  */
 export function generateSandpackFiles(
   example: ProjectExample,
-  transformedFiles: Record<string, TransformedFile>
+  transformedFiles: Record<string, TransformedFile>,
+  diConfigContent: string
 ): SandpackFiles {
   const files: SandpackFiles = {};
 
@@ -70,6 +71,13 @@ export function generateSandpackFiles(
     hidden: true,
   };
 
+  // Add the generated DI_CONFIG.ts
+  files['/src/.tdi2/DI_CONFIG.ts'] = {
+    code: diConfigContent,
+    hidden: true,
+    readOnly: true,
+  };
+
   // Generate main entry point with DI bootstrap
   files['/src/index.tsx'] = {
     code: generateMainEntry(example),
@@ -98,9 +106,6 @@ export function generateSandpackFiles(
 function generateMainEntry(
   example: ProjectExample
 ): string {
-  // Extract services from example files
-  const services = extractServices(example);
-
   // Find the main component (first component file or first .tsx file)
   const mainComponent = findMainComponent(example);
 
@@ -109,18 +114,11 @@ import { createRoot } from 'react-dom/client';
 import { CompileTimeDIContainer } from '@tdi2/di-core/container';
 import { DIProvider } from '@tdi2/di-core/context';
 
-// Import services
-${services.map((s) => `import { ${s.className} } from './${s.path}';`).join('\n')}
+// Import the auto-generated DI configuration (just like real TDI2 projects)
+import { DI_CONFIG } from './.tdi2/DI_CONFIG';
 
 // Import main component
 import ${mainComponent.componentName} from './${mainComponent.path}';
-
-// Create DI configuration
-const DI_CONFIG = {
-  services: [
-${services.map((s) => `    { token: '${s.interface}', implementation: ${s.className} },`).join('\n')}
-  ]
-};
 
 // Create and configure DI container
 const container = new CompileTimeDIContainer();
@@ -139,35 +137,6 @@ createRoot(document.getElementById('root')!).render(
   </React.StrictMode>
 );
 `;
-}
-
-/**
- * Extract service information from example files
- */
-function extractServices(example: ProjectExample): Array<{
-  className: string;
-  interface: string;
-  path: string;
-}> {
-  const services: Array<{ className: string; interface: string; path: string }> = [];
-
-  for (const file of example.files) {
-    // Only look at service files
-    if (!file.path.includes('services/')) continue;
-
-    // Extract service class name and interface from content
-    const classMatch = file.content.match(/export class (\w+) implements (\w+)/);
-    if (classMatch) {
-      const [, className, interfaceName] = classMatch;
-      services.push({
-        className,
-        interface: interfaceName,
-        path: file.path.replace(/^src\//, ''),
-      });
-    }
-  }
-
-  return services;
 }
 
 /**
