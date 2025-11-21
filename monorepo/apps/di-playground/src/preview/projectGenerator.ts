@@ -17,8 +17,17 @@ export interface SandpackFiles {
 }
 
 /**
- * Generate Sandpack file structure with ORIGINAL source files + Vite plugin
- * This replicates what happens in real TDI2 projects like examples/tdi2-basic-example
+ * Generate Sandpack file structure with browser-transformed code
+ *
+ * NOTE: We use pre-transformed code (not the Vite plugin in Sandpack) because:
+ * - Vite plugins with complex AST transformations don't work well in Sandpack
+ * - The @tdi2/vite-plugin-di package may not be available in Sandpack
+ * - Browser transformation is already working and tested
+ *
+ * This still provides educational value:
+ * - Editor shows original → transformed side-by-side
+ * - Preview shows the working result
+ * - Structure matches real TDI2 projects (with DI_CONFIG)
  */
 export function generateSandpackFiles(
   example: ProjectExample,
@@ -27,80 +36,18 @@ export function generateSandpackFiles(
 ): SandpackFiles {
   const files: SandpackFiles = {};
 
-  // Add package.json with @tdi2/vite-plugin-di
+  // Add package.json (simple React, no Vite plugin)
   files['/package.json'] = {
     code: JSON.stringify(
       {
         name: 'tdi2-playground-preview',
         version: '1.0.0',
-        type: 'module',
-        main: '/src/main.tsx',
-        scripts: {
-          dev: 'vite',
-          build: 'vite build',
-        },
         dependencies: {
           react: '^19.0.0',
           'react-dom': '^19.0.0',
           '@tdi2/di-core': '3.3.0',
           valtio: '^2.1.2',
         },
-        devDependencies: {
-          '@tdi2/vite-plugin-di': '3.3.0',
-          '@vitejs/plugin-react': '^4.4.1',
-          vite: '^6.0.0',
-          typescript: '^5.0.2',
-        },
-      },
-      null,
-      2
-    ),
-    hidden: true,
-  };
-
-  // Add vite.config.ts with the actual DI plugin (just like the real example!)
-  files['/vite.config.ts'] = {
-    code: `import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { diEnhancedPlugin } from '@tdi2/vite-plugin-di';
-
-export default defineConfig({
-  plugins: [
-    diEnhancedPlugin({
-      enableFunctionalDI: true,
-      enableInterfaceResolution: true,
-      generateDebugFiles: true,
-    }),
-    react(),
-  ],
-});
-`,
-    hidden: true,
-  };
-
-  // Add tsconfig.json
-  files['/tsconfig.json'] = {
-    code: JSON.stringify(
-      {
-        compilerOptions: {
-          target: 'ES2020',
-          useDefineForClassFields: true,
-          lib: ['ES2020', 'DOM', 'DOM.Iterable'],
-          module: 'ESNext',
-          skipLibCheck: true,
-          moduleResolution: 'bundler',
-          allowImportingTsExtensions: true,
-          resolveJsonModule: true,
-          isolatedModules: true,
-          noEmit: true,
-          jsx: 'react-jsx',
-          strict: true,
-          noUnusedLocals: true,
-          noUnusedParameters: true,
-          noFallthroughCasesInSwitch: true,
-          experimentalDecorators: true,
-        },
-        include: ['src'],
       },
       null,
       2
@@ -116,36 +63,56 @@ export default defineConfig({
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TDI2 Playground - ${example.name}</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    }
+    #root {
+      padding: 20px;
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>`,
     hidden: true,
   };
 
-  // Generate main.tsx entry point (imports auto-generated DI config)
-  files['/src/main.tsx'] = {
+  // Add the generated DI_CONFIG.ts (from browser transformer)
+  files['/src/.tdi2/DI_CONFIG.ts'] = {
+    code: diConfigContent,
+    hidden: true,
+    readOnly: true,
+  };
+
+  // Generate main entry point
+  files['/src/index.tsx'] = {
     code: generateMainEntry(example),
     hidden: true,
     readOnly: true,
   };
 
-  // Add ALL ORIGINAL untransformed files (let Vite plugin do the transformation!)
+  // Add TRANSFORMED component files (from browser transformer)
   for (const file of example.files) {
-    const sandpackPath = `/src/${file.path.replace(/^src\//, '')}`;
-    files[sandpackPath] = {
-      code: file.content, // ✅ ORIGINAL untransformed source
-      active: file === example.files[0],
-    };
+    const transformed = transformedFiles[file.path];
+
+    // Only include files that were successfully transformed OR are services
+    if (transformed || file.path.includes('services/')) {
+      const sandpackPath = `/src/${file.path.replace(/^src\//, '')}`;
+      files[sandpackPath] = {
+        code: transformed?.transformedCode || file.content,
+        active: file === example.files[0],
+      };
+    }
   }
 
   return files;
 }
 
 /**
- * Generate main.tsx entry point - matches examples/tdi2-basic-example/src/main.tsx
+ * Generate index.tsx entry point (like real TDI2 projects)
  */
 function generateMainEntry(
   example: ProjectExample
@@ -157,15 +124,16 @@ function generateMainEntry(
 import { createRoot } from 'react-dom/client';
 import { CompileTimeDIContainer } from '@tdi2/di-core/container';
 import { DIProvider } from '@tdi2/di-core/context';
-import { DI_CONFIG } from './.tdi2/di-config'; // Auto-generated by Vite plugin
+import { DI_CONFIG } from './.tdi2/DI_CONFIG';
 import ${mainComponent.componentName} from './${mainComponent.path}';
 
 // Create and configure DI container
 const container = new CompileTimeDIContainer();
 container.loadConfiguration(DI_CONFIG);
 
-console.log('🔧 DI Container initialized');
-console.log('📋 Registered services:', container.getRegisteredTokens());
+console.log('🔧 TDI2 Playground - DI Container initialized');
+console.log('📋 Example: ${example.name}');
+console.log('📦 Registered services:', container.getRegisteredTokens());
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
