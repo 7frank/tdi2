@@ -37,8 +37,7 @@ export interface IntegratedResolverOptions {
   sourceConfig?: Partial<DISourceConfiguration>;
   excludePatterns?: string[];
   outputDir?: string;
-  project?: Project; // Allow passing an existing project (for browser use)
-  useInMemoryFileSystem?: boolean; // For browser compatibility
+  project?: Project; // Allow passing an existing project (for browser/custom use)
 }
 
 export class IntegratedInterfaceResolver {
@@ -67,22 +66,11 @@ export class IntegratedInterfaceResolver {
       ...options,
     } as Required<IntegratedResolverOptions>;
 
-    // Use provided project or create a new one
+    // Use provided project or create a default one
     if (options.project) {
       this.project = options.project;
-    } else if (options.useInMemoryFileSystem) {
-      // Browser-compatible in-memory file system
-      this.project = new Project({
-        useInMemoryFileSystem: true,
-        compilerOptions: {
-          target: 99, // ESNext
-          module: 99, // ESNext
-          jsx: 2, // React
-          experimentalDecorators: true,
-        },
-      });
     } else {
-      // Node.js file system with tsconfig
+      // Default: Node.js file system with tsconfig
       this.project = new Project({
         tsConfigFilePath: "./tsconfig.json",
       });
