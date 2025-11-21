@@ -299,11 +299,80 @@ export class ProductService implements ProductServiceInterface {
 
   private async scanInterfaces(): Promise<void> {
     try {
-      // Scan all service files - project was passed in constructor
-      await this.interfaceResolver.scanProject();
+      // BROWSER FIX: Don't call scanProject() because it tries to read from disk
+      // Instead, manually scan the source files we already created in memory
 
-      console.log('Interface scan complete. Mappings found:',
-        (this.interfaceResolver as any).interfaceToImplementation?.size || 0);
+      // Clear any existing mappings
+      const interfaces = (this.interfaceResolver as any).interfaces;
+      if (interfaces) {
+        interfaces.clear();
+      }
+
+      // Get all source files already in the project
+      const sourceFiles = this.project.getSourceFiles();
+      console.log(`📁 Scanning ${sourceFiles.length} source files already in project...`);
+
+      // Manually trigger the interface collection process
+      for (const sourceFile of sourceFiles) {
+        const filePath = sourceFile.getFilePath();
+        if (filePath.includes('node_modules') || filePath.includes('.tdi2')) continue;
+
+        console.log(`  📄 Scanning ${filePath}...`);
+        const classes = sourceFile.getClasses();
+
+        for (const classDecl of classes) {
+          const className = classDecl.getName();
+          if (!className) continue;
+
+          // Check for @Service decorator
+          const decorators = classDecl.getDecorators();
+          const hasServiceDecorator = decorators.some(d => {
+            const name = d.getText();
+            return name.includes('Service') || name.includes('@Service');
+          });
+
+          if (!hasServiceDecorator) continue;
+
+          console.log(`    ✓ Found service: ${className}`);
+
+          // Get implemented interfaces
+          const implementsClause = classDecl.getImplements();
+          for (const impl of implementsClause) {
+            const interfaceName = impl.getText();
+            console.log(`      → implements ${interfaceName}`);
+
+            // Register this interface->class mapping
+            const mapping = {
+              implementationClass: className,
+              interfaceName: interfaceName,
+              serviceFilePath: filePath,
+              isAutoResolved: true,
+            };
+
+            // Store in the resolver's internal map
+            const interfaceMap = (this.interfaceResolver as any).interfaceToImplementation;
+            if (interfaceMap) {
+              interfaceMap.set(interfaceName, mapping);
+            }
+          }
+
+          // Also register the class itself
+          const classMapping = {
+            implementationClass: className,
+            interfaceName: className,
+            serviceFilePath: filePath,
+            isAutoResolved: true,
+          };
+          const interfaceMap = (this.interfaceResolver as any).interfaceToImplementation;
+          if (interfaceMap) {
+            interfaceMap.set(className, classMapping);
+          }
+        }
+      }
+
+      const interfaceMap = (this.interfaceResolver as any).interfaceToImplementation;
+      const mappingCount = interfaceMap ? interfaceMap.size : 0;
+      console.log(`✅ Interface scan complete. Found ${mappingCount} mappings`);
     } catch (error) {
       console.error('Error scanning interfaces:', error);
     }
