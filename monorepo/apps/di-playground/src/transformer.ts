@@ -512,8 +512,8 @@ export const INTERFACE_IMPLEMENTATIONS = {};
       // Create unique token
       const token = `${interfaceName}__${filePath.replace(/\//g, '_')}`;
 
-      // Add import
-      imports.add(`import { ${className} } from './${filePath}';`);
+      // Add import (DI_CONFIG is in .tdi2 folder, so use ../ to go up to src/)
+      imports.add(`import { ${className} } from '../${filePath}';`);
 
       // Create factory function (only once per class)
       if (!processedClasses.has(className)) {
