@@ -108,6 +108,14 @@ export class BrowserTransformer {
    * More efficient than updating one-by-one
    */
   async updateFilesAndRescan(files: Array<{ path: string; content: string }>): Promise<void> {
+    // CRITICAL: Clear all existing files to prevent pollution from previous examples
+    const allFiles = this.project.getSourceFiles();
+    console.log(`🗑️  Clearing ${allFiles.length} existing files from virtual filesystem`);
+    for (const file of allFiles) {
+      this.project.removeSourceFile(file);
+    }
+    console.log(`✅ Virtual filesystem cleared`);
+
     // Update all files first
     for (const file of files) {
       this.updateVirtualFile(file.path, file.content);
