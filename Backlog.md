@@ -2,6 +2,20 @@
 
 ## ordered log (for production release)
 
+### linter plugin
+
+file navigation via links see Issue:
+
+- https://github.com/microsoft/vscode/issues/54272
+
+### gifs for transporting this topic a bit more light hearted
+
+https://www.pinatafarm.com/memegenerator/89da5b38-ba30-4f76-b971-5e8819076eb1
+
+Monty Python stoning = lets bring back classes to react..
+john travolta = you should hire an architect
+johnny depp = you are the worst architect i heard of, but you have heard of me
+
 ### fix interface collision & test case
 
 two interface of the same name and in different files are resolved inproperly

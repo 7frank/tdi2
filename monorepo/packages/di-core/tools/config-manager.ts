@@ -326,6 +326,15 @@ If you see issues with mismatched configurations:
     return path.join(this.configDir, 'transformed');
   }
 
+  getProjectRoot(): string {
+    // Return current working directory as project root
+    return process.cwd();
+  }
+
+  getScanDirs(): string[] {
+    return this.options.scanDirs;
+  }
+
   // FIXED: Enhanced cleanup with better logic
   static cleanOldConfigs(keepCount: number = 3, outputDir: string = 'node_modules/.tdi2'): void {
     const tdi2Dir = path.resolve(outputDir, 'configs');

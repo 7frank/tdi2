@@ -1,0 +1,60 @@
+{
+  "name": "@tdi2/eslint-plugin-tdi2",
+  "version": "0.1.0",
+  "description": "ESLint plugin for TDI2 interface resolution context",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+      
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin",
+    "tdi2",
+    "dependency-injection",
+    "typescript",
+    "interface-resolution"
+  ],
+  "author": "TDI2 Team",
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/7frank/tdi2",
+    "directory": "monorepo/packages/eslint-plugin-tdi2"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "^6.0.0",
+    "@typescript-eslint/utils": "^6.0.0",
+    "eslint": "^8.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "eslint": ">=8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

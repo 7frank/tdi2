@@ -43,6 +43,7 @@ import { shouldSkipFile as shouldSkipFileUtil } from './utils';
 import { ConfigurationProcessor } from '../config-processor/index';
 import { BeanFactoryGenerator } from '../config-processor/bean-factory-generator';
 import type { ConfigurationMetadata } from '../../src/types';
+import type { ComponentMetadata, ComponentInjection } from '../eslint-metadata/metadata-types';
 
 interface TransformerOptions {
   scanDirs?: string[];
@@ -83,6 +84,7 @@ export class FunctionalDIEnhancedTransformer {
   private errors: TransformationError[] = [];
   private warnings: TransformationWarning[] = [];
   private configurations: ConfigurationMetadata[] = [];
+  private componentMetadataMap: Map<string, ComponentMetadata> = new Map();
 
   constructor(options: TransformerOptions = {}) {
     if (!options.scanDirs || options.scanDirs.length === 0) {
@@ -180,6 +182,9 @@ export class FunctionalDIEnhancedTransformer {
 
       // Phase 5: Register discovered services (including beans)
       await this.registerDiscoveredServices();
+
+      // Phase 5.5: Generate DI configuration (including ESLint metadata with component data)
+      await this.serviceRegistry.generateDIConfiguration();
 
       // Phase 6: Generate debug files if requested
       if ((this.options as any).generateDebugFiles) {
@@ -412,6 +417,9 @@ export class FunctionalDIEnhancedTransformer {
       return;
     }
 
+    // Step 1.5: Collect component metadata for ESLint
+    this.collectComponentMetadata(candidate.filePath, componentName, dependencies);
+
     // Step 2: Add DI imports using import manager
     this.importManager.ensureDIImports(candidate.sourceFile);
 
@@ -441,11 +449,51 @@ export class FunctionalDIEnhancedTransformer {
     });
   }
 
+  /**
+   * Collect component metadata for ESLint rule context
+   * Note: When multiple components exist in the same file, we store the component
+   * that was transformed LAST. The ESLint rule will search by component name.
+   */
+  private collectComponentMetadata(filePath: string, componentName: string, dependencies: any[]): void {
+    const injections: ComponentInjection[] = dependencies.map(dep => {
+      const resolved = dep.resolvedImplementation;
+      const interfaceMapping = this.interfaceResolver.getInterfaceImplementations();
+      const allImpls = Array.from(interfaceMapping.values())
+        .filter(impl => impl.interfaceName === dep.interfaceType)
+        .map(impl => impl.implementationClass);
+
+      return {
+        paramName: dep.serviceKey,
+        interfaceType: dep.interfaceType,
+        isOptional: dep.isOptional || false,
+        resolvedClass: resolved?.implementationClass || '',
+        resolvedPath: resolved?.filePath || '',
+        token: resolved?.sanitizedKey || '',
+        allPossibleImplementations: allImpls,
+        hasAmbiguity: allImpls.length > 1,
+      };
+    });
+
+    const metadata: ComponentMetadata = {
+      componentName,
+      injections,
+    };
+
+    // Use filePath:componentName as key to support multiple components per file
+    const key = `${filePath}:${componentName}`;
+    this.componentMetadataMap.set(key, metadata);
+    console.debug(`📦 Collected metadata for ${componentName} at ${filePath} with ${injections.length} injections`);
+  }
+
   private async registerDiscoveredServices(): Promise<void> {
     console.log('📝 Registering discovered services...');
 
     const implementations = this.interfaceResolver.getInterfaceImplementations();
     this.serviceRegistry.registerServices(Array.from(implementations.values()), new Map());
+
+    // Pass component metadata to the registry for ESLint metadata generation
+    this.serviceRegistry.setComponentMetadata(this.componentMetadataMap);
+    console.log(`📦 Registered component metadata for ${this.componentMetadataMap.size} components`);
 
     const validation = this.serviceRegistry.validateRegistry();
     if (!validation.isValid) {
