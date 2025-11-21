@@ -123,6 +123,14 @@ export class BrowserTransformer {
     console.log(`✅ Updated ${files.length} files and re-scanned interfaces`);
   }
 
+  /**
+   * Re-scan interfaces without updating files
+   * Used after transformations that modify source files
+   */
+  async rescanInterfaces(): Promise<void> {
+    await this.scanInterfaces();
+  }
+
   private async scanInterfaces(): Promise<void> {
     try {
       // BROWSER FIX: Don't call scanProject() because it tries to read from disk

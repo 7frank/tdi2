@@ -167,6 +167,16 @@ function App() {
       }
     }
 
+    // CRITICAL: Re-scan interfaces after transformations
+    // Transformations remove/recreate source files, which clears interface mappings
+    // This rebuild ensures generateDIConfig() has the correct mappings
+    try {
+      await transformerRef.current.rescanInterfaces();
+      console.log('✅ Re-scanned interfaces after transformations');
+    } catch (err) {
+      console.error('Error re-scanning interfaces:', err);
+    }
+
     setTransformedFiles(results);
     setIsTransforming(false);
     isTransformingRef.current = false;
