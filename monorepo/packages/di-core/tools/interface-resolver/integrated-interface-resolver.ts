@@ -37,6 +37,7 @@ export interface IntegratedResolverOptions {
   sourceConfig?: Partial<DISourceConfiguration>;
   excludePatterns?: string[];
   outputDir?: string;
+  project?: Project; // Allow passing an existing project (for browser/custom use)
 }
 
 export class IntegratedInterfaceResolver {
@@ -65,9 +66,15 @@ export class IntegratedInterfaceResolver {
       ...options,
     } as Required<IntegratedResolverOptions>;
 
-    this.project = new Project({
-      tsConfigFilePath: "./tsconfig.json",
-    });
+    // Use provided project or create a default one
+    if (options.project) {
+      this.project = options.project;
+    } else {
+      // Default: Node.js file system with tsconfig
+      this.project = new Project({
+        tsConfigFilePath: "./tsconfig.json",
+      });
+    }
 
     // Initialize components with source configuration
     this.keySanitizer = new KeySanitizer();

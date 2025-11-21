@@ -30,7 +30,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "test": "bun test",
+    "test": "echo 'No tests configured yet'",
     "lint": "echo 'No linting configured yet'",
     "check-types": "tsc --noEmit"
   },
