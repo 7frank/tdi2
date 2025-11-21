@@ -345,12 +345,14 @@ export class ProductService implements ProductServiceInterface {
             const mapping = {
               implementationClass: className,
               interfaceName: interfaceName,
-              serviceFilePath: filePath,
+              filePath: filePath,
               isAutoResolved: true,
+              registrationType: 'interface',
+              isClassBased: false,
             };
 
-            // Store in the resolver's internal map
-            const interfaceMap = (this.interfaceResolver as any).interfaceToImplementation;
+            // Store in the resolver's internal map (correct property name is 'interfaces')
+            const interfaceMap = (this.interfaceResolver as any).interfaces;
             if (interfaceMap) {
               interfaceMap.set(interfaceName, mapping);
             }
@@ -360,17 +362,19 @@ export class ProductService implements ProductServiceInterface {
           const classMapping = {
             implementationClass: className,
             interfaceName: className,
-            serviceFilePath: filePath,
+            filePath: filePath,
             isAutoResolved: true,
+            registrationType: 'class',
+            isClassBased: true,
           };
-          const interfaceMap = (this.interfaceResolver as any).interfaceToImplementation;
+          const interfaceMap = (this.interfaceResolver as any).interfaces;
           if (interfaceMap) {
             interfaceMap.set(className, classMapping);
           }
         }
       }
 
-      const interfaceMap = (this.interfaceResolver as any).interfaceToImplementation;
+      const interfaceMap = (this.interfaceResolver as any).interfaces;
       const mappingCount = interfaceMap ? interfaceMap.size : 0;
       console.log(`✅ Interface scan complete. Found ${mappingCount} mappings`);
     } catch (error) {
@@ -401,7 +405,7 @@ export class ProductService implements ProductServiceInterface {
    * Generate the DI_CONFIG file content with the same structure as the real Vite plugin
    */
   generateDIConfig(): string {
-    const mappings = (this.interfaceResolver as any).interfaceToImplementation || new Map();
+    const mappings = (this.interfaceResolver as any).interfaces || new Map();
 
     console.log('Generating DI_CONFIG. Mappings size:', mappings.size);
     console.log('All files in project:', this.project.getSourceFiles().map(f => f.getFilePath()));
@@ -428,7 +432,7 @@ export const INTERFACE_IMPLEMENTATIONS = {};
     // Process all interface->implementation mappings
     mappings.forEach((implementation: any, interfaceName: string) => {
       const className = implementation.implementationClass;
-      const filePath = implementation.serviceFilePath.replace(/^\/virtual\//, '').replace(/\.ts$/, '');
+      const filePath = implementation.filePath.replace(/^\/virtual\//, '').replace(/\.ts$/, '');
 
       // Create unique token
       const token = `${interfaceName}__${filePath.replace(/\//g, '_')}`;
