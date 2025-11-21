@@ -18,11 +18,12 @@ export default defineConfig({
   resolve: {
     alias: {
       // Import browser-compatible tools directly from source
-      '../../packages/di-core/tools/functional-di-enhanced-transformer/transformation-pipeline': path.resolve(__dirname, '../../packages/di-core/tools/functional-di-enhanced-transformer/transformation-pipeline.ts'),
-      '../../packages/di-core/tools/interface-resolver/integrated-interface-resolver': path.resolve(__dirname, '../../packages/di-core/tools/interface-resolver/integrated-interface-resolver.ts'),
-      '../../packages/di-core/tools/shared/SharedDependencyExtractor': path.resolve(__dirname, '../../packages/di-core/tools/shared/SharedDependencyExtractor.ts'),
-      '../../packages/di-core/tools/shared/SharedTypeResolver': path.resolve(__dirname, '../../packages/di-core/tools/shared/SharedTypeResolver.ts'),
-      '../../packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers': path.resolve(__dirname, '../../packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts'),
+      '../../packages/di-core/tools/functional-di-enhanced-transformer/transformation-pipeline.ts': path.resolve(__dirname, '../../packages/di-core/tools/functional-di-enhanced-transformer/transformation-pipeline.ts'),
+      '../../packages/di-core/tools/interface-resolver/integrated-interface-resolver.ts': path.resolve(__dirname, '../../packages/di-core/tools/interface-resolver/integrated-interface-resolver.ts'),
+      '../../packages/di-core/tools/shared/SharedDependencyExtractor.ts': path.resolve(__dirname, '../../packages/di-core/tools/shared/SharedDependencyExtractor.ts'),
+      '../../packages/di-core/tools/shared/SharedTypeResolver.ts': path.resolve(__dirname, '../../packages/di-core/tools/shared/SharedTypeResolver.ts'),
+      '../../packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts': path.resolve(__dirname, '../../packages/di-core/tools/functional-di-enhanced-transformer/di-inject-markers.ts'),
+      '../../packages/di-core/tools/functional-di-enhanced-transformer/import-manager.ts': path.resolve(__dirname, '../../packages/di-core/tools/functional-di-enhanced-transformer/import-manager.ts'),
 
       // Prevent Node.js modules from being bundled
       'crypto': path.resolve(__dirname, './src/polyfills/crypto.ts'),
