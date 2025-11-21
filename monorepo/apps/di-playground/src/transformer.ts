@@ -329,6 +329,94 @@ export class ProductService implements ProductServiceInterface {
     }
   }
 
+  /**
+   * Generate the DI_CONFIG file content with the same structure as the real Vite plugin
+   */
+  generateDIConfig(): string {
+    const mappings = (this.interfaceResolver as any).interfaceToImplementation || new Map();
+
+    if (mappings.size === 0) {
+      return `// Auto-generated DI configuration
+// No services found
+
+export const DI_CONFIG = {};
+
+export const SERVICE_TOKENS = {};
+
+export const INTERFACE_IMPLEMENTATIONS = {};
+`;
+    }
+
+    const factoryFunctions: string[] = [];
+    const configEntries: string[] = [];
+    const serviceTokens: Record<string, string> = {};
+    const interfaceImplementations: Record<string, string[]> = {};
+    const imports: Set<string> = new Set();
+
+    // Process all interface->implementation mappings
+    mappings.forEach((implementation: any, interfaceName: string) => {
+      const className = implementation.implementationClass;
+      const filePath = implementation.serviceFilePath.replace(/^\/virtual\//, '').replace(/\.ts$/, '');
+
+      // Create unique token
+      const token = `${interfaceName}__${filePath.replace(/\//g, '_')}`;
+
+      // Add import
+      imports.add(`import { ${className} } from './${filePath}';`);
+
+      // Create factory function
+      factoryFunctions.push(`function create${className}(container: any) {
+  return () => new ${className}();
+}`);
+
+      // Add config entry
+      configEntries.push(`  '${token}': {
+    factory: create${className},
+    scope: 'singleton' as const,
+    dependencies: [],
+    interfaceName: '${interfaceName}',
+    implementationClass: '${className}',
+    implementationClassPath: '${token}',
+    isAutoResolved: true,
+    registrationType: 'interface',
+    isClassBased: false,
+    isInheritanceBased: false,
+    baseClass: null,
+    baseClassGeneric: null,
+  }`);
+
+      // Add service token mapping
+      serviceTokens[className] = token;
+
+      // Add interface implementation mapping
+      if (!interfaceImplementations[interfaceName]) {
+        interfaceImplementations[interfaceName] = [];
+      }
+      interfaceImplementations[interfaceName].push(className);
+    });
+
+    const timestamp = new Date().toISOString();
+
+    return `// Auto-generated DI configuration
+// Generated: ${timestamp}
+
+${Array.from(imports).join('\n')}
+
+// Factory functions
+${factoryFunctions.join('\n\n')}
+
+// DI Configuration Map
+export const DI_CONFIG = {
+${configEntries.join(',\n')}
+};
+
+// Service mappings
+export const SERVICE_TOKENS = ${JSON.stringify(serviceTokens, null, 2)};
+
+export const INTERFACE_IMPLEMENTATIONS = ${JSON.stringify(interfaceImplementations, null, 2)};
+`;
+  }
+
   async transform(inputCode: string, fileName: string = 'Component.tsx'): Promise<TransformationResult> {
     try {
       // Create the component file in virtual filesystem
