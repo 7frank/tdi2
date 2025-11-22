@@ -1,0 +1,72 @@
+{
+  "name": "tdi2-vscode",
+  "displayName": "TDI2 - TypeScript Dependency Injection",
+  "description": "Rich hover documentation and navigation for TDI2 dependency injection",
+  "version": "0.1.0",
+  "publisher": "tdi2",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "typescript",
+    "dependency injection",
+    "di",
+    "react",
+    "tdi2"
+  ],
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tdi2.refreshMetadata",
+        "title": "TDI2: Refresh Metadata"
+      },
+      {
+        "command": "tdi2.showDependencyGraph",
+        "title": "TDI2: Show Dependency Graph"
+      }
+    ],
+    "configuration": {
+      "title": "TDI2",
+      "properties": {
+        "tdi2.enableHover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hover documentation for Inject<> markers"
+        },
+        "tdi2.enableCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable CodeLens 'Go to Implementation' links"
+        },
+        "tdi2.enableDefinitionProvider": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Ctrl+Click navigation to implementations"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "test": "node ./dist/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.0",
+    "@types/vscode": "1.85.0",
+    "typescript": "5.3.3"
+  },
+  "dependencies": {}
+}
