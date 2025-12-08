@@ -11,6 +11,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "clean": "turbo run clean",
     "clean:deps": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -rf apps/*/node_modules",
+    "publish:packages":"turbo publish:package",
     "1-changeset": "changeset",
     "2-version": "changeset version && bun update",
     "3-release": "bun run build && bun run publish:packages && changeset tag",
