@@ -7,11 +7,11 @@
 - Build command:
   ```bash
   cd slides
-  uv run mkslides build Meetup-Leipzig.js/slides2.md --config-file Meetup-Leipzig.js/config.yaml
+  uv run python -m mkslides build Meetup-React.js05022026/slides.md --config-file Meetup-React.js05022026/config.yaml
   ```
 - Serve command:
   ```bash
-  uv run python -m mkslides serve "Meetup-Leipzig.js/slides2.md" --config-file Meetup-Leipzig.js/config.yaml
+  uv run python -m mkslides serve "Meetup-React.js05022026/slides.md" --config-file Meetup-React.js05022026/config.yaml
   ```
 
 chromium --app=file:///home/frank/Projects/7frank/tdi2/docs/SlideDecks/slides/site/index.html
