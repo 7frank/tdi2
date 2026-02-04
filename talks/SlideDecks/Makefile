@@ -16,8 +16,8 @@ help: ## Show this help message
 	@echo "  make quick-build   # Quick build test"
 	@echo ""
 	@echo "📋 All Commands:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $1, $2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "🚀 Getting Started:"
 	@echo "  make setup         # Full setup (recommended first time)"
@@ -25,8 +25,8 @@ help: ## Show this help message
 	@echo "  make serve         # Start development server"
 	@echo ""
 	@echo "⚡ Direct UV Commands:"
-	@echo "  uv run mkslides serve slides/main.md"
-	@echo "  uv run mkslides build slides/main.md -d dist"
+	@echo "  uv run python -m mkslides serve slides/main.md"
+	@echo "  uv run python -m mkslides build slides/main.md -d dist"
 
 # Environment setup
 setup: clean install dev-install setup-dev ## Complete setup for development
@@ -62,10 +62,10 @@ serve: ## Start development server with live reload
 		echo "❌ Virtual environment not found. Run 'make install' first"; \
 		exit 1; \
 	fi
-	uv run mkslides serve slides/main.md
+	uv run python -m mkslides serve slides/main.md
 
-serve-m-lpz: 
-	uv run mkslides serve "slides/Meetup-Leipzig.js/slides.md"
+serve-m-lpz: ## Serve Meetup Leipzig.js presentation
+	uv run python -m mkslides serve "slides/Meetup-Leipzig.js/slides.md"
 
 
 watch: ## Watch for changes and rebuild automatically
@@ -76,7 +76,7 @@ build: ## Build presentation files
 	@echo "🏗️  Building presentation..."
 	@mkdir -p dist
 	@echo "📦 Building with mkslides..."
-	uv run mkslides build slides/main.md -d dist
+	uv run python -m mkslides build slides/main.md -d dist
 	@echo "✅ Presentation built in dist/"
 	@ls -la dist/index.html 2>/dev/null && echo "📁 Main file: dist/index.html" || echo "⚠️  Check dist/ directory for output files"
 
@@ -158,7 +158,7 @@ export-leipzig-js: ## Build for React Summit (premium conference)
 	@echo "🎯 Building for React Summit..."
 	@mkdir -p dist/Meetup-Leipzig.js
 	@echo "📦 Building with mkslides..."
-	uv run mkslides build slides/Meetup-Leipzig.js/slides.md -d dist/Meetup-Leipzig.js
+	uv run python -m mkslides build slides/Meetup-Leipzig.js/slides.md -d dist/Meetup-Leipzig.js
 	@echo "✅ React Summit build ready in dist/Meetup-Leipzig.js/"
 	@ls -la dist/Meetup-Leipzig.js/index.html && echo "📁 Open: dist/Meetup-Leipzig.js/index.html"
 
@@ -167,7 +167,7 @@ react-summit: ## Build for React Summit (premium conference)
 	@echo "🎯 Building for React Summit..."
 	@mkdir -p dist/react-summit
 	@echo "📦 Building with mkslides..."
-	uv run mkslides build slides/main.md -d dist/react-summit
+	uv run python -m mkslides build slides/main.md -d dist/react-summit
 	@echo "✅ React Summit build ready in dist/react-summit/"
 	@ls -la dist/react-summit/index.html && echo "📁 Open: dist/react-summit/index.html"
 
@@ -175,7 +175,7 @@ react-advanced: ## Build for React Advanced London
 	@echo "🎯 Building for React Advanced..."
 	@mkdir -p dist/react-advanced
 	@echo "📦 Building with mkslides..."
-	uv run mkslides build slides/main.md -d dist/react-advanced
+	uv run python -m mkslides build slides/main.md -d dist/react-advanced
 	@echo "✅ React Advanced build ready in dist/react-advanced/"
 	@ls -la dist/react-advanced/index.html && echo "📁 Open: dist/react-advanced/index.html"
 
@@ -183,7 +183,7 @@ local-meetup: ## Build for local meetup (simplified version)
 	@echo "🎯 Building for local meetup..."
 	@mkdir -p dist/local-meetup
 	@echo "📦 Building with mkslides..."
-	uv run mkslides build slides/main.md -d dist/local-meetup
+	uv run python -m mkslides build slides/main.md -d dist/local-meetup
 	@echo "✅ Local meetup build ready in dist/local-meetup/"
 	@ls -la dist/local-meetup/index.html && echo "📁 Open: dist/local-meetup/index.html"
 
@@ -259,7 +259,7 @@ init-files: ## Create missing files and directories
 	fi
 	@if [ ! -f "LICENSE" ]; then \
 		echo "⚠️  LICENSE file missing - creating basic MIT license"; \
-		echo "MIT License\n\nCopyright (c) 2025 7Frank\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software..." > LICENSE; \
+		printf "MIT License\n\nCopyright (c) 2025 7Frank\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software...\n" > LICENSE; \
 	fi
 	@echo "✅ Basic structure created"
 update: ## Update dependencies
@@ -314,15 +314,15 @@ bump-major: ## Bump major version
 # Quick one-liner commands
 quick-test: ## One-liner test: setup and serve immediately
 	@echo "⚡ Quick test: setup and serve..."
-	uv venv --python 3.12 || true && uv sync && uv run mkslides serve slides/main.md
+	uv venv --python 3.12 || true && uv sync && uv run python -m mkslides serve slides/main.md
 
 quick-serve: ## One-liner serve (assumes dependencies installed)
 	@echo "🚀 Quick serve..."
-	uv run mkslides serve slides/main.md
+	uv run python -m mkslides serve slides/main.md
 
 quick-build: ## One-liner build test
 	@echo "⚡ Quick build test..."
-	uv run mkslides build slides/main.md -d quick-test && echo "✅ Build completed - check quick-test/index.html"
+	uv run python -m mkslides build slides/main.md -d quick-test && echo "✅ Build completed - check quick-test/index.html"
 presentation-ready: clean build conference-check backup ## Final check before presentation
 	@echo "🎬 Final presentation readiness check..."
 	@echo "✅ Build completed"
@@ -338,7 +338,7 @@ presentation-ready: clean build conference-check backup ## Final check before pr
 emergency-build: ## Emergency build with minimal checks
 	@echo "🚨 Emergency build (minimal validation)..."
 	mkdir -p dist
-	uv run mkslides build slides/main.md --output dist/index.html
+	uv run python -m mkslides build slides/main.md --output dist/index.html
 	@echo "⚡ Emergency build ready in dist/"
 
 # Print useful information
@@ -347,15 +347,15 @@ info: ## Show environment information
 	@echo "========================="
 	@echo "Python: $(shell python --version 2>/dev/null || echo 'Not found')"
 	@echo "UV: $(shell uv --version 2>/dev/null || echo 'Not found')"
-	@echo "mkslides: $(shell uv run mkslides --version 2>/dev/null || echo 'Not installed')"
+	@echo "mkslides: $(shell uv run python -m mkslides --version 2>/dev/null || echo 'Not installed')"
 	@echo ""
 	@echo "📁 Project structure:"
 	@tree -L 2 -I '__pycache__|.git|.venv|*.pyc' 2>/dev/null || \
 		find . -maxdepth 2 -type d | grep -E '^\.\/[^.]' | sort
 	@echo ""
 	@echo "⚡ One-liner commands:"
-	@echo "  uv run mkslides serve slides/main.md"
-	@echo "  uv run mkslides build slides/main.md -d dist"
+	@echo "  uv run python -m mkslides serve slides/main.md"
+	@echo "  uv run python -m mkslides build slides/main.md -d dist"
 	@echo "  make quick-test  # Setup + serve in one command"
 
 # Quick actions for presentation day
