@@ -9,7 +9,7 @@ date: "2025"
 
 ## How Service Injection might fix one of Reacts greatest issues
 
-_Leipzig.js Meetup - August 2025_
+_React.js Meetup - February 2026_
 
 **Frank Reimann M.Sc.** Software Engineer @ Jambit
 
@@ -19,7 +19,7 @@ _Leipzig.js Meetup - August 2025_
 
 ![https://github.com/7frank/tdi2/blob/main/docs/SlideDecks/slides/Meetup-Leipzig.js/slides2.md](./frame.png)
 
-Note: Hey everyone! Great to have you here on the stream today - we'll start shortly, just getting everything set up. For those joining us live at Leipzig.js, welcome! And for everyone watching the stream, thanks for tuning in. </br></br> Welcome again, tonight we'll explore how coupling is one of the root causes of React's scaling problems and demonstrate a service injection solution that has the potential of bringing enterprise-grade architecture to React. We've got some really exciting examples to show you, and there will be live coding after the presentation where we can build something together.
+Note: Hey everyone! Great to have you here on the stream today - we'll start shortly, just getting everything set up. For those joining us live at React.js, welcome! And for everyone watching the stream, thanks for tuning in. </br></br> Welcome again, tonight we'll explore how coupling is one of the root causes of React's scaling problems and demonstrate a service injection solution that has the potential of bringing enterprise-grade architecture to React. We've got some really exciting examples to show you, and there will be live coding after the presentation where we can build something together.
 
 ---
 
@@ -27,7 +27,9 @@ Note: Hey everyone! Great to have you here on the stream today - we'll start sho
 
 - developing software since 2003 privately or in companies
 - currently employed at [jambit.com](https://www.jambit.com/)
-  - doing fullstack,architecture and ai
+  - doing fullstack,architecture and ai work 
+    - which in other comanies would be techincal strategist or principal engineer
+    - mainly focusing on what brings impact
 - collecting tech skills like others collect pokemon
   - [roadmap.sh/u/7frank](https://roadmap.sh/u/7frank)
 

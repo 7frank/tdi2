@@ -2,6 +2,10 @@
 
 ## TODO for Presentation
 
+- merge PR in time and generate new QRCode
+
+- focus talk on coupling
+
 ### Styling & Build
 - Get the styling fixed
 - Build command:
