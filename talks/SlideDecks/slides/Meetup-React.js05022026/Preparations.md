@@ -6,6 +6,9 @@
 
 - focus talk on coupling
 
+- ensure that example is working with linter 
+
+
 ### Styling & Build
 - Get the styling fixed
 - Build command:

@@ -2,6 +2,13 @@
 
 ## ordered log (for production release)
 
+## last 2 pr might have brought some clutter
+
+https://github.com/7frank/tdi2/pull/70
+https://github.com/7frank/tdi2/pull/69
+
+check if we currently use the vscode extension pacakge in any capacity
+
 ### linter plugin
 
 file navigation via links see Issue:

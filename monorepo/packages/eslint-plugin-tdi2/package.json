@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/eslint-plugin-tdi2",
-  "version": "0.1.0",
+  "version": "3.3.1",
   "description": "ESLint plugin for TDI2 interface resolution context",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -11,7 +11,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-      
     },
     "./package.json": "./package.json"
   },

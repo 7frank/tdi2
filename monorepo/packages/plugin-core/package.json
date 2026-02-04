@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/plugin-core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Shared utilities for TDI2 build tool plugins",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

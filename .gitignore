@@ -5,3 +5,4 @@ monorepo/tmp.sh
 talks/SlideDecks/quick-test/
 .env
 talks/SlideDecks/slides/site/
+/tmp

@@ -17,6 +17,14 @@
     "@repo/eslint-config",
     "@repo/typescript-config",
     "di-test-harness",
-    "@tdi2/docs-starlight"
+    "@tdi2/docs-starlight",
+    "@tdi2/di-debug",
+    "@tdi2/di-playground",
+    "@tdi2/di-cross-package-tests",
+    "@tdi2/logging",
+    "@tdi2/plugin-esbuild-di",
+    "@tdi2/plugin-rollup-di",
+    "@tdi2/plugin-webpack-di",
+    "tdi2-vscode"
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/vite-plugin-di",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "Vite plugin for TDI2 (TypeScript Dependency Injection) with interface-based automatic resolution",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -43,7 +43,7 @@
     "build": "tsup",
     "build:watch": "tsup --watch",
     "dev": "tsup --watch",
-    "test":"CI=true bun run test:unit && bun run test:e2e",
+    "test": "CI=true bun run test:unit && bun run test:e2e",
     "test:unit": "vitest",
     "test:watch": "vitest --watch",
     "test:e2e": "playwright test",

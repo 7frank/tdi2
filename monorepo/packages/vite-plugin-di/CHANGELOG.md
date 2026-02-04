@@ -1,5 +1,15 @@
 # @tdi2/vite-plugin-di
 
+## 3.3.1
+
+### Patch Changes
+
+- add eslint support
+
+- Updated dependencies []:
+  - @tdi2/di-core@3.3.1
+  - @tdi2/plugin-core@1.0.1
+
 ## 3.3.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @tdi2/di-core
 
+## 3.3.1
+
+### Patch Changes
+
+- add eslint support
+
 ## 3.3.0
 
 ### Minor Changes

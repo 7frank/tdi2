@@ -1,5 +1,14 @@
 # @tdi2/di-testing
 
+## 3.3.1
+
+### Patch Changes
+
+- add eslint support
+
+- Updated dependencies []:
+  - @tdi2/di-core@3.3.1
+
 ## 3.3.0
 
 ### Minor Changes
