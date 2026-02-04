@@ -1,5 +1,15 @@
 # @tdi2/vite-plugin-di
 
+## 3.3.2
+
+### Patch Changes
+
+- fix workspace ref
+
+- Updated dependencies []:
+  - @tdi2/plugin-core@3.3.2
+  - @tdi2/di-core@3.3.2
+
 ## 3.3.1
 
 ### Patch Changes
