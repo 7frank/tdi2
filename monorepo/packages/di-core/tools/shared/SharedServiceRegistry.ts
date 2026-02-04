@@ -8,10 +8,12 @@ import type {
   ServiceImplementationBase
 } from '../interface-resolver/interface-resolver-types';
 import type { ConfigManager } from '../config-manager';
+import type { ComponentMetadata } from '../eslint-metadata';
 import * as path from 'path';
 import * as fs from 'fs';
 import { KeySanitizer } from '../interface-resolver/key-sanitizer';
 import { consoleFor } from '../logger';
+import { ESLintMetadataGenerator } from '../eslint-metadata';
 
 const keySanitizer = new KeySanitizer();
 const console = consoleFor('di-core:shared-service-registry');
@@ -64,6 +66,7 @@ export class SharedServiceRegistry {
   private interfaceMapping = new Map<string, string[]>();
   private classMapping = new Map<string, string>();
   private dependencyGraph = new Map<string, ExtractedDependency[]>();
+  private componentMetadata = new Map<string, ComponentMetadata>();
 
   constructor(
     private configManager: ConfigManager
@@ -183,10 +186,34 @@ export class SharedServiceRegistry {
   async generateDIConfiguration(): Promise<void> {
     const configContent = this.generateConfigContent();
     const configFilePath = path.join(this.configManager.getConfigDir(), 'di-config.ts');
-    
+
     await fs.promises.writeFile(configFilePath, configContent, 'utf8');
 
     console.info(`📝 Generated DI configuration: ${configFilePath}`);
+
+    // Generate ESLint metadata
+    await this.generateESLintMetadata();
+  }
+
+  /**
+   * Generate ESLint metadata for interface resolution context
+   */
+  private async generateESLintMetadata(): Promise<void> {
+    try {
+      const generator = new ESLintMetadataGenerator(
+        this,
+        this.configManager,
+        this.componentMetadata
+      );
+
+      const metadata = await generator.generateMetadata();
+      await generator.writeMetadataFile(metadata);
+
+      console.info('✅ Generated ESLint metadata');
+    } catch (error) {
+      console.error('❌ Failed to generate ESLint metadata:', error);
+      // Don't fail the build if ESLint metadata generation fails
+    }
   }
 
   /**
@@ -563,5 +590,20 @@ ${dependencyResolves}
       classMapping: new Map(this.classMapping),
       dependencyGraph: new Map(this.dependencyGraph)
     };
+  }
+
+  /**
+   * Set component metadata for ESLint generation
+   */
+  setComponentMetadata(metadata: Map<string, ComponentMetadata>): void {
+    this.componentMetadata = metadata;
+    console.debug(`📦 Set component metadata for ${metadata.size} components`);
+  }
+
+  /**
+   * Get component metadata
+   */
+  getComponentMetadata(): Map<string, ComponentMetadata> {
+    return this.componentMetadata;
   }
 }
