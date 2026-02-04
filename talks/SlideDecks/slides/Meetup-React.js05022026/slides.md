@@ -51,7 +51,7 @@ Note: Companies: Frelancing, public german televion ARD/MDR, Check24 <br/><br/> 
 ```bash
 npx degit 7frank/tdi2/examples/tdi2-basic-example di-react-example
 cd di-react-example
-npm i
+npm install --legacy-peer-deps
 npm run dev
 ```
 

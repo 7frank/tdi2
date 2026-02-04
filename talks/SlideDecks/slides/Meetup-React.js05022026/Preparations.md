@@ -2,14 +2,16 @@
 
 ## TODO for Presentation
 
-- merge PR in time and generate new QRCode
+- generate new QRCode for presentation link
 
 - focus talk on coupling
 
-- ensure that example is working with linter 
+- ensure that example is working with linter
 
+- read do something with them and then delete /home/frank/Projects/7frank/tdi2/talks/React.js-Meetup
 
 ### Styling & Build
+
 - Get the styling fixed
 - Build command:
   ```bash
@@ -22,26 +24,30 @@
   ```
 
 chromium --app=file:///home/frank/Projects/7frank/tdi2/docs/SlideDecks/slides/site/index.html
-chromium --app=file:///home/frank/Projects/7frank/tdi2/docs/SlideDecks/slides/site/index.html --window-size=1600,1200 
+chromium --app=file:///home/frank/Projects/7frank/tdi2/docs/SlideDecks/slides/site/index.html --window-size=1600,1200
 
 ### Resources
+
 - [HoGent Markdown Slides Documentation](https://hogenttin.github.io/hogent-markdown-slides/)
 - [HoGent Markdown Slides GitHub](https://github.com/HoGentTIN/hogent-markdown-slides)
 
 ## Technical Setup
 
 ### OBS Configuration
+
 - Setup OBS to use browser instead of screen capture
 - Enable speaker notes with "s" key in browser
 - Test browser presentation view
 
 ### Streaming Setup
+
 - Schedule a new stream for tomorrow
-- **Important:** Make sure NOT to "stop automatically" 
+- **Important:** Make sure NOT to "stop automatically"
 - Stop manually at the end of the presentation
 - Have buffer time for live coding session after formal presentation
 
 ### Audio Setup
+
 - Switch to Bluetooth audio before starting
 - Open presentation in browser and check base audio levels
 - Have someone join the call in browser to test for audio problems
