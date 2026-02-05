@@ -27,7 +27,7 @@ Note: Hey everyone! Great to have you here on the stream today - we'll start sho
 
 - developing software since 2003 privately or in companies
 - currently employed at [jambit.com](https://www.jambit.com/)
-  - doing fullstack,architecture and ai work 
+  - doing fullstack,architecture and ai work
     - which in other companies would be on the level of technical strategist or principal engineer
     - mainly focusing on what brings impact
 - collecting tech skills like others collect pokemon
@@ -56,7 +56,6 @@ npm run dev
 
 # code . # see eslint plugin in action
 ```
-
 
 **ECommerce Example:**  
 https://github.com/7frank/tdi2/tree/main/examples/tdi2-ecommerce-example
@@ -138,7 +137,7 @@ function UserProfile({ userId }) {
 
 **Problems:** Mixed concerns, testing complexity, coupling
 
-Note: This looks innocent, but it's where the problems start. The component handles both UI rendering and business logic, making it hard to test and maintain.
+Note: This looks innocent, but it's where the problems start. The component handles both UI rendering and business logic, making it hard to test and maintain. And I know aync FC address this partially but not the coupling, which is what we are focusing on
 
 ---
 
@@ -171,7 +170,7 @@ function UserProfile({
 
 > Because we are only using the mechanism react introduced for a problem react created in the first place
 
-Note: This is the inevitable evolution. Every new requirement adds more props, more hooks, more complexity. 
+Note: This is the inevitable evolution. Every new requirement adds more props, more hooks, more complexity. While you already can imagine how fun it is to test all this.
 
 ---
 
@@ -203,7 +202,7 @@ public class UserService {
 
 **Benefits:** Single responsibility, easy testing, loose coupling
 
-Note: Backend development solved this decades ago with dependency injection. Controllers handle HTTP, services handle business logic. Although Type erasure requires @Qualifier Annotation
+Note: Backend development solved this decades ago with dependency injection. Controllers handle HTTP, services handle business logic. Although Type erasure requires @Qualifier Annotation.
 
 ---
 
@@ -249,13 +248,14 @@ Note: Angular solved this from day one with dependency injection. Services handl
 ```typescript
 // 1. Define what the component needs
 interface UserServiceInterface {
-  state: { user: User | null; loading: boolean };
+  user?: User;
+  loading: boolean;
   loadUser(id: string): Promise<void>;
 }
 
 // 2. Component becomes pure template
 function UserProfile({ userService }: { userService: Inject<UserServiceInterface> }) {
-  const { user, loading } = userService.state;
+  const { user, loading } = userService;
 
   return loading ? <Spinner /> : <div>{user?.name}</div>;
 }
@@ -263,18 +263,20 @@ function UserProfile({ userService }: { userService: Inject<UserServiceInterface
 // 3. Service handles all business logic
 @Service()
 class UserService implements UserServiceInterface {
-  state = { user: null, loading: false };
+  user?: User;
+  loading: boolean = false;
 
   async loadUser(id: string): Promise<void> {
-    this.state.loading = true;
-    this.state.user = await fetch(`/api/users/${id}`).then(r => r.json());
-    this.state.loading = false;
+    this.loading = true;
+    this.user = await fetch(`/api/users/${id}`).then(r => r.json());
+    this.loading = false;
   }
 }
 ```
 
 Note: This is the core insight - separate UI from business logic using service injection, just like backend frameworks do.
 
+This could be your FC that injects the UserService via Autowiring. No PropDrilling, no useX. Just declare the interafec you need, and write the Implemetnation anywhere. The Framework will create the dependency graph for you.
 
 ---
 
@@ -287,6 +289,10 @@ Note: This is the core insight - separate UI from business logic using service i
 - ✅ **Hooks are still welcome** - Use them for view controllers and UI-specific logic
 - ✅ **DI is optional** - This pattern works alongside Redux, Context, Zustand, etc.
 - ✅ **Classes are just a vehicle** - They enable decorators, but you could manually write this pattern
+
+<video width="1024" autoplay muted loop>
+  <source src="./gifs/Monty Python stoning Meme.mp4" type="video/mp4">
+</video>
 
 ### The Goal: Better Architecture, Not New Constraints
 
@@ -334,7 +340,13 @@ const userService = container.get<UserServiceInterface>("UserService");
 
 **Benefits:** Testable, reusable, composable business logic independent of React
 
-Note: This is huge - your business logic becomes completely portable. Same service works in React components, Node.js scripts, tests, CLI tools. True separation of concerns through dependency injection. A sign for good architecture is that you can replace parts easily.
+Note: Here's the kicker - your business logic becomes completely portable. Same service works in React components, Node.js scripts, tests, CLI tools.
+
+- This works because TDI2's React integration is just a thin layer on top of our core TypeScript DI system
+
+- (shared validator service, astro islands, microfrontends)
+
+- You are potentially much less bound to the react hooks mechanism or custom state management
 
 ---
 
@@ -348,28 +360,46 @@ Note: This is huge - your business logic becomes completely portable. Same servi
 | **I**nterface Segregation | ❌ Components depend on everything via props                | ✅ Components depend only on needed service interfaces    |
 | **Dependency Inversion**  | ❌ Components depend on concrete implementations            | ✅ Components depend on abstractions (interfaces)         |
 
+Note: (show of hands) who Knows SOLID. This is why React feels chaotic at scale - it fundamentally violates established software engineering principles. Service injection brings SOLID principles to React development.
+
+---
+
 **Traditional React violates every SOLID principle. Service injection follows them all.**
 
 ```typescript
-// SOLID compliance example
+// ✅ Single Responsibility: Each interface has one clear purpose
 interface UserServiceInterface {
-  /* minimal interface */
-}
-interface NotificationServiceInterface {
-  /* focused interface */
+  user?: User;
+  loading: boolean;
+  loadUser(id: string): Promise<void>;
 }
 
+interface NotificationServiceInterface {
+  notifications: Notification[];
+  markAsRead(id: string): void;
+}
+
+// ✅ Dependency Inversion: Component depends on abstractions (interfaces)
+// ✅ Interface Segregation: Component gets exactly what it needs
 function UserProfile({
   userService,
+  notificationService
 }: {
   userService: Inject<UserServiceInterface>;
+  notificationService: Inject<NotificationServiceInterface>;
 }) {
-  // Single responsibility: just UI rendering
-  // Depends on abstraction, not implementation
+  // ✅ Open/Closed: Can swap implementations without changing component
+  // ✅ Liskov Substitution: Any valid service implementation works
+  return (
+    <div>
+      <h1>{userService.user?.name}</h1>
+      <NotificationBadge count={notificationService.notifications.length} />
+    </div>
+  );
 }
 ```
 
-Note: (show of hands) who Knows SOLID. This is why React feels chaotic at scale - it fundamentally violates established software engineering principles. Service injection brings SOLID principles to React development.
+Note: I know this comparison might seem controversial - SOLID principles aren't always straightforward, and some aspects are debated in the community. But here's the key insight: React provides minimal architectural guardrails. It relies on framework authors and the ecosystem to fill in the gaps. This lack of standardization often hurts teams - you end up with missing common patterns, too many competing frameworks, and pieces that don't fit together cleanly. Service injection brings those proven architectural patterns directly into React.
 
 ---
 
@@ -386,16 +416,20 @@ function UserProfile({ userService }: { userService: Inject<UserServiceInterface
 **TDI2 transforms it to this:**
 
 ```typescript
-function UserProfile() {
-  const userService = useService('UserService');        // Auto-injected
-  const userSnap = useSnapshot(userService.state);      // Reactive state
+function UserProfile(props: UserServiceInterface) {
+  // Auto-injected, Reactive state
+  const userService = proxy(props.userService) ??
+         (useService('UserServiceInterface__src_services_UserServiceInterface_ts_line_20') as unknown as UserServiceInterface);
+
   return <div>{userSnap.user?.name}</div>;
 }
 ```
 
-**Result:** Less props, automatic reactivity, surgical re-rendering
+**Result:** Less props, automatic reactivity
 
-Note: The transformation happens at build time. You write clean code, the framework handles the plumbing.
+Note: How does that work, you may ask. The transformation happens at build time. You write clean code, the framework handles the plumbing.
+
+One nice benefit is, that you dont have to define your own global state anymore for these services.
 
 ---
 
@@ -429,19 +463,71 @@ it('should render user name', () => {
 
 **Result:** Fast, isolated, comprehensive testing
 
-**Coming Soon:** `@tdi2/di-testing` package with:
-
 - DI-aware testing utilities
 - Service-focused component testing helpers
 - Behavior-driven testing patterns for services
 
-Note: Testing becomes simple - mock the service for components, mock dependencies for services. No React complexity. We're also working on specialized testing utilities to make this even easier.
+Note: Lets look at testing for a bit:
+
+The first example shows testing a service - we mock the UserRepository dependency and test the business logic in isolation.
+
+The second example demonstrates FC testing - we pass a mock service to verify the UI renders correctly based on service state.
+
+No complex React testing required.
+
+---
+
+### **Experimental** Testing Framework
+
+[@tdi2/di-testing](https://www.npmjs.com/package/@tdi2/di-testing)
+
+```typescript
+import {
+  MockBean,
+  TestContext,
+  createTestInstance,
+  verify,
+} from "@tdi2/di-testing";
+
+@TestContext({ isolateTest: true })
+class OrderServiceTest {
+  @MockBean()
+  paymentService!: MockedService<PaymentService>;
+
+  @MockBean()
+  emailService!: MockedService<EmailService>;
+}
+
+it("processes order with payment and notification", async () => {
+  const ctx = createTestInstance(OrderServiceTest);
+
+  // Setup service behavior
+  ctx.paymentService.__mock__
+    .when("processPayment")
+    .thenReturn(Promise.resolve(true));
+  ctx.emailService.__mock__
+    .when("sendConfirmation")
+    .thenReturn(Promise.resolve());
+
+  // Test business logic
+  const orderService = new OrderService(ctx.paymentService, ctx.emailService);
+  const result = await orderService.processOrder(orderData);
+
+  // Verify service interactions
+  verify(ctx.paymentService, "processPayment").once();
+  verify(ctx.emailService, "sendConfirmation").withArgs(
+    orderData.customerEmail
+  );
+});
+```
+
+Note: We also have a testing library. Its still experimental but gives you an idea of how this would integrate.
 
 ---
 
 ## Key Benefits
 
-### 🎯 **Less Props Drama**
+### 🎯 **Fewer Hooks / Props Drilling**
 
 Components get exactly what they need via injection
 
@@ -455,9 +541,15 @@ Less code touched per change reduces merge conflicts
 
 ### 🚀 **Familiar Patterns**
 
-If you know Spring Boot, you already understand TDI2
+If you know Angular / Spring Boot, you already understand TDI2
 
-Note: These are the core benefits that make service injection compelling for React development.
+Note: Quick recap of what we've covered:
+
+We've shown what we perceive as the core problem - "Coupling" - and how proven solutions like Spring Boot and Angular handle this with dependency injection. Then we demonstrated how our implementation brings these patterns to React.
+
+We've shown that our implementation doesn't reinvent the wheel, explained how testing works with service injection, and discussed how to mitigate some drawbacks using the ESLint plugin.
+
+These are the core benefits that might make service injection compelling for your React development.
 
 ---
 
@@ -495,7 +587,9 @@ function UserProfile({
 }
 ```
 
-Note: This shows the reality - complex props management, multiple hooks coordination, and business logic mixed with UI rendering.
+Note: Traditional React approach - notice how everything is tightly coupled. Props drilled through multiple components, custom hooks importing more hooks, business logic (analytics tracking) mixed directly into UI handlers.
+
+The real pain comes when you need to refactor: if useNotifications needs to move to a different module, or the analytics service API changes, you're not just updating one file - you're touching this component, all its parent components that pass these props down, potentially breaking other components that share these hooks, and updating every test that mocks these dependencies. One small change cascades through your entire component tree.
 
 ---
 
@@ -539,7 +633,15 @@ function UserProfile({
 }
 ```
 
-Note: Same UI, but now the component is a pure template. Services handle all coordination and business logic. The component just renders what services provide.
+
+
+
+Note: 
+
+While state management frameworks like Redux, Zustand, or Context API solve the state sharing problem of classical react, they don't address the underlying coupling - you still have tight dependencies between components, hooks importing hooks, and business logic mixed with UI concerns.
+
+
+So here is the same UI, but now the component is a pure template. Services handle all coordination and business logic. The component just renders what services provide.
 
 ---
 
@@ -548,13 +650,13 @@ Note: Same UI, but now the component is a pure template. Services handle all coo
 **Built on proven technologies:**
 
 - **Vite Plugin** - Compile-time code transformation
-- **Valtio** - Reactive state (2.9kb, faster than Redux)
+- **Valtio** - Reactive state (smaller, faster than Redux)
 - **TypeScript** - Interface-based dependency resolution
 - **Decorators** - Familiar Spring Boot patterns
 
 **Zero runtime overhead** - transformation happens at build time
 
-Note: TDI2 combines mature technologies in a new way to solve React's architectural problems.
+Note: Now once again we dont reinvent too much. TDI2 combines mature technologies in a new way to solve React's architectural problems.
 
 ---
 
@@ -589,7 +691,7 @@ interface MyServiceInterface {
 @Service()
 class MyService implements MyServiceInterface {
   state = { count: 0 };
-  
+
   increment() {
     this.state.count++;
   }
@@ -610,6 +712,8 @@ function MyComponent({ myService }: { myService: Inject<MyServiceInterface> }) {
 ```
 
 Note: Getting started is straightforward. Add the plugin, create services, use them in components. You don't need to rewrite your entire app. Start with your most painful component, extract one service, see the benefits immediately. Then gradually expand the pattern.
+
+Getting linting and testing set up may still be a bit of a hassle.
 
 ---
 
@@ -654,7 +758,7 @@ Note: I want to hear about your React challenges and discuss how service injecti
 
 ## Thank You Leipzig.js!
 
-### Ready to Escape Props Hell?
+### Ready for something new?
 
 **The future of React architecture starts with conversations like this**
 
@@ -665,4 +769,3 @@ _Let's make React truly enterprise-ready together!_
 **Next: Live coding session**
 
 Note: Thank you for your attention. I'm excited to discuss this further and hear your thoughts on bringing enterprise architecture patterns to React.
-

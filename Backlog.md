@@ -11,6 +11,18 @@ https://github.com/7frank/tdi2/pull/69
 
 - enterprise example not working after `rm package.json` `npm i` with `3.3.3`
 
+### Bug: injected code should contain `proxy` otherwise it will not be reactive
+
+```typescript
+const userService =
+  proxy(props.userService) ??
+  (useService(
+    "UserServiceInterface__src_services_UserServiceInterface_ts_line_20"
+  ) as unknown as UserServiceInterface);
+```
+
+one way to solve this would be to `useService(token,default)`
+
 ### linter plugin
 
 file navigation via links see Issue:
