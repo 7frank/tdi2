@@ -4,6 +4,7 @@ import { ProductList } from "./components/ProductList";
 import { ProductSearch } from "./components/ProductSearch";
 import { ShoppingCart } from "./components/ShoppingCart";
 import { UserProfile } from "./components/UserProfile";
+import { Checkout } from "./components/Checkout";
 
 type ViewType = "products" | "cart" | "profile";
 
@@ -33,6 +34,9 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {renderView()}
       </main>
+
+      {/* Checkout Modal */}
+      <Checkout />
 
       {/* TDI2 Success Message */}
       <div className="fixed bottom-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-md">

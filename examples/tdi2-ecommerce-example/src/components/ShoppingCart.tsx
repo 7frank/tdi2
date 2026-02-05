@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import type { Inject } from '@tdi2/di-core/markers';
 import { CartServiceInterface } from '../services/CartService';
+import { CheckoutServiceInterface } from '../services/CheckoutService';
 import { CartItem } from '../types/Cart';
 
 interface ShoppingCartProps {
   services: {
     cartService: Inject<CartServiceInterface>;
+    checkoutService: Inject<CheckoutServiceInterface>;
   };
 }
 
 export function ShoppingCart(props: ShoppingCartProps) {
-  const { services: { cartService } } = props;
+  const { services: { cartService, checkoutService } } = props;
   const { 
     items, 
     totalItems, 
@@ -140,7 +142,10 @@ export function ShoppingCart(props: ShoppingCartProps) {
           </div>
         </div>
 
-        <button className="w-full mt-4 px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium">
+        <button
+          onClick={() => checkoutService.openCheckout()}
+          className="w-full mt-4 px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
+        >
           Proceed to Checkout
         </button>
       </div>
