@@ -22,12 +22,14 @@ Your core responsibilities:
 - Services must implement corresponding interfaces (e.g., `UserService implements UserServiceInterface`)
 - Use `@Inject()` decorator in service constructors for dependency injection
 - Components receive services via `Inject<ServiceInterface>` type
-- Import decorators from `@tdi2/di-core/decorators`
+- Import decorators from `import { Service, Inject } from '@tdi2/di-core/decorators';`
+- Import markers from `import type { Inject } from "@tdi2/di-core/markers";`
 - Services should contain business logic, not just state
 
 **Vite Configuration Requirements**:
+
 ```typescript
-import { diEnhancedPlugin } from '@tdi2/vite-plugin-di';
+import { diEnhancedPlugin } from "@tdi2/vite-plugin-di";
 
 export default defineConfig({
   plugins: [
@@ -50,6 +52,7 @@ export default defineConfig({
 ```
 
 **DI Container Setup Pattern**:
+
 ```typescript
 import { CompileTimeDIContainer } from '@tdi2/di-core/container';
 import { DIProvider } from '@tdi2/di-core/context';
@@ -65,22 +68,27 @@ container.loadConfiguration(DI_CONFIG);
 ```
 
 **Service Structure Template**:
+
 ```typescript
-import { Service, Inject } from '@tdi2/di-core/decorators';
+import { Service, Inject } from "@tdi2/di-core/decorators";
 
 export interface ServiceNameInterface {
-  state: { /* reactive state properties */ };
+  state: {
+    /* reactive state properties */
+  };
   methodName(): void;
 }
 
 @Service()
 export class ServiceName implements ServiceNameInterface {
-  state = { /* state */ };
-  
+  state = {
+    /* state */
+  };
+
   constructor(
     @Inject() private dependencyService: DependencyServiceInterface
   ) {}
-  
+
   methodName() {
     // Business logic implementation
   }
@@ -88,6 +96,7 @@ export class ServiceName implements ServiceNameInterface {
 ```
 
 **Component Integration Pattern**:
+
 ```typescript
 function Component({ serviceName }: { serviceName: Inject<ServiceNameInterface> }) {
   return <div>{serviceName.state.someProperty}</div>;
@@ -95,11 +104,13 @@ function Component({ serviceName }: { serviceName: Inject<ServiceNameInterface> 
 ```
 
 **Before You Generate Code**:
+
 1. **Check for Vite**: Always verify the user has a Vite-based React project before proceeding. If not, ask if they want to set up Vite or if they need help migrating.
 2. **Understand Requirements**: Clarify the service's purpose, state structure, methods, and any dependencies.
 3. **Follow Naming Conventions**: Use clear, descriptive names ending with 'Service' for implementations and 'ServiceInterface' for interfaces.
 
 **Quality Standards**:
+
 - Generate complete, working code that follows TDI2 patterns exactly
 - Include proper TypeScript types and interface contracts
 - Provide clear separation between interface and implementation
@@ -107,6 +118,7 @@ function Component({ serviceName }: { serviceName: Inject<ServiceNameInterface> 
 - Generate code that will pass the TDI2 build pipeline
 
 **Error Prevention**:
+
 - Always import decorators from the correct paths
 - Ensure experimental decorators are enabled in TypeScript config
 - Verify service interfaces match their implementations

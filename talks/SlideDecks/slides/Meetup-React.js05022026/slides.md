@@ -28,7 +28,7 @@ Note: Hey everyone! Great to have you here on the stream today - we'll start sho
 - developing software since 2003 privately or in companies
 - currently employed at [jambit.com](https://www.jambit.com/)
   - doing fullstack,architecture and ai work 
-    - which in other comanies would be techincal strategist or principal engineer
+    - which in other companies would be on the level of technical strategist or principal engineer
     - mainly focusing on what brings impact
 - collecting tech skills like others collect pokemon
   - [roadmap.sh/u/7frank](https://roadmap.sh/u/7frank)
@@ -51,9 +51,15 @@ Note: Companies: Frelancing, public german televion ARD/MDR, Check24 <br/><br/> 
 ```bash
 npx degit 7frank/tdi2/examples/tdi2-basic-example di-react-example
 cd di-react-example
-npm install --legacy-peer-deps
+npm i
 npm run dev
+
+# code . # see eslint plugin in action
 ```
+
+
+**ECommerce Example:**  
+https://github.com/7frank/tdi2/tree/main/examples/tdi2-ecommerce-example
 
 **Enterprise Example:**  
 https://github.com/7frank/tdi2/tree/main/examples/tdi2-enterprise-forms-example
@@ -87,7 +93,7 @@ Note: This is our roadmap for tonight. We'll start with the fundamental problems
 
 ## The Problem: React at Scale
 
-**6 years of React development led to this realization:**
+**7 years of React development led to this realization:**
 
 _Hooks and props are fundamentally incompatible with enterprise architecture_
 
@@ -102,10 +108,8 @@ Note: (show of hands) Who likes react hooks. Let's start with the core problem. 
 ---
 
 ## Example: The UserProfile Problem
-## Example: The UserProfile Problem
 
 ```typescript
-// Typical React component - looks simple at first
 // Typical React component - looks simple at first
 function UserProfile({ userId }) {
   const [user, setUser] = useState(null);
@@ -113,13 +117,6 @@ function UserProfile({ userId }) {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    setLoading(true);
-    fetchUser(userId).then(user => {
-      setUser(user);
-      setLoading(false);
-      // Load related data
-      fetchNotifications(user.id).then(setNotifications);
-    });
     setLoading(true);
     fetchUser(userId).then(user => {
       setUser(user);
@@ -179,10 +176,8 @@ Note: This is the inevitable evolution. Every new requirement adds more props, m
 ---
 
 ## Backend Solved This: Spring Boot
-## Backend Solved This: Spring Boot
 
 ```java
-// Clean separation of concerns
 // Clean separation of concerns
 @RestController
 public class UserController {
@@ -190,7 +185,6 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("/users/{id}")
-    public User getUser(@PathVariable String id) {
     public User getUser(@PathVariable String id) {
         return userService.findById(id); // Pure delegation
     }
@@ -203,7 +197,6 @@ public class UserService {
 
     public User findById(String id) {
         return repository.findById(id); // Pure business logic
-        return repository.findById(id); // Pure business logic
     }
 }
 ```
@@ -211,13 +204,9 @@ public class UserService {
 **Benefits:** Single responsibility, easy testing, loose coupling
 
 Note: Backend development solved this decades ago with dependency injection. Controllers handle HTTP, services handle business logic. Although Type erasure requires @Qualifier Annotation
-**Benefits:** Single responsibility, easy testing, loose coupling
-
-Note: Backend development solved this decades ago with dependency injection. Controllers handle HTTP, services handle business logic. Although Type erasure requires @Qualifier Annotation
 
 ---
 
-## Angular Also Solved This: Dependency Injection
 ## Angular Also Solved This: Dependency Injection
 
 ```typescript
@@ -256,21 +245,10 @@ Note: Angular solved this from day one with dependency injection. Services handl
 ## The Solution: Service Injection for React
 
 **Core Concept:** Components depend on services, not implementations
-**Angular got it right:** Services injected, components focus on templates
-
-Note: Angular solved this from day one with dependency injection. Services handle business logic, components handle templates. React missed this architectural lesson. Although Angular uses token and class based injection.
-
----
-
-## The Solution: Service Injection for React
-
-**Core Concept:** Components depend on services, not implementations
 
 ```typescript
 // 1. Define what the component needs
-// 1. Define what the component needs
 interface UserServiceInterface {
-  state: { user: User | null; loading: boolean };
   state: { user: User | null; loading: boolean };
   loadUser(id: string): Promise<void>;
 }
@@ -291,20 +269,30 @@ class UserService implements UserServiceInterface {
     this.state.loading = true;
     this.state.user = await fetch(`/api/users/${id}`).then(r => r.json());
     this.state.loading = false;
-    this.state.user = await fetch(`/api/users/${id}`).then(r => r.json());
-    this.state.loading = false;
   }
 }
 ```
 
 Note: This is the core insight - separate UI from business logic using service injection, just like backend frameworks do.
 
+
 ---
 
-## Key Advantage: Services Work Everywhere
+## Disclaimer
 
-**Services are framework-agnostic and composable through DI:**
-Note: This is the core insight - separate UI from business logic using service injection, just like backend frameworks do.
+> **Exceptions to the rules**
+
+### TDI2 is **Complementary**, Not Restrictive
+
+- ✅ **Hooks are still welcome** - Use them for view controllers and UI-specific logic
+- ✅ **DI is optional** - This pattern works alongside Redux, Context, Zustand, etc.
+- ✅ **Classes are just a vehicle** - They enable decorators, but you could manually write this pattern
+
+### The Goal: Better Architecture, Not New Constraints
+
+TDI2 provides **enterprise-grade patterns** while respecting your existing React workflow.
+
+Note: Emphasize that TDI2 is additive, not replacement. You can adopt it incrementally - start with one service, keep your existing state management. The framework is designed to integrate, not dominate. Classes enable the decorator syntax, but the core concept (service injection) works with any pattern. React hooks remain valuable for view-specific concerns - TDI2 just moves business logic out of components.
 
 ---
 
@@ -313,7 +301,6 @@ Note: This is the core insight - separate UI from business logic using service i
 **Services are framework-agnostic and composable through DI:**
 
 ```typescript
-// UserService can inject other services and work outside React
 // UserService can inject other services and work outside React
 @Service()
 class UserService implements UserServiceInterface {
@@ -668,9 +655,7 @@ Note: I want to hear about your React challenges and discuss how service injecti
 ## Thank You Leipzig.js!
 
 ### Ready to Escape Props Hell?
-### Ready to Escape Props Hell?
 
-**The future of React architecture starts with conversations like this**
 **The future of React architecture starts with conversations like this**
 
 _Let's make React truly enterprise-ready together!_
@@ -680,8 +665,4 @@ _Let's make React truly enterprise-ready together!_
 **Next: Live coding session**
 
 Note: Thank you for your attention. I'm excited to discuss this further and hear your thoughts on bringing enterprise architecture patterns to React.
-**🔗 github.com/7frank/tdi2**
 
-**Next: Live coding session**
-
-Note: Thank you for your attention. I'm excited to discuss this further and hear your thoughts on bringing enterprise architecture patterns to React.

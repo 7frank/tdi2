@@ -9,13 +9,8 @@ https://github.com/7frank/tdi2/pull/69
 
 - check if we currently use the vscode extension pacakge in any capacity
 
-- di-core package.json we had to remove clean otherwise publish would fail due to missing d.ts problem we had earlier too
-    "prepublishOnly": "npm run build",
-    "prepublishOnly": "npm run clean && npm run build",
-but that also did not work as it seems then still some stuff is  cascading
+- enterprise example not working after `rm package.json` `npm i` with `3.3.3`
 
-deleting prepublish in di-core partially wouls work but still we 
-and even then workspace would still be not rsolved properly it seems
 ### linter plugin
 
 file navigation via links see Issue:

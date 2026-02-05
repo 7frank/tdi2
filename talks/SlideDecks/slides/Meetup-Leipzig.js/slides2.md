@@ -100,10 +100,8 @@ Note: (show of hands) Who likes react hooks. Let's start with the core problem. 
 ---
 
 ## Example: The UserProfile Problem
-## Example: The UserProfile Problem
 
 ```typescript
-// Typical React component - looks simple at first
 // Typical React component - looks simple at first
 function UserProfile({ userId }) {
   const [user, setUser] = useState(null);
@@ -177,10 +175,8 @@ Note: This is the inevitable evolution. Every new requirement adds more props, m
 ---
 
 ## Backend Solved This: Spring Boot
-## Backend Solved This: Spring Boot
 
 ```java
-// Clean separation of concerns
 // Clean separation of concerns
 @RestController
 public class UserController {
@@ -188,7 +184,6 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("/users/{id}")
-    public User getUser(@PathVariable String id) {
     public User getUser(@PathVariable String id) {
         return userService.findById(id); // Pure delegation
     }
@@ -200,7 +195,6 @@ public class UserService {
     private UserRepository repository;
 
     public User findById(String id) {
-        return repository.findById(id); // Pure business logic
         return repository.findById(id); // Pure business logic
     }
 }
@@ -215,7 +209,6 @@ Note: Backend development solved this decades ago with dependency injection. Con
 
 ---
 
-## Angular Also Solved This: Dependency Injection
 ## Angular Also Solved This: Dependency Injection
 
 ```typescript
@@ -266,9 +259,7 @@ Note: Angular solved this from day one with dependency injection. Services handl
 
 ```typescript
 // 1. Define what the component needs
-// 1. Define what the component needs
 interface UserServiceInterface {
-  state: { user: User | null; loading: boolean };
   state: { user: User | null; loading: boolean };
   loadUser(id: string): Promise<void>;
 }
@@ -287,8 +278,6 @@ class UserService implements UserServiceInterface {
 
   async loadUser(id: string): Promise<void> {
     this.state.loading = true;
-    this.state.user = await fetch(`/api/users/${id}`).then(r => r.json());
-    this.state.loading = false;
     this.state.user = await fetch(`/api/users/${id}`).then(r => r.json());
     this.state.loading = false;
   }
