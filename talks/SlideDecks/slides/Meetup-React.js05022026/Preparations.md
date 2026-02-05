@@ -4,9 +4,9 @@
 
 - generate new QRCode for presentation link
 
-- focus talk on coupling
+https://www.qrcode-generator.de/
 
-- ensure that example is working with linter
+- add linter slide after testing
 
 - read do something with them and then delete /home/frank/Projects/7frank/tdi2/talks/React.js-Meetup
 

@@ -1,8 +1,8 @@
 ---
 title: "React for Enterprise: How Service Injection might fix one of Reacts greatest issues"
-subtitle: "Leipzig.js Meetup - August 2025"
+subtitle: "React.js Meetup - February 2026"
 author: "7Frank"
-date: "2025"
+date: "2026"
 ---
 
 # React for Enterprise
@@ -25,20 +25,20 @@ Note: Hey everyone! Great to have you here on the stream today - we'll start sho
 
 ## WHOAMI
 
-- developing software since 2003 privately or in companies
-- currently employed at [jambit.com](https://www.jambit.com/)
-  - doing fullstack,architecture and ai work
-    - which in other companies would be on the level of technical strategist or principal engineer
-    - mainly focusing on what brings impact
-- collecting tech skills like others collect pokemon
+- Developing software since 2003 in private and corporate settings
+- Currently employed at [jambit.com](https://www.jambit.com/)
+  - Full-stack, architecture, and AI work
+    - Technical strategist/principal engineer level in scope
+    - Focus on high-impact solutions
+- Collecting tech skills like others collect Pokémon
   - [roadmap.sh/u/7frank](https://roadmap.sh/u/7frank)
 
-> but for this presentation important infos are
+> Relevant experience for this presentation
 
-- jquery 2011-2017
-- react since 2018 on and off
-- angular, vue, java
-  - current favorite is svelte 5 with runes api
+- jQuery: 2011-2017
+- React: since 2018 (on and off)
+- Angular, Vue, Java
+  - Current favorite: Svelte 5 with Runes API
 
 Note: Companies: Frelancing, public german televion ARD/MDR, Check24 <br/><br/> I'll try to talk in english for the mayority of the time but might switch back to german in case i need to explain certain more complex details
 

@@ -170,7 +170,7 @@ function UserProfile({
 
 > Because we are only using the mechanism react introduced for a problem react created in the first place
 
-Note: This is the inevitable evolution. Every new requirement adds more props, more hooks, more complexity. 
+Note: This is the inevitable evolution. Every new requirement adds more props, more hooks, more complexity.
 
 ---
 
@@ -589,7 +589,7 @@ interface MyServiceInterface {
 @Service()
 class MyService implements MyServiceInterface {
   state = { count: 0 };
-  
+
   increment() {
     this.state.count++;
   }
@@ -655,6 +655,7 @@ Note: I want to hear about your React challenges and discuss how service injecti
 ## Thank You Leipzig.js!
 
 ### Ready to Escape Props Hell?
+
 ### Ready to Escape Props Hell?
 
 **The future of React architecture starts with conversations like this**
