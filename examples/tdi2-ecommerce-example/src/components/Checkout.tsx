@@ -51,16 +51,25 @@ export function Checkout(props: CheckoutProps) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
       <div className="bg-white rounded-lg max-w-2xl w-full mx-4 my-8">
         {/* Header */}
-        <div className="px-6 py-4 border-b flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Checkout</h2>
+        <div className="px-6 py-4 border-b">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-2xl font-bold">Checkout</h2>
+            <button
+              onClick={() => checkoutService.closeCheckout()}
+              className="text-gray-500 hover:text-gray-700"
+              disabled={orderStatus === 'processing'}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
           <button
-            onClick={() => checkoutService.closeCheckout()}
-            className="text-gray-500 hover:text-gray-700"
+            onClick={() => checkoutService.autoFillTestData()}
+            className="text-sm px-3 py-1.5 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 border border-purple-300"
             disabled={orderStatus === 'processing'}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            🎲 Auto-Fill Test Data
           </button>
         </div>
 

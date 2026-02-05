@@ -1,5 +1,6 @@
 import { Service, Inject } from '@tdi2/di-core/decorators';
 import { CartServiceInterface } from './CartService';
+import { TestDataServiceInterface } from './TestDataService';
 
 export interface CheckoutServiceInterface {
   state: {
@@ -25,6 +26,7 @@ export interface CheckoutServiceInterface {
   closeCheckout(): void;
   updateShippingInfo(field: string, value: string): void;
   updatePaymentInfo(field: string, value: string): void;
+  autoFillTestData(): void;
   processOrder(): Promise<void>;
   resetCheckout(): void;
 }
@@ -32,8 +34,13 @@ export interface CheckoutServiceInterface {
 @Service()
 export class CheckoutService implements CheckoutServiceInterface {
   constructor(
-    @Inject() private cartService: CartServiceInterface
-  ) {}
+    @Inject() private cartService: CartServiceInterface,
+    @Inject() private testDataService: TestDataServiceInterface
+  ) {
+
+      console.log("CheckoutServiceInterface Services",cartService,testDataService)
+
+  }
 
   state = {
     isCheckoutOpen: false,
@@ -68,6 +75,11 @@ export class CheckoutService implements CheckoutServiceInterface {
 
   updatePaymentInfo(field: string, value: string): void {
     this.state.paymentInfo[field] = value;
+  }
+
+  autoFillTestData(): void {
+    this.state.shippingInfo = this.testDataService.generateRandomShippingInfo();
+    this.state.paymentInfo = this.testDataService.generateRandomPaymentInfo();
   }
 
   async processOrder(): Promise<void> {
