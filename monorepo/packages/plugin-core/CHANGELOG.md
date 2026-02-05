@@ -1,5 +1,14 @@
 # @tdi2/plugin-core
 
+## 3.3.3
+
+### Patch Changes
+
+- fix workspaces
+
+- Updated dependencies []:
+  - @tdi2/di-core@3.3.3
+
 ## 3.3.2
 
 ### Patch Changes

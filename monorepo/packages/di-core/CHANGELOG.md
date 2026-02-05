@@ -1,5 +1,11 @@
 # @tdi2/di-core
 
+## 3.3.3
+
+### Patch Changes
+
+- fix workspaces
+
 ## 3.3.2
 
 ### Patch Changes

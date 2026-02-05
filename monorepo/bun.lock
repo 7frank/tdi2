@@ -142,7 +142,7 @@
     },
     "packages/di-core": {
       "name": "@tdi2/di-core",
-      "version": "3.3.2",
+      "version": "3.3.3",
       "dependencies": {
         "debug": "^4.4.3",
         "ts-morph": "^21.0.1",
@@ -187,7 +187,7 @@
     },
     "packages/di-testing": {
       "name": "@tdi2/di-testing",
-      "version": "3.3.2",
+      "version": "3.3.3",
       "dependencies": {
         "@tdi2/di-core": "workspace:*",
         "@testing-library/react": "^16.3.0",
@@ -220,7 +220,7 @@
     },
     "packages/eslint-plugin-tdi2": {
       "name": "@tdi2/eslint-plugin-tdi2",
-      "version": "3.3.2",
+      "version": "3.3.3",
       "devDependencies": {
         "@typescript-eslint/parser": "^6.0.0",
         "@typescript-eslint/utils": "^6.0.0",
@@ -259,7 +259,7 @@
     },
     "packages/plugin-core": {
       "name": "@tdi2/plugin-core",
-      "version": "3.3.2",
+      "version": "3.3.3",
       "dependencies": {
         "@tdi2/di-core": "workspace:*",
       },
@@ -347,7 +347,7 @@
     },
     "packages/vite-plugin-di": {
       "name": "@tdi2/vite-plugin-di",
-      "version": "3.3.2",
+      "version": "3.3.3",
       "dependencies": {
         "@tdi2/di-core": "workspace:*",
         "@tdi2/plugin-core": "workspace:*",

@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/di-core",
-  "version": "3.3.2",
+  "version": "3.3.3",
   "description": "TypeScript Dependency Injection 2 - Core DI framework",
   "type": "module",
   "main": "./dist/index.js",

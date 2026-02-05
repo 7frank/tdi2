@@ -1,6 +1,6 @@
 {
   "name": "@tdi2/vite-plugin-di",
-  "version": "3.3.2",
+  "version": "3.3.3",
   "description": "Vite plugin for TDI2 (TypeScript Dependency Injection) with interface-based automatic resolution",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
