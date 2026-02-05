@@ -14,7 +14,7 @@
     "publish:packages": "turbo publish:package",
     "1-changeset": "changeset",
     "2-version": "changeset version && bun update",
-    "3-release": "bun run build && bun run publish:packages && changeset tag",
+    "3-release": "bun run clean && bun run build && bun run publish:packages && changeset tag",
     "rm": "find . -maxdepth 3 -type d -name \"node_modules\" -exec rm -rf {} +",
     "docs:dev": "cd apps/docs-starlight && bun run dev",
     "docs:build": "cd apps/docs-starlight && bun run build",

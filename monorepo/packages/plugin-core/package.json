@@ -49,7 +49,7 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build",
+    "prepublishOnly": "npm run build",
     "publish:npm": "npm publish --access public",
     "publish:jsr": "npx jsr publish",
     "publish:package": "bun publish"

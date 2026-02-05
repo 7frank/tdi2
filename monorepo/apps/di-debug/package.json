@@ -32,7 +32,7 @@
     "lint": "echo 'No linting configured yet'",
     "clean": "rm -rf dist",
     "tdi2": "./bin/cli.js",
-    "prepublishOnly": "npm run clean && npm run build"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "dependency-injection",
