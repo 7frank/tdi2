@@ -1,14 +1,10 @@
 # Presentation Preparations - Leipzig.js Meetup
 
-## TODO for Presentation
+## Update QR Code if necessary
 
 - generate new QRCode for presentation link
 
 https://www.qrcode-generator.de/
-
-- add linter slide after testing
-
-- read do something with them and then delete /home/frank/Projects/7frank/tdi2/talks/React.js-Meetup
 
 ### Styling & Build
 
@@ -16,11 +12,11 @@ https://www.qrcode-generator.de/
 - Build command:
   ```bash
   cd slides
-  uv run python -m mkslides build Meetup-React.js05022026/slides.md --config-file Meetup-React.js05022026/config.yaml
+  uv run python -m mkslides build Meetup-React.js05022026 --config-file Meetup-React.js05022026/config.yaml
   ```
 - Serve command:
   ```bash
-  uv run python -m mkslides serve "Meetup-React.js05022026/slides.md" --config-file Meetup-React.js05022026/config.yaml
+  uv run python -m mkslides serve "Meetup-React.js05022026" --config-file Meetup-React.js05022026/config.yaml
   ```
 
 chromium --app=file:///home/frank/Projects/7frank/tdi2/docs/SlideDecks/slides/site/index.html

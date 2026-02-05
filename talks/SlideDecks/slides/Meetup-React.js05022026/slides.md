@@ -525,6 +525,48 @@ Note: We also have a testing library. Its still experimental but gives you an id
 
 ---
 
+<style>
+img {
+ height:100%;
+  border-radius: 10px;
+  border: 2px solid #d6e9ff; /* default light blue */
+ 
+  box-shadow: 0 0 0 2px rgba(214, 233, 255, 0.6);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 120ms ease;
+}
+
+img:hover {
+  border-color: #7fbfff;
+  box-shadow: 0 0 0 4px rgba(127, 191, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+</style>
+
+## IDE Support 1/3
+
+<img  src=./screenshots/linter-plugin0.png />
+
+- ESLint plugin that enables navigation between interfaces and their resolved classes
+
+---
+
+## IDE Support 2/3
+
+<img  src=./screenshots/linter-plugin1.png />
+
+* Shows exactly why and which class was resolved
+---
+
+## IDE Support 3/3
+
+<img  src=./screenshots/linter-plugin2.png />
+
+* Displays the default error message below with our enhanced info above
+
+
+---
+
 ## Key Benefits
 
 ### 🎯 **Fewer Hooks / Props Drilling**
@@ -633,13 +675,9 @@ function UserProfile({
 }
 ```
 
-
-
-
-Note: 
+Note:
 
 While state management frameworks like Redux, Zustand, or Context API solve the state sharing problem of classical react, they don't address the underlying coupling - you still have tight dependencies between components, hooks importing hooks, and business logic mixed with UI concerns.
-
 
 So here is the same UI, but now the component is a pure template. Services handle all coordination and business logic. The component just renders what services provide.
 
