@@ -2,7 +2,7 @@
 
 ## ordered log (for production release)
 
-## last 2 pr might have brought some clutter
+### last 2 pr might have brought some clutter
 
 https://github.com/7frank/tdi2/pull/70
 https://github.com/7frank/tdi2/pull/69
@@ -10,6 +10,24 @@ https://github.com/7frank/tdi2/pull/69
 - check if we currently use the vscode extension pacakge in any capacity
 
 - enterprise example not working after `rm package.json` `npm i` with `3.3.3`
+
+Bug: fix default value=5
+
+### Evaluate: estabish new direction
+- for reaching "enterprise audience" we may not neglect broader adoption options
+- focus more on ts not react first
+
+- for react instead of complicated destructuring support
+  - use 2nd fc parameter thats not used instead for passing services
+  - or have dedicated "props.injected" that
+- radically simpler structure
+  - more trust
+  -fewer bugs
+  - acessibility
+
+
+
+
 
 ### Bug: injected code should contain `proxy` otherwise it will not be reactive
 

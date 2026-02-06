@@ -289,8 +289,8 @@ This could be your FC that injects the UserService via Autowiring. No PropDrilli
 - ✅ **Hooks are still welcome** - Use them for view controllers and UI-specific logic
 - ✅ **DI is optional** - This pattern works alongside Redux, Context, Zustand, etc.
 - ✅ **Classes are just a vehicle** - They enable decorators, but you could manually write this pattern
-
-<video width="1024" autoplay muted loop>
+ 
+<video width="1024" autoplay muted loop controls>
   <source src="./gifs/Monty Python stoning Meme.mp4" type="video/mp4">
 </video>
 
