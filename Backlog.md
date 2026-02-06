@@ -14,6 +14,7 @@ https://github.com/7frank/tdi2/pull/69
 Bug: fix default value=5
 
 ### Evaluate: estabish new direction
+
 - for reaching "enterprise audience" we may not neglect broader adoption options
 - focus more on ts not react first
 
@@ -22,12 +23,10 @@ Bug: fix default value=5
   - or have dedicated "props.injected" that
 - radically simpler structure
   - more trust
-  -fewer bugs
+    -fewer bugs
   - acessibility
 
-
-
-
+### remove clutter, di-debug ( use eslint generated meta code instead, add small flowjs visualisation)
 
 ### Bug: injected code should contain `proxy` otherwise it will not be reactive
 
